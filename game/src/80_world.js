@@ -110,6 +110,7 @@ class World extends Phaser.Scene {
     if (!RUN) campFx(g, t, open);
     // 玩家
     const fr = (t * 4 | 0) % 2, bob = Math.round(Math.sin(t * 3) * 1);
+    { const wi = STATS.weapons.findIndex(w => w && w.whirl), n = wi >= 0 && RUN ? player.spin[wi].n : 0; this.spinRate = n > 0 ? 6 + n * 0.8 : 0; } // 旋转时角色左右快速翻面，像在原地转
     const sig = dollSig(S.equip);
     if (sig !== this.dollSig) { // 装备变了：重画纸娃娃
       this.dollSig = sig; this.dollN = (this.dollN || 0) + 1;
@@ -118,7 +119,7 @@ class World extends Phaser.Scene {
     }
     const hk = (player.hurtT > 0.15 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
-    this.hero.setPosition(player.x, player.y + bob).setFlipX(player.face < 0).setDepth(10 + player.y / 100).setAlpha(player.dashT > 0 ? 0.5 : 1);
+    this.hero.setPosition(player.x, player.y + bob).setFlipX(this.spinRate ? (t * this.spinRate | 0) % 2 === 0 : player.face < 0).setDepth(10 + player.y / 100).setAlpha(player.dashT > 0 ? 0.5 : 1);
     this.heroSh.setPosition(player.x, player.y + 1);
     { const hub = S.equip.hub, hg = this.hubG; hg.clear(); if (hub) { const b = baseOf(hub); const c = hex(b.el ? ELEM_C[b.el] : b.mass ? '#e9e0c9' : b.energy ? '#c08aff' : '#57e0d0'); const n = 22; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.7; hg.fillStyle(c, 0.35 + 0.3 * Math.sin(i * 1.3 + t * 3)); hg.fillRect(Math.round(player.x + Math.cos(a) * 9), Math.round(player.y + 1 + Math.sin(a) * 3), 1, 1); } } }
     if (player.dashT > 0 && this.frame % 2 === 0) {
@@ -141,6 +142,7 @@ class World extends Phaser.Scene {
       // 旋身：刃数跟攻速走，层数越高半径越大、拖尾越长；满层时脚下一圈风纹
       const n = W_.whirl ? player.spin[wi].n : 0, R = W_.rng * (1 + n * WH.rngPer / 100);
       const nb = W_.whirl ? W_.blades : 3, tail = Math.floor(n / 2);
+      if (W_.whirl && n > 0) { whirlFx(pg, player.x, player.y, R, n / W_.stackMax, t, player.orbitA, nb); return; } // 旋风斩：人带着刃原地转，身边卷起一圈风
       if (W_.whirl && n >= W_.stackMax) for (let k = 0; k < 40; k++) { const a = k / 40 * Math.PI * 2 - t * 3; pg.fillStyle(0xdfe6ee, 0.12 + 0.12 * Math.sin(k * 1.7 + t * 6)); pg.fillRect(player.x + Math.cos(a) * R * 0.85, player.y + Math.sin(a) * R * 0.5, 2, 1); }
       for (let i = 0; i < nb; i++) {
         const a0 = player.orbitA + i * Math.PI * 2 / nb;
@@ -153,7 +155,8 @@ class World extends Phaser.Scene {
         for (let k = -2; k <= 3; k++) { const [qx, qy] = px(k); pg.fillStyle(k >= 2 ? 0xffffff : k <= -1 ? 0x9a8f86 : 0xdfe6ee, 1).fillRect(qx, qy, 1, 1); pg.fillRect(qx - Math.round(ox), qy - Math.round(oy), 1, 1); }
       }
     });
-    for (const z of zones) { const c = hex(ELEM_C[z.el]); if (z.enemy) { pg.fillStyle(0x2f5a22, 0.35 * Math.min(1, z.t)).fillEllipse(z.x, z.y, z.r * 2, z.r * 1.2); } const n = Math.max(10, z.r * 1.5 | 0); pg.fillStyle(c, z.vortex ? 0.8 : 0.45); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (z.vortex ? t * 6 : 0), rr = z.r * (z.vortex ? 0.4 + 0.6 * ((i * 7) % 5) / 5 : (0.5 + 0.5 * Math.abs(Math.sin(i * 1.7 + t * 3)))); pg.fillRect(z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr * 0.6, 1, 1); } }
+    for (const z of zones) if (z.storm) tornado(pg, z.x, z.y + 2, 30, 20, t, z.seed ??= Math.random() * 9, Math.min(1, z.t * 2) * 0.8); // 风暴之眼：身后的大龙卷风
+    for (const z of zones) { if (z.storm) continue; const c = hex(ELEM_C[z.el]); if (z.enemy) { pg.fillStyle(0x2f5a22, 0.35 * Math.min(1, z.t)).fillEllipse(z.x, z.y, z.r * 2, z.r * 1.2); } const n = Math.max(10, z.r * 1.5 | 0); pg.fillStyle(c, z.vortex ? 0.8 : 0.45); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (z.vortex ? t * 6 : 0), rr = z.r * (z.vortex ? 0.4 + 0.6 * ((i * 7) % 5) / 5 : (0.5 + 0.5 * Math.abs(Math.sin(i * 1.7 + t * 3)))); pg.fillRect(z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr * 0.6, 1, 1); } }
     for (const W_ of STATS.weapons) if (W_ && W_.form === 'aura') { const c = hex(ELEM_C[W_.el]); const n = 28; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.8; pg.fillStyle(c, 0.25 + 0.25 * Math.sin(i + t * 4)); pg.fillRect(player.x + Math.cos(a) * W_.rng, player.y - 2 + Math.sin(a) * W_.rng * 0.6, 1, 1); } }
     // 特效线与环
     const fg = this.fxG; fg.clear();
@@ -204,6 +207,7 @@ class World extends Phaser.Scene {
   }
   drawProj(g, p, t) {
     // 光晕 + 短拖尾（叠加发光层）
+    if (p.gust) { tornado(g, p.x, p.y + 3, 13, 9, G.time, p.seed ??= Math.random() * 9, 0.85); return; } // 旋风之心的刃风：小龙卷风
     const gg = this.glowG;
     if (gg && !p.mine) {
       const c = p.enemy ? 0xff5a4a : hex(ELEM_C[p.el]), y0 = p.lob ? p.y - p.z : p.y, tr = p._tr || (p._tr = []);

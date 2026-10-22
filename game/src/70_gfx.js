@@ -112,6 +112,42 @@ function chromeTextures(add) {
   add('dock', cvs(32, 30, x => { for (let j = 2; j < 30; j++) for (let i = 0; i < 32; i++) px(x, R() < 0.5 ? '#231c2c' : '#262030', i, j); px(x, CH.ink, 0, 0, 32, 2); px(x, CH.ironH, 0, 2, 32, 1); px(x, CH.br, 0, 6, 32, 1); px(x, CH.ink, 0, 29, 32, 1); for (let i = 2; i < 32; i += 8) px(x, '#1a1422', i, 12 + (i % 3) * 4, 3, 1); }));
 }
 const ORB = { cx: 32, cy: 33, r: 24 };
+/* ---------- 旋风：龙卷风和旋风斩 ---------- */
+// 龙卷风：一层层椭圆往上叠，越往上越宽，整体左右摆；每层的点按角度旋转，朝前的一半更亮
+function tornado(g, x, y, h, w, t, seed, a = 1) {
+  const L = Math.max(5, h / 2 | 0);
+  g.fillStyle(0x1a1422, 0.25 * a).fillEllipse(x, y, w * 0.7, 3); // 脚下的影子
+  for (let i = 0; i < L; i++) {
+    const f = i / (L - 1), yy = y - f * h, rw = w * (0.18 + 0.82 * f ** 1.4), cx = x + Math.sin(t * 4 + f * 3 + seed) * w * 0.18 * f, m = Math.max(6, rw * 1.2 | 0);
+    for (let k = 0; k < m; k++) {
+      const an = k / m * Math.PI * 2 + t * 11 - f * 2.5 + seed, sn = Math.sin(an), front = sn > 0;
+      if (((k + i) % 3 === 0) && !front) continue;
+      g.fillStyle(front ? (k % 2 ? 0xe4dfe8 : 0xb8b0c4) : 0x7a7088, (front ? 0.75 : 0.4) * a * (0.55 + 0.45 * f));
+      g.fillRect(Math.round(cx + Math.cos(an) * rw / 2), Math.round(yy + sn * rw * 0.16), front && f > 0.5 ? 2 : 1, 1);
+    }
+  }
+  for (let k = 0; k < 6; k++) { const an = t * 7 + k * 1.05 + seed, rr = w * 0.35 + ((t * 20 + k * 5) % 6); g.fillStyle(0x9a8f78, 0.5 * a).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr * 0.3), 1, 1); } // 卷起的尘土
+}
+// 旋风斩：人裹在一股贴身的旋风里，腰间是武器转出的弧形刀光；外圈只在地上画一圈淡淡的风纹表示攻击范围
+function whirlFx(g, x, y, R, f, t, ang, nb) {
+  const spd = 9 + f * 9;
+  // 外圈地面风纹（攻击范围）
+  const m = 30 + (f * 16 | 0);
+  for (let k = 0; k < m; k++) { const an = k / m * Math.PI * 2 - t * spd * 0.35, sn = Math.sin(an); if (k % 3 === 0) continue; g.fillStyle(0xb8b0c4, (sn > 0 ? 0.22 : 0.12) * (0.5 + f * 0.5)); g.fillRect(Math.round(x + Math.cos(an) * R), Math.round(y + sn * R * 0.32), 1, 1); }
+  // 贴身旋风：从脚下到头顶的一股风，比人宽一圈
+  tornado(g, x, y + 1, 18 + f * 4, 20 + f * 8, t * (1 + f), 0, 0.5 + f * 0.35);
+  // 刀光：武器在腰间转出的弧，弧长随层数从 60° 到 220°，近处亮、尾巴淡
+  const arc = 1 + f * 2.8, r = 11 + f * 5;
+  for (let i = 0; i < Math.min(nb, 2); i++) {
+    const a0 = -t * spd + i * Math.PI, steps = 26;
+    for (let s = 0; s < steps; s++) {
+      const q = s / steps, an = a0 + q * arc, sn = Math.sin(an), cx = x + Math.cos(an) * r, cy = y - 6 + sn * r * 0.38;
+      g.fillStyle(q < 0.12 ? 0xffffff : sn > 0 ? 0xd4dbe6 : 0x9aa0b0, 0.85 * (1 - q) ** 1.3 * (sn > 0 ? 1 : 0.55));
+      g.fillRect(Math.round(cx), Math.round(cy), q < 0.5 || sn > 0 ? 2 : 1, q < 0.6 ? 2 : 1);
+    }
+  }
+  for (let k = 0; k < 10; k++) { const an = -t * spd * 0.6 + k * 0.63, rr = 10 + ((t * 2.5 + k * 0.37) % 1) * (R - 10); g.fillStyle(0x9a8f78, 0.45 * (1 - rr / R)).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr * 0.3), 1, 1); } // 往外甩的尘土
+}
 /* ---------- 文字：平滑字体，按画布的实际分辨率渲染 ---------- */
 const FONT_FAM = '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", "WenQuanYi Zen Hei", sans-serif';
 const FS = { 8: [8, 500, 10], 12: [10, 500, 13], num: [7, 700, 8] }; // 字号、字重、行高（逻辑像素）
