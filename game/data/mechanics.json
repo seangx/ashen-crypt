@@ -72,7 +72,7 @@
   "maxStacks": 10,
   "decay": 2,
   "morePer": 1.08,
-  "rngPer": 5,
+  "rngPer": 1,
   "heartMore": 2,
   "offhandMul": 0.5,
   "dashMul": 1,
