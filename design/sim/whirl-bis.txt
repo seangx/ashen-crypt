@@ -1,0 +1,11 @@
+whirl  物品等级  30：秒伤     67426（面板    23805，满 19 层）  有效生命    714  平均抗性  27%  天梯  37 层（止于 40 层死亡（63 秒））  单趟 阵亡 18:26 过 30 层 旋风之心 | TurbineBlades TurbineBlades TitaniumShield StormEye Thruster IridiumNexus | 符文 Whirl,Crush,AttackSpeed,ArmorOnHit
+whirl  物品等级  70：秒伤    428920（面板    53320，满 25 层）  有效生命   1331  平均抗性  40%  天梯  40 层（止于 43 层死亡（49 秒））  单趟 灯灭 19:17 过 33 层 旋风之心 | TurbineBlades Spikes TitaniumShield StormEye Thruster IridiumNexus | 符文 Whirl,Crush,AttackSpeed,ArmorOnHit
+whirl  物品等级 100：秒伤   1170256（面板   121184，满 25 层）  有效生命   1809  平均抗性  45%  天梯  46 层（止于 49 层死亡（15 秒））  单趟 灯灭 15:35 过 27 层 旋风之心 | TurbineBlades TurbineBlades TitaniumShield StormEye Thruster IridiumNexus | 符文 Whirl,Crush,AttackSpeed,ArmorOnHit
+random 物品等级  30：秒伤      4679（面板     4679）  有效生命    690  平均抗性  28%  天梯  18 层（止于 21 层死亡（59 秒））  单趟 阵亡 16:49 过 21 层 | Zapper TurbineBlades PolymerShield PolymerCore Warp QuartzNexus | 符文 Shock,Boomerang,Purity,Blind
+random 物品等级  70：秒伤     18069（面板    18069）  有效生命   1230  平均抗性  28%  天梯  41 层（止于 42 层死亡（82 秒））  单趟 阵亡 29:29 过 40 层 | PlasmaNova Cannon PolymerShield PolymerCore Thruster BaryteNexus | 符文 DashOnHit,Plasma,Lethal,Rigor
+random 物品等级 100：秒伤     67945（面板    67945）  有效生命   2017  平均抗性  23%  天梯  34 层（止于 37 层死亡（26 秒））  单趟 阵亡 22:53 过 36 层 | Thorns TurbineBlades CrystalShield EtherealCore EMP ZirconNexus | 符文 Plasma,Blind,Shock,Knockback
+
+whirl / random：
+  物品等级 30：秒伤 ×14.41  有效生命 ×1.03  秒伤×有效生命 ×14.91  天梯 37 vs 18  单趟 30 层/18:26 vs 21 层/16:49
+  物品等级 70：秒伤 ×23.74  有效生命 ×1.08  秒伤×有效生命 ×25.69  天梯 40 vs 41  单趟 33 层/19:17 vs 40 层/29:29
+  物品等级 100：秒伤 ×17.22  有效生命 ×0.90  秒伤×有效生命 ×15.45  天梯 46 vs 34  单趟 27 层/15:35 vs 36 层/22:53

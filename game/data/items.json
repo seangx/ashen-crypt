@@ -1,0 +1,69 @@
+{
+ "_说明": "装备底材的名字、图标和表现。数值在 astro.json（按原作）；这里只有名字、图标、攻击形态和少量表现参数。weapons.form：proj 投射物 / beam 光束 / orbit 环绕刃 / nova 新星 / cone 喷射 / mine 陷阱 / aura 力场 / ram 撞击 / stab 近刺 / reflect 反伤；fast 高速弹，pellets 每发弹数，dpsMul 持续伤害武器的每秒倍数，wide 宽弹，spiral 螺旋，wander 自动追踪，pool 毒池，shoot 陷阱改为射击。engines.dash 是冲刺技能。其余部位是 [名字, 图标]。",
+ "weapons": {
+  "Cannon": {"n": "骨弩", "ic": "w_crossbow", "form": "proj"},
+  "Rocket": {"n": "火油罐", "ic": "w_firepot", "form": "proj", "blast": 32},
+  "Laser": {"n": "圣光杖", "ic": "w_lightrod", "form": "beam"},
+  "Taser": {"n": "雷符", "ic": "w_stormseal", "form": "proj"},
+  "PlutoniumBar": {"n": "瘟疫香炉", "ic": "w_censer", "form": "aura"},
+  "Hullbreaker": {"n": "撞城骨锤", "ic": "w_maul", "form": "ram"},
+  "TurbineBlades": {"n": "回旋骨刃", "ic": "w_bladering", "form": "orbit", "req": 1},
+  "PlasmaNova": {"n": "圣钟", "ic": "w_bell", "form": "nova"},
+  "Railgun": {"n": "穿心弩", "ic": "w_piercer", "form": "proj", "fast": 1},
+  "BlastMine": {"n": "火药陷阱", "ic": "w_trap_exp", "form": "mine"},
+  "PlasmaMine": {"n": "圣光陷阱", "ic": "w_trap_pla", "form": "mine"},
+  "StormMine": {"n": "雷暴陷阱", "ic": "w_trap_ele", "form": "mine", "shoot": 1},
+  "ShrapnelMine": {"n": "碎骨陷阱", "ic": "w_trap_kin", "form": "mine", "shoot": 1},
+  "WasteMine": {"n": "腐尸陷阱", "ic": "w_trap_nuc", "form": "mine", "pool": 1},
+  "Blastgun": {"n": "散骨铳", "ic": "w_scatter", "form": "proj", "pellets": 5},
+  "Orbitron": {"n": "疫星仪", "ic": "w_orrery", "form": "proj", "spiral": 1},
+  "FlameSlinger": {"n": "回旋火轮", "ic": "w_firewheel", "form": "proj", "blast": 18},
+  "Zapper": {"n": "雷灵", "ic": "w_wisp", "form": "proj", "wander": 1},
+  "SporeBlaster": {"n": "疫孢囊", "ic": "w_sporesac", "form": "proj"},
+  "Thorns": {"n": "荆棘甲", "ic": "w_thorns", "form": "reflect"},
+  "Spikes": {"n": "骨刺", "ic": "w_spike", "form": "stab"},
+  "PlasmaBlaster": {"n": "圣焰铳", "ic": "w_holygun", "form": "proj"},
+  "FlameThrower": {"n": "喷火颅", "ic": "w_flameskull", "form": "cone", "dpsMul": 20},
+  "Shuriken": {"n": "飞镰", "ic": "w_sickle", "form": "proj"},
+  "PlasmaCutter": {"n": "圣光镰刃", "ic": "w_lightscythe", "form": "proj", "wide": 1}
+},
+ "engines": {
+  "Thruster": {"n": "影步靴", "ic": "a_shadowstep", "dash": "step"},
+  "Warp": {"n": "魂跃靴", "ic": "a_soulstep", "dash": "warp"},
+  "Afterburner": {"n": "余烬靴", "ic": "a_emberstep", "dash": "trail"},
+  "FusionDrive": {"n": "疫爆靴", "ic": "a_plaguestep", "dash": "burst"},
+  "EMP": {"n": "雷鸣靴", "ic": "a_stormstep", "dash": "storm"},
+  "BlackHoleWarp": {"n": "虚渊靴", "ic": "a_voidstep", "dash": "vortex"},
+  "Annihilator": {"n": "湮灭靴", "ic": "a_doomstep", "dash": "nova"}
+},
+ "shield": {
+  "TitaniumShield": ["铁骨盾", "a_boneward"],
+  "PhantomShield": ["幻影盾", "a_phantomward"],
+  "NebulaShield": ["灵纱盾", "a_veilward"],
+  "CrystalShield": ["晶骨盾", "a_crystalward"],
+  "EtherealShield": ["幽影盾", "a_shadeward"],
+  "PolymerShield": ["缝尸盾", "a_tombward"]
+},
+ "core": {
+  "TitaniumCore": ["铁骨盔", "a_helm"],
+  "PhantomCore": ["幻影兜帽", "a_phantomhood"],
+  "NebulaCore": ["灵纱冠", "a_veilcrown"],
+  "CrystalCore": ["晶冠", "a_crystalcrown"],
+  "EtherealCore": ["幽影兜帽", "a_shadehood"],
+  "PolymerCore": ["缝合面具", "a_mask"]
+},
+ "hub": {
+  "AmberNexus": ["琥珀法阵", "a_circle_exp"],
+  "SilverNexus": ["银纹法阵", "a_circle_ele"],
+  "CrystalNexus": ["水晶法阵", "a_circle_pla"],
+  "OnyxNexus": ["黑曜法阵", "a_circle_kin"],
+  "BaryteNexus": ["腐土法阵", "a_circle_nuc"],
+  "QuartzNexus": ["沙漏法阵", "a_circle"],
+  "ZirconNexus": ["月石法阵", "a_circle"],
+  "IridiumNexus": ["灰石法阵", "a_circle"]
+},
+ "chip": {
+  "Chip": { "n": "印记", "ic": "a_sigil", "req": 12, "w": 1000 },
+  "EmpoweredChip": { "n": "强化印记", "ic": "a_sigil_e", "req": 70, "w": 100 }
+ }
+}

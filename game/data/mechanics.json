@@ -1,0 +1,374 @@
+{
+ "_说明": "战斗机制常数：主属性换算、减伤、异常状态、各种武器形态的细节。大部分来自原作，调整前先想清楚影响面。",
+ "attributes": {
+  "_说明": "每点主属性的效果。体魄：护甲 +massArmor（0.02 = 2%）、物理伤害总增 massKinMore、加速度 massAccel；魂力：灵障 energyDeflect、冲刺回复 energyDash、元素伤害总增 energyThermalMore；时砂：行动速度 timeFlow",
+  "massArmor": 0.02,
+  "massKinMore": 0.01,
+  "massAccel": -0.01,
+  "massAccelMin": 0.3,
+  "energyDeflect": 0.02,
+  "energyDash": 0.01,
+  "energyThermalMore": 0.01,
+  "timeFlow": 0.01
+ },
+ "defense": {
+  "_说明": "deflectDelay 受伤后灵障停止回复的秒数; dodgeCap 闪避上限; hurtInvuln 受伤后的无敌时间; meleeGuardLess 近战命中后承伤总降（蛮力符文）; meleeGuardTime 持续秒数",
+  "deflectDelay": 2,
+  "dodgeCap": 75,
+  "hurtInvuln": 0.25,
+  "meleeGuardLess": 0.45,
+  "meleeGuardTime": 1
+ },
+ "offense": {
+  "_说明": "multicritDecay 暴击率超过 100% 时每多一重的几率衰减; luckCap 幸运上限; dashRegen 冲刺槽每秒基础回复; unit 原作距离单位换算成像素; projSpeed / projSpeedFast 投射物速度; knockback / pull 击退 / 拉近的力度; contTicks 持续伤害武器每秒结算次数; auraTick 力场武器结算间隔; mineMax 同时存在的陷阱数; mineArm 陷阱布置后多久生效; mineLife 陷阱存在秒数; ramCd 撞击同一个敌人的间隔; ramDashMul 冲刺中撞击的倍率; ramMinMul 慢速撞击最低倍率; chainRange 连锁 / 弹射找下一个目标的距离; shredTime 降抗持续秒数",
+  "multicritDecay": 0.8,
+  "luckCap": 80,
+  "dashRegen": 0.12,
+  "unit": 0.16,
+  "projSpeed": 220,
+  "projSpeedFast": 420,
+  "knockback": 90,
+  "pull": 70,
+  "contTicks": 5,
+  "auraTick": 0.2,
+  "mineMax": 8,
+  "mineArm": 0.3,
+  "mineLife": 12,
+  "ramCd": 0.6,
+  "ramDashMul": 1.5,
+  "ramMinMul": 0.25,
+  "chainRange": 80,
+  "shredTime": 3
+ },
+ "ailments": {
+  "_说明": "元素异常。碎骨 debris：半径 debrisR（原作单位）内造成命中伤害的 debrisPct；余震 after：重复 afterRepeats 次，每次是上一次的 afterPct；感电 shock：每层全抗 -shockAll%、闪电抗 -shockEle%，持续 shockDur 秒，最多 shockMax 层；致盲 blind：blindDur 秒内伤害总降 blindLess，最多 blindMax；疫病 rad：radDur 秒内造成命中伤害的 radPct；灼烧 burn：火焰伤害的 burnFromFire 进入灼烧池，每 burnTick 秒造成池子的 burnTickPct，并衰减 burnDecay",
+  "debrisR": 150,
+  "debrisPct": 0.2,
+  "afterPct": 0.75,
+  "afterRepeats": 5,
+  "afterTick": 0.25,
+  "shockDur": 2,
+  "shockAll": 1,
+  "shockEle": 2,
+  "shockMax": 100,
+  "blindDur": 3,
+  "blindLess": 0.2,
+  "blindMax": 0.9,
+  "radPct": 0.3,
+  "radDur": 4,
+  "burnFromFire": 0.25,
+  "burnTick": 0.25,
+  "burnTickPct": 0.1,
+  "burnDecay": 0.01
+ },
+ "itemValue": {
+  "_说明": "装备界面里比较好坏用的估值 = 秒伤 + (护甲 + 灵障) × defense + 遁靴平均伤害 × engine",
+  "defense": 0.5,
+  "engine": 0.1
+ },
+ "whirl": {
+  "_说明": "旋风斩流派。旋身符文：环绕武器连续命中时每秒 +gainPerSec 层，最多 maxStacks 层，decay 秒没命中清零；每层伤害总增 ×morePer（乘算），环半径 +rngPer%。刃数 = bladesBase + floor(攻速 / apsPerBlade)，最多 bladesMax（只影响画面）。旋风之心（大型天赋）：环绕武器伤害 ×heartMore；满层时每次命中有 gustChance% 几率朝敌人甩出刃风（穿透 gustPierce，伤害 = 本次命中 × gustMul，飞 gustLife 秒）；代价：非近战武器伤害 ×offhandMul，冲刺距离 ×dashMul。风暴之眼（独特头冠）：每移动 vortexStep 像素在身后留一个龙卷风，持续 vortexLife 秒，半径 vortexR，每 vortexTick 秒造成环绕武器单次伤害 × vortexMul，把 vortexPullR 内的怪以 vortexPull 像素/秒吸向中心，最多 vortexMax 个；护甲的代价写在 uniques.json 的 armorLess。craftPref / runeOrder 是 tools/sim.js --build whirl 的做装词条族优先级和插符文顺序；treeKey 是旋风之心所在的小团（迅影第 1 个） 第二版：刃数超过 bladesBase 的每一把，伤害再 ×bladeMore（乘算）；affixes 是本流派加的词条族，格式同 astro.json 的 affixes（tiers：[[数值], 权重, 物品等级下限, 上限]，5 档及以上的最高两档是只能掉落的溢彩档），外加 text（# 处填数值）、stat（spinCap 局部：这把武器的层数上限；armorOnHit 全局：命中回护甲，和吸髓符文相加）和 tag（只出在带这个标签的武器上）。 魂火：每层旋转每秒消耗 soulPerStack；环绕武器每次攻击只要打中至少一只怪就回 soulPerSpin，风暴之眼的龙卷风每跳打中至少一只怪回 soulOnVortex；魂火空了层数不再增长，照常按 decay 清零。 每层的伤害倍率现在由旋身符文的等级决定（runes.json 里 Whirl 的 spinMore，1 级 1.06 到满级 1.12）；morePer 只在符文没写 spinMore 时用。SpinCap 现在是全局词条：武器、盾、头冠上的都加到带旋身的武器上。 减伤：每层当前旋转让承受伤害降低 drPerStack%，最多 drCap%。",
+  "gainPerSec": 1,
+  "maxStacks": 10,
+  "decay": 2,
+  "morePer": 1.08,
+  "rngPer": 5,
+  "bladesBase": 3,
+  "apsPerBlade": 3,
+  "bladesMax": 8,
+  "heartMore": 2,
+  "gustChance": 15,
+  "gustMul": 0.6,
+  "gustPierce": 3,
+  "gustLife": 0.8,
+  "offhandMul": 0.5,
+  "dashMul": 1,
+  "vortexStep": 40,
+  "vortexLife": 3,
+  "vortexR": 18,
+  "vortexTick": 0.25,
+  "vortexMul": 0.5,
+  "vortexPullR": 30,
+  "vortexPull": 40,
+  "vortexMax": 6,
+  "craftPref": [
+   "IncreasedKineticBaseDamage",
+   "FlatKineticDamage",
+   "IncreasedArmor",
+   "KineticResistance",
+   "ThermalResistance",
+   "GearArmorOnHit",
+   "IncreasedBaseAttackSpeed",
+   "SpinCap",
+   "SoulLess",
+   "SoulRegen",
+   "IncreasedAttackSpeed",
+   "FlatArmor",
+   "FlatMass",
+   "FlatDodge",
+   "IncreasedBaseVelocity"
+  ],
+  "runeOrder": [
+   "Whirl",
+   "Crush",
+   "AttackSpeed",
+   "ArmorOnHit",
+   "Melee"
+  ],
+  "treeKey": "agic0_6",
+  "bladeMore": 1.1,
+  "affixes": {
+   "SpinCap": {
+    "text": "旋转层数上限 +#",
+    "stat": "spinCap",
+    "local": false,
+    "type": "S",
+    "on": [
+     "weapon",
+     "shield",
+     "core"
+    ],
+    "tag": "Melee",
+    "grp": "SpinCap",
+    "tiers": [
+     [
+      [
+       1
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       2
+      ],
+      800,
+      15,
+      999
+     ],
+     [
+      [
+       3
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       4
+      ],
+      400,
+      40,
+      999
+     ],
+     [
+      [
+       5
+      ],
+      250,
+      55,
+      999
+     ],
+     [
+      [
+       6,
+       7
+      ],
+      120,
+      70,
+      999
+     ],
+     [
+      [
+       7,
+       8
+      ],
+      60,
+      85,
+      999
+     ]
+    ]
+   },
+   "GearArmorOnHit": {
+    "text": "命中时回复 # 点护甲",
+    "stat": "armorOnHit",
+    "type": "S",
+    "on": [
+     "shield",
+     "core"
+    ],
+    "grp": "GearArmorOnHit",
+    "tiers": [
+     [
+      [
+       2,
+       4
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       6,
+       8
+      ],
+      700,
+      20,
+      999
+     ],
+     [
+      [
+       10,
+       14
+      ],
+      400,
+      40,
+      999
+     ],
+     [
+      [
+       16,
+       20
+      ],
+      200,
+      65,
+      999
+     ]
+    ]
+   }
+  },
+  "soulOnVortex": 0.2,
+  "soulPerSpin": 0.8,
+  "soulPerStack": 0.6,
+  "drPerStack": 1,
+  "drCap": 40
+ },
+ "soul": {
+  "_说明": "魂火：所有流派共用的资源条（护甲条下面那条细条）。上限 = base + 魂力 × perEnergy；每秒回复 = (regen + 魂力 × regenPerEnergy) × (1 + 魂火回复提高%)；魂火消耗降低最多 costCap%。各流派怎么花魂火写在各自的段里（目前只有 whirl）。affixes 格式同 whirl.affixes。 灯火（推关）：推关一趟从当前层出发一层接一层往下打，进入时灯火 = 魂火上限。每秒燃烧 burn + 层数 × burnPerFloor，推关中没有自然回复（regen 只在天梯里用）；击杀回 onKill（普通 / 精英 / Boss），“魂火回复提高%”提高击杀回复。灯火归 0：平安返回，拾取的全部带走。阵亡：这一趟拾取的装备、符文、碎片每件有 deathKeep% 几率保留。nextFloorDelay：打掉守关 Boss 后几秒进入下一层（期间自动拾取地上的东西）。lowWarn：灯火低于这个比例时灯火条闪烁。 startBack：推关（没锁层时）从 max(1, 最深层 − startBack) 出发，越走越难，最深层是一趟的高潮；锁层时就从锁定的层出发。超过出发前的最深层才算推层成功。 重温：比出发时的最深层浅的层，燃烧 ×revisitBurnMul、击杀回复 ×revisitKillMul，热身的几层花得少，灯火留给最深层。 returnHp：推关里某一层的最低血量（护甲比例）低于 returnHp% 时，打掉这层的守关 Boss 后自动撤回（和灯灭一样平安带走全部东西），免得挂机时在最深层反复阵亡。 撤回只看最深层附近的层（层数 ≥ 出发前最深层 − 1），热身层血量再低也不撤。returnHpMelee：近战流派（AI 在近战模式）用的撤回阈值，null 时沿用 returnHp。",
+  "base": 100,
+  "perEnergy": 5,
+  "regen": 5,
+  "regenPerEnergy": 0.2,
+  "costCap": 50,
+  "affixes": {
+   "SoulRegen": {
+    "text": "魂火回复提高 #%",
+    "stat": "soulRegen",
+    "type": "S",
+    "on": [
+     "shield",
+     "core",
+     "hub",
+     "engine"
+    ],
+    "grp": "SoulRegen",
+    "tiers": [
+     [
+      [
+       5,
+       10
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       11,
+       18
+      ],
+      700,
+      15,
+      999
+     ],
+     [
+      [
+       19,
+       28
+      ],
+      400,
+      35,
+      999
+     ],
+     [
+      [
+       29,
+       40
+      ],
+      200,
+      60,
+      999
+     ]
+    ]
+   },
+   "SoulLess": {
+    "text": "魂火消耗降低 #%",
+    "stat": "soulLess",
+    "type": "S",
+    "on": [
+     "shield",
+     "core",
+     "hub",
+     "engine"
+    ],
+    "grp": "SoulLess",
+    "tiers": [
+     [
+      [
+       3,
+       5
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       6,
+       9
+      ],
+      700,
+      15,
+      999
+     ],
+     [
+      [
+       10,
+       14
+      ],
+      400,
+      35,
+      999
+     ],
+     [
+      [
+       15,
+       20
+      ],
+      200,
+      60,
+      999
+     ]
+    ]
+   }
+  },
+  "burn": 2,
+  "burnPerFloor": 0.1,
+  "onKill": {
+   "normal": 1,
+   "elite": 8,
+   "boss": 30
+  },
+  "deathKeep": 50,
+  "nextFloorDelay": 1.6,
+  "lowWarn": 0.25,
+  "startBack": 5,
+  "revisitBurnMul": 0.5,
+  "revisitKillMul": 1.5,
+  "returnHp": 30,
+  "returnHpMelee": null
+ }
+}

@@ -1,0 +1,45 @@
+{
+ "_说明": "自动战斗、接管、自动循环和自动推层。",
+ "steer": {
+  "_说明": "自动走位：把各种“推力”加起来决定往哪走。mobRepel 怪物的排斥（按 1/距离²），bossMul Boss 的排斥倍数；projRange 敌方弹在这个距离内才躲，projRepel 躲弹的力度；zoneRepel 躲地面毒池的力度（池子半径外加 zoneMargin 像素也算）；wallRepel 墙的排斥；orbit 绕圈的力度（越大越倾向绕着怪转，而不是直线后退）；centerPull 没有威胁时回到场地中间的力度；lookAhead 每次朝推力方向走多远（像素）；lootRange 最近的怪比这个远时，去捡最近的掉落；dashNear 怪离得比这个近就冲刺；dashLowArmor 护甲低于这个比例、且怪在 dashLowNear 内也冲刺",
+  "mobRepel": 1,
+  "bossMul": 3,
+  "projRange": 30,
+  "projRepel": 2,
+  "zoneRepel": 1.5,
+  "zoneMargin": 6,
+  "wallRepel": 1,
+  "orbit": 0.8,
+  "centerPull": 2e-05,
+  "lookAhead": 40,
+  "lootRange": 60,
+  "dashNear": 22,
+  "dashLowArmor": 0.5,
+  "dashLowNear": 40
+ },
+ "melee": {
+  "_说明": "近战模式（装着环绕 / 撞城 / 荆棘类武器时）：目标是怪最密的地方（denseR 半径内怪最多的那只附近的怪堆中心）。从自己的位置穿过怪堆中心，走到另一边 pass 像素再折返；离穿越点不到 passReach 像素、走了 passTime 秒、或怪堆移动超过 denseR 时换下一个穿越点。不会因为怪靠近就冲刺躲开。护甲低于 retreat 时后撤（按风筝模式走，护甲低时可以冲刺），回到 back 以上再冲；推关里灯火低于 lightRetreat 而且守关 Boss 还活着时也后撤（宁可灯灭也别阵亡）",
+  "denseR": 40,
+  "pass": 45,
+  "passReach": 8,
+  "passTime": 2.5,
+  "retreat": 0.4,
+  "back": 0.7,
+  "lightRetreat": 0.15
+ },
+ "takeover": {
+  "_说明": "在场地上移动鼠标（累计超过 moveThreshold 像素）或触摸就切到手动，idleResume 秒没有操作后回到自动。manualLootXpMul：手动操作期间击杀的经验和掉落几率倍数（1 = 不变）",
+  "moveThreshold": 3,
+  "idleResume": 3,
+  "manualLootXpMul": 1.0
+ },
+ "loop": {
+  "_说明": "一局结束后显示 summarySec 秒结算，然后自动开下一局",
+  "summarySec": 3
+ },
+ "push": {
+  "_说明": "自动推层：打赢就去最深层；连输 lossesToRetreat 次退一层；退下来以后赢 winsToRetry 次再回去冲最深层。锁定层数时都不变",
+  "lossesToRetreat": 2,
+  "winsToRetry": 3
+ }
+}

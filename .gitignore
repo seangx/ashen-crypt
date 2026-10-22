@@ -1,0 +1,14 @@
+# 商业游戏安装包（有版权，体积 600MB+）
+*.zip
+# 从商业游戏提取的数据表，是否入库待定
+references/astroloot-data/
+# 用户上传的截图（可能是商业游戏画面）
+uploads/
+# 构建产物：python3 game/tools/build.py 可重新生成
+game/build/
+game/ashen-crypt.html
+# 缓存
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/

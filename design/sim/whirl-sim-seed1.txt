@@ -1,0 +1,46 @@
+#  1    2分 第  1层起 过  2层 灯灭 下次  3   143s 等级  8 秒伤     415 护甲    153 灵障     0 最低血  57% 魂空  0% 碎片  28 铸符  0 符文  7 　　　| TurbineBlades/q0/r1 PlasmaBlaster/q0/r0 TitaniumShield/q0/r0 TitaniumCore/q1/r2 Thruster/q0/r3 QuartzNexus/q0/r0
+#  2    7分 第  3层起 过  4层 灯灭 下次  5   249s 等级 14 秒伤     718 护甲    171 灵障    30 最低血  50% 魂空  0% 碎片  99 铸符  0 符文 13 心　　| TurbineBlades/q0/r1 Cannon/q1/r1 CrystalShield/q1/r2 TitaniumCore/q1/r2 Thruster/q0/r3 QuartzNexus/q0/r0
+#  3   11分 第  5层起 过  5层 灯灭 下次  6   263s 等级 16 秒伤    2011 护甲    243 灵障     4 最低血  28% 魂空  0% 碎片 313 铸符  0 符文 25 心　　| TurbineBlades/q1/r2 Cannon/q1/r2 EtherealShield/q1/r2 TitaniumCore/q1/r2 Thruster/q0/r3 IridiumNexus/q0/r2
+#  4   17分 第  6层起 过  8层 灯灭 下次  9   346s 等级 19 秒伤    3433 护甲    406 灵障     0 最低血   5% 魂空  0% 碎片 604 铸符  0 符文 48 旋心　| TurbineBlades/q1/r2 PlasmaBlaster/q1/r2 TitaniumShield/q2/r2 TitaniumCore/q2/r2 Thruster/q1/r2 AmberNexus/q1/r2
+#  5   22分 第  9层起 过  7层 阵亡 下次 11   334s 等级 21 秒伤    3438 护甲    406 灵障     0 最低血   2% 魂空  0% 碎片 712 铸符  0 符文 60 旋心　| TurbineBlades/q1/r2 PlasmaBlaster/q1/r2 TitaniumShield/q2/r2 TitaniumCore/q2/r2 Thruster/q1/r2 AmberNexus/q1/r2
+#  6   24分 天梯  1层 win      63s 跳+3 解锁到  4 最高  1 等级 21 秒伤    3438 护甲    406 最低血  99% 魂空  0%
+#  7   25分 天梯  4层 win      68s 跳+3 解锁到  7 最高  4 等级 21 秒伤    3438 护甲    406 最低血  93% 魂空  0%
+#  8   26分 天梯  7层 win      66s 跳+3 解锁到 10 最高  7 等级 21 秒伤    3438 护甲    406 最低血  83% 魂空  0%
+#  9   31分 第 11层起 过  7层 阵亡 下次 13   326s 等级 23 秒伤    3815 护甲    402 灵障     0 最低血   6% 魂空  0% 碎片 871 铸符  0 符文 74 旋心　| TurbineBlades/q1/r2 Spikes/q3/r2 TitaniumShield/q2/r2 TitaniumCore/q2/r2 Thruster/q1/r2 AmberNexus/q1/r2
+# 10   45分 第 13层起 过 15层 阵亡 下次 23   822s 等级 27 秒伤    8838 护甲    607 灵障    27 最低血   1% 魂空  0% 碎片1214 铸符  0 符文107 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 EtherealShield/q4/r2 PolymerCore/q4/r2 Afterburner/q3/r2 AmberNexus/q1/r2
+# 11   46分 天梯 10层 win      67s 跳+3 解锁到 13 最高 10 等级 27 秒伤    9922 护甲    514 最低血  93% 魂空  0%
+# 12   47分 天梯 13层 win      55s 跳+3 解锁到 16 最高 13 等级 27 秒伤    9922 护甲    514 最低血  68% 魂空  0%
+# 13   49分 天梯 16层 win      92s 跳+2 解锁到 18 最高 16 等级 27 秒伤    9922 护甲    514 最低血  19% 魂空  0%
+# 14   50分 第 23层起 过  1层 阵亡 下次 23    82s 等级 27 秒伤    8838 护甲    592 灵障    27 最低血   2% 魂空  0% 碎片1285 铸符  8 符文112 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 EtherealShield/q4/r2 PolymerCore/q4/r2 FusionDrive/q3/r2 AmberNexus/q1/r2
+# 15   52分 第 23层起 过  2层 阵亡 下次 22退  124s 等级 28 秒伤    8235 护甲    630 灵障    53 最低血   0% 魂空  0% 碎片1372 铸符  8 符文119 旋心　| TurbineBlades/q4/r2 PlasmaBlaster/q4/r2 EtherealShield/q4/r2 TitaniumCore/q4/r2 FusionDrive/q3/r2 AmberNexus/q1/r2
+# 16   58分 第 22层起 过  6层 阵亡 下次 23退  313s 等级 29 秒伤    9977 护甲    705 灵障    27 最低血   4% 魂空  0% 碎片1541 铸符  8 符文125 旋心　| TurbineBlades/q4/r2 PlasmaBlaster/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Warp/q4/r2 AmberNexus/q1/r2
+# 17   59分 天梯 18层 win      62s 跳+3 解锁到 21 最高 18 等级 29 秒伤   11139 护甲    676 最低血  32% 魂空  0%
+# 18   60分 天梯 21层 win      61s 跳+3 解锁到 24 最高 21 等级 29 秒伤   11139 护甲    676 最低血   3% 魂空  0%
+# 19   60分 天梯 24层 dead     33s      解锁到 24 最高 21 等级 29 秒伤   11139 护甲    676 最低血   4% 魂空  0%
+# 20   62分 第 23层起 过  1层 阵亡 下次 22退   83s 等级 29 秒伤   11139 护甲    676 灵障    26 最低血  16% 魂空  0% 碎片1606 铸符 16 符文130 旋心　| TurbineBlades/q4/r2 PlasmaBlaster/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q2/r3 AmberNexus/q1/r2
+# 21   64分 第 22层起 过  2层 阵亡 下次 23退  129s 等级 30 秒伤   11202 护甲    676 灵障    26 最低血   2% 魂空  0% 碎片1658 铸符 16 符文132 旋心　| TurbineBlades/q4/r2 PlasmaBlaster/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q0/r3 AmberNexus/q1/r2
+# 22   66分 第 23层起 过  2层 阵亡 下次 22退  120s 等级 30 秒伤   10079 护甲    636 灵障    29 最低血   7% 魂空  0% 碎片1714 铸符 16 符文137 旋心　| TurbineBlades/q4/r2 PlasmaBlaster/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q2/r3 AmberNexus/q1/r2
+# 23   69分 第 22层起 过  2层 阵亡 下次 23退  150s 等级 30 秒伤   11258 护甲    636 灵障    26 最低血   2% 魂空  0% 碎片1769 铸符 16 符文142 旋心　| TurbineBlades/q4/r2 Cannon/q3/r3 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q0/r3 AmberNexus/q1/r2
+# 24   70分 天梯 24层 dead     79s      解锁到 24 最高 21 等级 30 秒伤   11258 护甲    636 最低血   5% 魂空  0%
+# 25   72分 第 23层起 过  1层 阵亡 下次 22退   96s 等级 31 秒伤   11258 护甲    636 灵障    26 最低血   4% 魂空  0% 碎片1801 铸符 16 符文145 旋心　| TurbineBlades/q4/r2 Cannon/q3/r3 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q0/r3 AmberNexus/q1/r2
+# 26   74分 第 22层起 过  2层 阵亡 下次 23退  130s 等级 31 秒伤   10020 护甲    636 灵障    28 最低血   7% 魂空  0% 碎片1872 铸符 16 符文148 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q2/r3 AmberNexus/q1/r2
+# 27   76分 第 23层起 过  1层 阵亡 下次 22退   97s 等级 31 秒伤   10020 护甲    636 灵障    28 最低血   5% 魂空  0% 碎片1895 铸符 16 符文149 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q0/r3 AmberNexus/q1/r2
+# 28   78分 第 22层起 过  2层 阵亡 下次 23退  167s 等级 31 秒伤   11746 护甲    636 灵障    28 最低血   6% 魂空  0% 碎片1951 铸符 16 符文152 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q4/r3 AmberNexus/q1/r2
+# 29   80分 第 23层起 过  1层 阵亡 下次 22退   83s 等级 31 秒伤   11746 护甲    636 灵障    28 最低血   5% 魂空  0% 碎片1998 铸符 16 符文156 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q4/r3 AmberNexus/q1/r2
+# 30   81分 天梯 24层 win      67s 跳+3 解锁到 27 最高 24 等级 31 秒伤   11746 护甲    636 最低血   7% 魂空  0%
+# 31   81分 天梯 27层 dead     17s      解锁到 27 最高 24 等级 31 秒伤   11746 护甲    636 最低血  12% 魂空  0%
+# 32   83分 第 22层起 过  2层 阵亡 下次 23退  123s 等级 31 秒伤   11746 护甲    636 灵障    28 最低血  18% 魂空  0% 碎片2057 铸符 17 符文162 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q4/r3 AmberNexus/q1/r2
+# 33   85分 第 23层起 过  2层 阵亡 下次 22退  123s 等级 32 秒伤   11808 护甲    636 灵障    28 最低血   7% 魂空  0% 碎片2109 铸符 17 符文165 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 TitaniumShield/q5/r2 TitaniumCore/q4/r2 Thruster/q4/r3 AmberNexus/q1/r2
+# 34   88分 第 22层起 过  2层 阵亡 下次 23退  129s 等级 32 秒伤    9771 护甲    797 灵障    96 最低血  15% 魂空  0% 碎片2158 铸符 17 符文170 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 PolymerShield/q4/r2 TitaniumCore/q4/r2 FusionDrive/q3/r2 AmberNexus/q1/r2
+# 35   89分 第 23层起 过  1层 阵亡 下次 22退   96s 等级 32 秒伤   12335 护甲    672 灵障    28 最低血   2% 魂空  0% 碎片2218 铸符 17 符文174 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 PolymerShield/q4/r2 TitaniumCore/q4/r2 Thruster/q4/r3 AmberNexus/q1/r2
+# 36   91分 第 22层起 过  2层 阵亡 下次 23退  126s 等级 32 秒伤   12869 护甲    672 灵障    28 最低血   0% 魂空  0% 碎片2270 铸符 17 符文181 旋心　| TurbineBlades/q4/r2 Spikes/q4/r2 PolymerShield/q4/r2 TitaniumCore/q4/r2 Thruster/q4/r3 AmberNexus/q1/r2
+
+天梯 12 局，通过 9；最高 24 层，解锁到 27 层。
+
+推关 24 趟：时长 中位 129s（25% 120s，75% 263s，最长 822s）；<1分 0，1–3分 17，3–10分 6，10–20分 1，>20分 0
+每趟通过层数：中位 2（25% 2，75% 5，最多 15）；结束原因：灯灭 4，阵亡 20
+每小时（推关时间）带回：装备 313 件，词条碎片 708 个；阵亡共丢装备 266 件
+魂火见底时间占比：0.0%（推层 0.0%，天梯 0.0%）
+铁砧：换上自制 45 次，加词条 436 次，升档 541 次，拆解 379 件，熔铸 0 次。
+
+24 局，游戏内 91 分钟：最深第 22 层通关；阵亡 20 趟（首次从第 9 层出发，第 5 局）。

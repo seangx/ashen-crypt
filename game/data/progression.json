@@ -1,0 +1,279 @@
+{
+ "_说明": "成长与难度：玩家基础属性、经验曲线、怪物成长、每局节奏、精英、怪物与 Boss、起始装备、系统解锁。以 _ 开头的键是注释，构建时会被去掉。",
+ "player": {
+  "_说明": "armor 护甲（就是生命）; res 基础抗性 %; maxRes 抗性上限 %; critMult 暴击倍率; dashDist 冲刺距离（像素）; dashTime 冲刺时长（秒）; dashMax 基础冲刺槽; pickup 拾取半径; deflectRate 灵障每秒回复（占上限）; baseSpeed 基础移速; thrustToSpeed 遁靴推力换算移速; accelMul 加速度 = 移速 × 它",
+  "armor": 100,
+  "res": 0,
+  "maxRes": 75,
+  "critMult": 1.5,
+  "dashDist": 60,
+  "dashTime": 0.16,
+  "dashMax": 1,
+  "pickup": 26,
+  "deflectRate": 0.25,
+  "baseSpeed": 64,
+  "thrustToSpeed": 0.03,
+  "accelMul": 7
+ },
+ "xp": {
+  "_说明": "升到下一级需要的经验 = base × growth^(等级-1)；每级 1 个天赋点",
+  "base": 100,
+  "growth": 1.25
+ },
+ "monsterScaling": {
+  "_说明": "怪物等级 L 的倍率 = growth^(L-1)；怪物等级 = 任务层数 + 墓图阶数 + 命盘加的等级。分段成长（可选）：knee 填数字后，L 超过 knee 的部分改用 hpGrowth2 / dmgGrowth2（没填就沿用第一段）；knee 为 null 时不分段",
+  "hpGrowth": 1.18,
+  "dmgGrowth": 1.12,
+  "xpGrowth": 1.1,
+  "knee": 20,
+  "hpGrowth2": null,
+  "dmgGrowth2": 1.03
+ },
+ "run": {
+  "maxDepth": 100,
+  "_说明": "maxDepth 推层的最深层（打到这层以后自动推层就一直刷这层；天梯不受限）。每局：杀够 killsBase + killsPerLevel×层数 只怪后 Boss 出现。同屏上限 = spawnCapBase + min(spawnCapMaxExtra, 层数)；刷怪间隔 = max(spawnIntervalMin, spawnInterval - spawnIntervalPerLevel×层数)",
+  "killsBase": 30,
+  "killsPerLevel": 2,
+  "spawnCapBase": 6,
+  "spawnCapMaxExtra": 14,
+  "spawnFirst": 1,
+  "spawnInterval": 0.8,
+  "spawnIntervalPerLevel": 0.02,
+  "spawnIntervalMin": 0.25
+ },
+ "elite": {
+  "_说明": "普通怪变精英的几率和倍率；精英的掉落几率乘 loot.drop.eliteMul",
+  "chance": 0.06,
+  "hp": 3.5,
+  "dmg": 1.5,
+  "spd": 1.1,
+  "size": 1,
+  "xp": 4
+ },
+ "monsters": {
+  "_说明": "1 级数值，按 monsterScaling 成长。w 刷出权重; minL 从第几层开始出现; ai chase 近身 / ranged 远程（rng 射程, cd 射击间隔）; res 抗性 %; el 伤害元素 kin 物理 exp 火焰 pla 圣光 ele 闪电 nuc 瘟疫",
+  "skel": {
+   "n": "骷髅",
+   "hp": 60,
+   "dmg": 8,
+   "spd": 30,
+   "xp": 10,
+   "w": 100,
+   "ai": "chase",
+   "el": "kin",
+   "size": 6
+  },
+  "thief": {
+   "n": "盗墓鬼",
+   "hp": 40,
+   "dmg": 6,
+   "spd": 50,
+   "xp": 8,
+   "w": 50,
+   "ai": "chase",
+   "el": "kin",
+   "size": 5,
+   "minL": 2
+  },
+  "armor": {
+   "n": "铁甲骷髅",
+   "hp": 160,
+   "dmg": 14,
+   "spd": 22,
+   "xp": 20,
+   "w": 35,
+   "ai": "chase",
+   "el": "kin",
+   "size": 7,
+   "minL": 3,
+   "res": {
+    "kin": 30
+   }
+  },
+  "mage": {
+   "n": "骨法师",
+   "hp": 50,
+   "dmg": 10,
+   "spd": 26,
+   "xp": 16,
+   "w": 35,
+   "ai": "ranged",
+   "el": "pla",
+   "size": 6,
+   "minL": 4,
+   "rng": 100,
+   "cd": 2.2
+  }
+ },
+ "monsterAttack": {
+  "_说明": "meleeCd 近身攻击间隔; touch 近身判定距离（加在体型上）; shotSpd / shotLife 远程怪的弹速和弹的存在时间",
+  "meleeCd": 1,
+  "touch": 6,
+  "shotSpd": 80,
+  "shotLife": 4
+ },
+ "bosses": {
+  "_说明": "按层数轮换：第 1 层用第一个，第 2 层第二个……（顺序就是轮换顺序）。数值是 1 级的，按 monsterScaling 成长。pat 招式见 bossPatterns",
+  "list": [
+   {
+    "id": "lord",
+    "n": "骸骨领主",
+    "el": "kin",
+    "hp": 2400,
+    "dmg": 18,
+    "spd": 22,
+    "xp": 300,
+    "size": 12,
+    "pat": "ring"
+   },
+   {
+    "id": "moon",
+    "n": "蚀月女王",
+    "el": "pla",
+    "hp": 2000,
+    "dmg": 16,
+    "spd": 30,
+    "xp": 300,
+    "size": 12,
+    "pat": "blink"
+   },
+   {
+    "id": "bog",
+    "n": "腐沼巨像",
+    "el": "nuc",
+    "hp": 3000,
+    "dmg": 22,
+    "spd": 16,
+    "xp": 300,
+    "size": 13,
+    "pat": "pool"
+   },
+   {
+    "id": "storm",
+    "n": "雷冠术士",
+    "el": "ele",
+    "hp": 2200,
+    "dmg": 16,
+    "spd": 24,
+    "xp": 300,
+    "size": 12,
+    "pat": "bolt"
+   }
+  ]
+ },
+ "bossPatterns": {
+  "_说明": "cd 出招间隔（秒）; shotDmg 弹的伤害占 Boss 伤害的比例; shotSpd 弹速",
+  "ring": {
+   "cd": 2.5,
+   "shots": 10,
+   "shotSpd": 80,
+   "shotDmg": 0.6,
+   "chargeEvery": 6,
+   "chargeFrom": 4.5,
+   "chargeSpeed": 2.2
+  },
+  "blink": {
+   "cd": 3,
+   "distX": 70,
+   "distY": 50,
+   "waves": 3,
+   "shots": 6,
+   "shotSpd": 55,
+   "shotSpdStep": 15,
+   "shotDmg": 0.5,
+   "keepAway": 50,
+   "awaySpeed": -0.6,
+   "nearSpeed": 0.8
+  },
+  "pool": {
+   "cd": 3,
+   "r": 22,
+   "dur": 4,
+   "poolDmg": 0.35,
+   "poolTick": 0.5,
+   "shots": 3,
+   "spread": 0.4,
+   "shotSpd": 60,
+   "shotDmg": 0.7
+  },
+  "bolt": {
+   "cd": 1.8,
+   "shots": 3,
+   "spread": 0.18,
+   "shotSpd": 140,
+   "shotDmg": 0.45,
+   "summonEvery": 4,
+   "summonN": 3,
+   "summon": "skel"
+  }
+ },
+ "bossFatigue": {
+  "_说明": "Boss 出现 start 秒后每秒叠一层疲惫，每层承受伤害 × step，最多 max 层",
+  "start": 5,
+  "step": 1.04,
+  "max": 60
+ },
+ "bossLoot": {
+  "_说明": "Boss 必掉：items 件装备（物品等级 +ilvlBonus，稀有度加成 rarityBonus%），shards 个词条碎片，runes 枚符文",
+  "items": 3,
+  "ilvlBonus": 2,
+  "rarityBonus": 25,
+  "shards": 5,
+  "runes": 1,
+  "runeIlvlBonus": 2
+ },
+ "starter": {
+  "_说明": "新角色的装备：武器底材、它的符文槽数和插好的符文、遁靴、盾、法阵",
+  "weapon": "Cannon",
+  "weaponSockets": 2,
+  "weaponRunes": [
+   "Pierce"
+  ],
+  "engine": "Thruster",
+  "shield": "TitaniumShield",
+  "hub": "QuartzNexus"
+ },
+ "unlocks": {
+  "_说明": "系统在什么时候开放：depth = 已通关的最深层数达到它；level = 角色等级达到它；ladder = 天梯最高层达到它。0 表示一开始就有。没写的系统一直开放。craft 铁砧（加词条、升一档、拆解）；craftAdv 铁砧的洗数值和移除；feed 符文喂养；fuse 传奇熔铸",
+  "gear": {
+   "depth": 0,
+   "level": 0
+  },
+  "mods": {
+   "depth": 0,
+   "level": 0
+  },
+  "craft": {
+   "depth": 5,
+   "level": 0
+  },
+  "craftAdv": {
+   "depth": 15,
+   "level": 0
+  },
+  "feed": {
+   "ladder": 20
+  },
+  "fuse": {
+   "ladder": 40
+  },
+  "tree": {
+   "depth": 0,
+   "level": 0
+  },
+  "atlas": {
+   "depth": 0,
+   "level": 0
+  },
+  "wr": {
+   "depth": 0,
+   "level": 0,
+   "_说明": "右手（双持）"
+  },
+  "ladder": {
+   "depth": 10,
+   "level": 0,
+   "_说明": "天梯"
+  }
+ }
+}

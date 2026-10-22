@@ -1,0 +1,60 @@
+{
+  "_说明": "墓图（原作：星区）、命盘（原作：弹珠机树）、Boss 祝福。",
+
+  "boons": {
+    "_说明": "每个 Boss 3 种祝福，击杀次数达到 at 里对应的数后永久获得。add 的写法同天赋（tree.json）",
+    "at": [1, 5, 15],
+    "lord": [{ "n": "骨甲", "add": { "armorInc": 15 } }, { "n": "巨骨", "add": { "mass": 10 } }, { "n": "碎颅", "add": { "inc:kin": 25 } }],
+    "moon": [{ "n": "月影", "add": { "dodge": 8 } }, { "n": "月辉", "add": { "inc:pla": 25 } }, { "n": "月步", "add": { "dashMax": 1 } }],
+    "bog": [{ "n": "泥甲", "add": { "res:all": 8 } }, { "n": "沼毒", "add": { "inc:nuc": 25 } }, { "n": "腐蚀", "add": { "dotInc": 20 } }],
+    "storm": [{ "n": "迅雷", "add": { "aspd": 8 } }, { "n": "雷冠", "add": { "inc:ele": 25 } }, { "n": "天眼", "add": { "critInc": 30 } }]
+  },
+
+  "maps": {
+    "_说明": "maxTier 最高阶; affLimit 普通 / 罕见 / 稀有能有几条词条; affCount 掉落时罕见 / 稀有的词条数 [最少, 最多]; tierScale 每高一阶词条数值 +8%; qtyPerTier 每阶加物品数量 %; rarityQty / rarityIir 普通 / 罕见 / 稀有墓图额外的物品数量 % 和稀有度 %; tierEvery 不在墓图里时，每几层掉的墓图高一阶; tierShiftWeights 掉落阶数 -1 / 0 / +1 的权重; dropRarityWeights 掉落墓图普通 / 罕见 / 稀有的权重。墓图的阶数直接加到怪物等级上",
+    "maxTier": 10, "affLimit": [0, 2, 4], "affCount": { "magic": [1, 2], "rare": [3, 4] },
+    "tierScale": 0.08, "qtyPerTier": 5, "rarityQty": [0, 10, 25], "rarityIir": [0, 10, 25],
+    "tierEvery": 6, "tierShiftWeights": [25, 55, 20], "dropRarityWeights": [50, 35, 15],
+    "affixes": [
+      { "k": "mobHp", "r": [20, 40], "q": 8, "bad": 1, "_说明": "怪物生命总增 %" },
+      { "k": "mobDmg", "r": [15, 30], "q": 8, "bad": 1, "_说明": "怪物伤害总增 %" },
+      { "k": "mobSpd", "r": [15, 30], "q": 6, "bad": 1 },
+      { "k": "elite", "r": [50, 100], "q": 6, "bad": 1, "_说明": "精英怪数量提高 %" },
+      { "k": "need", "r": [25, 50], "q": 10, "bad": 1, "_说明": "需要多杀 % 的怪" },
+      { "k": "bossHp", "r": [30, 60], "q": 6, "bad": 1 },
+      { "k": "mobRes", "r": [10, 25], "q": 6, "bad": 1 },
+      { "k": "noRegen", "r": [30, 60], "q": 6, "bad": 1, "_说明": "灵障回复总降 %" },
+      { "k": "iir", "r": [20, 40], "_说明": "物品稀有度 %" },
+      { "k": "xp", "r": [10, 25] },
+      { "k": "dice", "r": [20, 40] },
+      { "k": "runes", "r": [20, 40] }
+    ],
+    "_affixes说明": "r 掷值范围（再乘阶数加成）; q 这条坏词条给的物品数量 %; bad 为 1 的让任务变难"
+  },
+
+  "marble": {
+    "_说明": "命盘：一行一行往下，每个钉子只能从上一行相邻的钉子走过来。小写键是小钉子，数值取 small（call:部位 取 call）；大写键是大钉子，效果在 big。点数 = 已通关最深层数 - 1 + 跑完的墓图数 ÷ mapsPerPoint。效果键：iiq 物品数量 %、iir 稀有度 %、xp 经验 %、mapDrop 墓图掉落 %、dice / runes 骰子 / 符文掉落 %、unique 独特几率 %、mapTier 高一阶墓图几率 %、twin 骰子掉两个几率 %、chest Boss 多掉 3 件几率 %、lvl 怪物等级 +",
+    "rows": [
+      ["start"],
+      ["iiq", "iir"],
+      ["xp", "mapDrop", "xp"],
+      ["dice", "iiq", "iir", "runes"],
+      ["call:weapon", "iir", "LVL1", "iiq", "call:core"],
+      ["call:shield", "iiq", "xp", "xp", "iir", "call:engine"],
+      ["mapDrop", "dice", "UNIQUE", "MAPTIER", "TWIN", "runes", "mapDrop"],
+      ["call:hub", "iiq", "iir", "CHEST", "LVL2", "iiq", "iir", "call:chip"]
+    ],
+    "small": { "iiq": 6, "iir": 12, "xp": 6, "mapDrop": 30, "dice": 15, "runes": 15 },
+    "call": 60,
+    "big": {
+      "LVL1": { "n": "深掘", "fx": { "lvl": 1, "iiq": 12 } },
+      "LVL2": { "n": "无底", "fx": { "lvl": 2, "iiq": 25 } },
+      "UNIQUE": { "n": "奇珍", "fx": { "unique": 50 } },
+      "MAPTIER": { "n": "引路", "fx": { "mapTier": 25 } },
+      "TWIN": { "n": "双生", "fx": { "twin": 15 } },
+      "CHEST": { "n": "王冢", "fx": { "chest": 30 } }
+    },
+    "mapsPerPoint": 2,
+    "chestItems": 3
+  }
+}

@@ -1,0 +1,37 @@
+#  1    2分 第  1层起 过  2层 灯灭 下次  3   143s 等级  8 秒伤     449 护甲    155 灵障     0 最低血  57% 魂空  0% 碎片  28 铸符  0 符文  7 　　　| PlasmaBlaster/q0/r0 Cannon/q0/r0 TitaniumShield/q0/r0 TitaniumCore/q1/r2 Thruster/q0/r3 IridiumNexus/q0/r1
+#  2    7分 第  3层起 过  5层 灯灭 下次  6   256s 等级 14 秒伤     871 护甲    195 灵障     0 最低血  76% 魂空  0% 碎片 159 铸符  0 符文 18 　　　| Spikes/q1/r2 Cannon/q1/r2 TitaniumShield/q0/r2 TitaniumCore/q1/r2 Thruster/q0/r3 IridiumNexus/q0/r2
+#  3   12分 第  6层起 过  7层 阵亡 下次  8   315s 等级 17 秒伤     891 护甲    219 灵障    60 最低血   3% 魂空  0% 碎片 278 铸符  0 符文 30 　　　| Spikes/q1/r2 Cannon/q1/r2 TitaniumShield/q1/r2 CrystalCore/q1/r2 Thruster/q0/r3 ZirconNexus/q1/r2
+#  4   19分 第  8层起 过  7层 灯灭 下次 10   404s 等级 20 秒伤    2309 护甲    270 灵障    68 最低血 100% 魂空  0% 碎片 501 铸符  0 符文 52 　　　| PlasmaBlaster/q2/r2 PlasmaBlaster/q1/r2 TitaniumShield/q2/r2 CrystalCore/q1/r2 Warp/q1/r2 ZirconNexus/q1/r2
+#  5   26分 第 10层起 过  9层 灯灭 下次 14   422s 等级 23 秒伤    3486 护甲    313 灵障   109 最低血 100% 魂空  0% 碎片 816 铸符  0 符文 87 　　　| PlasmaBlaster/q2/r2 PlasmaBlaster/q3/r2 PolymerShield/q3/r2 CrystalCore/q2/r2 Warp/q2/r2 ZirconNexus/q1/r2
+#  6   27分 天梯  1层 win      63s 跳+3 解锁到  4 最高  1 等级 23 秒伤    3486 护甲    313 最低血 100% 魂空  0%
+#  7   28分 天梯  4层 win      67s 跳+3 解锁到  7 最高  4 等级 23 秒伤    3486 护甲    313 最低血 100% 魂空  0%
+#  8   29分 天梯  7层 win      61s 跳+3 解锁到 10 最高  7 等级 23 秒伤    3486 护甲    313 最低血 100% 魂空  0%
+#  9   37分 第 14层起 过 10层 灯灭 下次 19   469s 等级 25 秒伤    3942 护甲    303 灵障   165 最低血 100% 魂空  0% 碎片1222 铸符  0 符文122 　　　| Orbitron/q4/r2 PlasmaBlaster/q3/r2 PolymerShield/q3/r2 EtherealCore/q3/r2 Thruster/q0/r3 SilverNexus/q3/r2
+# 10   38分 天梯 10层 win      68s 跳+3 解锁到 13 最高 10 等级 25 秒伤    3942 护甲    303 最低血 100% 魂空  0%
+# 11   39分 天梯 13层 win      67s 跳+3 解锁到 16 最高 13 等级 25 秒伤    3942 护甲    303 最低血 100% 魂空  0%
+# 12   41分 天梯 16层 win      72s 跳+3 解锁到 19 最高 16 等级 25 秒伤    3942 护甲    303 最低血 100% 魂空  0%
+# 13   48分 第 19层起 过  8层 灯灭 下次 22   454s 等级 28 秒伤    6432 护甲    336 灵障   208 最低血 100% 魂空  0% 碎片1679 铸符  6 符文167 　　　| FlameThrower/q4/r2 PlasmaBlaster/q3/r2 PolymerShield/q4/r2 NebulaCore/q4/r2 Thruster/q0/r3 SilverNexus/q3/r2
+# 14   50分 天梯 19层 win      75s 跳+3 解锁到 22 最高 19 等级 28 秒伤    6432 护甲    336 最低血 100% 魂空  0%
+# 15   51分 天梯 22层 win      73s 跳+3 解锁到 25 最高 22 等级 28 秒伤    6432 护甲    336 最低血 100% 魂空  0%
+# 16   51分 天梯 25层 dead     33s      解锁到 25 最高 22 等级 28 秒伤    6432 护甲    336 最低血   9% 魂空  0%
+# 17   60分 第 22层起 过 10层 阵亡 下次 27   539s 等级 30 秒伤    7238 护甲    609 灵障   165 最低血   9% 魂空  0% 碎片1926 铸符 14 符文186 　　　| FlameThrower/q4/r2 PlasmaBlaster/q3/r2 PolymerShield/q4/r2 TitaniumCore/q5/r2 EMP/q4/r2 CrystalNexus/q5/r2
+# 18   62分 天梯 25层 win      77s 跳+3 解锁到 28 最高 25 等级 30 秒伤    7862 护甲    646 最低血  55% 魂空  0%
+# 19   62分 天梯 28层 dead     36s      解锁到 28 最高 25 等级 30 秒伤    7862 护甲    646 最低血   0% 魂空  0%
+# 20   67分 第 27层起 过  5层 阵亡 下次 27   274s 等级 31 秒伤    7548 护甲    646 灵障    99 最低血   4% 魂空  0% 碎片2053 铸符 15 符文197 　　　| FlameThrower/q4/r2 PlasmaBlaster/q3/r2 PolymerShield/q5/r2 TitaniumCore/q5/r2 FusionDrive/q4/r2 CrystalNexus/q5/r2
+# 21   73分 第 27层起 过  6层 灯灭 下次 28   356s 等级 32 秒伤    8638 护甲    789 灵障    66 最低血  39% 魂空  0% 碎片2446 铸符 15 符文226 　　　| FlameThrower/q4/r2 Cannon/q4/r3 PolymerShield/q5/r2 TitaniumCore/q5/r2 Thruster/q5/r2 CrystalNexus/q5/r2
+# 22   75分 天梯 28层 win     108s 跳+2 解锁到 30 最高 28 等级 32 秒伤    8638 护甲    789 最低血  98% 魂空  0%
+# 23   77分 天梯 30层 win     136s 跳+2 解锁到 32 最高 30 等级 32 秒伤    8638 护甲    789 最低血  98% 魂空  0%
+# 24   80分 天梯 32层 win     178s 跳+1 解锁到 33 最高 32 等级 32 秒伤    8638 护甲    789 最低血  55% 魂空  0%
+# 25   85分 第 28层起 过  4层 阵亡 下次 28   270s 等级 33 秒伤    8871 护甲    699 灵障   117 最低血   3% 魂空  0% 碎片2628 铸符 24 符文240 　　　| FlameThrower/q4/r2 Cannon/q4/r3 PolymerShield/q5/r2 TitaniumCore/q5/r2 Annihilator/q5/r2 CrystalNexus/q5/r2
+# 26   88分 天梯 33层 win     176s 跳+1 解锁到 34 最高 33 等级 33 秒伤    9527 护甲    699 最低血  56% 魂空  0%
+# 27   90分 天梯 34层 dead    154s      解锁到 34 最高 33 等级 33 秒伤    9527 护甲    699 最低血   7% 魂空  0%
+
+天梯 16 局，通过 13；最高 33 层，解锁到 34 层。
+
+推关 11 趟：时长 中位 356s（25% 270s，75% 454s，最长 539s）；<1分 0，1–3分 1，3–10分 10，10–20分 0，>20分 0
+每趟通过层数：中位 7（25% 5，75% 9，最多 10）；结束原因：灯灭 7，阵亡 4
+每小时（推关时间）带回：装备 434 件，词条碎片 986 个；阵亡共丢装备 108 件
+魂火见底时间占比：0.0%（推层 0.0%，天梯 0.0%）
+铁砧：换上自制 37 次，加词条 455 次，升档 638 次，拆解 458 件，熔铸 0 次。
+
+11 局，游戏内 85 分钟：最深第 27 层通关；阵亡 4 趟（首次从第 6 层出发，第 3 局）。

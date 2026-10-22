@@ -1,0 +1,186 @@
+{
+ "_说明": "掉落与物品：掉率、稀有度、品质、词条数量、符文槽、骰子、符文掉落经验。武器 / 护甲底材和词条档位在 astro.json。",
+ "drop": {
+  "_说明": "每只普通怪的掉落几率（0.06 = 6%）。item 装备; shard 词条碎片（在当前物品等级能出的词条里按权重抽）; mod 符文; map 墓图; eliteMul 精英怪几率倍数; unique 掉装备时变成独特装备的几率; uniqueBoss Boss 掉装备时的独特几率; mapBoss Boss 掉墓图的几率",
+  "item": 0.03,
+  "shard": 0.06,
+  "mod": 0.035,
+  "map": 0.006,
+  "eliteMul": 4,
+  "unique": 0.03,
+  "uniqueBoss": 0.15,
+  "mapBoss": 0.35
+ },
+ "rarityWeights": {
+  "_说明": "掉落装备的稀有度权重：普通 / 罕见 / 稀有。稀有度加成只乘在稀有上",
+  "normal": 200,
+  "magic": 600,
+  "rare": 200
+ },
+ "affixCount": {
+  "_说明": "掉落时词条数量 [最少, 最多]；limit 是前缀 / 后缀各自的上限（铁砧加词条时按稀有的上限算，稀有度跟着词条数变：0 条普通，1–2 条罕见，3–4 条稀有）",
+  "magic": [
+   1,
+   2
+  ],
+  "rare": [
+   2,
+   3
+  ],
+  "limit": {
+   "normal": [
+    0,
+    0
+   ],
+   "magic": [
+    1,
+    1
+   ],
+   "rare": [
+    2,
+    2
+   ]
+  }
+ },
+ "fp": {
+  "_说明": "锻造潜力：掉落时在 [最少, 最多] 里随机。独特装备没有",
+  "normal": [
+   10,
+   20
+  ],
+  "magic": [
+   15,
+   25
+  ],
+  "rare": [
+   20,
+   35
+  ]
+ },
+ "exalted": {
+  "_说明": "溢彩：档数至少 minTiers 的词条族，最高 topTiers 档只能掉落（铁砧做不出来，普通掉落也不会出），只出现在天梯宝箱的溢彩装备上。档数更少的词条族不受影响",
+  "topTiers": 2,
+  "minTiers": 5
+ },
+ "legendary": {
+  "_说明": "传奇潜力：独特装备掉落时在 [最少, 最多] 里随机；天梯宝箱里的独特装备用 ladder",
+  "potential": [
+   0,
+   2
+  ],
+  "ladder": [
+   1,
+   3
+  ]
+ },
+ "quality": {
+  "_说明": "11 档品质：物品等级落在 [ilvlMin, ilvlMax] 里才可能出，按 w 权重抽。物品等级 = 怪物等级。品质决定底材数值（astro.json 里按品质的数组）",
+  "list": [
+   {
+    "n": "朽坏",
+    "ilvlMin": 1,
+    "ilvlMax": 5,
+    "w": 1000
+   },
+   {
+    "n": "锈蚀",
+    "ilvlMin": 4,
+    "ilvlMax": 10,
+    "w": 950
+   },
+   {
+    "n": "加固",
+    "ilvlMin": 8,
+    "ilvlMax": 15,
+    "w": 900
+   },
+   {
+    "n": "精炼",
+    "ilvlMin": 14,
+    "ilvlMax": 20,
+    "w": 850
+   },
+   {
+    "n": "卓越",
+    "ilvlMin": 18,
+    "ilvlMax": 25,
+    "w": 800
+   },
+   {
+    "n": "重铸",
+    "ilvlMin": 24,
+    "ilvlMax": 31,
+    "w": 750
+   },
+   {
+    "n": "精英",
+    "ilvlMin": 30,
+    "ilvlMax": 55,
+    "w": 650
+   },
+   {
+    "n": "圣遗",
+    "ilvlMin": 36,
+    "ilvlMax": 60,
+    "w": 600
+   },
+   {
+    "n": "长老",
+    "ilvlMin": 54,
+    "ilvlMax": 999,
+    "w": 500
+   },
+   {
+    "n": "远古",
+    "ilvlMin": 68,
+    "ilvlMax": 999,
+    "w": 150
+   },
+   {
+    "n": "永恒",
+    "ilvlMin": 80,
+    "ilvlMax": 999,
+    "w": 50
+   }
+  ]
+ },
+ "sockets": {
+  "_说明": "符文槽数量的权重：第 1 个数是 1 槽的权重，第 2 个是 2 槽……。weapon 用于武器、头冠、遁靴；hub 是法阵的升级槽",
+  "weapon": [
+   1000,
+   800,
+   600,
+   300,
+   100,
+   25
+  ],
+  "hub": [
+   1000,
+   900,
+   800,
+   700,
+   600,
+   500,
+   400,
+   200
+  ]
+ },
+ "runeDrop": {
+  "_说明": "掉落的符文自带经验 = rand^(expBase + expPerIlvl × 物品等级) × cap × capGrowth^物品等级。符文升级经验门槛在 astro.json 的 modXp",
+  "cap": 250,
+  "capGrowth": 1.3,
+  "expBase": 2,
+  "expPerIlvl": 0.2,
+  "maxLevel": 20,
+  "levelCap": 45
+ },
+ "uniqueBossOnlyWeight": {
+  "_说明": "uniques.json 里 w 为 0 的独特装备只从 Boss 掉，这时用这个权重",
+  "w": 20
+ },
+ "uniqueFixedTier": {
+  "_说明": "独特装备保底词条的档位：max = 按词条族的最高档往下数（不看物品等级）；ilvl = 从当前物品等级允许的最高档往下数",
+  "mode": "ilvl"
+ },
+ "stashCap": 60
+}

@@ -1,0 +1,135 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<canvas id="out" width="1440" height="810"></canvas>
+<script>
+const W = 480, H = 270, Z = 3;
+const lo = document.createElement('canvas'); lo.width = W; lo.height = H;
+const g = lo.getContext('2d');
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x | 0, y | 0, w | 0, h | 0); };
+const P = (x, y, c) => R(x, y, 1, 1, c);
+const disc = (cx, cy, r, c, sy = 1) => { for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r + r * .6) P(cx + x, cy + y * sy, c); };
+const OL = '#3b2f4a';
+// palette
+const C = { sky0: '#7ccaf2', sky1: '#bfe8ff', cloud: '#ffffff', cloudS: '#d6ecfa', hill: '#a6dc8c', hillS: '#8cc87c',
+  grass: '#8fd36a', grass2: '#84c962', grassH: '#a8e27e', path: '#f3dfa6', pathS: '#e0c787', stone: '#e6e1d4', stoneS: '#aaa3bd', moss: '#6fbf5a',
+  leaf: '#5fb85a', leafH: '#90dd6c', leafS: '#3f8a66', trunk: '#9a6a44', trunkS: '#6e4a3a', shadow: 'rgba(70,80,150,.28)',
+  parch: '#f6ead0', parch2: '#ecdcb6', wood: '#c8925a', woodD: '#8a5a3a', woodH: '#e6b47a', ink: '#5a3a2a' };
+// sky
+for (let y = 18; y < 84; y++) { const t = (y - 18) / 66; g.fillStyle = `rgb(${124 + t * 67 | 0},${202 + t * 30 | 0},${242 + t * 13 | 0})`; g.fillRect(0, y, W, 1); }
+// clouds
+function cloud(x, y, s) { [[0, 0, 7], [8, 2, 6], [-8, 2, 5], [3, -3, 6]].forEach(([dx, dy, r]) => disc(x + dx * s, y + dy * s + 1, r * s, C.cloudS)); [[0, 0, 7], [8, 2, 6], [-8, 2, 5], [3, -3, 6]].forEach(([dx, dy, r]) => disc(x + dx * s, y + dy * s, r * s, C.cloud)); }
+cloud(70, 34, 1); cloud(300, 28, .8); cloud(420, 44, .7);
+// floating islands
+function island(x, y, w) { for (let i = 0; i < w; i++) { const d = Math.floor(Math.sin(i / w * Math.PI) * w * .35); R(x + i, y + 3, 1, d, i % 3 ? '#c9946a' : '#b07e58'); } R(x - 1, y, w + 2, 4, '#7cc96a'); R(x - 1, y, w + 2, 1, '#a6e48a'); disc(x + w * .3, y - 4, 4, C.leaf); disc(x + w * .3 - 1, y - 5, 2, C.leafH); R(x + w * .3, y - 1, 1, 2, C.trunk); }
+island(170, 40, 30); island(360, 30, 18); island(250, 56, 12);
+// distant hills
+for (let x = 0; x < W; x++) { const h = 10 + Math.sin(x / 37) * 6 + Math.sin(x / 13) * 2; R(x, 84 - h, 1, h, C.hill); R(x, 84 - h, 1, 1, '#c2eaa4'); }
+for (let x = 0; x < W; x++) { const h = 5 + Math.sin(x / 23 + 2) * 4; R(x, 84 - h, 1, h, C.hillS); }
+// grass field
+R(0, 84, W, 152, C.grass);
+for (let ty = 84; ty < 236; ty += 8) for (let tx = 0; tx < W; tx += 8) if (((tx + ty) / 8) % 2) R(tx, ty, 8, 8, C.grass2);
+for (let i = 0; i < 520; i++) { const x = rnd() * W | 0, y = 86 + rnd() * 148 | 0; P(x, y, C.grassH); P(x, y + 1, C.grass2); }
+// path
+for (let y = 84; y < 236; y++) { const cx = 240 + Math.sin(y / 22) * 34; const w = 16 + (y - 84) * .09; R(cx - w, y, w * 2, 1, C.path); P(cx - w, y, C.pathS); P(cx + w - 1, y, C.pathS); }
+for (let i = 0; i < 90; i++) { const y = 86 + rnd() * 148 | 0; const cx = 240 + Math.sin(y / 22) * 34; P(cx + (rnd() - .5) * 26, y, C.pathS); }
+// flowers
+const FL = ['#ff9ec4', '#ffe46b', '#ffffff', '#b9a6ff', '#ff8a7a'];
+for (let i = 0; i < 70; i++) { const x = rnd() * W | 0, y = 90 + rnd() * 140 | 0; if (Math.abs(x - (240 + Math.sin(y / 22) * 34)) < 30) continue; const c = FL[i % FL.length]; P(x, y, c); P(x - 1, y + 1, c); P(x + 1, y + 1, c); P(x, y + 2, c); P(x, y + 1, '#ffe9a0'); P(x, y + 3, C.leafS); }
+// shadow helper
+const sh = (x, y, w) => { g.fillStyle = C.shadow; g.beginPath(); g.ellipse(x, y, w, w * .35, 0, 0, 7); g.fill(); };
+// trees
+function tree(x, y, s) { sh(x, y + 1, 9 * s); R(x - 1, y - 8 * s, 3, 8 * s + 1, C.trunk); R(x + 1, y - 8 * s, 1, 8 * s + 1, C.trunkS);
+  disc(x, y - 14 * s, 9 * s, OL); disc(x, y - 14 * s, 8 * s, C.leafS); disc(x - 1, y - 15 * s, 7 * s, C.leaf); disc(x - 3, y - 17 * s, 3 * s, C.leafH); P(x + 3, y - 12 * s, '#ff7a7a'); P(x - 4, y - 10 * s, '#ff7a7a'); }
+// ruins pillars
+function pillar(x, y, h, broken) { sh(x + 4, y + 1, 7); R(x - 1, y - h - 1, 11, h + 2, OL); R(x, y - h, 9, h, C.stone); R(x + 6, y - h, 3, h, C.stoneS); for (let j = 4; j < h; j += 7) R(x, y - j, 9, 1, '#cfc8d8');
+  if (!broken) { R(x - 2, y - h - 4, 13, 4, OL); R(x - 1, y - h - 3, 11, 2, C.stone); } R(x, y - h, 4, 2, C.moss); R(x + 1, y - h + 2, 2, 3, C.moss); R(x + 5, y - 3, 4, 3, C.moss); }
+pillar(118, 128, 30, false); pillar(150, 120, 18, true); pillar(344, 132, 26, true); pillar(372, 124, 34, false);
+// fallen stone
+R(330, 140, 14, 5, OL); R(331, 141, 12, 3, C.stone); R(331, 141, 4, 1, C.moss);
+const trees = [[30, 112, 1.2], [62, 100, .9], [432, 108, 1.1], [462, 126, 1.3], [20, 200, 1.3], [455, 214, 1.2], [88, 230, 1]];
+// sprites
+function slime(x, y, body, hi) { sh(x, y + 1, 7); const ws = [3, 5, 6, 7, 7, 7, 7, 6]; const n = ws.length;
+  ws.forEach((w, j) => { const yy = y - n + j; R(x - w - 1, yy - 1, w * 2 + 2, 3, OL); }); ws.forEach((w, j) => { const yy = y - n + j; R(x - w, yy, w * 2, 1, body); });
+  R(x - 6, y - 1, 12, 1, 'rgba(60,40,90,.25)'); R(x - 3, y - 7, 2, 1, hi); P(x - 4, y - 6, hi); P(x - 4, y - 5, hi); R(x - 3, y - 4, 1, 2, OL); R(x + 2, y - 4, 1, 2, OL); P(x - 5, y - 2, '#ff9ec4'); P(x + 4, y - 2, '#ff9ec4'); P(x, y - 2, OL); }
+function mush(x, y) { sh(x, y + 1, 5); R(x - 2, y - 5, 5, 5, OL); R(x - 1, y - 5, 3, 5, '#fff2dc'); P(x - 1, y - 3, OL); P(x + 1, y - 3, OL); disc(x, y - 7, 5, OL, .6); disc(x, y - 7, 4, '#ff6f6f', .55); P(x - 2, y - 8, '#fff'); P(x + 2, y - 7, '#fff'); P(x, y - 9, '#fff'); }
+function hero(x, y) { sh(x, y + 1, 6);
+  const S = ['....kkkk....', '...kyyyyk...', '..kyyyyyyk..', '..kfffffk...', '..kfkffkfk..', '..kffffffk..', '.krrbbbbrrk.', 'krrbbwbbbrrk', 'krrbbbbbbrk.', '.krkbbbbkrk.', '..kknnkknk..', '..knnk.knnk.', '..kkk...kkk.'];
+  const M = { k: OL, y: '#ffd76a', f: '#ffe1c4', r: '#e8505e', b: '#5b8fe0', w: '#ffffff', n: '#8a5a3a' };
+  S.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') P(x - 6 + i, y - 13 + j, M[ch]); }));
+  // sword
+  for (let i = 0; i < 7; i++) { P(x + 7 + i, y - 9 - i, i < 2 ? '#8a5a3a' : '#eef4ff'); P(x + 8 + i, y - 9 - i, OL); } R(x + 7, y - 9, 3, 1, '#ffd76a'); }
+function loot(x, y, beam, col) { const gr = g.createLinearGradient(0, y - 40, 0, y); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, beam); g.fillStyle = gr; g.fillRect(x - 2, y - 40, 5, 40); sh(x, y + 1, 4); R(x - 3, y - 4, 7, 5, OL); R(x - 2, y - 3, 5, 3, col); P(x - 2, y - 3, '#fff'); }
+// draw sorted
+const actors = [];
+trees.forEach(t => actors.push([t[1], () => tree(...t)]));
+actors.push([150, () => hero(236, 150)]);
+[[196, 132, '#7fe0b0', '#d4fff0'], [282, 140, '#ff9ec4', '#ffe0ee'], [268, 174, '#8fb8ff', '#e0ecff'], [204, 182, '#7fe0b0', '#d4fff0'], [310, 196, '#ffd76a', '#fff6d0']].forEach(s => actors.push([s[1], () => slime(...s)]));
+actors.push([118, () => mush(176, 118)]); actors.push([210, () => mush(150, 210)]);
+actors.push([162, () => loot(318, 162, 'rgba(255,215,90,.75)', '#ffcf4a')]);
+actors.push([204, () => loot(172, 204, 'rgba(110,170,255,.7)', '#6aa8ff')]);
+actors.sort((a, b) => a[0] - b[0]).forEach(a => a[1]());
+// slash arc
+g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2; g.beginPath(); g.arc(238, 140, 22, -1.2, 0.3); g.stroke();
+g.strokeStyle = 'rgba(255,240,170,.6)'; g.lineWidth = 1; g.beginPath(); g.arc(238, 140, 25, -1.0, 0.2); g.stroke();
+// sparkles
+[[258, 128], [276, 136], [226, 110], [300, 160]].forEach(([x, y]) => { P(x, y, '#fff'); P(x - 1, y, '#fff6c0'); P(x + 1, y, '#fff6c0'); P(x, y - 1, '#fff6c0'); P(x, y + 1, '#fff6c0'); });
+// UI frames
+function frame(x, y, w, h, fill = C.parch) { R(x, y, w, h, C.woodD); R(x + 1, y + 1, w - 2, h - 2, C.wood); R(x + 1, y + 1, w - 2, 1, C.woodH); R(x + 2, y + 2, w - 4, h - 4, fill); R(x + 2, y + h - 3, w - 4, 1, C.parch2); }
+// top bar
+frame(0, 0, W, 19);
+R(5, 4, 132, 6, C.woodD); R(6, 5, 130, 4, '#f2c4c4'); R(6, 5, 118, 4, '#ef5d6c'); R(6, 5, 118, 1, '#ff9aa4');
+R(5, 11, 132, 4, C.woodD); R(6, 12, 130, 2, '#cfeff0'); R(6, 12, 96, 2, '#3fc4c8');
+R(318, 6, 112, 6, C.woodD); R(319, 7, 110, 4, '#e7dcc0'); R(319, 7, 64, 4, '#8fcf5a'); R(319, 7, 64, 1, '#c0ec90');
+// bottom bar
+frame(0, 236, W, 34);
+R(6, 244, 108, 3, C.parch2); R(6, 244, 70, 3, '#f0b94a');
+R(172, 239, 1, 28, C.parch2);
+const bx = 178; const icons = ['sword', 'gem', 'anvil', 'star', 'map', 'book'];
+for (let i = 0; i < 6; i++) { const x = bx + i * 29; R(x, 239, 27, 28, C.woodD); R(x + 1, 240, 25, 26, '#fbf3e0'); R(x + 1, 240, 25, 1, '#fff'); R(x + 1, 264, 25, 2, C.parch2); }
+// icons (small)
+let ix = bx + 13, iy = 247;
+for (let i = 0; i < 6; i++) { const x = ix + i * 29; switch (icons[i]) {
+  case 'sword': for (let k = 0; k < 7; k++) { P(x - 3 + k, iy + 3 - k, '#9fb6d8'); } R(x - 3, iy + 2, 3, 1, '#c8925a'); break;
+  case 'gem': disc(x, iy, 3, '#9b6ff0'); P(x - 1, iy - 1, '#e6d8ff'); break;
+  case 'anvil': R(x - 4, iy - 1, 9, 2, '#7f8aa8'); R(x - 2, iy + 1, 5, 2, '#7f8aa8'); R(x - 3, iy + 3, 7, 1, '#5d6684'); break;
+  case 'star': R(x - 1, iy - 3, 3, 7, '#ffcf4a'); R(x - 3, iy - 1, 7, 3, '#ffcf4a'); P(x, iy - 2, '#fff6c0'); break;
+  case 'map': R(x - 3, iy - 3, 7, 7, '#e9c98a'); P(x + 1, iy - 1, '#e8505e'); P(x - 1, iy + 1, '#8a5a3a'); P(x, iy, '#8a5a3a'); break;
+  case 'book': R(x - 3, iy - 3, 7, 7, '#5b8fe0'); R(x - 2, iy - 2, 5, 5, '#8fb8ff'); R(x - 3, iy - 3, 1, 7, '#3d5ea8'); break; } }
+// big button
+R(355, 239, 96, 28, '#3f7a3a'); R(356, 240, 94, 26, '#6cc25a'); R(356, 240, 94, 2, '#a6e88a'); R(356, 263, 94, 3, '#4f9a44');
+R(455, 239, 22, 28, C.woodD); R(456, 240, 20, 26, '#fbf3e0');
+// offline report popup
+frame(330, 26, 144, 58);
+R(334, 30, 136, 12, '#f0d9a2');
+// floating numbers markers drawn as text later
+// upscale
+const out = document.getElementById('out').getContext('2d');
+out.imageSmoothingEnabled = false; out.drawImage(lo, 0, 0, W * Z, H * Z);
+const F = '"WenQuanYi Zen Hei", sans-serif';
+function T(s, x, y, size, col, opt = {}) { out.font = `${opt.w || 500} ${size * Z}px ${F}`; out.textAlign = opt.a || 'left'; out.textBaseline = 'middle';
+  if (opt.o) { out.lineWidth = opt.ow || 4; out.strokeStyle = opt.o; out.lineJoin = 'round'; out.strokeText(s, x * Z, y * Z); } out.fillStyle = col; out.fillText(s, x * Z, y * Z); }
+T('1,284 / 1,420', 9, 7, 5.2, '#fff', { o: '#8a3040', ow: 3, w: 700 });
+T('第 12 层 · 青苔遗迹', 240, 9.5, 8, C.ink, { a: 'center', w: 700 });
+T('Boss', 312, 9, 5.5, C.ink, { a: 'right', w: 700 });
+T('23 / 36', 474, 9, 6, C.ink, { a: 'right', w: 700 });
+T('Lv 18', 6, 241, 6.5, C.ink, { w: 700 });
+T('秒伤 2,416', 6, 253, 6.5, '#c0681c', { w: 700 });
+T('生存 优', 62, 253, 6.5, '#3f8a3a', { w: 700 });
+T('骰子 14  符文 3', 6, 263.5, 6, '#6a5a8a', { w: 500 });
+['装备', '符文', '制造', '天赋', '藏图', '手册'].forEach((s, i) => T(s, bx + 13.5 + i * 29, 259, 6, C.ink, { a: 'center', w: 700 }));
+T('3', bx + 3 * 29 + 23, 242, 5.5, '#e8505e', { a: 'center', w: 700 });
+T('远征中 · 自动推层', 403, 250, 7, '#fff', { a: 'center', w: 700, o: '#3f7a3a', ow: 4 });
+T('下一个 Boss：第 15 层', 403, 260.5, 5, '#eaffdc', { a: 'center', w: 500 });
+T('音', 466, 253, 7, C.ink, { a: 'center', w: 700 });
+T('离线 6 小时 · 远征报告', 402, 36, 6.5, C.ink, { a: 'center', w: 700 });
+T('推进 9 → 12 层', 337, 48, 5.6, C.ink, {});
+T('击杀 3,120', 410, 48, 5.6, C.ink, {});
+T('经验 +2 级', 337, 58, 5.6, C.ink, {});
+T('自动分解 41 件', 410, 58, 5.6, C.ink, {});
+T('带回 2 件可能更好的装备', 337, 68, 5.6, '#c0681c', { w: 700 });
+T('卡在第 13 层 Boss 2 次', 337, 77.5, 5.6, '#c23a5a', { w: 700 });
+T('186', 284, 124, 7, '#fff', { a: 'center', w: 700, o: OL, ow: 4 });
+T('412!', 206, 116, 8.5, '#ffd24a', { a: 'center', w: 700, o: '#8a4a1a', ow: 5 });
+T('97', 268, 160, 6.5, '#fff', { a: 'center', w: 700, o: OL, ow: 4 });
+T('稀有 · 翠羽长弓', 318, 113, 5.3, '#a0600a', { a: 'center', w: 700, o: '#fff8e0', ow: 4 });
+</script></body></html>

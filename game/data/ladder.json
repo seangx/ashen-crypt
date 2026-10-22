@@ -1,0 +1,45 @@
+{
+  "_说明": "天梯（个人）。层数 N 从 1 到已解锁的最高层任选，怪物等级 = N。墓图和命盘在天梯里不生效。",
+
+  "run": {
+    "_说明": "density：同屏怪物上限 ×density，刷怪间隔 ÷density；eliteMul 精英几率倍数；进度 normalP（普通怪）/ eliteP（精英）点，攒满 pointsBase + pointsPerLevel × N 召唤守关 Boss；timeLimit 限时（秒），超时或死亡算失败，没有损失",
+    "density": 1.5, "eliteMul": 2,
+    "normalP": 1, "eliteP": 5, "pointsBase": 150, "pointsPerLevel": 4,
+    "timeLimit": 240,
+    "mobDrops": false, "xp": false,
+    "_说明2": "mobDrops 天梯里的怪物会不会掉东西（装备、碎片、符文、墓图）；xp 天梯里击杀给不给经验（含符文经验）。都关时天梯只有通关宝箱",
+    "mob": { "mobHp": 40, "mobDmg": -35, "_说明": "天梯怪物修正（百分比，同墓图的怪物词条键）：mobHp 生命、mobDmg 伤害、mobSpd 速度、mobRes 抗性、elite 精英几率、bossHp Boss 生命" }
+  },
+
+  "jumps": {
+    "_说明": "击败守关 Boss 后按剩余时间跳层：[剩余秒数至少, 跳几层]，从上往下取第一个满足的",
+    "list": [[150, 3], [90, 2], [0, 1]]
+  },
+
+  "reward": {
+    "_说明": "成功时的宝箱。items 件装备，物品等级 N + ilvlBonus（按 Boss 掉落算独特几率）；词条碎片 shardsBase + floor(N / shardsPerN) 个；每种铸符各有 glyphBase% + N × glyphPerN% 的几率掉 1 张；N ≥ exaltedFrom 时每件装备有 (N − exaltedFrom) × exaltedPerN% 的几率是溢彩（最多 exaltedMax%）",
+    "items": 2, "ilvlBonus": 3,
+    "shardsBase": 4, "shardsPerN": 5,
+    "glyphBase": 10, "glyphPerN": 0.5,
+    "exaltedFrom": 30, "exaltedPerN": 1, "exaltedMax": 40
+  },
+
+  "tiers": {
+    "_说明": "段位：最高层达到 at 时第一次进入该段位，奖励每种铸符各 firstGlyphs 张",
+    "list": [
+      { "at": 10, "n": "青铜", "c": "#d8814a" },
+      { "at": 20, "n": "白银", "c": "#d3dbe6" },
+      { "at": 30, "n": "黄金", "c": "#ffcc3a" },
+      { "at": 40, "n": "铂金", "c": "#9fe8e0" },
+      { "at": 50, "n": "钻石", "c": "#9fd8ff" },
+      { "at": 60, "n": "大师", "c": "#e6a6ff" },
+      { "at": 75, "n": "传说", "c": "#ff9a3d" }
+    ],
+    "firstGlyphs": 2
+  },
+
+  "records": {
+    "_说明": "每次成功存一条记录，最多保留 max 条（窗口里显示最近 show 条）",
+    "max": 200, "show": 20
+  }
+}
