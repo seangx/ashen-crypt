@@ -12,11 +12,21 @@ class World extends Phaser.Scene {
     this.roomTex = this.textures.exists('room') ? this.textures.get('room') : this.textures.createCanvas('room', W, H);
     this.add.image(0, 0, 'room').setOrigin(0).setDepth(0); this.roomL = null;
     this.wallG = this.add.graphics().setDepth(5);
-    this.lightTex = this.textures.exists('light') ? this.textures.get('light') : this.textures.createCanvas('light', LW, LHt);
-    this.add.image(0, 0, 'light').setOrigin(0).setScale(2).setDepth(50);
+    if (this.renderer.type === Phaser.WEBGL && CryptFX) {
+      // 彩色光照：半分辨率的光照图，先填冷色环境光，再叠加各个光源；用“两倍正片叠底”盖在场景上（0.5 = 原色，更亮的地方会提亮）
+      const gl = this.renderer.gl; this.MUL2 = this.renderer.addBlendMode([gl.DST_COLOR, gl.SRC_COLOR], gl.FUNC_ADD);
+      this.lightRT = this.add.renderTexture(0, 0, LW, LHt).setOrigin(0).setScale(2).setDepth(50).setBlendMode(this.MUL2);
+      this.lightRT.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      try { this.renderer.pipelines.addPostPipeline('CryptFX', CryptFX); } catch (e) { }
+      this.cameras.main.setPostPipeline('CryptFX'); const pp = this.cameras.main.getPostPipeline('CryptFX'); this.post = Array.isArray(pp) ? pp[0] : pp;
+      this.glowG = this.add.graphics().setDepth(57.5).setBlendMode(Phaser.BlendModes.ADD); // 弹道的光晕和拖尾
+    } else {
+      this.lightTex = this.textures.exists('light') ? this.textures.get('light') : this.textures.createCanvas('light', LW, LHt);
+      this.add.image(0, 0, 'light').setOrigin(0).setScale(2).setDepth(50);
+    }
     this.glows = SCONCES.map(s => this.add.image(s.x, s.y + 2, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(51));
     this.heroGlow = this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(51).setScale(1.1);
-    this.barG = this.add.graphics().setDepth(45);
+    this.barG = this.add.graphics().setDepth(52);
     this.lootG = this.add.graphics().setDepth(55);
     this.projG = this.add.graphics().setDepth(58);
     this.fxG = this.add.graphics().setDepth(59);
@@ -29,6 +39,9 @@ class World extends Phaser.Scene {
       bone: P({ lifespan: { min: 350, max: 800 }, speed: { min: 30, max: 90 }, angle: { min: 200, max: 340 }, gravityY: 260, tint: [0xece3cb, 0xb9ad94, 0x7d7262] }),
       bossdie: P({ lifespan: { min: 500, max: 1200 }, speed: { min: 40, max: 140 }, angle: { min: 190, max: 350 }, gravityY: 200, tint: [0xece3cb, 0x7a55a0, 0xffd75e] }),
       spark: P({ lifespan: 220, speed: { min: 15, max: 45 } }, 60),
+      // 打击火花（2 像素、叠加发光）和骨屑
+      spark2: this.add.particles(0, 0, 'px2', { emitting: false, lifespan: { min: 90, max: 230 }, speed: { min: 30, max: 110 }, scale: { start: 1, end: 0.3 }, alpha: { start: 1, end: 0 }, gravityY: 140, blendMode: 'ADD' }).setDepth(60),
+      chip: this.add.particles(0, 0, 'px2', { emitting: false, lifespan: { min: 400, max: 800 }, speed: { min: 40, max: 110 }, angle: { min: 200, max: 340 }, gravityY: 320, scale: { start: 1, end: 0.5 }, tint: [0xece3cb, 0xb9ad94, 0xfff6dc] }).setDepth(30),
       fire: P({ lifespan: { min: 250, max: 450 }, speed: { min: 10, max: 40 }, gravityY: -30, tint: [0xff9a3d, 0xffd36a, 0xe8533a] }, 60),
       loot: P({ lifespan: 500, speedY: -14, speedX: 0, alpha: { start: 1, end: 0 } }, 56),
     };
@@ -42,6 +55,7 @@ class World extends Phaser.Scene {
     cv.addEventListener('pointerleave', () => { mouse.on = false; }); cv.addEventListener('pointerenter', () => { mouse.on = true; });
   }
   // 震屏有冷却，只在大事件上用
+  hitStop(d, cd = 0.35) { if (!G.fx || G.time < (this.stopCd || 0)) return; this.stopUntil = G.time + d; this.stopCd = G.time + cd; } // 有冷却，打 Boss 时不会一直卡
   shake(ms, amt) { if (!G.fx || G.time < (this.shakeT || 0)) return; this.shakeT = G.time + 0.6; this.cameras.main.shake(ms, amt); }
   dmgText(x, y, str, col, big) {
     if (this.dmgCount > 50) return; this.dmgCount++;
@@ -56,8 +70,9 @@ class World extends Phaser.Scene {
     this.tweens.add({ targets: t, y: y - 10, alpha: 0, duration: 800, onComplete: () => t.destroy() });
   }
   update(_, delta) {
-    const dt = Math.min(0.05, delta / 1000); G.time += dt;
-    logic(dt);
+    const dt = Math.min(0.05, delta / 1000); G.time += dt; this.dt = dt;
+    if (G.time >= (this.stopUntil || 0)) logic(dt); // 顿帧：世界停几十毫秒，画面照常
+
     this.consume();
     this.render(dt);
   }
@@ -69,13 +84,14 @@ class World extends Phaser.Scene {
         case 'text': this.label(e.x, e.y, e.s, e.c); break;
         case 'beam': this.lines.push({ ...e, life: 0.09, jag: e.el === 'ele' }); break;
         case 'bolt': this.lines.push({ ...e, life: 0.15, jag: true }); break;
-        case 'boom': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.25, max: 0.25, el: e.el, fill: true }); this.em.fire.explode(10, e.x, e.y); break;
+        case 'boom': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.25, max: 0.25, el: e.el, fill: true }); this.em.fire.explode(10, e.x, e.y); this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(8, e.x, e.y); if (this.post) this.post.waves.push({ x: e.x, y: e.y, r: e.r * 1.4 + 16, k: 1, life: 0.35, t0: G.time }); break;
         case 'ring': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.18, max: 0.18, el: e.el }); break;
         case 'shield': this.rings.push({ x: e.x, y: e.y - 6, r: 11, life: 0.2, max: 0.2, el: 'cyan' }); break;
         case 'cone': { const n = 4; for (let i = 0; i < n; i++) { const a = e.a + rf(-0.5, 0.5), d = rf(8, e.r); this.em.fire.explode(1, e.x + Math.cos(a) * d, e.y + Math.sin(a) * d); } break; }
-        case 'hit': this.em.spark.particleTint = hex(ELEM_C[e.el]); this.em.spark.explode(3, e.x, e.y); break;
+        case 'hit': this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(2, e.x, e.y); break;
+        case 'impact': this.em.spark2.particleTint = hex(e.crit ? '#ffe6a0' : ELEM_C[e.el]); this.em.spark2.explode(e.big ? (e.crit ? 10 : 4) : 4, e.x, e.y); if (e.crit) this.em.chip.explode(e.big ? 4 : 1, e.x, e.y); if (e.big && e.crit) this.hitStop(0.05, 1.2); break;
         case 'burn': this.em.fire.explode(2, e.x, e.y - 6); break;
-        case 'die': if (e.boss) { this.em.bossdie.explode(60, e.x, e.y - 12); this.shake(300, 0.01); } else this.em.bone.explode(8, e.x, e.y - 6); break;
+        case 'die': if (e.boss) { this.em.bossdie.explode(60, e.x, e.y - 12); this.shake(300, 0.01); this.hitStop(0.09); } else { this.em.bone.explode(6, e.x, e.y - 6); this.em.chip.explode(e.elite ? 12 : 5, e.x, e.y - 6); if (e.elite) { this.hitStop(0.06); this.shake(90, 0.002); } } break;
         case 'pick': this.em.spark.particleTint = 0xfff2c8; this.em.spark.explode(4, e.x, e.y - 4); break;
         case 'orbitHit': break;
         case 'spike': this.lines.push({ x1: e.x, y1: e.y + 1, x2: e.x, y2: e.y - 9, el: e.el, life: 0.12 }); this.em.bone.explode(2, e.x, e.y - 2); break;
@@ -113,12 +129,12 @@ class World extends Phaser.Scene {
     const bar = this.barG; bar.clear();
     for (const m of mobs) this.syncMob(m, bar, t);
     for (const dp of drops) this.syncDrop(dp, t);
-    for (const [ent, o] of this.spr) if (o.seen !== this.frame) { o.img.destroy(); o.sh && o.sh.destroy(); this.spr.delete(ent); }
+    for (const [ent, o] of this.spr) if (o.seen !== this.frame) { o.img.destroy(); o.sh && o.sh.destroy(); o.cs && o.cs.destroy(); this.spr.delete(ent); }
     // 掉落光柱
     const lg = this.lootG; lg.clear();
     for (const dp of drops) if ((dp.kind === 'item' && dp.item.rar > 0) || dp.kind === 'map') this.beam(lg, dp, t);
     // 投射物、环绕刃
-    const pg = this.projG; pg.clear();
+    const pg = this.projG; pg.clear(); if (this.glowG) this.glowG.clear();
     for (const p of projs) this.drawProj(pg, p, t);
     STATS.weapons.forEach((W_, wi) => {
       if (!W_ || W_.form !== 'orbit') return;
@@ -149,21 +165,52 @@ class World extends Phaser.Scene {
       fg.fillStyle(c, 1 - k); const n = Math.max(12, rr * 2 | 0); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; fg.fillRect(r.x + Math.cos(a) * rr - .5, r.y + Math.sin(a) * rr * 0.75 - .5, 1, 1); }
     }
     this.rings = this.rings.filter(r => r.life > 0);
-    // 光照
+    // 光照：每个光源有颜色；WebGL 下画进彩色光照图，否则沿用旧的暗部遮罩
     const fl = 1 + Math.sin(t * 9) * .04 + Math.sin(t * 23) * .03;
-    const lights = SCONCES.map(s => ({ x: s.x, y: s.y + 6, r2: (64 * fl) ** 2, i: .75 }));
-    lights.push({ x: player.x + player.face * 4, y: player.y - 6, r2: (110 * fl) ** 2, i: .8 });
-    if (!RUN) { const gt = FAC_BY.gate; lights.push({ x: gt.x - 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6 }, { x: gt.x + 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6 }, { x: 240, y: 178, r2: (80 * fl) ** 2, i: .75 });
-      for (const id of ['altar', 'runes', 'stele', 'chest', 'anvil', 'statue', 'atlas']) if (open[id]) lights.push({ x: FAC_BY[id].x, y: FAC_BY[id].y - 12, r2: id === 'altar' ? 900 : 620, i: .35 }); }
-    for (const m of mobs) if ((m.burn > 1 || m.boss) && lights.length < 18) lights.push({ x: m.x, y: m.y - 6, r2: m.boss ? 1600 : 420, i: .4 });
-    for (const r of this.rings) if (r.fill && lights.length < 22) lights.push({ x: r.x, y: r.y, r2: (r.r * 1.5) ** 2, i: .6 });
-    for (const dp of drops) if (dp.kind === 'item' && dp.item.rar >= 1 && lights.length < 24) lights.push({ x: dp.x, y: dp.y - 8, r2: 520, i: .45 });
-    const amb = RUN ? 0.4 : 0.32;
-    renderLight(this.lightTex.getContext(), lights, amb, theme.fog); this.lightTex.refresh();
+    const WARM = 0xff9a4a, lights = SCONCES.map(s => ({ x: s.x, y: s.y + 6, r2: (64 * fl) ** 2, i: .75, c: WARM }));
+    lights.push({ x: player.x + player.face * 4, y: player.y - 6, r2: (110 * fl) ** 2, i: .55, c: 0x7fd0e0 }); // 提灯亡魂身上的青色魂光
+    if (!RUN) { const gt = FAC_BY.gate; lights.push({ x: gt.x - 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: gt.x + 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: 240, y: 178, r2: (80 * fl) ** 2, i: .75, c: 0xffa050 });
+      const FC = { altar: 0xc08aff, runes: 0x57e0d0, stele: 0xffd36a };
+      for (const id of ['altar', 'runes', 'stele', 'chest', 'anvil', 'statue', 'atlas']) if (open[id]) lights.push({ x: FAC_BY[id].x, y: FAC_BY[id].y - 12, r2: id === 'altar' ? 900 : 620, i: .35, c: FC[id] || 0xd0a070 }); }
+    for (const m of mobs) if ((m.burn > 1 || m.boss) && lights.length < 18) lights.push({ x: m.x, y: m.y - 6, r2: m.boss ? 1600 : 420, i: .4, c: m.boss ? 0xc23a5a : 0xff7a3a });
+    for (const r of this.rings) if (r.fill && lights.length < 22) lights.push({ x: r.x, y: r.y, r2: (r.r * 1.5) ** 2, i: .6, c: hex(ELEM_C[r.el] || '#ffd36a') });
+    for (const dp of drops) if (dp.kind === 'item' && dp.item.rar >= 1 && lights.length < 24) lights.push({ x: dp.x, y: dp.y - 8, r2: 520, i: .45, c: hex(icol(dp.item)) });
+    if (this.lightRT) {
+      const rt = this.lightRT; rt.fill(RUN ? 0x34324c : 0x2e2c44);
+      for (const l of lights) rt.stamp('ldisc', null, l.x / 2, l.y / 2, { scale: Math.sqrt(l.r2) / 64, tint: l.c, alpha: l.i * 0.85, blendMode: Phaser.BlendModes.ADD });
+      // 热浪：墙上的火把、营地的火盆和篝火
+      const hz = SCONCES.map(s => ({ x: s.x, y: s.y - 6, w: 6, h: 18 }));
+      if (!RUN) { const gt = FAC_BY.gate; hz.push({ x: gt.x - 36, y: gt.y - 18, w: 8, h: 26 }, { x: gt.x + 36, y: gt.y - 18, w: 8, h: 26 }, { x: 240, y: 176, w: 9, h: 28 }); }
+      this.post.hazes = hz;
+    } else { const amb = RUN ? 0.4 : 0.32; renderLight(this.lightTex.getContext(), lights, amb, theme.fog); this.lightTex.refresh(); }
     this.glows.forEach(gl => gl.setAlpha(.16 * fl));
-    this.heroGlow.setPosition(player.x + player.face * 4, player.y - 6).setAlpha(.14 * fl);
+    this.heroGlow.setPosition(player.x + player.face * 4, player.y - 6).setAlpha((this.lightRT ? .07 : .14) * fl);
+    // 投影：火把、营地火光把角色和怪的影子投到地上；怪的影子也背着提灯亡魂的光
+    const casters = SCONCES.map(s => ({ x: s.x, y: s.y + 6, r: 140 }));
+    if (!RUN) casters.push({ x: FAC_BY.gate.x - 36, y: FAC_BY.gate.y - 10, r: 100 }, { x: FAC_BY.gate.x + 36, y: FAC_BY.gate.y - 10, r: 100 }, { x: 240, y: 180, r: 120 });
+    this.heroCS = this.heroCS || {}; this.castShadow(this.heroCS, this.hero.texture.key, player.x, player.y + bob, player.face < 0, casters);
+    const mc = [...casters, { x: player.x, y: player.y + 2, r: 115 }];
+    for (const m of mobs) { const o = this.spr.get(m); if (o) this.castShadow(o, o.key, o.img.x, m.y + 1, m.face < 0, mc); }
+  }
+  // 一个影子：取最近的强光源，把精灵压扁、翻过来、朝背光方向铺在地上
+  castShadow(o, key, x, y, flip, list) {
+    if (!this.lightRT) return;
+    let best = null;
+    for (const l of list) { const dx = x - l.x, dy = y - l.y, d = Math.hypot(dx, dy * 1.3); if (d < 6) continue; const k = 1 - d / l.r; if (k > 0 && (!best || k > best.k)) best = { a: Math.atan2(dy, dx), k }; }
+    if (!o.cs) o.cs = this.add.image(0, 0, key).setOrigin(0.5, 1).setTintFill(0x000000).setDepth(9.1);
+    if (!best) { o.cs.setVisible(false); return; }
+    if (o.cs.texture.key !== key) o.cs.setTexture(key);
+    o.cs.setVisible(true).setPosition(Math.round(x), Math.round(y)).setRotation(best.a - Math.PI / 2).setScale(flip ? -1 : 1, -(0.45 + 0.35 * (1 - best.k))).setAlpha(0.4 * Math.min(1, best.k * 2.5));
   }
   drawProj(g, p, t) {
+    // 光晕 + 短拖尾（叠加发光层）
+    const gg = this.glowG;
+    if (gg && !p.mine) {
+      const c = p.enemy ? 0xff5a4a : hex(ELEM_C[p.el]), y0 = p.lob ? p.y - p.z : p.y, tr = p._tr || (p._tr = []);
+      tr.unshift(p.x, y0); if (tr.length > 12) tr.length = 12;
+      for (let i = 2; i < tr.length; i += 2) { gg.fillStyle(c, 0.4 * (1 - i / 12)); gg.fillCircle(tr[i], tr[i + 1], 2 - i * 0.1); }
+      gg.fillStyle(c, 0.22); gg.fillCircle(p.x, y0, 5); gg.fillStyle(c, 0.45); gg.fillCircle(p.x, y0, 2.5);
+    }
     if (p.enemy) { g.fillStyle(0x120c18, 1).fillRect(p.x - 2, p.y - 2, 4, 4); g.fillStyle(hex(ELEM_C[p.el]), 1).fillRect(p.x - 1, p.y - 1, 2, 2); return; }
     const c = hex(ELEM_C[p.el]);
     if (p.lob) { g.fillStyle(0x000000, 0.35).fillRect(p.x - 2, p.y, 4, 1); const y = p.y - p.z; g.fillStyle(0x120c18, 1).fillRect(p.x - 2, y - 2, 5, 5); g.fillStyle(0x8f5d36, 1).fillRect(p.x - 1, y - 1, 3, 3); g.fillStyle(0xffd36a, 1).fillRect(p.x, y - 3, 1, 2); return; }
@@ -176,13 +223,14 @@ class World extends Phaser.Scene {
     const sp = Math.hypot(p.vx, p.vy) || 1, ux = p.vx / sp, uy = p.vy / sp;
     g.fillStyle(c, 0.5); pline(g, p.x - ux * 6, p.y - uy * 6, p.x - ux * 3, p.y - uy * 3);
     g.fillStyle(c, 1); pline(g, p.x - ux * 3, p.y - uy * 3, p.x, p.y);
-    g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - .5, 1, 1);
+    g.fillStyle(0xffffff, 1).fillRect(Math.round(p.x) - 1, Math.round(p.y) - 1, 2, 2);
   }
   syncMob(m, bar, t) {
     let o = this.spr.get(m);
     if (!o) { o = { img: this.add.image(0, 0, 'px').setOrigin(0.5, 1), sh: this.add.image(0, 0, 'shadow').setDepth(9) }; this.spr.set(m, o); }
     o.seen = this.frame;
-    const sx = m.x, sy = m.y;
+    let sx = m.x, sy = m.y;
+    if (m.kbT > 0) { const k = 2.5 * m.kbT / 0.12; sx += Math.cos(m.kbA) * k; sy += Math.sin(m.kbA) * k * 0.6; m.kbT -= this.dt || 0.016; } // 挨打时往后一顿
     const moving = Math.abs(m.vx) + Math.abs(m.vy) > 2; const fr = moving ? ((t * 6 + m.x * 0.1) | 0) % 2 : 0;
     const key = `m_${m.type}_${fr}${m.fl > 0 ? '_fl' : m.elite ? '_e' : ''}`;
     if (o.key !== key) { o.img.setTexture(key); o.key = key; }

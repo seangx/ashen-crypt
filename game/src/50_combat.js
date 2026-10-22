@@ -152,12 +152,13 @@ function damage(m, amt, el, crit, small) {
   if (m.dead || amt <= 0) return;
   m.hp -= amt; m.fl = 0.08;
   if (!small || amt > m.max * 0.04) fx({ t: 'num', x: m.x, y: m.y - m.size * 2, v: amt, el, crit, small });
+  if (G.fx && !small) { m.kbT = 0.12; m.kbA = Math.atan2(m.y - player.y, m.x - player.x); if (crit || m.boss || m.elite) fx({ t: 'impact', x: m.x, y: m.y - m.size, el, crit, big: m.boss || m.elite }); } // 只影响画面：击退偏移、火花
   if (m.hp <= 0) kill(m);
 }
 function kill(m) {
   if (m.dead) return;
   m.dead = true; S.stats.kills++;
-  fx({ t: 'die', x: m.x, y: m.y, boss: m.boss, type: m.type });
+  fx({ t: 'die', x: m.x, y: m.y, boss: m.boss, elite: m.elite, type: m.type });
   sfx(m.boss ? 'bossdie' : 'kill');
   if (!RUN) return;
   RUN.kills++;

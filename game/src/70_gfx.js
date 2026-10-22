@@ -23,6 +23,9 @@ function buildTextures(sc) {
   add('shard', SPR.shard); for (const g of GLYPHS) add('glyph_' + g.id, SPR.glyphs[g.id]);
   add('dust', DUST_ICON); add('soul', SOUL_ICON); add('glow', GLOW);
   add('px', cvs(1, 1, x => px(x, '#fff', 0, 0)));
+  add('px2', cvs(2, 2, x => px(x, '#fff', 0, 0, 2, 2)));
+  // 光照用的柔和光斑：白色，透明度按 (1-d²)² 衰减
+  add('ldisc', cvs(64, 64, x => { const d = x.createImageData(64, 64); for (let j = 0; j < 64; j++) for (let i = 0; i < 64; i++) { const r2 = ((i - 31.5) ** 2 + (j - 31.5) ** 2) / 1024, a = r2 >= 1 ? 0 : (1 - r2) ** 2, o = (j * 64 + i) * 4; d.data[o] = d.data[o + 1] = d.data[o + 2] = 255; d.data[o + 3] = Math.round(a * 255); } x.putImageData(d, 0, 0); }));
   add('shadow', cvs(9, 3, x => { px(x, 'rgba(0,0,0,.4)', 1, 0, 7, 3); px(x, 'rgba(0,0,0,.4)', 0, 1, 9, 1); }));
   // 界面九宫格
   add('f_btn', bevelCanvas(12, 12, '#3a3049', '#5e4f74', '#221b2c'));
