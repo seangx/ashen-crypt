@@ -179,8 +179,7 @@ function weaponStats(it, P, isEngine) {
   W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100);
   W.crit = qv(b.crit || 0, q) / 100 * (1 + critInc / 100) * (TM.crit ?? 1);
   W.critMult = PLAYER.critMult + critDmg / 100;
-  // 旋身：刃数跟攻速走，超过 bladesBase 的每把刃伤害再乘 bladeMore；层数上限 = maxStacks + 词条
-  if (W.whirl) { W.blades = Math.min(WH.bladesMax, WH.bladesBase + Math.floor(W.aps / WH.apsPerBlade)); const bm = Math.pow(WH.bladeMore, W.blades - WH.bladesBase); for (const e of ELEM) { W.min[e] *= bm; W.max[e] *= bm; } }
+  // 旋身：层数上限 = maxStacks + 词条
   W.stackMax = WH.maxStacks + spinCap + (P.raw.spinCap || 0);
   W.avg = ELEM.reduce((s, e) => s + (W.min[e] + W.max[e]) / 2, 0);
   const critE = 1 + Math.min(1, W.crit) * (W.critMult - 1);

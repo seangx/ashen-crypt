@@ -10,7 +10,7 @@ const ladderBusy = () => RUN && RUN.mode === 'ladder';
 function startLadder(N) {
   refreshStats();
   LX = lootFx(null, true);
-  RUN = { mode: 'ladder', L: N, base: N, map: null, mob: { ...(LD.run.mob || {}) }, bossD: bossFor(N), kills: 0, prog: 0, need: ladderNeed(N), limit: LD.run.timeLimit, dens: LD.run.density, eliteMul: LD.run.eliteMul,
+  RUN = { dmg: { whirl: 0, devil: 0 }, mode: 'ladder', L: N, base: N, map: null, mob: { ...(LD.run.mob || {}) }, bossD: bossFor(N), kills: 0, prog: 0, need: ladderNeed(N), limit: LD.run.timeLimit, dens: LD.run.density, eliteMul: LD.run.eliteMul,
     boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, result: null, gain: { items: [], shards: 0, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
   arenaReset();
   if (G.ui) G.ui.banner(`天梯第 ${N} 层`, COL.emberHi);

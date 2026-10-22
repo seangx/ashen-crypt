@@ -27,7 +27,7 @@ if (seedsArg) {
   const base = process.argv.slice(2).filter((a, i, all) => !(a === '--seeds' || all[i - 1] === '--seeds' || a === '--seed' || all[i - 1] === '--seed'));
   Promise.all(seeds.map(sd => new Promise(res => { let buf = ''; const ch = spawn(process.execPath, [__filename, ...base, '--seed', String(sd)], { env: { ...process.env, ASH_SEEDS_CHILD: '1' } }); ch.stdout.on('data', d => buf += d); ch.stderr.on('data', d => buf += d); ch.on('close', () => res({ sd, buf })); })))
     .then(all => {
-      const K = [['push', '推层'], ['ladder', '天梯'], ['runs', '推关趟数'], ['tMed', '单趟中位秒'], ['flMed', '单趟层数中位'], ['lampout', '灯灭'], ['retreat', '撤回'], ['emergency', '紧急撤回'], ['dead', '阵亡'], ['itemsH', '带回装备/时'], ['salvH', '分解/时'], ['shardsH', '捡碎片/时'], ['salvShardsH', '分解碎片/时'], ['lostItems', '阵亡丢装备'], ['minHp', '每层最低血中位%'], ['minHpFront', '最深层附近最低血中位%']];
+      const K = [['push', '推层'], ['ladder', '天梯'], ['runs', '推关趟数'], ['tMed', '单趟中位秒'], ['flMed', '单趟层数中位'], ['lampout', '灯灭'], ['retreat', '撤回'], ['emergency', '紧急撤回'], ['dead', '阵亡'], ['itemsH', '带回装备/时'], ['salvH', '分解/时'], ['shardsH', '捡碎片/时'], ['salvShardsH', '分解碎片/时'], ['lostItems', '阵亡丢装备'], ['minHp', '每层最低血中位%'], ['minHpFront', '最深层附近最低血中位%'], ['devilPct', '小旋风伤害占比%']];
       const rows = all.map(({ sd, buf }) => { const m = buf.match(/^SUMMARY (.*)$/m); if (!m) { console.log(`种子 ${sd} 出错：\n${buf.slice(-2000)}`); return null; } return { sd, v: JSON.parse(m[1]) }; }).filter(Boolean);
       for (const r of rows) console.log(`种子 ${r.sd}：` + K.map(([k, n]) => `${n} ${r.v[k]}`).join('，'));
       const med = k => { const a = rows.map(r => r.v[k]).sort((x, y) => x - y); return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : 0; };
@@ -130,7 +130,7 @@ if (seedsArg) {
       // 铁砧（贪心）
       if (opt.craft === 'auto') {
         // 灯火秒数（粗算，不算击杀回复）：上限 ÷ (这层的燃烧 + 满层旋转的消耗)，推关做装按 秒伤 × 有效生命 × 灯火秒数
-        const lightOf = n => { const w = n.weapons.find(x => x && x.whirl), SO = A.DATA.mechanics.soul; return n.soulMax / (SO.burn + S.maxDepth * SO.burnPerFloor + (w ? w.stackMax * WH.soulPerStack * (1 - n.soulLess) : 0)); };
+        const lightOf = n => { const w = n.weapons.find(x => x && x.whirl), SO = A.DATA.mechanics.soul; return n.soulMax / (SO.burn + S.maxDepth * SO.burnPerFloor + (w ? WH.soulPerSec * (1 - n.soulLess) : 0)); };
         const ev = eq => { const n = A.computeStats(eq); return spinDps(n) * ehpOf(n) * lightOf(n); };
         const mid = (a, t) => { const v = a.tiers[t][0]; return a.pair ? [Math.round((v[0] + v[1]) / 2), Math.round((v[2] + v[3]) / 2)] : v.length === 1 ? v[0] : Math.round((v[0] + v[1]) / 2); };
         const slots = ['wl', 'wr', 'shield', 'core', 'engine', 'hub'];
@@ -172,7 +172,7 @@ if (seedsArg) {
       const ladDue = opt.ladderMin ? simT >= ladNextT : opt.ladder && mode !== 'ladder' && pushes % opt.ladder === 0;
       if (ladDue && mode !== 'ladder' && A.unlocked('ladder') && !A.LAD.pending) { S.ladder.chain = true; A.LAD.pending = S.ladder.unlocked; ladLeft = opt.ladderMin ? opt.ladderCap : 1e9; ladNextT = simT + opt.ladderMin * 60; }
       const lr = A.AUTO.last;
-      rows.push({ soulE, mode, mins: lr.descent && lr.descent.mins || [], fl: lr.descent ? lr.descent.floors : 0, got: { items: lr.gain.items.length, shards: lr.gain.shards }, salv: lr.salv || { n: 0, shards: 0 }, lost: lr.lost || { items: 0, mods: 0, shards: 0 }, lad: mode === 'ladder' ? { t: Math.round(lr.t), jump: lr.lad ? lr.lad.jump : 0, unlocked: S.ladder.unlocked, best: S.ladder.best } : null, run: r + 1, L, depth, next: S.depth, back: S.auto.back, res, t: Math.round(t), min: Math.round(simT / 60), kills: S.stats.kills, lv: S.level, maxDepth: S.maxDepth, dps: Math.round(spinDps(A.STATS)), wf: (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Whirl') ? '旋' : '') + (S.tree.includes(WH.treeKey) ? '心' : '') + (Object.values(S.equip).some(it => it && it.u === 'StormEye') ? '眼' : ''), armor: A.STATS.armor, deflect: A.STATS.deflect, minHp: Math.round(minArmor * 100),
+      rows.push({ soulE, mode, dmg: lr.dmg || { whirl: 0, devil: 0 }, mins: lr.descent && lr.descent.mins || [], fl: lr.descent ? lr.descent.floors : 0, got: { items: lr.gain.items.length, shards: lr.gain.shards }, salv: lr.salv || { n: 0, shards: 0 }, lost: lr.lost || { items: 0, mods: 0, shards: 0 }, lad: mode === 'ladder' ? { t: Math.round(lr.t), jump: lr.lad ? lr.lad.jump : 0, unlocked: S.ladder.unlocked, best: S.ladder.best } : null, run: r + 1, L, depth, next: S.depth, back: S.auto.back, res, t: Math.round(t), min: Math.round(simT / 60), kills: S.stats.kills, lv: S.level, maxDepth: S.maxDepth, dps: Math.round(spinDps(A.STATS)), wf: (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Whirl') ? '旋' : '') + (S.tree.includes(WH.treeKey) ? '心' : '') + (Object.values(S.equip).some(it => it && it.u === 'StormEye') ? '眼' : ''), armor: A.STATS.armor, deflect: A.STATS.deflect, minHp: Math.round(minArmor * 100),
         eq: ['wl', 'wr', 'shield', 'core', 'engine', 'hub'].map(k => S.equip[k] ? `${S.equip[k].b}/q${S.equip[k].q}/r${S.equip[k].rar}` : '-').join(' '),
         shards: Object.values(S.shards).reduce((a, b) => a + b, 0), glyphs: Object.values(S.glyphs).reduce((a, b) => a + b, 0), crafts: { ...crafts }, mods: S.mods.length + Object.values(S.equip).reduce((n, it) => n + (it && it.mods ? it.mods.filter(Boolean).length : 0), 0) });
     }
@@ -198,6 +198,7 @@ if (seedsArg) {
     console.log(`每小时（推关时间）带回：装备 ${(keptI / hrs).toFixed(0)} 件，词条碎片 ${(keptS / hrs).toFixed(0)} 个；分解祭坛分解 ${(salvN / hrs).toFixed(0)} 件、得碎片 ${(salvS / hrs).toFixed(0)} 个；阵亡共丢装备 ${lostI} 件`);
   }
   { const all = [...out, ...lads], se = all.reduce((a, r) => a + r.soulE, 0), st = all.reduce((a, r) => a + r.t, 0); console.log(`魂火见底时间占比：${(se / Math.max(1, st) * 100).toFixed(1)}%（推层 ${(out.reduce((a, r) => a + r.soulE, 0) / Math.max(1, out.reduce((a, r) => a + r.t, 0)) * 100).toFixed(1)}%，天梯 ${(lads.reduce((a, r) => a + r.soulE, 0) / Math.max(1, lads.reduce((a, r) => a + r.t, 0)) * 100).toFixed(1)}%）`); }
+  { const a = [...out, ...lads], w = a.reduce((x, r) => x + r.dmg.whirl, 0), d = a.reduce((x, r) => x + r.dmg.devil, 0); if (w + d) console.log(`旋风斩伤害：小旋风占 ${(d / (w + d) * 100).toFixed(1)}%`); }
   if (opt.craft === 'auto' && lastC) console.log(`铁砧：换上自制 ${lastC.swap||0} 次，加词条 ${lastC.add} 次，升档 ${lastC.up} 次，拆解 ${lastC.shatter} 件，熔铸 ${lastC.fuse} 次。`);
   console.log(`\n${out.length} 局，游戏内 ${out.length ? out[out.length - 1].min : 0} 分钟：最深第 ${out.length ? out[out.length - 1].maxDepth - 1 : 0} 层通关；阵亡 ${deaths.length} 趟${deaths.length ? '（首次从第 ' + deaths[0].depth + ' 层出发，第 ' + deaths[0].run + ' 局）' : ''}。`);
   if (process.env.ASH_SEEDS_CHILD) { // --seeds 的子进程：给父进程一行机器可读的汇总
@@ -205,7 +206,7 @@ if (seedsArg) {
     const cnt = k => out.filter(r => r.res === k).length;
     console.log('SUMMARY ' + JSON.stringify({ push: out.length ? out[out.length - 1].maxDepth - 1 : 0, ladder: lads.length ? lads[lads.length - 1].lad.best : 0, runs: out.length, tMed: q(out.map(r => r.t), 0.5), flMed: q(out.map(r => r.fl), 0.5),
       lampout: cnt('lampout'), retreat: cnt('retreat'), emergency: cnt('emergency'), dead: cnt('dead'), salvH: Math.round(out.reduce((a, r) => a + r.salv.n, 0) / hrs), salvShardsH: Math.round(out.reduce((a, r) => a + r.salv.shards, 0) / hrs), itemsH: Math.round(out.reduce((a, r) => a + r.got.items - r.lost.items, 0) / hrs), shardsH: Math.round(out.reduce((a, r) => a + r.got.shards - r.lost.shards, 0) / hrs), lostItems: out.reduce((a, r) => a + r.lost.items, 0),
-      minHp: q(out.flatMap(r => r.mins.map(x => x[1])), 0.5), minHpFront: q(out.flatMap(r => r.mins.filter(x => x[2]).map(x => x[1])), 0.5) }));
+      minHp: q(out.flatMap(r => r.mins.map(x => x[1])), 0.5), minHpFront: q(out.flatMap(r => r.mins.filter(x => x[2]).map(x => x[1])), 0.5), devilPct: (() => { const a = [...out, ...lads], w = a.reduce((x, r) => x + r.dmg.whirl, 0), d = a.reduce((x, r) => x + r.dmg.devil, 0); return Math.round(d / Math.max(1, w + d) * 100); })() }));
   }
   if (opt.json) fs.writeFileSync(opt.json, JSON.stringify(out, null, 1));
   const bad = errs.filter(e => !/GPU stall|swiftshader|GroupMarker/.test(e));

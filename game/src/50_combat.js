@@ -5,7 +5,7 @@ let RUN = null;
 let mobs = [], projs = [], drops = [], fxq = [], zones = [];
 const mouse = { x: 240, y: 150, on: false, touch: false };
 const F = { x0: 10, x1: 470, y0: 62, y1: 226 };
-const player = { x: 240, y: 150, vx: 0, vy: 0, armor: 1, deflect: 0, deflT: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: [0, 0], orbitA: 0, guardT: 0, spin: [{ n: 0, g: 0, idle: 9 }, { n: 0, g: 0, idle: 9 }], soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
+const player = { x: 240, y: 150, vx: 0, vy: 0, armor: 1, deflect: 0, deflT: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: [0, 0], orbitA: 0, guardT: 0, spin: [{ n: 0, g: 0, idle: 9 }, { n: 0, g: 0, idle: 9 }], swing: [0, 0], devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
 const fx = o => { if (G.fx) fxq.push(o); };
 const MINE_MAX = MECH.mineMax;
 const RL = DATA.rules, PAT = PROG.bossPatterns, ELITE = PROG.elite;
@@ -22,7 +22,7 @@ function startRun(L) {
   const map = S.mapArmed && S.maps.find(m => m.id === S.mapArmed);
   if (map) { S.maps = S.maps.filter(m => m !== map); S.mapArmed = null; }
   LX = lootFx(map); const mob = LX.mob;
-  RUN = { mode: 'push', L: L + LX.lvl, base: L, map, mob, bossD: bossFor(L + LX.lvl), kills: 0, prog: 0, dens: 1, eliteMul: 1, need: Math.round(killNeed(L) * (1 + (mob.need || 0) / 100)), boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, next: 0, result: null, descent: { from: L, floors: 0, prevMax: S.maxDepth, minHp: 1 }, gain: { items: [], shards: 0, shardK: {}, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
+  RUN = { dmg: { whirl: 0, devil: 0 }, mode: 'push', L: L + LX.lvl, base: L, map, mob, bossD: bossFor(L + LX.lvl), kills: 0, prog: 0, dens: 1, eliteMul: 1, need: Math.round(killNeed(L) * (1 + (mob.need || 0) / 100)), boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, next: 0, result: null, descent: { from: L, floors: 0, prevMax: S.maxDepth, minHp: 1 }, gain: { items: [], shards: 0, shardK: {}, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
   arenaReset();
 }
 /* 灯火下行：守关 Boss 倒下后直接进入下一层（护甲、灯火、旋转层数都带着走） */
@@ -43,7 +43,7 @@ function deathLoss(r) {
 function arenaReset() {
   mobs = []; projs = []; drops = []; zones = [];
   player.x = 240; player.y = 150; player.vx = player.vy = 0; player.wcd = [0, 0];
-  player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.soul = STATS.soulMax; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
+  player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.swing = [0, 0]; player.devilT = 0; player.soul = STATS.soulMax; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
   resetPlayer();
   sfx('start');
 }
@@ -301,19 +301,18 @@ function chainHit(W, first, from, chains) {
     f = { x: cur.x, y: cur.y - 5 }; cur = nearest(cur.x, cur.y - 4, 60, hit);
   }
 }
+// 旋风的判定半径：武器范围，每层旋势 +rngPer%，风暴之眼再 +eyeRng%
+const whirlR = (W, n) => W.rng * (1 + n * WH.rngPer / 100) * (W.whirl && STATS.flag.stormEye ? 1 + WH.eyeRng / 100 : 1);
+const spinning = () => STATS.weapons.some((W, i) => W && W.whirl && player.spin[i].n > 0);
 const inRange = (W, r) => mobs.some(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2);
 function fire(W, i) {
   const px = player.x, py = player.y - 6;
   switch (W.form) {
-    case 'orbit': { // 回旋骨刃：伤害环内所有敌人；旋身符文叠层（伤害、半径），旋风之心满层时甩出刃风
-      const st = player.spin[i], n = W.whirl ? st.n : 0, mul = W.whirl ? Math.pow(W.morePer, n) : 1, r = W.rng * (1 + n * WH.rngPer / 100);
-      const gust = W.whirl && n >= W.stackMax && STATS.flag.whirlHeart;
-      let any = false;
-      for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2) {
-        hitMob(m, W, { mul }); any = true;
-        if (gust && rnd() * 100 < WH.gustChance) shoot(W, px, py, Math.atan2(m.y - 4 - py, m.x - px), { pierce: WH.gustPierce, chain: 0, split: 0, ret: 0, hit: new Set(), mul: mul * WH.gustMul, life: WH.gustLife, first: false, gust: 1 });
-      }
-      if (any) { sfx('slash'); st.idle = 0; if (W.whirl) player.soul = Math.min(STATS.soulMax, player.soul + WH.soulPerSpin); } // 魂火：每次攻击打中就回，不按怪数
+    case 'orbit': { // 回旋骨刃：砍身边一圈；旋身符文叠旋势（伤害、半径），转的时候每砍中一个敌人回灯火
+      const st = player.spin[i], n = W.whirl ? st.n : 0, mul = W.whirl ? Math.pow(W.morePer, n) : 1, r = whirlR(W, n);
+      let hits = 0;
+      for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2) { const d = hitMob(m, W, { mul }); hits++; if (RUN && RUN.dmg) RUN.dmg.whirl += d; }
+      if (hits) { sfx('slash'); st.idle = 0; player.swing[i] = 0.18; if (W.whirl && n > 0) player.soul = Math.min(STATS.soulMax, player.soul + Math.min(hits, WH.soulHitCap) * WH.soulPerHit); }
       return true;
     }
     case 'nova': { // 圣钟：以自身为中心
@@ -400,7 +399,7 @@ function logic(dt) {
   } else {
     let tvx = 0, tvy = 0;
     const tg = at || (fieldActive() ? { x: mouse.x, y: mouse.y + 4 } : null);
-    if (tg) { const dx = tg.x - player.x, dy = tg.y - player.y, d = Math.hypot(dx, dy); if (d > 2) { const s = P.speed * Math.min(1, d / 24); tvx = dx / d * s; tvy = dy / d * s; } }
+    if (tg) { const dx = tg.x - player.x, dy = tg.y - player.y, d = Math.hypot(dx, dy); if (d > 2) { const s = P.speed * Math.min(1, d / 24) * (spinning() ? WH.spinMoveMul : 1); tvx = dx / d * s; tvy = dy / d * s; } }
     const ax = tvx - player.vx, ay = tvy - player.vy, al = Math.hypot(ax, ay), step = P.accel * dt;
     if (al <= step) { player.vx = tvx; player.vy = tvy; } else { player.vx += ax / al * step; player.vy += ay / al * step; }
     player.x += player.vx * dt; player.y += player.vy * dt;
@@ -413,13 +412,14 @@ function logic(dt) {
   if (player.guardT > 0) player.guardT -= dt;
   if (player.deflT > 0) player.deflT -= dt; else player.deflect = Math.min(P.deflect, player.deflect + P.deflect * P.deflRate * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt);
   if (P.armorRegen) player.armor = Math.min(P.armor, player.armor + P.armor * P.armorRegen * dt);
+  player.swing = player.swing.map(v => Math.max(0, v - dt));
   player.orbitA += dt * 5 * (1 + 0.12 * Math.max(player.spin[0].n, player.spin[1].n)); // 旋转层数越高转得越快
   if (!RUN) { player.armor = P.armor; player.deflect = P.deflect; player.soul = P.soulMax; return; }
-  // 魂火：天梯里每秒自然回复；推关里是灯火，每秒燃烧，越深越快，只靠击杀回。旋转每层每秒另外消耗 whirl.soulPerStack
-  const stacks = P.weapons.reduce((s, W, i) => s + (W && W.whirl ? player.spin[i].n : 0), 0), lad = RUN.mode === 'ladder';
+  // 魂火：天梯里每秒自然回复；推关里是灯火，每秒燃烧，越深越快，只靠击杀回。转旋风的时候每秒另外消耗 whirl.soulPerSec
+  const spin = spinning(), lad = RUN.mode === 'ladder';
   if (!RUN.ending && !RUN.next) {
     const rv = !lad && RUN.base < RUN.descent.prevMax; // 重温已经打过的层
-    const net = (lad ? P.soulRegen : -(SOUL.burn + RUN.base * SOUL.burnPerFloor) * (rv ? SOUL.revisitBurnMul : 1)) - stacks * WH.soulPerStack * (1 - P.soulLess);
+    const net = (lad ? P.soulRegen : -(SOUL.burn + RUN.base * SOUL.burnPerFloor) * (rv ? SOUL.revisitBurnMul : 1)) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
     player.soul = clamp(player.soul + net * dt, 0, P.soulMax);
     if (player.soul <= 0) player.soulEmpty += dt;
     if (!lad && player.soul <= 0) { RUN.result = 'lampout'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('灯火燃尽 · 平安返回', COL.emberHi); }
@@ -447,14 +447,16 @@ function logic(dt) {
     RUN.next = Math.max(0, RUN.next - dt); if (!RUN.next) nextFloor();
     stepProjs(dt); return;
   }
-  // 风暴之眼：移动时在身后留下龙卷风
-  if (P.flag.stormEye) {
-    player.walk += Math.hypot(player.x - player.lx, player.y - player.ly);
-    if (player.walk >= WH.vortexStep) {
-      player.walk = 0; const OW = P.weapons.find(w => w && w.form === 'orbit') || P.weapons.find(w => w && w.form !== 'reflect');
-      if (OW) { const vs = zones.filter(z => z.storm); if (vs.length >= WH.vortexMax) vs[0].t = 0; zones.push({ W: OW, mul: WH.vortexMul, x: player.x, y: player.y, r: WH.vortexR, t: WH.vortexLife, tickT: WH.vortexTick, pull: WH.vortexPull, pullR: WH.vortexPullR, el: OW.el, vortex: 1, storm: 1 }); }
+  // 转旋风的时候：风暴之眼把身边的怪卷过来；旋风之心不断甩出小旋风
+  if (spinning()) {
+    const wi = P.weapons.findIndex((W, i) => W && W.whirl && player.spin[i].n > 0), OW = P.weapons[wi], n = player.spin[wi].n;
+    if (P.flag.stormEye) { const pr = whirlR(OW, n) * WH.pullR; for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy); if (d > 6 && d < pr) { m.x += dx / d * WH.pull * dt; m.y += dy / d * WH.pull * dt; } } }
+    if (P.flag.whirlHeart && (player.devilT -= dt) <= 0) {
+      player.devilT = WH.devilEvery * (n >= OW.stackMax ? WH.devilFullMul : 1);
+      const eye = P.flag.stormEye, max = WH.devilMax + (eye ? WH.eyeMaxAdd : 0), ds = zones.filter(z => z.devil); if (ds.length >= max) ds[0].t = 0;
+      zones.push({ W: OW, mul: WH.devilMul * Math.pow(OW.morePer, n), x: player.x, y: player.y, r: WH.devilR, t: WH.devilLife + (eye ? WH.eyeLifeAdd : 0), tickT: WH.devilTick, el: OW.el, devil: 1, ang: rnd() * Math.PI * 2, seed: rnd() * 9 });
     }
-  }
+  } else player.devilT = 0;
   player.lx = player.x; player.ly = player.y;
   // 天梯限时
   if (RUN.limit && RUN.t >= RUN.limit) { RUN.result = 'timeout'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('时间到'); return; }
@@ -570,9 +572,14 @@ function bossAct(m, aim, bl) {
 function stepZones(dt) {
   for (const z of zones) {
     z.t -= dt; z.tick = (z.tick || 0) - dt;
+    if (z.devil) { // 小旋风：带随机偏转的直线，碰到场地边缘就弹回来
+      z.ang += rf(-WH.devilTurn, WH.devilTurn) * dt; z.x += Math.cos(z.ang) * WH.devilSpeed * dt; z.y += Math.sin(z.ang) * WH.devilSpeed * 0.7 * dt;
+      if (z.x < 8 || z.x > W - 8) { z.ang = Math.PI - z.ang; z.x = clamp(z.x, 8, W - 8); }
+      if (z.y < FLOOR_Y + 6 || z.y > FIELD_B - 4) { z.ang = -z.ang; z.y = clamp(z.y, FLOOR_Y + 6, FIELD_B - 4); }
+    }
     if (z.enemy) { if (z.tick <= 0) { z.tick = z.tickT || 0.5; if (dist2(player, z) < (z.r + 3) ** 2) hurtPlayer(z.dmg, z.el); } continue; }
     if (z.pull) for (const m of mobs) if (!m.dead && !m.boss && dist2(m, z) < (z.pullR || z.r * 1.6) ** 2) { const dx = z.x - m.x, dy = z.y - m.y, d = Math.hypot(dx, dy) || 1; m.x += dx / d * z.pull * dt; m.y += dy / d * z.pull * dt; }
-    if (z.tick <= 0) { z.tick = z.tickT || 0.2; let zh = false; for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, z) < (z.r + m.size) ** 2 && !(z.trail && m.trailT > RUN.t)) { hitMob(m, z.W, { mul: z.mul || 1 }); zh = true; if (z.trail) m.trailT = RUN.t + 0.19; } if (zh && z.storm) player.soul = Math.min(STATS.soulMax, player.soul + WH.soulOnVortex); } // 龙卷风每跳打中就回魂火（不按怪数）
+    if (z.tick <= 0) { z.tick = z.tickT || 0.2; let zh = false; for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, z) < (z.r + m.size) ** 2 && !(z.trail && m.trailT > RUN.t)) { const d = hitMob(m, z.W, { mul: z.mul || 1 }); if (z.devil && RUN.dmg) RUN.dmg.devil += d; zh = true; if (z.trail) m.trailT = RUN.t + 0.19; } } // 小旋风打中不回灯火
   }
   zones = zones.filter(z => z.t > 0);
 }

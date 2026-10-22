@@ -128,25 +128,25 @@ function tornado(g, x, y, h, w, t, seed, a = 1) {
   }
   for (let k = 0; k < 6; k++) { const an = t * 7 + k * 1.05 + seed, rr = w * 0.35 + ((t * 20 + k * 5) % 6); g.fillStyle(0x9a8f78, 0.5 * a).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr * 0.3), 1, 1); } // 卷起的尘土
 }
-// 旋风斩：人裹在一股贴身的旋风里，腰间是武器转出的弧形刀光；外圈只在地上画一圈淡淡的风纹表示攻击范围
-function whirlFx(g, x, y, R, f, t, ang, nb) {
-  const spd = 9 + f * 9;
-  // 外圈地面风纹（攻击范围）
-  const m = 30 + (f * 16 | 0);
-  for (let k = 0; k < m; k++) { const an = k / m * Math.PI * 2 - t * spd * 0.35, sn = Math.sin(an); if (k % 3 === 0) continue; g.fillStyle(0xb8b0c4, (sn > 0 ? 0.22 : 0.12) * (0.5 + f * 0.5)); g.fillRect(Math.round(x + Math.cos(an) * R), Math.round(y + sn * R * 0.32), 1, 1); }
-  // 贴身旋风：从脚下到头顶的一股风，比人宽一圈
-  tornado(g, x, y + 1, 18 + f * 4, 20 + f * 8, t * (1 + f), 0, 0.5 + f * 0.35);
-  // 刀光：武器在腰间转出的弧，弧长随层数从 60° 到 220°，近处亮、尾巴淡
-  const arc = 1 + f * 2.8, r = 11 + f * 5;
-  for (let i = 0; i < Math.min(nb, 2); i++) {
-    const a0 = -t * spd + i * Math.PI, steps = 26;
+// 旋风斩：人在原地转，武器甩成一圈刀光（半径 = 判定半径），脚下一圈被带起的风和尘土；层数越高刀光越长越密
+function whirlFx(g, x, y, R, f, t) {
+  const spd = 10 + f * 10, rs = Math.min(R, 20 + f * 6); // 刀光贴身画；判定半径更大时，外面用风纹铺到判定边缘
+  // 风：几道贴地的弧形气流，跟着刀光同向转
+  for (let j = 0; j < 4; j++) {
+    const rr = rs + (R - rs) * (j / 3) + 4, a0 = -t * spd * (0.8 + j * 0.1) + j * 1.7, len = 1.2 + f * 1.4;
+    for (let s = 0; s < 20; s++) { const q = s / 20, an = a0 + q * len, sn = Math.sin(an); g.fillStyle(sn > 0 ? 0xcfc8d8 : 0x8a8098, (sn > 0 ? 0.4 : 0.2) * (1 - q) * (0.5 + f * 0.5)); g.fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y - 1 + sn * rr * 0.32), 1, 1); }
+  }
+  // 刀光：两把武器各拖一道弧，弧长随层数从 70° 到 250°，前半圈亮、后半圈暗
+  const arc = 1.2 + f * 3.2;
+  for (let i = 0; i < 2; i++) {
+    const a0 = -t * spd + i * Math.PI, steps = 30;
     for (let s = 0; s < steps; s++) {
-      const q = s / steps, an = a0 + q * arc, sn = Math.sin(an), cx = x + Math.cos(an) * r, cy = y - 6 + sn * r * 0.38;
-      g.fillStyle(q < 0.12 ? 0xffffff : sn > 0 ? 0xd4dbe6 : 0x9aa0b0, 0.85 * (1 - q) ** 1.3 * (sn > 0 ? 1 : 0.55));
-      g.fillRect(Math.round(cx), Math.round(cy), q < 0.5 || sn > 0 ? 2 : 1, q < 0.6 ? 2 : 1);
+      const q = s / steps, an = a0 + q * arc, sn = Math.sin(an), cx = x + Math.cos(an) * rs, cy = y - 6 + sn * rs * 0.38;
+      g.fillStyle(q < 0.1 ? 0xffffff : sn > 0 ? 0xd4dbe6 : 0x9aa0b0, 0.9 * (1 - q) ** 1.2 * (sn > 0 ? 1 : 0.5));
+      g.fillRect(Math.round(cx), Math.round(cy), q < 0.5 ? 2 : 1, q < 0.3 ? 2 : 1);
     }
   }
-  for (let k = 0; k < 10; k++) { const an = -t * spd * 0.6 + k * 0.63, rr = 10 + ((t * 2.5 + k * 0.37) % 1) * (R - 10); g.fillStyle(0x9a8f78, 0.45 * (1 - rr / R)).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr * 0.3), 1, 1); } // 往外甩的尘土
+  for (let k = 0; k < 10; k++) { const an = -t * spd * 0.6 + k * 0.63, rr = R * (0.3 + ((t * 2.5 + k * 0.37) % 1) * 0.8); g.fillStyle(0x9a8f78, 0.5 * (1 - rr / (R * 1.1))).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr * 0.3), 1, 1); } // 往外甩的尘土
 }
 /* ---------- 文字：平滑字体，按画布的实际分辨率渲染 ---------- */
 const FONT_FAM = '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", "WenQuanYi Zen Hei", sans-serif';
