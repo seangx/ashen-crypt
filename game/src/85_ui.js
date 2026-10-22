@@ -256,7 +256,7 @@ class UI extends Phaser.Scene {
     } else if (RUN) {
       const f = Math.min(1, RUN.prog / RUN.need), fw = Math.round(184 * f), won = RUN.result === 'win';
       b.fillStyle(won ? 0xffd36a : 0x7a55a0, 1).fillRect(8, 15, fw, 6); b.fillStyle(won ? 0xfff0b0 : 0xa888d0, 1).fillRect(8, 15, fw, 1);
-      const t = won ? '完成' : `${RUN.prog} / ${RUN.need}`; if (this.bossT.text !== t) this.bossT.setText(t).setTint(hex(COL.text));
+      const t = won ? '完成' : `${Math.floor(RUN.prog + 1e-6)} / ${RUN.need}`; if (this.bossT.text !== t) this.bossT.setText(t).setTint(hex(COL.text));
     }
     const lt = String(S.level); if (this.lvT.text !== lt) this.lvT.setText(lt);
     const xg = this.xpG; xg.clear(); const DW = W - 132; xg.fillStyle(0x14202c, 1).fillRect(0, 3, DW, 3); xg.fillStyle(0x9fd8ff, 1).fillRect(0, 3, Math.round(DW * clamp(S.xp / xpNeed(S.level), 0, 1)), 2); xg.fillStyle(0x0b080e, 1); for (let i = 34; i < DW; i += 34) xg.fillRect(i, 3, 1, 3);

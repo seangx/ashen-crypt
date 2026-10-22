@@ -56,8 +56,9 @@ function spawnMob(type, o = {}) {
   const side = ri(0, 2);
   const x = o.x ?? (side === 0 ? rf(F.x0, F.x1) : side === 1 ? F.x0 : F.x1), y = o.y ?? (side === 0 ? F.y0 : rf(F.y0, F.y1));
   const elite = !o.boss && rnd() < ELITE.chance * (RUN.eliteMul || 1) * (1 + (mx.elite || 0) / 100);
-  const hp = d.hp * monHp(L) * (elite ? ELITE.hp : 1) * (1 + (mx.mobHp || 0) / 100);
-  const m = { type, d, x, y, hp, max: hp, dmg: d.dmg * monDmg(L) * (elite ? ELITE.dmg : 1) * (1 + (mx.mobDmg || 0) / 100), spd: d.spd * (elite ? ELITE.spd : 1) * (1 + (mx.mobSpd || 0) / 100), size: d.size + (elite ? ELITE.size : 0), res: Object.fromEntries(ELEM.map(e => [e, ((d.res || {})[e] || 0) + (mx.mobRes || 0)])), el: d.el,
+  const HD = o.boss ? null : PROG.run.horde; // 怪海：普通怪更多更脆
+  const hp = d.hp * monHp(L) * (elite ? ELITE.hp : 1) * (1 + (mx.mobHp || 0) / 100) * (HD ? HD.hp : 1);
+  const m = { type, d, x, y, hp, max: hp, dmg: d.dmg * monDmg(L) * (elite ? ELITE.dmg : 1) * (1 + (mx.mobDmg || 0) / 100) * (HD ? HD.dmg : 1), spd: d.spd * (elite ? ELITE.spd : 1) * (1 + (mx.mobSpd || 0) / 100), size: d.size + (elite ? ELITE.size : 0), res: Object.fromEntries(ELEM.map(e => [e, ((d.res || {})[e] || 0) + (mx.mobRes || 0)])), el: d.el,
     elite, boss: !!o.boss, rise: o.boss ? 0.8 : 0.4, atkCd: 1, cd: rf(0.5, d.cd || 2), fl: 0, shock: 0, shockT: 0, blindT: 0, blindK: 0, burn: 0, burnT: 0, rad: [], after: [], t: 0, face: 1, vx: 0, vy: 0, kx: 0, ky: 0, ramT: 0, fat: 0 };
   mobs.push(m); return m;
 }
@@ -150,9 +151,10 @@ function ailment(m, e, d, W, o) {
 }
 function damage(m, amt, el, crit, small) {
   if (m.dead || amt <= 0) return;
-  m.hp -= amt; if (!small && !(m.flCd > 0)) { m.fl = 0.06; m.flCd = 0.45; } // 受击白闪限频：连续挨打不会一直发白
-  if (!small || amt > m.max * 0.04) fx({ t: 'num', x: m.x, y: m.y - m.size * 2, v: amt, el, crit, small });
-  if (G.fx && !small) { m.kbT = 0.12; m.kbA = Math.atan2(m.y - player.y, m.x - player.x); if (crit || m.boss || m.elite) fx({ t: 'impact', x: m.x, y: m.y - m.size, el, crit, big: m.boss || m.elite }); } // 只影响画面：击退偏移、火花
+  const crowd = mobs.length > 15 && !m.boss && !m.elite; // 怪海里的普通怪：不白闪、不飘数字，只留刀痕和击退
+  m.hp -= amt; if (!small && !crowd && !(m.flCd > 0)) { m.fl = 0.06; m.flCd = 0.45; } // 受击白闪限频：连续挨打不会一直发白
+  if ((!small || amt > m.max * 0.04) && !crowd) fx({ t: 'num', x: m.x, y: m.y - m.size * 2, v: amt, el, crit, small }); 
+  if (G.fx && !small) { m.kbT = 0.12; m.kbA = Math.atan2(m.y - player.y, m.x - player.x); if ((crit && !crowd) || m.boss || m.elite) fx({ t: 'impact', x: m.x, y: m.y - m.size, el, crit, big: m.boss || m.elite }); } // 只影响画面：击退偏移、火花
   if (m.hp <= 0) kill(m);
 }
 function kill(m) {
@@ -162,15 +164,16 @@ function kill(m) {
   sfx(m.boss ? 'bossdie' : 'kill');
   if (!RUN) return;
   RUN.kills++;
-  if (!m.boss) RUN.prog += RUN.mode === 'ladder' ? (m.elite ? LD.run.eliteP : LD.run.normalP) : 1;
-  if (RUN.mode !== 'ladder') player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * STATS.soulGainMul * (RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
+  const hk = m.boss ? 1 : 1 / PROG.run.horde.count; // 怪海：每只的推进、经验、灯火、掉落按数量摊薄
+  if (!m.boss) RUN.prog += (RUN.mode === 'ladder' ? (m.elite ? LD.run.eliteP : LD.run.normalP) : 1) * hk;
+  if (RUN.mode !== 'ladder') player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * (RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
   deathRules(m);
   const mm = manualMul();
-  const xp = Math.round(m.d.xp * (m.elite ? ELITE.xp : 1) * monXp(RUN.L) * (1 + LX.xp / 100) * mm);
+  const xp = m.d.xp * (m.elite ? ELITE.xp : 1) * monXp(RUN.L) * (1 + LX.xp / 100) * mm * hk;
   const lad = RUN.mode === 'ladder';
   if (!lad || LD.run.xp) { gainXp(xp); modXp(xp); }
   const L = RUN.L;
-  const mult = (m.boss || (lad && !LD.run.mobDrops) ? 0 : m.elite ? DROP.eliteMul : 1) * mm; // 天梯：怪物不掉落，只有通关宝箱
+  const mult = (m.boss || (lad && !LD.run.mobDrops) ? 0 : m.elite ? DROP.eliteMul : 1) * mm * hk; // 天梯：怪物不掉落，只有通关宝箱
   const shardDrop = () => { const k = rollShard(L); dropThing(m, { kind: 'shard', k }); if (rnd() * 100 < LX.twin) dropThing(m, { kind: 'shard', k }); };
   if (rnd() < DROP.item * mult * (1 + LX.iiq / 100)) dropThing(m, { kind: 'item', item: rollItem(L, LX.iir) });
   if (rnd() < DROP.shard * mult * (1 + LX.dice / 100)) shardDrop();
@@ -463,9 +466,13 @@ function logic(dt) {
   // 刷怪（天梯：上限 ×密度，间隔 ÷密度）
   if (!RUN.boss) {
     RUN.spawnT -= dt;
-    const R = PROG.run, cap = Math.round((R.spawnCapBase + Math.min(R.spawnCapMaxExtra, RUN.L)) * RUN.dens);
-    if (RUN.spawnT <= 0 && mobs.length < cap) { spawnMob(pickMob(RUN.L)); RUN.spawnT = Math.max(R.spawnIntervalMin, R.spawnInterval - RUN.L * R.spawnIntervalPerLevel) / RUN.dens; }
-    if (RUN.prog >= RUN.need) spawnBoss();
+    const R = PROG.run, HD = R.horde, cap = Math.round((R.spawnCapBase + Math.min(R.spawnCapMaxExtra, RUN.L)) * RUN.dens * HD.count);
+    if (RUN.spawnT <= 0 && mobs.length < cap) { // 一次刷一群，挤在场边同一处
+      const n = Math.min(cap - mobs.length, ri(HD.pack[0], HD.pack[1])), first = spawnMob(pickMob(RUN.L));
+      for (let i = 1; i < n; i++) spawnMob(pickMob(RUN.L), { x: clamp(first.x + rf(-14, 14), F.x0, F.x1), y: clamp(first.y + rf(-10, 10), F.y0, F.y1) });
+      RUN.spawnT = Math.max(R.spawnIntervalMin, R.spawnInterval - RUN.L * R.spawnIntervalPerLevel) / RUN.dens / HD.count * n;
+    }
+    if (RUN.prog >= RUN.need - 1e-6) spawnBoss();
   }
   // 武器
   P.weapons.forEach((W, i) => {

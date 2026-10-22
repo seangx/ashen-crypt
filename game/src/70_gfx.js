@@ -138,7 +138,7 @@ function whirlFx(ground, blade, glow, x, y, R, f, t, eye, ang) { // ang：角色
   // 风暴之眼：吸扯范围外往里流的风线
   if (eye) { const PR = R * WH.pullR; for (let k = 0; k < 14; k++) { const ph = (t * 0.9 + k * 0.37) % 1, rr = PR - (PR - R) * ph, an = k * 2.4 - t * 1.5 - ph * 1.2; for (let s = 0; s < 6; s++) { const r2 = rr + s * 1.5; ground.fillStyle(0xd08a60, 0.45 * Math.sin(ph * Math.PI) * (1 - s / 6)).fillRect(Math.round(x + Math.cos(an + s * 0.02) * r2), Math.round(y + Math.sin(an + s * 0.02) * r2), 1, 1); } } }
   // 刀光：经典旋风斩那种粗的红橙色月牙拖影（叠加发光层，外沿 = 判定半径）。一道长的主弧 + 对面一道短的，头粗尾细
-  const g = glow || blade, cy = y - 3, W = 7 + f * 7, S = 24;
+  const g = blade, cy = y - 3, W = Math.min(R * 0.55, 12 + f * 12), S = 24;
   const band = (r0, r1, b0, b1) => { const n = 3, pts = []; for (let j = 0; j <= n; j++) { const a = b0 + (b1 - b0) * j / n; pts.push({ x: x + Math.cos(a) * r1, y: cy + Math.sin(a) * r1 }); } for (let j = n; j >= 0; j--) { const a = b0 + (b1 - b0) * j / n; pts.push({ x: x + Math.cos(a) * r0, y: cy + Math.sin(a) * r0 }); } g.fillPoints(pts, true); }; // 一小段环形扇面，相邻段首尾相接不重叠
   for (let i = 0; i < 2; i++) {
     const a0 = (ang ?? -t * spd) + i * Math.PI, arc = (i ? 0.5 : 1) * (1.4 + f * 2.2), w0 = W * (i ? 0.6 : 1);
@@ -149,6 +149,7 @@ function whirlFx(ground, blade, glow, x, y, R, f, t, eye, ang) { // ang：角色
       g.fillStyle(0xffc070, k); band(R - w * 0.3, R, b0, b1); // 刃口亮边（外沿 = 判定半径）
     }
     g.fillStyle(0xffe6b0, 0.9).fillCircle(x + Math.cos(a0) * (R - 2), cy + Math.sin(a0) * (R - 2), 1.5 + f); // 刀头
+    if (glow) { glow.lineStyle(3, 0xff6a30, 0.35); glow.beginPath(); glow.arc(x, cy, R - 1, a0, a0 + arc * 0.25); glow.strokePath(); } // 只有刀头一小段发光
   }
   for (let k = 0; k < 8; k++) { const an = -t * spd * 0.6 + k * 0.79, rr = R * (0.4 + ((t * 2.5 + k * 0.37) % 1) * 0.7); ground.fillStyle(0x8a6a4a, 0.5 * (1 - rr / (R * 1.15))).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr), 1, 1); } // 往外甩的尘土
 }

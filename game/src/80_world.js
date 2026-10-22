@@ -29,7 +29,8 @@ class World extends Phaser.Scene {
     this.barG = this.add.graphics().setDepth(52);
     this.lootG = this.add.graphics().setDepth(55);
     this.projG = this.add.graphics().setDepth(58);
-    this.groundG = this.add.graphics().setDepth(8.5); // 贴地的范围圈（在影子和怪下面）
+    this.groundG = this.add.graphics().setDepth(8.5);
+    this.whirlG = this.add.graphics().setDepth(9.8); // 旋风的月牙刀光：画在怪下面（怪挡住刀光），不再叠加在怪身上发白 // 贴地的范围圈（在影子和怪下面）
     this.fxG = this.add.graphics().setDepth(59);
     this.hero = this.add.image(0, 0, 'hero_0').setOrigin(0.5, 1);
     this.heroSh = this.add.image(0, 0, 'shadow').setDepth(9);
@@ -59,7 +60,7 @@ class World extends Phaser.Scene {
   hitStop(d, cd = 0.35) { if (!G.fx || G.time < (this.stopCd || 0)) return; this.stopUntil = G.time + d; this.stopCd = G.time + cd; } // 有冷却，打 Boss 时不会一直卡
   shake(ms, amt) { if (!G.fx || G.time < (this.shakeT || 0)) return; this.shakeT = G.time + 0.6; this.cameras.main.shake(ms, amt); }
   dmgText(x, y, str, col, big) {
-    if (this.dmgCount > 50) return; this.dmgCount++;
+    if (this.dmgCount > 30) return; this.dmgCount++;
     // 伤害数字复用文字对象，避免每次都新建纹理
     this.dmgPool ??= { n: [], b: [] }; const pool = big ? this.dmgPool.b : this.dmgPool.n;
     const t = (pool.pop() || T(this, 0, 0, '', { size: 'num', scale: big ? 1.7 : 1 })).setText(str).setPosition(Math.round(x + rf(-3, 3)), Math.round(y)).setOrigin(0.5, 1).setTint(hex(col)).setDepth(70).setAlpha(1).setVisible(true);
@@ -92,7 +93,7 @@ class World extends Phaser.Scene {
         case 'hit': this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(2, e.x, e.y); break;
         case 'impact': this.em.spark2.particleTint = hex(e.crit ? '#ffe6a0' : ELEM_C[e.el]); this.em.spark2.explode(e.big ? (e.crit ? 10 : 4) : 4, e.x, e.y); if (e.crit) this.em.chip.explode(e.big ? 4 : 1, e.x, e.y); if (e.big && e.crit) this.hitStop(0.05, 1.2); break;
         case 'burn': this.em.fire.explode(2, e.x, e.y - 6); break;
-        case 'die': if (e.boss) { this.em.bossdie.explode(60, e.x, e.y - 12); this.shake(300, 0.01); this.hitStop(0.09); } else { this.em.bone.explode(6, e.x, e.y - 6); this.em.chip.explode(e.elite ? 12 : 5, e.x, e.y - 6); if (e.elite) { this.hitStop(0.06); this.shake(90, 0.002); } } break;
+        case 'die': if (e.boss) { this.em.bossdie.explode(60, e.x, e.y - 12); this.shake(300, 0.01); this.hitStop(0.09); } else { this.em.bone.explode(e.elite ? 6 : 2, e.x, e.y - 6); this.em.chip.explode(e.elite ? 12 : 2, e.x, e.y - 6); if (e.elite) { this.hitStop(0.06); this.shake(90, 0.002); } } break;
         case 'pick': this.em.spark.particleTint = 0xfff2c8; this.em.spark.explode(4, e.x, e.y - 4); break;
         case 'orbitHit': break;
         case 'wcut': { const a = e.a + Math.PI / 2 + rf(-0.4, 0.4), c = Math.cos(a) * 4, sn = Math.sin(a) * 4; this.lines.push({ x1: e.x - c, y1: e.y - sn, x2: e.x + c, y2: e.y + sn, el: 'kin', life: 0.07 }); break; } // 旋风砍中：一道斜切 + 碎屑，代替整只怪发白
@@ -142,13 +143,13 @@ class World extends Phaser.Scene {
     const lg = this.lootG; lg.clear();
     for (const dp of drops) if ((dp.kind === 'item' && dp.item.rar > 0) || dp.kind === 'map') this.beam(lg, dp, t);
     // 投射物、环绕刃
-    const pg = this.projG; pg.clear(); this.groundG.clear(); if (this.glowG) this.glowG.clear();
+    const pg = this.projG; pg.clear(); this.groundG.clear(); this.whirlG.clear(); if (this.glowG) this.glowG.clear();
     for (const p of projs) this.drawProj(pg, p, t);
     STATS.weapons.forEach((W_, wi) => {
       if (!W_ || W_.form !== 'orbit') return;
       // 回旋骨刃：有旋势时人在转（刀光圈 + 风）；没有时每次砍中画一道横扫
       const n = W_.whirl ? player.spin[wi].n : 0, R = whirlR(W_, n);
-      if (n > 0) { const f = n / W_.stackMax; whirlFx(this.groundG, pg, this.glowG, player.x, player.y, R, f, t, STATS.flag.stormEye, Math.PI / 2 - (this.spinPh || 0) * Math.PI / 2 + 0.5); if (f >= 1 && this.post && G.time - (this.wPulse || 0) > 0.55) { this.wPulse = G.time; this.post.waves.push({ x: player.x, y: player.y, r: R + 10, k: 0.45, life: 0.3, t0: G.time }); } } // 满层：每圈一道空气冲击波
+      if (n > 0) { const f = n / W_.stackMax; whirlFx(this.groundG, this.whirlG, this.glowG, player.x, player.y, R, f, t, STATS.flag.stormEye, Math.PI / 2 - (this.spinPh || 0) * Math.PI / 2 + 0.5); if (f >= 1 && this.post && G.time - (this.wPulse || 0) > 0.55) { this.wPulse = G.time; this.post.waves.push({ x: player.x, y: player.y, r: R + 10, k: 0.45, life: 0.3, t0: G.time }); } } // 满层：每圈一道空气冲击波
       else if (player.swing[wi] > 0) { const k = player.swing[wi] / 0.18, a0 = (player.face < 0 ? Math.PI : 0) - 2.4 + (1 - k) * 4.8; for (let s2 = 0; s2 < 16; s2++) { const q = s2 / 16, an = a0 - q * 2.2; pg.fillStyle(0xdfe6ee, 0.8 * k * (1 - q)); pg.fillRect(Math.round(player.x + Math.cos(an) * R), Math.round(player.y - 6 + Math.sin(an) * R * 0.4), 2, 1); } }
     });
     for (const z of zones) if (z.devil) { const a = Math.min(1, z.t * 2); if (this.glowG) devilFx(this.groundG, this.glowG, z.x, z.y + 2, z.r, t, z.seed, a); else tornado(pg, z.x, z.y + 2, z.r * 1.6, z.r * 1.2, t, z.seed, a * 0.85); } // 旋风之心甩出的小旋风
@@ -167,7 +168,7 @@ class World extends Phaser.Scene {
     // 光照：每个光源有颜色；WebGL 下画进彩色光照图，否则沿用旧的暗部遮罩
     const fl = 1 + Math.sin(t * 9) * .04 + Math.sin(t * 23) * .03;
     const WARM = 0xff9a4a, lights = SCONCES.map(s => ({ x: s.x, y: s.y + 6, r2: (64 * fl) ** 2, i: .75, c: WARM }));
-    lights.push({ x: player.x + player.face * 4, y: player.y - 6, r2: (110 * fl) ** 2, i: .55, c: 0x7fd0e0 }); // 提灯亡魂身上的青色魂光
+    lights.push({ x: player.x + player.face * 4, y: player.y - 6, r2: (110 * fl) ** 2, i: .38, c: 0x7fd0e0 }); // 提灯亡魂身上的青色魂光
     if (!RUN) { const gt = FAC_BY.gate; lights.push({ x: gt.x - 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: gt.x + 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: 240, y: 178, r2: (80 * fl) ** 2, i: .75, c: 0xffa050 });
       const FC = { altar: 0xc08aff, runes: 0x57e0d0, stele: 0xffd36a };
       for (const id of ['altar', 'runes', 'stele', 'chest', 'anvil', 'statue', 'atlas']) if (open[id]) lights.push({ x: FAC_BY[id].x, y: FAC_BY[id].y - 12, r2: id === 'altar' ? 900 : 620, i: .35, c: FC[id] || 0xd0a070 }); }
