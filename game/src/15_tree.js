@@ -23,7 +23,7 @@ const treeText = (k, v) => k.startsWith('inc:') && k !== 'inc:all' ? `${INC_N[k.
 const RULES = DATA.rules; RULES.whirl = DATA.mechanics.whirl; // {whirl.参数} 引用 mechanics.json 的 whirl
 const ruleText = (k, v) => { const R = RULES[k]; return R && R.text ? R.text.replace(/\{(\w+)(?:\.(\w+))?\}/g, (m, a, b) => b ? RULES[a][b] : a === 'v' ? v : R[a]) : null; };
 const MORE_N = { 'dmg:hit': '命中伤害', 'dmg:nonEle': '闪电以外的伤害', 'dmg:nonKin': '物理以外的伤害', 'dmg:nonPla': '圣光以外的伤害', 'dmg:thermal': '元素伤害', 'dmg:nonAoe': '非范围武器伤害',
-  speed: '移动速度', armor: '护盾', deflect: '护盾', deflRate: '护盾回复速度', aspd: '攻击速度', dot: '持续伤害', rad: '疫病伤害', blind: '致盲效果', crit: '暴击率' };
+  speed: '移动速度', armor: '护盾', deflect: '护盾', deflRate: '护盾回复速度', life: '生命', aspd: '攻击速度', dot: '持续伤害', rad: '疫病伤害', blind: '致盲效果', crit: '暴击率' };
 for (const e of ELEM) MORE_N['dmg:' + e] = ELEM_N[e] + '伤害';
 const moreText = (k, v) => k === 'dashMax' ? `冲刺槽 ${v}（至少 1）` : `${MORE_N[k] || k}${v >= 1 ? '总增' : '总降'} ${Math.round(Math.abs(v - 1) * 100)}%`;
 // 大型节点的说明：规则 → 附加 → 代价，按数值自动生成
