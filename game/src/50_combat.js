@@ -150,7 +150,7 @@ function ailment(m, e, d, W, o) {
 }
 function damage(m, amt, el, crit, small) {
   if (m.dead || amt <= 0) return;
-  m.hp -= amt; m.fl = 0.08;
+  m.hp -= amt; if (!small && !(m.flCd > 0)) { m.fl = 0.06; m.flCd = 0.45; } // 受击白闪限频：连续挨打不会一直发白
   if (!small || amt > m.max * 0.04) fx({ t: 'num', x: m.x, y: m.y - m.size * 2, v: amt, el, crit, small });
   if (G.fx && !small) { m.kbT = 0.12; m.kbA = Math.atan2(m.y - player.y, m.x - player.x); if (crit || m.boss || m.elite) fx({ t: 'impact', x: m.x, y: m.y - m.size, el, crit, big: m.boss || m.elite }); } // 只影响画面：击退偏移、火花
   if (m.hp <= 0) kill(m);
@@ -311,7 +311,7 @@ function fire(W, i) {
     case 'orbit': { // 回旋骨刃：砍身边一圈；旋身符文叠旋势（伤害、半径），转的时候每砍中一个敌人回灯火
       const st = player.spin[i], n = W.whirl ? st.n : 0, mul = W.whirl ? Math.pow(W.morePer, n) : 1, r = whirlR(W, n);
       let hits = 0;
-      for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2) { const d = hitMob(m, W, { mul }); hits++; if (RUN && RUN.dmg) RUN.dmg.whirl += d; }
+      for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2) { const d = hitMob(m, W, { mul }); hits++; if (n > 0 && hits <= 5) fx({ t: 'wcut', x: m.x, y: m.y - m.size, a: Math.atan2(m.y - player.y, m.x - player.x) }); if (RUN && RUN.dmg) RUN.dmg.whirl += d; }
       if (hits) { sfx('slash'); st.idle = 0; player.swing[i] = 0.18; if (W.whirl && n > 0) player.soul = Math.min(STATS.soulMax, player.soul + Math.min(hits, WH.soulHitCap) * WH.soulPerHit); }
       return true;
     }
@@ -494,7 +494,7 @@ function logic(dt) {
   // 敌人
   for (const m of mobs) {
     if (m.dead) continue;
-    m.t += dt; if (m.fl > 0) m.fl -= dt; if (m.ramT > 0) m.ramT -= dt; if (m.slowT > 0) m.slowT -= dt;
+    m.t += dt; if (m.fl > 0) m.fl -= dt; if (m.flCd > 0) m.flCd -= dt; if (m.ramT > 0) m.ramT -= dt; if (m.slowT > 0) m.slowT -= dt;
     if (m.rise > 0) { m.rise -= dt; continue; }
     if (m.boss && m.t > MECH.fatigueStart) m.fat = Math.min(MECH.fatigueMax, Math.floor(m.t - MECH.fatigueStart));
     // 异常

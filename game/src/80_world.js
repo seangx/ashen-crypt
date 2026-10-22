@@ -29,6 +29,7 @@ class World extends Phaser.Scene {
     this.barG = this.add.graphics().setDepth(52);
     this.lootG = this.add.graphics().setDepth(55);
     this.projG = this.add.graphics().setDepth(58);
+    this.groundG = this.add.graphics().setDepth(8.5); // 贴地的范围圈（在影子和怪下面）
     this.fxG = this.add.graphics().setDepth(59);
     this.hero = this.add.image(0, 0, 'hero_0').setOrigin(0.5, 1);
     this.heroSh = this.add.image(0, 0, 'shadow').setDepth(9);
@@ -94,6 +95,7 @@ class World extends Phaser.Scene {
         case 'die': if (e.boss) { this.em.bossdie.explode(60, e.x, e.y - 12); this.shake(300, 0.01); this.hitStop(0.09); } else { this.em.bone.explode(6, e.x, e.y - 6); this.em.chip.explode(e.elite ? 12 : 5, e.x, e.y - 6); if (e.elite) { this.hitStop(0.06); this.shake(90, 0.002); } } break;
         case 'pick': this.em.spark.particleTint = 0xfff2c8; this.em.spark.explode(4, e.x, e.y - 4); break;
         case 'orbitHit': break;
+        case 'wcut': { const a = e.a + Math.PI / 2 + rf(-0.4, 0.4), c = Math.cos(a) * 4, sn = Math.sin(a) * 4; this.lines.push({ x1: e.x - c, y1: e.y - sn, x2: e.x + c, y2: e.y + sn, el: 'kin', life: 0.07 }); break; } // 旋风砍中：一道斜切 + 碎屑，代替整只怪发白
         case 'spike': this.lines.push({ x1: e.x, y1: e.y + 1, x2: e.x, y2: e.y - 9, el: e.el, life: 0.12 }); this.em.bone.explode(2, e.x, e.y - 2); break;
       }
     }
@@ -110,16 +112,21 @@ class World extends Phaser.Scene {
     if (!RUN) campFx(g, t, open);
     // 玩家
     const fr = (t * 4 | 0) % 2, bob = Math.round(Math.sin(t * 3) * 1);
-    { const wi = STATS.weapons.findIndex(w => w && w.whirl), n = wi >= 0 && RUN ? player.spin[wi].n : 0; this.spinRate = n > 0 ? 6 + n * 0.8 : 0; } // 旋转时角色左右快速翻面，像在原地转
+    { const wi = STATS.weapons.findIndex(w => w && w.whirl), n = wi >= 0 && RUN ? player.spin[wi].n : 0; this.spinRate = n > 0 ? 2 + 2 * n / STATS.weapons[wi].stackMax : 0; } // 每秒转几圈：旋势越高越快
     const sig = dollSig(S.equip);
     if (sig !== this.dollSig) { // 装备变了：重画纸娃娃
       this.dollSig = sig; this.dollN = (this.dollN || 0) + 1;
       for (const f of [0, 1]) { const cv = dollCanvas(S.equip, f); for (const [k, c] of [['doll_', cv], ['doll_fl_', silhouette(cv, '#ffffff')]]) { const key = k + f; if (this.textures.exists(key)) this.textures.remove(key); this.textures.addCanvas(key, c); } }
+      for (const v of [1, 2]) { const key = 'doll_v' + v; if (this.textures.exists(key)) this.textures.remove(key); this.textures.addCanvas(key, dollCanvas(S.equip, 0, v)); } // 转身用的侧面、背面
       this.hero.setTexture('doll_0'); if (this.heroCS && this.heroCS.cs) this.heroCS.cs.setTexture('doll_0'); G.ui && G.ui.dollChanged && G.ui.dollChanged(); // 影子也要换到新纹理，旧的已经删掉
     }
-    const hk = (player.hurtT > 0.15 ? 'doll_fl_' : 'doll_') + fr;
+    // 旋风斩转身：正 → 侧 → 背 → 另一侧，一圈 4 帧；身后拖两个旧帧的淡残影
+    const SPIN = [['doll_0', false], ['doll_v1', false], ['doll_v2', false], ['doll_v1', true]], ph = this.spinRate ? (this.spinPh = (this.spinPh || 0) + dt * this.spinRate * 4) : 0;
+    const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.hurtT > 0.15 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
-    this.hero.setPosition(player.x, player.y + bob).setFlipX(this.spinRate ? (t * this.spinRate | 0) % 2 === 0 : player.face < 0).setDepth(10 + player.y / 100).setAlpha(player.dashT > 0 ? 0.5 : 1);
+    this.hero.setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(10 + player.y / 100).setAlpha(player.dashT > 0 ? 0.5 : 1);
+    if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x6a78a8));
+    this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(-ph * Math.PI / 2 - i) * (i + 1), player.y).setDepth(10 + player.y / 100 - 0.01).setAlpha(0.35 - i * 0.15); });
     this.heroSh.setPosition(player.x, player.y + 1);
     { const hub = S.equip.hub, hg = this.hubG; hg.clear(); if (hub) { const b = baseOf(hub); const c = hex(b.el ? ELEM_C[b.el] : b.mass ? '#e9e0c9' : b.energy ? '#c08aff' : '#57e0d0'); const n = 22; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.7; hg.fillStyle(c, 0.35 + 0.3 * Math.sin(i * 1.3 + t * 3)); hg.fillRect(Math.round(player.x + Math.cos(a) * 9), Math.round(player.y + 1 + Math.sin(a) * 3), 1, 1); } } }
     if (player.dashT > 0 && this.frame % 2 === 0) {
@@ -135,13 +142,13 @@ class World extends Phaser.Scene {
     const lg = this.lootG; lg.clear();
     for (const dp of drops) if ((dp.kind === 'item' && dp.item.rar > 0) || dp.kind === 'map') this.beam(lg, dp, t);
     // 投射物、环绕刃
-    const pg = this.projG; pg.clear(); if (this.glowG) this.glowG.clear();
+    const pg = this.projG; pg.clear(); this.groundG.clear(); if (this.glowG) this.glowG.clear();
     for (const p of projs) this.drawProj(pg, p, t);
     STATS.weapons.forEach((W_, wi) => {
       if (!W_ || W_.form !== 'orbit') return;
       // 回旋骨刃：有旋势时人在转（刀光圈 + 风）；没有时每次砍中画一道横扫
       const n = W_.whirl ? player.spin[wi].n : 0, R = whirlR(W_, n);
-      if (n > 0) whirlFx(pg, player.x, player.y, R, n / W_.stackMax, t);
+      if (n > 0) { const f = n / W_.stackMax; whirlFx(this.groundG, pg, this.glowG, player.x, player.y, R, f, t, STATS.flag.stormEye, Math.PI / 2 - (this.spinPh || 0) * Math.PI / 2 + 0.5); if (f >= 1 && this.post && G.time - (this.wPulse || 0) > 0.55) { this.wPulse = G.time; this.post.waves.push({ x: player.x, y: player.y, r: R + 10, k: 0.45, life: 0.3, t0: G.time }); } } // 满层：每圈一道空气冲击波
       else if (player.swing[wi] > 0) { const k = player.swing[wi] / 0.18, a0 = (player.face < 0 ? Math.PI : 0) - 2.4 + (1 - k) * 4.8; for (let s2 = 0; s2 < 16; s2++) { const q = s2 / 16, an = a0 - q * 2.2; pg.fillStyle(0xdfe6ee, 0.8 * k * (1 - q)); pg.fillRect(Math.round(player.x + Math.cos(an) * R), Math.round(player.y - 6 + Math.sin(an) * R * 0.4), 2, 1); } }
     });
     for (const z of zones) if (z.devil) tornado(pg, z.x, z.y + 2, z.r * 1.6, z.r * 1.2, t, z.seed, Math.min(1, z.t * 2) * 0.85); // 旋风之心甩出的小旋风

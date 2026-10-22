@@ -248,19 +248,25 @@ const HEAD_DOLL = {
 const DOLL_W = 26, DOLL_H = 18, DOLL_OX = 7, DOLL_OY = 4;
 const dollSig = eq => ['wl', 'wr', 'shield', 'core', 'engine'].map(k => eq[k] ? eq[k].b : '-').join('|');
 // 画出一帧纸娃娃（outline 后的画布）
-function dollCanvas(eq, fr) {
+// view：0 正面，1 侧面，2 背面（旋风斩转身用）。侧面把身子压窄、脸只露一只眼在边上；背面盖住脸、两手的武器前后对调
+const DOLL_SIDE = r => (r.slice(2, 10) + '').padEnd(8, '.');
+function dollCanvas(eq, fr, view = 0) {
   const c = document.createElement('canvas'); c.width = DOLL_W; c.height = DOLL_H; const x = c.getContext('2d');
   const put = (img, dx, dy, alpha = 1) => { x.globalAlpha = alpha; x.drawImage(img, dx, dy); x.globalAlpha = 1; };
   // 盾：背在身后
   if (eq.shield) { const [a, b] = SHIELD_COL[eq.shield.b] || ['b', 'w']; put(sprite(recolor(SHIELD_DOLL, { x: a, X: b, y: 'y' })), DOLL_OX - 2, DOLL_OY + 4); }
   // 副手武器（右手槽）在身后
   const held = (it, hand, alpha) => { if (!it) return; const h = HELD[it.b]; if (!h) return; const [rows, ax, ay] = h; const [hx, hy] = DOLL_HAND[hand]; put(sprite(rows), DOLL_OX + hx - ax - 1, DOLL_OY + hy - ay - 1, alpha); };
-  held(eq.wr, 'back', 0.85);
+  if (view === 2) held(eq.wl, 'back', 0.85); else if (view === 0) held(eq.wr, 'back', 0.85);
   const boots = eq.engine ? BOOT_COL[eq.engine.b] || 'P' : 'k';
   const hd = eq.core ? HEAD_DOLL[eq.core.b] || {} : {};
-  const body = DOLL_BODY[fr].map((r, j) => j <= 5 && hd.hood ? recolor([r], hd.hood)[0] : r);
-  put(sprite(recolor(body, { F: boots, G: 'p', b: 'w' })), DOLL_OX - 1, DOLL_OY - 1);
-  if (hd.over) put(sprite(hd.over), DOLL_OX + hd.ox - 1, DOLL_OY + hd.oy - 1);
-  held(eq.wl, 'front', 1);
+  let rows = DOLL_BODY[fr];
+  if (view === 2) rows = rows.map((r, j) => j >= 2 && j <= 4 ? r.replace(/[kf]/g, 'p') : r);
+  if (view === 1) rows = rows.map((r, j) => { let q = DOLL_SIDE(r); if (j >= 2 && j <= 4) q = q.replace(/[kf]/g, 'p').slice(0, 5) + (j === 3 ? 'kf' : 'kk') + q[7]; return q; });
+  const body = rows.map((r, j) => j <= 5 && hd.hood ? recolor([r], hd.hood)[0] : r), bx = view === 1 ? DOLL_OX + 1 : DOLL_OX - 1;
+  put(sprite(recolor(body, { F: boots, G: 'p', b: 'w' })), bx, DOLL_OY - 1);
+  if (hd.over && view !== 1) put(sprite(hd.over), DOLL_OX + hd.ox - 1, DOLL_OY + hd.oy - 1);
+  if (view === 0) held(eq.wl, 'front', 1); else if (view === 2) held(eq.wr, 'front', 1);
+  else if (eq.wl) { const h = HELD[eq.wl.b]; if (h) { const [hr, ax, ay] = h; put(sprite(hr), DOLL_OX + 9 - ax, DOLL_OY + 7 - ay - 1); } } // 侧面：武器伸在身前
   return c;
 }
