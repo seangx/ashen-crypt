@@ -47,7 +47,7 @@ function arenaReset() {
   resetPlayer();
   sfx('start');
 }
-const fieldActive = () => (mouse.on || mouse.touch) && !(G.ui && G.ui.winId) && mouse.y > TOP_H && mouse.y < BOT_Y;
+const fieldActive = () => RUN && (mouse.on || mouse.touch) && !(G.ui && G.ui.winId) && mouse.y > TOP_H && mouse.y < BOT_Y;
 
 /* ---------- 敌人 ---------- */
 function pickMob(L) { const pool = Object.entries(MOBS).filter(([, m]) => L >= (m.minL || 1)); return wpick(pool, ([, m]) => m.w)[0]; }
@@ -425,6 +425,8 @@ function logic(dt) {
   }
   RUN.t += dt;
   if (!RUN.ending && !RUN.next && RUN.descent) RUN.descent.minHp = Math.min(RUN.descent.minHp, player.armor / P.armor);
+  // 紧急撤回：最深层附近护甲一旦低于 returnHpNow%，立刻平安返回，不等打完 Boss
+  if (!lad && !RUN.ending && !RUN.next && RUN.base >= RUN.descent.prevMax - 1 && player.armor > 0 && player.armor / P.armor * 100 < SOUL.returnHpNow) { RUN.result = 'emergency'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('紧急撤回', COL.emberHi); }
   // 光环类独特规则：每秒一次
   if ((P.flag.blindAura || P.flag.shockAura) && (RUN.auraT = (RUN.auraT || 0) - dt) <= 0) {
     RUN.auraT = RL.aura.every;
@@ -433,7 +435,7 @@ function logic(dt) {
   }
   if (RUN.ending) {
     RUN.ending -= dt;
-    const keepAll = ['win', 'lampout', 'retreat'].includes(RUN.result);
+    const keepAll = ['win', 'lampout', 'retreat', 'emergency'].includes(RUN.result);
     for (const dp of drops) if (keepAll) collect(dp);
     if (keepAll) drops = [];
     if (RUN.ending <= 0) finishRun();
@@ -618,8 +620,9 @@ function finishRun() {
   if (r.result === 'win' && r.map) S.stats.maps++;
   if (r.mode !== 'ladder' && r.descent.floors && !S.auto.lock) S.depth = S.maxDepth; // 最深层在每层通过时已经更新
   if (r.mode !== 'ladder' && r.result === 'dead') deathLoss(r);
+  if (salvRules().on && unlocked('craft')) r.salv = autoSalvage(r.gain.items); // 分解祭坛：带回的装备按规则拆成碎片
   LX = lootFx(null);
   autoAfterRun(r);
   refreshStats(); resetPlayer(); save();
-  if (G.ui && !S.auto.loop && !LAD.pending) G.ui.openWin('summary', r);
+  if (G.ui) G.ui.backToCamp(r);
 }

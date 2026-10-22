@@ -84,11 +84,14 @@ class World extends Phaser.Scene {
     fxq.length = 0;
   }
   render(dt) {
-    const L = RUN ? RUN.L : S.depth; const theme = themeFor(L);
-    if (this.roomL !== L) { drawBackground(this.roomTex.getContext(), theme, L * 7919 + 13); this.roomTex.refresh(); this.roomL = L; }
+    const L = RUN ? RUN.L : S.depth; const theme = RUN ? themeFor(L) : THEMES[0];
+    // 不在任务里就是营地：底图按解锁了哪些设施重画
+    const open = Object.fromEntries(CAMP.facilities.map(f => [f.id, facOpen(f)])), key = RUN ? L : 'camp' + CAMP.facilities.map(f => +open[f.id]).join('');
+    if (this.roomL !== key) { if (RUN) drawBackground(this.roomTex.getContext(), theme, L * 7919 + 13); else drawCamp(this.roomTex.getContext(), open); this.roomTex.refresh(); this.roomL = key; }
     const t = G.time; this.frame++;
     const g = this.wallG; g.clear();
     for (const s of SCONCES) flame(g, s.x, s.y - 1, t);
+    if (!RUN) campFx(g, t, open);
     // 玩家
     const fr = (t * 4 | 0) % 2, bob = Math.round(Math.sin(t * 3) * 1);
     const sig = dollSig(S.equip);
@@ -150,6 +153,8 @@ class World extends Phaser.Scene {
     const fl = 1 + Math.sin(t * 9) * .04 + Math.sin(t * 23) * .03;
     const lights = SCONCES.map(s => ({ x: s.x, y: s.y + 6, r2: (64 * fl) ** 2, i: .75 }));
     lights.push({ x: player.x + player.face * 4, y: player.y - 6, r2: (110 * fl) ** 2, i: .8 });
+    if (!RUN) { const gt = FAC_BY.gate; lights.push({ x: gt.x - 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6 }, { x: gt.x + 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6 }, { x: 240, y: 178, r2: (80 * fl) ** 2, i: .75 });
+      for (const id of ['altar', 'runes', 'stele', 'chest', 'anvil', 'statue', 'atlas']) if (open[id]) lights.push({ x: FAC_BY[id].x, y: FAC_BY[id].y - 12, r2: id === 'altar' ? 900 : 620, i: .35 }); }
     for (const m of mobs) if ((m.burn > 1 || m.boss) && lights.length < 18) lights.push({ x: m.x, y: m.y - 6, r2: m.boss ? 1600 : 420, i: .4 });
     for (const r of this.rings) if (r.fill && lights.length < 22) lights.push({ x: r.x, y: r.y, r2: (r.r * 1.5) ** 2, i: .6 });
     for (const dp of drops) if (dp.kind === 'item' && dp.item.rar >= 1 && lights.length < 24) lights.push({ x: dp.x, y: dp.y - 8, r2: 520, i: .45 });

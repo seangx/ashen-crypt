@@ -1,0 +1,16 @@
+{
+ "_说明": "营地（主页）。一趟推关或天梯结束后回到营地。idleStay：自动循环开着时在营地停留几秒再出发。salvageIlvlBack：分解祭坛的“旧装备”规则，物品等级低于 最深层 − salvageIlvlBack 的装备分解。salvage：新存档的默认分解规则，rar 依次是 普通 / 罕见 / 稀有 是否分解，old 是旧装备规则开关，favN 是默认收藏词条数（取主武器流派做装偏好的前 favN 个）。facilities：营地里的设施，x/y 是在 480×270 画面里的脚底位置，unlock 对应 progression.json 的 unlocks（null 表示一开始就有），win 是点它打开的窗口，r 是点击半径。",
+ "idleStay": 4,
+ "salvageIlvlBack": 10,
+ "salvage": { "rar": [true, true, false], "old": true, "favN": 6 },
+ "facilities": [
+  { "id": "gate", "n": "地窖入口", "x": 240, "y": 118, "r": 30, "unlock": null, "win": "depart" },
+  { "id": "chest", "n": "储物箱", "x": 92, "y": 112, "r": 18, "unlock": null, "win": "gear" },
+  { "id": "statue", "n": "天赋石像", "x": 386, "y": 104, "r": 18, "unlock": "tree", "win": "tree" },
+  { "id": "anvil", "n": "铁砧", "x": 104, "y": 182, "r": 18, "unlock": "craft", "win": "craft" },
+  { "id": "altar", "n": "分解祭坛", "x": 168, "y": 210, "r": 18, "unlock": "craft", "win": "salvage" },
+  { "id": "runes", "n": "符文台", "x": 372, "y": 184, "r": 18, "unlock": "mods", "win": "mods" },
+  { "id": "atlas", "n": "墓图台", "x": 306, "y": 210, "r": 18, "unlock": "atlas", "win": "atlas" },
+  { "id": "stele", "n": "天梯石碑", "x": 438, "y": 150, "r": 18, "unlock": "ladder", "win": "ladder" }
+ ]
+}

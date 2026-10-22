@@ -71,7 +71,7 @@ function meleeTarget(W) {
 // 每帧：返回 AI 的目标点（不由 AI 驾驶时返回 null），需要时冲刺
 function autoStep(dt) {
   AUTO.clock += dt;
-  if (!RUN) { autoLoop(dt); return null; }
+  if (!RUN) { autoLoop(dt); return G.fx ? campTarget() : null; }
   if (!autoDriving() || RUN.ending) return null;
   const MW = meleeW(), mt = MW ? meleeTarget(MW) : null;
   if (mt) return mt; // 近战贴身时不靠冲刺躲
@@ -81,7 +81,7 @@ function autoStep(dt) {
   if ((!MW && t.near < K.dashNear) || (player.armor < STATS.armor * K.dashLowArmor && t.near < K.dashLowNear)) tryDash(t, true);
   return t;
 }
-// 自动循环：结算显示几秒后开下一局
+// 自动循环：在营地停留 camp.idleStay 秒后出发
 function autoLoop(dt) {
   if (!(S.auto.loop || LAD.pending) || !AUTO.nextT) return;
   AUTO.nextT -= dt;
@@ -104,7 +104,7 @@ function autoAfterRun(r) {
     }
   }
   AUTO.last = r; AUTO.lastT = AUTO.clock;
-  AUTO.nextT = S.auto.loop || LAD.pending ? AU.loop.summarySec : 0;
+  AUTO.nextT = S.auto.loop || LAD.pending ? CAMP.idleStay : 0; // 在营地停留一会儿再出发
 }
 // 手动期间的经验和掉落倍数
 const manualMul = () => autoDriving() ? 1 : AU.takeover.manualLootXpMul;

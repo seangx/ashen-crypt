@@ -244,3 +244,86 @@ function renderLight(lctx, lights, ambient, fog) {
   lctx.putImageData(lightImg, 0, 0);
 }
 
+
+/* ---------- 营地 ---------- */
+// 营地底图：地窖前的空地，中间是往下走的地窖入口，周围的设施按 data/camp.json 摆放；没解锁的画成一堆碎石
+function drawCamp(x, open) {
+  drawBackground(x, THEMES[0], 4242);
+  const R = seeded(777), px = (c, a, b, w = 1, h = 1) => { x.fillStyle = c; x.fillRect(Math.round(a), Math.round(b), w, h); };
+  // 篝火周围踩实的泥地
+  x.fillStyle = 'rgba(20,14,22,.45)'; x.beginPath(); x.ellipse(240, 160, 200, 58, 0, 0, Math.PI * 2); x.fill();
+  for (let n = 0; n < 260; n++) { const a = R() * Math.PI * 2, r = Math.sqrt(R()); px(R() < .5 ? '#2a2230' : '#3a3042', 240 + Math.cos(a) * r * 196, 160 + Math.sin(a) * r * 54); }
+  const sh = (cx, cy, w) => { x.fillStyle = 'rgba(0,0,0,.45)'; x.beginPath(); x.ellipse(cx, cy, w, 3, 0, 0, Math.PI * 2); x.fill(); };
+  const draw = {
+    gate(f) { // 石拱门 + 往下走的台阶 + 两个火盆
+      const { x: cx, y: cy } = f;
+      sh(cx, cy + 1, 34);
+      px('#0a070c', cx - 17, cy - 40, 34, 40);
+      for (let i = 0; i < 7; i++) { const w = 30 - i * 3, c = ['#3c3446', '#332c3c', '#2a2432', '#221d29', '#1b1721', '#15121a', '#0f0d13'][i]; px(c, cx - w / 2, cy - 4 - i * 5, w, 4); px('rgba(255,255,255,.06)', cx - w / 2, cy - 4 - i * 5, w, 1); }
+      for (const s of [-1, 1]) { const bx = s < 0 ? cx - 24 : cx + 17; px('#4f4560', bx, cy - 42, 7, 42); px('#5d5270', bx + (s < 0 ? 1 : 0), cy - 42, 6, 1); for (let yy = cy - 38; yy < cy; yy += 6) px('#2a2233', bx, yy, 7, 1); px('#2a2233', s < 0 ? bx + 6 : bx, cy - 42, 1, 42); }
+      px('#5a4f6a', cx - 27, cy - 49, 54, 7); px('#6b5f7c', cx - 27, cy - 49, 54, 1); px('#2a2233', cx - 27, cy - 43, 54, 1);
+      for (let i = 0; i < 5; i++) px('#2a2233', cx - 20 + i * 10, cy - 48, 1, 5);
+      x.drawImage(SPR.skull, cx - 3, cy - 48);
+      px('#3e3548', cx - 26, cy, 52, 3); px('#4f4560', cx - 26, cy, 52, 1);
+      for (const s of [-1, 1]) { const bx = cx + s * 36; sh(bx, cy + 1, 7); px('#2a2016', bx - 1, cy - 10, 3, 10); px('#2a2016', bx - 4, cy - 1, 2, 2); px('#2a2016', bx + 3, cy - 1, 2, 2); px('#5a4630', bx - 6, cy - 13, 13, 3); px('#7a6040', bx - 6, cy - 13, 13, 1); px('#3a2a1a', bx - 5, cy - 10, 11, 1); }
+    },
+    chest(f) {
+      const { x: cx, y: cy } = f; sh(cx, cy + 1, 13);
+      px('#120c18', cx - 12, cy - 15, 24, 15); px('#6a4426', cx - 11, cy - 9, 22, 8); px('#7d5530', cx - 11, cy - 14, 22, 5); px('#93683c', cx - 11, cy - 14, 22, 1);
+      px('#120c18', cx - 11, cy - 9, 22, 1); for (const bx of [cx - 8, cx + 6]) px('#4a4552', bx, cy - 14, 2, 13);
+      px('#c9a24a', cx - 1, cy - 10, 3, 3); px('#120c18', cx, cy - 9, 1, 1);
+    },
+    statue(f) { // 戴兜帽的石像，胸口一颗星
+      const { x: cx, y: cy } = f; sh(cx, cy + 1, 12);
+      px('#3a3248', cx - 10, cy - 7, 20, 7); px('#4a4158', cx - 10, cy - 7, 20, 1);
+      px('#120c18', cx - 7, cy - 33, 14, 26); px('#6a6478', cx - 6, cy - 32, 12, 25); px('#8a849a', cx - 6, cy - 32, 3, 25); px('#4a4458', cx + 3, cy - 32, 3, 25);
+      px('#120c18', cx - 4, cy - 29, 8, 5); px('#1a1420', cx - 3, cy - 28, 6, 4);
+      px('#ffd36a', cx, cy - 19, 1, 1); px('#ffd36a', cx - 1, cy - 18, 3, 1); px('#ffd36a', cx, cy - 17, 1, 1);
+    },
+    anvil(f) {
+      const { x: cx, y: cy } = f; sh(cx, cy + 1, 12);
+      px('#4a3020', cx - 7, cy - 8, 14, 8); px('#5e3e28', cx - 7, cy - 8, 14, 1); for (let i = 0; i < 3; i++) px('#3a2418', cx - 5 + i * 4, cy - 6, 1, 5);
+      px('#120c18', cx - 12, cy - 16, 24, 9); px('#3e3c48', cx - 11, cy - 15, 22, 4); px('#6c6a7a', cx - 11, cy - 15, 22, 1); px('#2c2a34', cx - 4, cy - 11, 8, 3); px('#3e3c48', cx - 14, cy - 15, 3, 2);
+      px('#8a5a30', cx + 6, cy - 21, 2, 6); px('#5a5866', cx + 3, cy - 23, 8, 3);
+    },
+    altar(f) { // 石台上一块裂开的魂晶
+      const { x: cx, y: cy } = f; sh(cx, cy + 1, 13);
+      px('#120c18', cx - 12, cy - 10, 24, 10); px('#4a4158', cx - 11, cy - 9, 22, 8); px('#5d5270', cx - 11, cy - 9, 22, 1); px('#2a2233', cx - 11, cy - 3, 22, 1);
+      for (let i = 0; i < 4; i++) px('#8a6ab0', cx - 9 + i * 6, cy - 6, 2, 1);
+      px('#120c18', cx - 4, cy - 20, 8, 10); px('#7a55a0', cx - 3, cy - 19, 6, 9); px('#c08aff', cx - 2, cy - 18, 2, 6); px('#120c18', cx, cy - 16, 1, 4);
+    },
+    runes(f) { // 石桌上摆着几块符文石
+      const { x: cx, y: cy } = f; sh(cx, cy + 1, 13);
+      for (const bx of [cx - 9, cx + 7]) px('#3a3248', bx, cy - 8, 3, 8);
+      px('#120c18', cx - 13, cy - 12, 26, 5); px('#5a4f6a', cx - 12, cy - 11, 24, 3); px('#6b5f7c', cx - 12, cy - 11, 24, 1);
+      for (const [dx, c] of [[-8, '#57e0d0'], [-2, '#9fd8ff'], [4, '#57e0d0']]) { px('#120c18', cx + dx - 1, cy - 17, 5, 5); px('#2a3a44', cx + dx, cy - 16, 3, 3); px(c, cx + dx + 1, cy - 15, 1, 1); }
+    },
+    atlas(f) { // 木桌上铺开的墓图
+      const { x: cx, y: cy } = f; sh(cx, cy + 1, 13);
+      for (const bx of [cx - 10, cx + 8]) px('#4a3020', bx, cy - 7, 2, 7);
+      px('#120c18', cx - 13, cy - 11, 26, 5); px('#6a4426', cx - 12, cy - 10, 24, 3);
+      px('#d9c9a0', cx - 9, cy - 15, 18, 5); px('#b9a880', cx - 9, cy - 11, 18, 1); px('#8a3a2a', cx - 5, cy - 14, 1, 1); px('#8a3a2a', cx - 4, cy - 13, 3, 1); px('#8a3a2a', cx, cy - 14, 1, 1); px('#8a3a2a', cx + 3, cy - 13, 2, 1); px('#8a3a2a', cx + 5, cy - 14, 1, 1);
+    },
+    stele(f) { // 刻满名字的高石碑
+      const { x: cx, y: cy } = f; sh(cx, cy + 1, 10);
+      px('#120c18', cx - 7, cy - 38, 14, 38); px('#4f4560', cx - 6, cy - 37, 12, 37); px('#6b5f7c', cx - 6, cy - 37, 2, 37); px('#3a3248', cx + 4, cy - 37, 2, 37);
+      px('#120c18', cx - 5, cy - 40, 10, 3); px('#5a4f6a', cx - 4, cy - 40, 8, 2);
+      for (let i = 0; i < 9; i++) px(i < 3 ? '#ff9a3d' : '#2a2233', cx - 3, cy - 33 + i * 3, 2 + (i * 3) % 5, 1);
+      px('#3e3548', cx - 9, cy - 2, 18, 3);
+    },
+  };
+  // 没解锁：一堆碎石盖住
+  const rubble = f => { sh(f.x, f.y + 1, 12); const r2 = seeded(f.x * 31 + f.y); for (let i = 0; i < 14; i++) { const a = r2() * Math.PI, rr = r2() * 10, bx = f.x + Math.cos(a) * rr * 1.2, by = f.y - Math.sin(a) * rr * 0.8; const s = 2 + (r2() * 3 | 0); px('#120c18', bx - 1, by - s, s + 2, s + 1); px(r2() < .5 ? '#4a4158' : '#3a3248', bx, by - s + 1, s, s - 1); px('#5d5270', bx, by - s + 1, s, 1); } };
+  // 篝火的石圈
+  for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; px('#4a4158', 240 + Math.cos(a) * 8 - 1, 182 + Math.sin(a) * 3 - 1, 3, 2); }
+  px('#3a2418', 234, 181, 12, 2); px('#5a3a22', 236, 180, 8, 1);
+  for (const f of CAMP.facilities) (open[f.id] ? draw[f.id] : rubble)(f);
+}
+// 营地每帧的动画：火盆、篝火、魂晶和符文的光
+function campFx(g, t, open) {
+  const gate = FAC_BY.gate; for (const s of [-1, 1]) flame(g, gate.x + s * 36, gate.y - 13, t + s);
+  flame(g, 240, 181, t * 0.8); flame(g, 238, 182, t * 1.1 + 2);
+  if (open.altar) { const a = FAC_BY.altar, k = 0.5 + 0.5 * Math.sin(t * 2.4); g.fillStyle(0xc08aff, 0.35 + 0.4 * k); g.fillRect(a.x - 2, a.y - 18, 2, 6); for (let i = 0; i < 3; i++) { const yy = (t * 10 + i * 7) % 20; g.fillStyle(0xc08aff, 0.6 * (1 - yy / 20)); g.fillRect(a.x - 3 + i * 3, a.y - 20 - yy, 1, 1); } }
+  if (open.runes) { const r = FAC_BY.runes; [-8, -2, 4].forEach((dx, i) => { g.fillStyle(i === 1 ? 0x9fd8ff : 0x57e0d0, 0.4 + 0.5 * Math.abs(Math.sin(t * 1.7 + i))); g.fillRect(r.x + dx + 1, r.y - 15, 1, 1); }); }
+  if (open.stele) { const s = FAC_BY.stele; g.fillStyle(0xffd36a, 0.3 + 0.3 * Math.sin(t * 3)); g.fillRect(s.x - 3, s.y - 33, 4, 1); }
+}
