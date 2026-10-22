@@ -1,6 +1,6 @@
 /* 推层模拟：无头浏览器里跑真实的游戏逻辑。走位、冲刺、自动循环和自动推层都用游戏自己的自动战斗（src/52_auto.js，参数在 data/auto.json），
    这个脚本只负责在两局之间换装、插符文、点天赋。
-   用法：node tools/sim.js [--runs 30 | --minutes 60] [--seed 1] [--gear auto|none] [--tree auto|none] [--lock] [--html ashen-crypt.html] [--json out.json] [--build whirl|random] [--ladder every:5|every:10m] [--ladderCap 3] [--override 路径=值 ...] [--seeds 1,2,3]
+   用法：node tools/sim.js [--runs 30 | --minutes 60] [--seed 1] [--gear auto|none] [--tree auto|none] [--lock] [--html ashen-crypt.html] [--json out.json] [--build whirl|random] [--ladder every:5|every:10m] [--ladderCap 3] [--override 路径=值 ...] [--seeds 1,2,3] [--par 3 | --serial]
      --minutes     按游戏内时间跑（包括每局之间的结算时间），代替 --runs
      --lock        锁定层数（不自动推层）
      --gear none   从不换装（检查“不换装备能不能一直推”）
@@ -24,14 +24,20 @@ const opt = { runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', '
 const seedsArg = arg('seeds', null);
 if (seedsArg) {
   const { spawn } = require('child_process'), seeds = seedsArg.split(',').map(Number);
-  const base = process.argv.slice(2).filter((a, i, all) => !(a === '--seeds' || all[i - 1] === '--seeds' || a === '--seed' || all[i - 1] === '--seed'));
-  Promise.all(seeds.map(sd => new Promise(res => { let buf = ''; const ch = spawn(process.execPath, [__filename, ...base, '--seed', String(sd)], { env: { ...process.env, ASH_SEEDS_CHILD: '1' } }); ch.stdout.on('data', d => buf += d); ch.stderr.on('data', d => buf += d); ch.on('close', () => res({ sd, buf })); })))
+  // 同时最多跑 --par 个（默认 3，太多会崩）；--serial 等于 --par 1
+  const par = process.argv.includes('--serial') ? 1 : +arg('par', 3);
+  const base = process.argv.slice(2).filter((a, i, all) => !(a === '--seeds' || all[i - 1] === '--seeds' || a === '--seed' || all[i - 1] === '--seed' || a === '--par' || all[i - 1] === '--par' || a === '--serial'));
+  const one = sd => new Promise(res => { let buf = ''; const ch = spawn(process.execPath, [__filename, ...base, '--seed', String(sd)], { env: { ...process.env, ASH_SEEDS_CHILD: '1' } }); ch.stdout.on('data', d => buf += d); ch.stderr.on('data', d => buf += d); ch.on('close', () => res({ sd, buf })); });
+  const out = [], queue = [...seeds];
+  Promise.all(Array.from({ length: Math.min(par, seeds.length) }, async () => { while (queue.length) { const sd = queue.shift(); out.push(await one(sd)); } })).then(() => out.sort((a, b) => a.sd - b.sd))
     .then(all => {
       const K = [['push', '推层'], ['ladder', '天梯'], ['runs', '推关趟数'], ['tMed', '单趟中位秒'], ['flMed', '单趟层数中位'], ['lampout', '灯灭'], ['retreat', '撤回'], ['emergency', '紧急撤回'], ['dead', '阵亡'], ['itemsH', '带回装备/时'], ['salvH', '分解/时'], ['shardsH', '捡碎片/时'], ['salvShardsH', '分解碎片/时'], ['lostItems', '阵亡丢装备'], ['minHp', '每层最低血中位%'], ['minHpFront', '最深层附近最低血中位%'], ['devilPct', '小旋风伤害占比%']];
       const rows = all.map(({ sd, buf }) => { const m = buf.match(/^SUMMARY (.*)$/m); if (!m) { console.log(`种子 ${sd} 出错：\n${buf.slice(-2000)}`); return null; } return { sd, v: JSON.parse(m[1]) }; }).filter(Boolean);
       for (const r of rows) console.log(`种子 ${r.sd}：` + K.map(([k, n]) => `${n} ${r.v[k]}`).join('，'));
       const med = k => { const a = rows.map(r => r.v[k]).sort((x, y) => x - y); return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : 0; };
       console.log(`中位数：` + K.map(([k, n]) => `${n} ${med(k)}`).join('，'));
+      const pct = (k, q) => { const a = rows.map(r => r.v[k]).sort((x, y) => x - y); if (!a.length) return 0; const i = (a.length - 1) * q, lo = Math.floor(i); return +(a[lo] + (a[Math.min(lo + 1, a.length - 1)] - a[lo]) * (i - lo)).toFixed(1); };
+      console.log(`四分位（p25 / 中位 / p75）：` + [['push', '推层'], ['ladder', '天梯']].map(([k, n]) => `${n} ${pct(k, 0.25)} / ${med(k)} / ${pct(k, 0.75)}`).join('，'));
     });
 } else
 (async () => {
