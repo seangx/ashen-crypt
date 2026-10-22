@@ -614,6 +614,16 @@ function stepProjs(dt) {
   }
   projs = projs.filter(p => !p.dead);
 }
+// 换存档：示范存档（先把当前进度备份）或恢复备份；正在打的一趟直接作废
+const BACKUP_KEY = SAVE_KEY + '-backup';
+const hasBackup = () => { try { return !!localStorage.getItem(BACKUP_KEY); } catch (e) { return false; } };
+function swapSave(raw) {
+  RUN = null; mobs = []; projs = []; drops = []; zones = []; LAD.pending = 0; AUTO.last = null; AUTO.camp = null;
+  load({ save: raw }); LX = lootFx(null); refreshStats(); resetPlayer(); save();
+  if (G.ui) { G.ui.closeWin(); G.ui.feeds = []; G.ui.renderFeed(); const gt = FAC_BY.gate; player.x = gt.x; player.y = gt.y + 8; }
+}
+function loadDemo(name) { try { if (!hasBackup()) localStorage.setItem(BACKUP_KEY, JSON.stringify(S)); } catch (e) { } swapSave(DEMO_SAVES[name]); }
+function restoreBackup() { let raw = null; try { raw = localStorage.getItem(BACKUP_KEY); } catch (e) { } if (!raw) return; swapSave(raw); try { localStorage.removeItem(BACKUP_KEY); } catch (e) { } }
 function finishRun() {
   const r = RUN; RUN = null; mobs = []; projs = []; drops = []; zones = [];
   S.stats.missions++;

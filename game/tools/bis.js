@@ -6,12 +6,13 @@
                写多个用逗号隔开，最后输出前两个的比值
      角色等级 = 物品等级；词条取物品等级允许的、铁砧能做到的最高档；符文等级 = min(20, 物品等级 / 5)。
      天梯从第 1 层开始连打（按剩余时间跳层），第一次失败就停，报告最高通过层。
+     --dump 文件  把第一个流派、第一个物品等级的配装存成游戏存档（天梯连打之后、单趟之前），给游戏里的“毕业存档”用。
      单趟：之后用同一身装备从推关第 1 层出发往下走，报告这一趟的时长、通过层数和结束原因（--descentMax 秒封顶，默认 1800）。 */
 const path = require('path'), fs = require('fs');
 let pw; try { pw = require('playwright'); } catch (e) { pw = require('/opt/node22/lib/node_modules/playwright'); }
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const ROOT = path.resolve(__dirname, '..');
-const opt = { seed: +arg('seed', 1), builds: arg('build', 'whirl,random').split(','), levels: arg('levels', '30,70,100').split(',').map(Number), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), descentMax: +arg('descentMax', 1800) };
+const opt = { seed: +arg('seed', 1), builds: arg('build', 'whirl,random').split(','), levels: arg('levels', '30,70,100').split(',').map(Number), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), descentMax: +arg('descentMax', 1800), dump: arg('dump', null) };
 
 const OV = require('./override'), HTML = OV.applyOverrides(fs.readFileSync(opt.html, 'utf8'), OV.overridesFrom(process.argv));
 async function run(build, IL) {
@@ -30,7 +31,7 @@ async function run(build, IL) {
   fs.writeFileSync(tmp, `<!doctype html><html><head><meta charset="utf-8"></head><body>${HTML}</body></html>`);
   await p.goto('file://' + tmp);
   await p.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 20000 });
-  const out = await p.evaluate(({ build, IL, seed, DMAX }) => {
+  const out = await p.evaluate(({ build, IL, seed, DMAX, DUMP }) => {
     const A = window.__ash; A.G.fx = false; window.__reseed(seed * 7919 + IL);
     const S = A.S, WH = A.DATA.mechanics.whirl, rnd = Math.random, pick = a => a[Math.floor(rnd() * a.length)];
     if (A.G.ui.closeWin) A.G.ui.closeWin();
@@ -94,13 +95,21 @@ async function run(build, IL) {
       if (!r || r.result !== 'win') { last = `${N} 层${r ? (r.result === 'dead' ? '死亡' : '超时') : '?'}（${Math.round(t)} 秒）`; break; }
       best = N; N += r.lad.jump;
     }
+    // 存档：最深层开满，碎片和铸符各给一些，营地设施都已清出
+    let snap = null;
+    if (DUMP) {
+      S.maxDepth = Math.min(A.DATA.progression.run.maxDepth, 66); // 再深这身装备每层要好几分钟 S.depth = S.maxDepth; S.ladder.best = best; S.xp = 0; S.stats.missions = Math.max(S.stats.missions, 200);
+      for (const k of WH.craftPref) S.shards[k] = 40; for (const k in S.glyphs) S.glyphs[k] = 6;
+      S.campSeen = A.DATA.camp.facilities.map(f => f.id); S.auto = { ...S.auto, loop: false, lock: false, fails: 0, back: false, backWins: 0 };
+      snap = JSON.stringify(S);
+    }
     // 推关单趟：从第 1 层出发一直往下走，直到灯灭或阵亡（最多 descentMax 秒游戏时间）
     S.auto.lock = true; S.depth = 1; A.AUTO.last = null; A.startRun(1);
     let dt2 = 0; while (A.RUN && dt2 < DMAX) { A.logic(dt); dt2 += dt; }
     if (A.RUN) { A.RUN.result = 'timeout'; A.RUN.ending = 0.01; A.logic(dt); }
     const dr = A.AUTO.last, descent = { t: Math.round(dt2), floors: dr ? dr.descent.floors : 0, res: dr ? dr.result : '?' };
-    return { info, best, last, descent };
-  }, { build, IL, seed: opt.seed, DMAX: opt.descentMax });
+    return { info, best, last, descent, snap };
+  }, { build, IL, seed: opt.seed, DMAX: opt.descentMax, DUMP: !!opt.dump });
   fs.unlinkSync(tmp); await b.close();
   const bad = errs.filter(e => !/GPU stall|swiftshader|GroupMarker/.test(e));
   if (bad.length) console.log(bad.join('\n'));
@@ -112,6 +121,7 @@ const mm = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
   const res = {};
   for (const build of opt.builds) for (const IL of opt.levels) {
     const r = await run(build, IL); (res[build] = res[build] || {})[IL] = r;
+    if (opt.dump && r.snap) { fs.writeFileSync(path.resolve(opt.dump), r.snap); console.log('存档写到 ' + opt.dump); opt.dump = null; }
     console.log(`${build.padEnd(6)} 物品等级 ${String(IL).padStart(3)}：秒伤 ${String(r.info.dps).padStart(9)}（面板 ${String(r.info.panel).padStart(8)}${r.info.stack ? '，满 ' + r.info.stack + ' 层' : ''}）  有效生命 ${String(r.info.ehp).padStart(6)}  平均抗性 ${String(r.info.res).padStart(3)}%  天梯 ${String(r.best).padStart(3)} 层（止于 ${r.last}）  单趟 ${{ lampout: '灯灭', retreat: '撤回', dead: '阵亡', win: '到底', timeout: '超时' }[r.descent.res] || r.descent.res} ${mm(r.descent.t)} 过 ${r.descent.floors} 层${r.info.heart ? ' 旋风之心' : ''} | ${r.info.eq} | 符文 ${r.info.runes}`);
   }
   if (opt.builds.length >= 2) {

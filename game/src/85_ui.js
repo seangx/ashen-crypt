@@ -751,7 +751,7 @@ class UI extends Phaser.Scene {
   /* 手册 */
   win_help(c) {
     const pages = [
-      ['操作', '亡魂跟着鼠标移动，两只手上的武器会自动攻击射程内最近的敌人。空格、Shift 或右键冲刺：冲刺时无敌，遁靴还会在冲刺时触发效果。回车开始任务，数字键 1–5 打开窗口；每升一级得 1 个天赋点。'],
+      ['操作', '亡魂跟着鼠标移动，两只手上的武器会自动攻击射程内最近的敌人。空格、Shift 或右键冲刺：冲刺时无敌，遁靴还会在冲刺时触发效果。回车开始任务，数字键 1–7 打开窗口；每升一级得 1 个天赋点。'],
       ['伤害', '伤害先算固定附加（武器底材和“附加 X–Y 伤害”），再乘“提高”（同类全部相加后乘一次），最后乘“总增”（每一条单独连乘）。武器上的词条只作用于那把武器。'],
       ['元素', '物理：碎骨，在周围炸开。火焰：余震，按比例再命中几次，并累积灼烧。闪电：感电，叠层降低全部抗性。圣光：致盲，3 秒内敌人伤害降低。瘟疫：疫病，4 秒内造成命中伤害的一部分，可叠加。'],
       ['符文', '武器、头冠和遁靴有符文槽。符文只在满足条件的装备上生效，例如穿刺符文要武器能穿透。法阵的升级槽里的符文会随击杀获得经验并升级（最高 20 级），力场符文只在法阵里生效。'],
@@ -761,11 +761,16 @@ class UI extends Phaser.Scene {
       ['灯火', `推关是一趟往下走：从最深层往回退 ${SOUL.startBack} 层出发（锁层时从锁定的层出发），每层打满进度、打掉守关 Boss 后直接进入下一层。灯火（护甲条下的紫色细条）进入时是满的，每秒燃烧，越深烧得越快；推关中不会自然回复，只靠击杀补（Boss 补得最多）。灯火烧完就平安返回，这一趟捡到的全部带走；最深层附近的某一层打得太险（最低血量低于 ${SOUL.returnHp}%），打完那层的 Boss 也会自动撤回；最深层附近护甲一旦跌到 ${SOUL.returnHpNow}% 以下，会立刻紧急撤回，同样全部带走；阵亡的话，捡到的装备、符文、词条碎片每件有 ${SOUL.deathKeep}% 几率保住。旋风斩等流派技能也从同一条里扣。天梯里不燃烧。`],
       ['营地', `营地是主页：一趟结束后回到这里。点地窖入口出发（可以选层、锁层），点储物箱、天赋石像、符文台、墓图台打开对应的窗口；铁砧和分解祭坛在通关第 ${PROG.unlocks.craft.depth} 层后清出来，天梯石碑在通关第 ${PROG.unlocks.ladder.depth} 层后清出来，天梯从石碑出发。自动刷时在营地停留 ${CAMP.idleStay} 秒再出发。分解祭坛：每次回营地，按规则把带回的装备拆成词条碎片（默认分解普通、罕见，保留稀有；物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的全部分解；带收藏词条的留下）。独特、传奇、溢彩装备和印记永远不自动分解。`],
       ['防御', '护甲就是生命。灵障先吸收伤害，2 秒没受伤就开始回复。抗性按百分比减伤，有上限。闪避直接躲开一次攻击。'],
+      ['存档', '毕业存档：旋风斩成型，100 级，最深层开满，天梯打到 70 层左右；两把回旋骨刃插旋身符文，头冠是风暴之眼，旋风之心已点。载入前会把你现在的进度备份一份，之后可以一键恢复（只备份第一次载入前的进度）。正在打的一趟会作废。'],
     ];
-    pages.forEach(([n], i) => mkBtn(this, c, 10, 10 + i * 20, 70, 17, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
+    pages.forEach(([n], i) => mkBtn(this, c, 10, 8 + i * 18, 70, 16, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
     const [n, txt] = pages[helpTopic];
     T(this, 92, 10, n, { color: COL.emberHi, parent: c });
     TW(this, 92, 28, txt, 360, { size: 12, color: COL.text, parent: c });
+    if (n === '存档') {
+      mkBtn(this, c, 92, 130, 150, 22, confirmKey === 'demo' ? '确认载入' : '载入旋风斩毕业存档', () => { if (!confirm2('demo')) return this.refresh(); loadDemo('whirl'); toast('已载入旋风斩毕业存档', COL.emberHi); }, { size: 8, style: confirmKey === 'demo' ? 'r' : 'w', icon: 'mod_Whirl', iconX: 5, labelX: 22 });
+      mkBtn(this, c, 250, 130, 150, 22, confirmKey === 'restore' ? '确认恢复' : '恢复之前的进度', () => { if (!confirm2('restore')) return this.refresh(); restoreBackup(); toast('已恢复之前的进度', COL.emberHi); }, { size: 8, style: confirmKey === 'restore' ? 'r' : 'n', disabled: !hasBackup() });
+    }
     T(this, 92, 186, '系统与数值参考 Astroloot 复刻；画面、名字和文字为原创。', { size: 8, color: COL.faint, parent: c });
   }
   /* 结算 */

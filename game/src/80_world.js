@@ -114,7 +114,7 @@ class World extends Phaser.Scene {
     if (sig !== this.dollSig) { // 装备变了：重画纸娃娃
       this.dollSig = sig; this.dollN = (this.dollN || 0) + 1;
       for (const f of [0, 1]) { const cv = dollCanvas(S.equip, f); for (const [k, c] of [['doll_', cv], ['doll_fl_', silhouette(cv, '#ffffff')]]) { const key = k + f; if (this.textures.exists(key)) this.textures.remove(key); this.textures.addCanvas(key, c); } }
-      this.hero.setTexture('doll_0'); G.ui && G.ui.dollChanged && G.ui.dollChanged();
+      this.hero.setTexture('doll_0'); if (this.heroCS && this.heroCS.cs) this.heroCS.cs.setTexture('doll_0'); G.ui && G.ui.dollChanged && G.ui.dollChanged(); // 影子也要换到新纹理，旧的已经删掉
     }
     const hk = (player.hurtT > 0.15 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
