@@ -142,7 +142,7 @@ class World extends Phaser.Scene {
       // 回旋骨刃：有旋势时人在转（刀光圈 + 风）；没有时每次砍中画一道横扫
       const n = W_.whirl ? player.spin[wi].n : 0, R = whirlR(W_, n);
       if (n > 0) whirlFx(pg, player.x, player.y, R, n / W_.stackMax, t);
-      else if (player.swing[wi] > 0) { const k = player.swing[wi] / 0.18, a0 = (player.face < 0 ? Math.PI : 0) - 2.4 + (1 - k) * 4.8; for (let s2 = 0; s2 < 16; s2++) { const q = s2 / 16, an = a0 - q * 2.2; pg.fillStyle(0xdfe6ee, 0.8 * k * (1 - q)); const rs = Math.min(R, 20); pg.fillRect(Math.round(player.x + Math.cos(an) * rs), Math.round(player.y - 6 + Math.sin(an) * rs * 0.4), 2, 1); } }
+      else if (player.swing[wi] > 0) { const k = player.swing[wi] / 0.18, a0 = (player.face < 0 ? Math.PI : 0) - 2.4 + (1 - k) * 4.8; for (let s2 = 0; s2 < 16; s2++) { const q = s2 / 16, an = a0 - q * 2.2; pg.fillStyle(0xdfe6ee, 0.8 * k * (1 - q)); pg.fillRect(Math.round(player.x + Math.cos(an) * R), Math.round(player.y - 6 + Math.sin(an) * R * 0.4), 2, 1); } }
     });
     for (const z of zones) if (z.devil) tornado(pg, z.x, z.y + 2, z.r * 1.6, z.r * 1.2, t, z.seed, Math.min(1, z.t * 2) * 0.85); // 旋风之心甩出的小旋风
     for (const z of zones) { if (z.devil) continue; const c = hex(ELEM_C[z.el]); if (z.enemy) { pg.fillStyle(0x2f5a22, 0.35 * Math.min(1, z.t)).fillEllipse(z.x, z.y, z.r * 2, z.r * 1.2); } const n = Math.max(10, z.r * 1.5 | 0); pg.fillStyle(c, z.vortex ? 0.8 : 0.45); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (z.vortex ? t * 6 : 0), rr = z.r * (z.vortex ? 0.4 + 0.6 * ((i * 7) % 5) / 5 : (0.5 + 0.5 * Math.abs(Math.sin(i * 1.7 + t * 3)))); pg.fillRect(z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr * 0.6, 1, 1); } }

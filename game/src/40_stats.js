@@ -173,7 +173,7 @@ function weaponStats(it, P, isEngine) {
   const CT = MECH.contTicks, aps0 = b.cont ? CT : qv(b.aps || 0, q); // 持续伤害武器：数值是每秒伤害，按每秒 CT 跳结算
   W.aps = aps0 * (1 + baseAspd / 100) * (1 + (P.aspdInc + (b.aspdInc || 0)) / 100) * aspdMore * P.timeMul;
   if (b.cont) { const k = (b.dpsMul || 1) / CT; for (const e of ELEM) { W.min[e] *= k; W.max[e] *= k; } W.aps = CT; W.contMul = (1 + baseAspd / 100) * (1 + P.aspdInc / 100) * aspdMore; for (const e of ELEM) { W.min[e] *= W.contMul; W.max[e] *= W.contMul; } }
-  W.rng = qv(b.range || 0, q) * UNIT * (1 + rangeInc / 100);
+  W.rng = qv(b.range || 0, q) * UNIT * (1 + rangeInc / 100) * (b.rngMul || 1); // rngMul：items.json 里按武器调的范围倍率
   W.aoeR = qv(b.aoe || 0, q) * UNIT * (1 + aoeInc / 100);
   W.auraDps = b.aura ? qv(b.aura, q) * (1 + inc / 100) * W.more * W.dotMore : 0;
   W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100);

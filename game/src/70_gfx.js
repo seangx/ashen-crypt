@@ -130,16 +130,16 @@ function tornado(g, x, y, h, w, t, seed, a = 1) {
 }
 // 旋风斩：人在原地转，武器甩成一圈刀光（半径 = 判定半径），脚下一圈被带起的风和尘土；层数越高刀光越长越密
 function whirlFx(g, x, y, R, f, t) {
-  const spd = 10 + f * 10, rs = Math.min(R, 20 + f * 6); // 刀光贴身画；判定半径更大时，外面用风纹铺到判定边缘
+  const spd = 10 + f * 10, rs = R; // 刀光画在判定半径上
   // 风：几道贴地的弧形气流，跟着刀光同向转
   for (let j = 0; j < 4; j++) {
-    const rr = rs + (R - rs) * (j / 3) + 4, a0 = -t * spd * (0.8 + j * 0.1) + j * 1.7, len = 1.2 + f * 1.4;
-    for (let s = 0; s < 20; s++) { const q = s / 20, an = a0 + q * len, sn = Math.sin(an); g.fillStyle(sn > 0 ? 0xcfc8d8 : 0x8a8098, (sn > 0 ? 0.4 : 0.2) * (1 - q) * (0.5 + f * 0.5)); g.fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y - 1 + sn * rr * 0.32), 1, 1); }
+    const rr = R * (0.45 + j * 0.15), a0 = -t * spd * (0.8 + j * 0.1) + j * 1.7, len = 1.2 + f * 1.4;
+    const ns = Math.max(20, Math.ceil(len * rr)); for (let s = 0; s < ns; s++) { const q = s / ns, an = a0 + q * len, sn = Math.sin(an); g.fillStyle(sn > 0 ? 0xcfc8d8 : 0x8a8098, (sn > 0 ? 0.4 : 0.2) * (1 - q) * (0.5 + f * 0.5)); g.fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y - 1 + sn * rr * 0.32), 1, 1); }
   }
   // 刀光：两把武器各拖一道弧，弧长随层数从 70° 到 250°，前半圈亮、后半圈暗
   const arc = 1.2 + f * 3.2;
   for (let i = 0; i < 2; i++) {
-    const a0 = -t * spd + i * Math.PI, steps = 30;
+    const a0 = -t * spd + i * Math.PI, steps = Math.max(30, Math.ceil(arc * rs)); // 每像素一点，半径变大也连成线
     for (let s = 0; s < steps; s++) {
       const q = s / steps, an = a0 + q * arc, sn = Math.sin(an), cx = x + Math.cos(an) * rs, cy = y - 6 + sn * rs * 0.38;
       g.fillStyle(q < 0.1 ? 0xffffff : sn > 0 ? 0xd4dbe6 : 0x9aa0b0, 0.9 * (1 - q) ** 1.2 * (sn > 0 ? 1 : 0.5));
