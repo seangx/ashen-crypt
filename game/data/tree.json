@@ -111,7 +111,7 @@
   "ele": [
    { "small": { "inc:ele": 8 }, "nn": "链电", "nadd": { "chain": 1, "inc:ele": 10 }, "key": { "n": "雷链", "flag": { "arc": 1 }, "more": { "aspd": 0.85 } }
    },
-   { "small": { "ail:ele": 0.03 }, "nn": "麻痹", "nadd": { "ail:ele": 0.08, "res:ele": 10 }, "key": { "n": "超导", "flag": { "shockSpread": 1 }, "more": { "dmg:nonEle": 0.85 } }
+   { "small": { "ail:ele": 0.03 }, "nn": "麻痹", "nadd": { "ail:ele": 0.08, "res:ele": 10 }, "key": { "n": "织雷之心", "flag": { "sparkHeart": 1, "shockSpread": 1 }, "more": { "dmg:nonEle": 0.85 } }
    },
    { "small": { "critInc": 12 }, "nn": "精准", "nadd": { "critInc": 25, "critDmg": 15 }, "key": { "n": "幸运一击", "flag": { "luckyCrit": 1 }, "add": { "critDmg": -30 } }
    },

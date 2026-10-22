@@ -20,7 +20,7 @@ const TREE_TEXT = {
 const INC_N = { proj: '投射物', melee: '近战', engine: '遁靴' };
 const treeText = (k, v) => k.startsWith('inc:') && k !== 'inc:all' ? `${INC_N[k.slice(4)] || ELEM_N[k.slice(4)]}伤害提高 ${v}%` : k.startsWith('ail:') ? `${AIL[k.slice(4)].n}几率 +${Math.round(v * 100)}%` : k.startsWith('res:') && k !== 'res:all' ? `${ELEM_N[k.slice(4)]}抗性 +${v}%` : TREE_TEXT[k](v);
 // 改规则的效果文字：{参数} 取 data/rules.json 里这条规则的参数，{v} 是天赋或装备给的数值，{别的规则.参数} 引用别的规则
-const RULES = DATA.rules; RULES.whirl = DATA.mechanics.whirl; // {whirl.参数} 引用 mechanics.json 的 whirl
+const RULES = DATA.rules; RULES.whirl = DATA.mechanics.whirl; RULES.spark = DATA.mechanics.spark; // {whirl.参数} 引用 mechanics.json 的 whirl
 const ruleText = (k, v) => { const R = RULES[k]; return R && R.text ? R.text.replace(/\{(\w+)(?:\.(\w+))?\}/g, (m, a, b) => b ? RULES[a][b] : a === 'v' ? v : R[a]) : null; };
 const MORE_N = { 'dmg:hit': '命中伤害', 'dmg:nonEle': '闪电以外的伤害', 'dmg:nonKin': '物理以外的伤害', 'dmg:nonPla': '圣光以外的伤害', 'dmg:thermal': '元素伤害', 'dmg:nonAoe': '非范围武器伤害',
   speed: '移动速度', armor: '护盾', deflect: '护盾', deflRate: '护盾回复速度', life: '生命', aspd: '攻击速度', dot: '持续伤害', rad: '疫病伤害', blind: '致盲效果', crit: '暴击率' };
@@ -120,7 +120,7 @@ function treeStats(ids = S.tree, eq = S.equip) {
     else if (k === 'critLess') M('crit', 1 - v / 100); else if (k === 'armorLess') M('armor', 1 - v / 100); else if (k === 'shockMul') flag.shockMul = (flag.shockMul || 1) * (1 + v / 100);
     else if (k === 'dodgeCap') flag.dodgeCap = (flag.dodgeCap || 0) + v;
     else if (k === 'spinDecay') flag.spinDecay = (flag.spinDecay || 1) * (1 - v / 100);
-    else if (['blindAura', 'shockAura', 'dodgeSpikes', 'multicrit', 'finale', 'splitEnd', 'stormEye'].includes(k)) flag[k] = 1;
+    else if (['blindAura', 'shockAura', 'dodgeSpikes', 'multicrit', 'finale', 'splitEnd', 'stormEye', 'sparkCrown'].includes(k)) flag[k] = 1;
     else if (k === 'takenKin') flag.takenKin = Math.max(flag.takenKin || 0, v / 100); }); };
   for (const id of ids) { const it = chipIn(id); if (!it) continue;
     for (const x of it.affs) { const a = AFF_BY[x.k]; if (!a || !a.tk) continue; const v = Array.isArray(x.v) ? x.v[0] : x.v; if (a.tm === 'm') M(a.tk, 1 + v / 100); else A(a.tk, v); }

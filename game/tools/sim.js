@@ -1,6 +1,6 @@
 /* 推层模拟：无头浏览器里跑真实的游戏逻辑。走位、冲刺、自动循环和自动推层都用游戏自己的自动战斗（src/52_auto.js，参数在 data/auto.json），
    这个脚本只负责在两局之间换装、插符文、点天赋。
-   用法：node tools/sim.js [--runs 30 | --minutes 60] [--seed 1] [--gear auto|none] [--tree auto|none] [--lock] [--html ashen-crypt.html] [--json out.json] [--build whirl|random] [--ladder every:5|every:10m] [--ladderCap 3] [--override 路径=值 ...] [--seeds 1,2,3] [--par 3 | --serial]
+   用法：node tools/sim.js [--runs 30 | --minutes 60] [--seed 1] [--gear auto|none] [--tree auto|none] [--lock] [--html ashen-crypt.html] [--json out.json] [--build whirl|spark|random] [--ladder every:5|every:10m] [--ladderCap 3] [--override 路径=值 ...] [--seeds 1,2,3] [--par 3 | --serial]
      --minutes     按游戏内时间跑（包括每局之间的结算时间），代替 --runs
      --lock        锁定层数（不自动推层）
      --gear none   从不换装（检查“不换装备能不能一直推”）
@@ -8,6 +8,7 @@
      --seed        随机种子；同一份数据、同一个种子，结果完全一样
      --craft auto  两局之间用铁砧：先熔铸（解锁后）；每个部位挑背包里物品等级和品质最高的 3 件底材做装，比身上好就换上；再拆掉背包里的装备（印记、独特除外），然后给身上每件装备反复做“秒伤 × (护甲 + 灵障)”提升最大的加词条 / 升档，直到没有提升或潜力用完；有希望符就附带
      --build whirl 旋风斩流派：天赋先走到旋风之心（mechanics.json 的 whirl.treeKey），左手只拿回旋骨刃，符文按 whirl.runeOrder 插，做装按 whirl.craftPref 的词条族优先级
+     --build spark 游雷（电球）流派：天赋先走到织雷之心（mechanics.json 的 spark.treeKey），左手只拿雷灵，符文按 spark.runeOrder 插，做装按 spark.craftPref
      --build random 乱配对照：天赋随机点，做装随机挑词条族
      --ladder every:K  天梯开放后，每 K 局推层打一次天梯最高层（开着连打：赢了接着打新的最高层，输了回推层）
    需要 playwright（容器里一般在 /opt/node22/lib/node_modules/playwright）。Phaser 用 tools/vendor/ 里的本地副本。 */
@@ -17,7 +18,7 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const ROOT = path.resolve(__dirname, '..');
 const opt = { runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', 'auto'), tree: arg('tree', 'none'), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), json: arg('json', null), maxT: +arg('maxT', 3600), minutes: +arg('minutes', 0), ladderArg: arg('ladder', ''), craft: arg('craft', 'none'), build: arg('build', 'none'), lock: process.argv.includes('--lock') };
 // 天梯：every:K = 每 K 趟推关排一次；every:10m = 每 10 分钟游戏时间排一次（每次最多连打 ladderCap 局）。--build whirl/random 默认 every:10m
-{ const la = opt.ladderArg || (['whirl', 'random'].includes(opt.build) ? 'every:10m' : ''), v = (la.split(':')[1] || '');
+{ const la = opt.ladderArg || (['whirl', 'random', 'spark'].includes(opt.build) ? 'every:10m' : ''), v = (la.split(':')[1] || '');
   opt.ladder = /m$/.test(v) ? 0 : +v || 0; opt.ladderMin = /m$/.test(v) ? parseFloat(v) : 0; opt.ladderCap = +arg('ladderCap', 3); }
 
 // --seeds 1,2,3：每个种子跑一遍（并行的子进程），打印各自的汇总和中位数
@@ -63,7 +64,9 @@ if (seedsArg) {
     const A = window.__ash; A.G.fx = false; window.__reseed(opt.seed * 7919 + 1);
     const S = A.S; const rows = [];
     if (A.G.ui.closeWin) A.G.ui.closeWin();
-    const WH = A.DATA.mechanics.whirl, B = opt.build;
+    const WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, B = opt.build;
+    // 成型流派（whirl / spark）共用一套“锁左手底材、按优先级插符文和做装、先走到大型天赋”的逻辑，BP 是它们各自的配置段
+    const ARCH = B === 'whirl' || B === 'spark', BP = B === 'spark' ? SPK : WH, BASE = B === 'spark' ? SPK.base : 'TurbineBlades';
     const spinDps = n => n.weapons.reduce((s, w) => s + (w ? w.dps * (w.spinMax || 1) : 0), 0); // 旋转满层的秒伤
     const ehpOf = n => { const w = n.weapons.find(x => x && x.whirl); const dr = 1 - (1 - (w ? Math.min(WH.drCap, WH.drPerStack * w.stackMax) / 100 : 0)) * (1 - (n.weapons.some(x => x && x.meleeGuard) ? A.DATA.mechanics.defense.meleeGuardLess : 0)); return A.defEhp(n, A.S.depth, Math.min(0.6, dr)); } // 有效生命：(生命 + 护盾 + 护盾回复×5) ÷ (1 − 护甲减伤 − 流派减伤) // 减伤合计在分数里最多算 60%; // 旋转满层减伤算进有效生命
     const score = () => spinDps(A.STATS) + ehpOf(A.STATS);
@@ -73,8 +76,8 @@ if (seedsArg) {
     const swapIn = (it, slot) => { const cur = S.equip[slot]; A.equipItem(it, slot); if (cur && cur.mods) { for (const m of cur.mods) if (m) S.mods.push(m); cur.mods = cur.mods.map(() => null); } A.refreshStats(); };
     const placeRunes = () => {
       // 旋风斩：左手的符文按 runeOrder 重排（同名取等级高的）
-      if (B === 'whirl' && S.equip.wl && S.equip.wl.sock) {
-        const w = S.equip.wl, pool = [...w.mods.filter(Boolean), ...S.mods], rank = m => { const i = WH.runeOrder.indexOf(m.mid); return (i < 0 ? 99 : i) * 100 - m.lvl; };
+      if (ARCH && S.equip.wl && S.equip.wl.sock) {
+        const w = S.equip.wl, pool = [...w.mods.filter(Boolean), ...S.mods], rank = m => { const i = BP.runeOrder.indexOf(m.mid); return (i < 0 ? 99 : i) * 100 - m.lvl; };
         const pickd = []; for (const m of pool.sort((a, b) => rank(a) - rank(b))) { if (pickd.length >= w.sock) break; if (A.modActive(m, w) && !pickd.some(x => x.mid === m.mid)) pickd.push(m); }
         w.mods = Array(w.sock).fill(null).map((_, i) => pickd[i] || null); S.mods = pool.filter(m => !pickd.includes(m)); A.refreshStats();
       }
@@ -85,7 +88,7 @@ if (seedsArg) {
         if (placed) S.mods = S.mods.filter(x => x !== m);
       }
     };
-    const fits = (it, s) => B !== 'whirl' || it.kind !== 'weapon' || (s === 'wl') === (it.b === 'TurbineBlades');
+    const fits = (it, s) => !ARCH || it.kind !== 'weapon' || (s === 'wl') === (it.b === BASE);
     // 选做装动作：默认按“秒伤 × 有效生命”贪心；whirl 按词条族优先级；random 随机
     const pickAct = (it, s, ev, mid) => {
       const acts = [];
@@ -94,7 +97,7 @@ if (seedsArg) {
       if (!acts.length) return null;
       if (B === 'random') return acts[Math.floor(Math.random() * acts.length)];
       // whirl 严格按 craftPref：先按顺序把空位填满（SpinCap、SoulLess 这类贪心看不出价值的也填），再按顺序升档
-      if (B === 'whirl') { const r = a => { const i = WH.craftPref.indexOf(a.k); return i < 0 ? 1e9 : (a.add ? 0 : 1000) + i; }; const best = acts.reduce((b, a) => r(a) < r(b) ? a : b); return r(best) < 1e9 ? best : null; }
+      if (ARCH) { const r = a => { const i = BP.craftPref.indexOf(a.k); return i < 0 ? 1e9 : (a.add ? 0 : 1000) + i; }; const best = acts.reduce((b, a) => r(a) < r(b) ? a : b); return r(best) < 1e9 ? best : null; }
       const base = ev({ ...S.equip, [s]: it }); let best = null;
       for (const act of acts) { const cl = { ...it, affs: it.affs.map(x => ({ ...x })) };
         if (act.add) { const a = A.AFF_BY[act.add], t = A.addTier(a, it); cl.affs.push({ k: a.k, t, v: mid(a, t) }); } else { const y = cl.affs[act.up]; y.t++; y.v = mid(A.AFF_BY[y.k], y.t); }
@@ -117,7 +120,7 @@ if (seedsArg) {
       if (opt.gear === 'auto') for (const it of [...S.stash]) {
         if (it.kind === 'chip') continue;
         let slot = it.kind === 'weapon' ? (S.equip.wr ? (A.itemValue(it) > A.itemValue(S.equip.wl) ? 'wl' : 'wr') : 'wr') : it.kind;
-        if (B === 'whirl' && it.kind === 'weapon') { slot = it.b === 'TurbineBlades' ? 'wl' : 'wr'; if (slot === 'wl' && !(S.equip.wl && S.equip.wl.b === 'TurbineBlades')) { swapIn(it, 'wl'); continue; } }
+        if (ARCH && it.kind === 'weapon') { slot = it.b === BASE ? 'wl' : 'wr'; if (slot === 'wl' && !(S.equip.wl && S.equip.wl.b === BASE)) { swapIn(it, 'wl'); continue; } }
         const cur = S.equip[slot]; if (!cur) { A.equipItem(it, slot); continue; }
         if (it.kind === 'weapon') { if (evS({ ...S.equip, [slot]: withMods(it, cur) }) > evS(S.equip)) swapIn(it, slot); continue; }
         const before = score(); A.equipItem(it, slot); if (score() < before) A.equipItem(cur, slot);
@@ -127,16 +130,16 @@ if (seedsArg) {
       if (opt.tree === 'auto' && canAlloc) {
         const ids = Object.keys(A.TREE.nodes).sort((a, b) => { const na = A.TREE.nodes[a], nb = A.TREE.nodes[b]; return (na.x * na.x + na.y * na.y) - (nb.x * nb.x + nb.y * nb.y) || (a < b ? -1 : 1); });
         // whirl：先沿最短路走到旋风之心
-        const route = () => { if (S.tree.includes(WH.treeKey)) return null; const prev = { start: null }, q = ['start', ...S.tree]; for (const x of S.tree) prev[x] = null; while (q.length) { const c = q.shift(); if (c === WH.treeKey) break; for (const n of A.TREE.nodes[c].nb) if (!(n in prev)) { prev[n] = c; q.push(n); } } let c = WH.treeKey; while (prev[c] && !S.tree.includes(prev[c]) && prev[c] !== 'start') c = prev[c]; return canAlloc(c) ? c : null; };
+        const route = () => { if (S.tree.includes(BP.treeKey)) return null; const prev = { start: null }, q = ['start', ...S.tree]; for (const x of S.tree) prev[x] = null; while (q.length) { const c = q.shift(); if (c === BP.treeKey) break; for (const n of A.TREE.nodes[c].nb) if (!(n in prev)) { prev[n] = c; q.push(n); } } let c = BP.treeKey; while (prev[c] && !S.tree.includes(prev[c]) && prev[c] !== 'start') c = prev[c]; return canAlloc(c) ? c : null; };
         let go = true; while (go) { go = false;
           if (B === 'random') { const c = ids.filter(id => canAlloc(id)); if (c.length) { S.tree.push(c[Math.floor(Math.random() * c.length)]); go = true; } continue; }
-          const r = B === 'whirl' ? route() : null; if (r) { S.tree.push(r); go = true; continue; }
+          const r = ARCH ? route() : null; if (r) { S.tree.push(r); go = true; continue; }
           for (const id of ids) if (canAlloc(id)) { S.tree.push(id); go = true; break; } }
       }
       // 铁砧（贪心）
       if (opt.craft === 'auto') {
         // 灯火秒数（粗算，不算击杀回复）：上限 ÷ (这层的燃烧 + 满层旋转的消耗)，推关做装按 秒伤 × 有效生命 × 灯火秒数
-        const lightOf = n => { const w = n.weapons.find(x => x && x.whirl), SO = A.DATA.mechanics.soul; return n.soulMax / (SO.burn + S.maxDepth * SO.burnPerFloor + (w ? WH.soulPerSec * (1 - n.soulLess) : 0)); };
+        const lightOf = n => { const w = n.weapons.find(x => x && x.whirl), SO = A.DATA.mechanics.soul; return n.soulMax / (SO.burn + S.maxDepth * SO.burnPerFloor + (w ? WH.soulPerSec * (1 - n.soulLess) : 0) + n.weapons.reduce((x, v) => x + (v && v.spark ? SPK.soulPerCast * v.aps * (1 - n.soulLess) : 0), 0)); };
         const ev = eq => { const n = A.computeStats(eq); return spinDps(n) * ehpOf(n) * lightOf(n); };
         const mid = (a, t) => { const v = a.tiers[t][0]; return a.pair ? [Math.round((v[0] + v[1]) / 2), Math.round((v[2] + v[3]) / 2)] : v.length === 1 ? v[0] : Math.round((v[0] + v[1]) / 2); };
         const slots = ['wl', 'wr', 'shield', 'core', 'engine', 'hub'];
@@ -178,7 +181,7 @@ if (seedsArg) {
       const ladDue = opt.ladderMin ? simT >= ladNextT : opt.ladder && mode !== 'ladder' && pushes % opt.ladder === 0;
       if (ladDue && mode !== 'ladder' && A.unlocked('ladder') && !A.LAD.pending) { S.ladder.chain = true; A.LAD.pending = S.ladder.unlocked; ladLeft = opt.ladderMin ? opt.ladderCap : 1e9; ladNextT = simT + opt.ladderMin * 60; }
       const lr = A.AUTO.last;
-      rows.push({ soulE, mode, dmg: lr.dmg || { whirl: 0, devil: 0 }, slamHits: lr.slamHits || 0, slamDash: lr.slamDash || 0, mins: lr.descent && lr.descent.mins || [], fl: lr.descent ? lr.descent.floors : 0, got: { items: lr.gain.items.length, shards: lr.gain.shards }, salv: lr.salv || { n: 0, shards: 0 }, lost: lr.lost || { items: 0, mods: 0, shards: 0 }, lad: mode === 'ladder' ? { t: Math.round(lr.t), jump: lr.lad ? lr.lad.jump : 0, unlocked: S.ladder.unlocked, best: S.ladder.best } : null, run: r + 1, L, depth, next: S.depth, back: S.auto.back, res, t: Math.round(t), min: Math.round(simT / 60), kills: S.stats.kills, lv: S.level, maxDepth: S.maxDepth, dps: Math.round(spinDps(A.STATS)), wf: (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Whirl') ? '旋' : '') + (S.tree.includes(WH.treeKey) ? '心' : '') + (Object.values(S.equip).some(it => it && it.u === 'StormEye') ? '眼' : ''), armor: A.STATS.armor, deflect: A.STATS.deflect, minHp: Math.round(minArmor * 100),
+      rows.push({ soulE, mode, dmg: lr.dmg || { whirl: 0, devil: 0 }, slamHits: lr.slamHits || 0, slamDash: lr.slamDash || 0, mins: lr.descent && lr.descent.mins || [], fl: lr.descent ? lr.descent.floors : 0, got: { items: lr.gain.items.length, shards: lr.gain.shards }, salv: lr.salv || { n: 0, shards: 0 }, lost: lr.lost || { items: 0, mods: 0, shards: 0 }, lad: mode === 'ladder' ? { t: Math.round(lr.t), jump: lr.lad ? lr.lad.jump : 0, unlocked: S.ladder.unlocked, best: S.ladder.best } : null, run: r + 1, L, depth, next: S.depth, back: S.auto.back, res, t: Math.round(t), min: Math.round(simT / 60), kills: S.stats.kills, lv: S.level, maxDepth: S.maxDepth, dps: Math.round(spinDps(A.STATS)), wf: B === 'spark' ? (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Spark') ? '雷' : '') + (S.tree.includes(SPK.treeKey) ? '织' : '') + (Object.values(S.equip).some(it => it && it.u === SPK.uniqueId) ? '冠' : '') : (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Whirl') ? '旋' : '') + (S.tree.includes(WH.treeKey) ? '心' : '') + (Object.values(S.equip).some(it => it && it.u === 'StormEye') ? '眼' : ''), armor: A.STATS.armor, deflect: A.STATS.deflect, minHp: Math.round(minArmor * 100),
         eq: ['wl', 'wr', 'shield', 'core', 'engine', 'hub'].map(k => S.equip[k] ? `${S.equip[k].b}/q${S.equip[k].q}/r${S.equip[k].rar}` : '-').join(' '),
         shards: Object.values(S.shards).reduce((a, b) => a + b, 0), glyphs: Object.values(S.glyphs).reduce((a, b) => a + b, 0), crafts: { ...crafts }, mods: S.mods.length + Object.values(S.equip).reduce((n, it) => n + (it && it.mods ? it.mods.filter(Boolean).length : 0), 0) });
     }
@@ -204,7 +207,8 @@ if (seedsArg) {
     console.log(`每小时（推关时间）带回：装备 ${(keptI / hrs).toFixed(0)} 件，词条碎片 ${(keptS / hrs).toFixed(0)} 个；分解祭坛分解 ${(salvN / hrs).toFixed(0)} 件、得碎片 ${(salvS / hrs).toFixed(0)} 个；阵亡共丢装备 ${lostI} 件`);
   }
   { const all = [...out, ...lads], se = all.reduce((a, r) => a + r.soulE, 0), st = all.reduce((a, r) => a + r.t, 0); console.log(`魂火见底时间占比：${(se / Math.max(1, st) * 100).toFixed(1)}%（推层 ${(out.reduce((a, r) => a + r.soulE, 0) / Math.max(1, out.reduce((a, r) => a + r.t, 0)) * 100).toFixed(1)}%，天梯 ${(lads.reduce((a, r) => a + r.soulE, 0) / Math.max(1, lads.reduce((a, r) => a + r.t, 0)) * 100).toFixed(1)}%）`); }
-  { const a = [...out, ...lads], w = a.reduce((x, r) => x + r.dmg.whirl, 0), d = a.reduce((x, r) => x + r.dmg.devil, 0); if (w + d) console.log(`旋风斩伤害：小旋风占 ${(d / (w + d) * 100).toFixed(1)}%`); }
+  { const a = [...out, ...lads], w = a.reduce((x, r) => x + r.dmg.whirl, 0), d = a.reduce((x, r) => x + r.dmg.devil, 0); if (w + d) console.log(`旋风斩伤害：小旋风占 ${(d / (w + d) * 100).toFixed(1)}%`);
+    const sp = a.reduce((x, r) => x + (r.dmg.spark || 0), 0), fk = a.reduce((x, r) => x + (r.dmg.fork || 0), 0); if (sp + fk) console.log(`游雷伤害：分叉游雷占 ${(fk / (sp + fk) * 100).toFixed(1)}%`); }
   if (opt.craft === 'auto' && lastC) console.log(`铁砧：换上自制 ${lastC.swap||0} 次，加词条 ${lastC.add} 次，升档 ${lastC.up} 次，拆解 ${lastC.shatter} 件，熔铸 ${lastC.fuse} 次。`);
   console.log(`\n${out.length} 局，游戏内 ${out.length ? out[out.length - 1].min : 0} 分钟：最深第 ${out.length ? out[out.length - 1].maxDepth - 1 : 0} 层通关；阵亡 ${deaths.length} 趟${deaths.length ? '（首次从第 ' + deaths[0].depth + ' 层出发，第 ' + deaths[0].run + ' 局）' : ''}。`);
   if (process.env.ASH_SEEDS_CHILD) { // --seeds 的子进程：给父进程一行机器可读的汇总

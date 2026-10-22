@@ -7,7 +7,7 @@ const salvRules = () => (S.salvage ??= { rar: [...CAMP.salvage.rar], old: CAMP.s
 // 收藏词条：玩家没改过时，取主武器流派的做装偏好前 favN 个
 function salvFav() {
   const R = salvRules(); if (R.fav) return R.fav;
-  return STATS.weapons.some(w => w && w.whirl) ? WH.craftPref.slice(0, CAMP.salvage.favN) : [];
+  return STATS.weapons.some(w => w && w.whirl) ? WH.craftPref.slice(0, CAMP.salvage.favN) : STATS.weapons.some(w => w && w.spark) ? SP.craftPref.slice(0, CAMP.salvage.favN) : [];
 }
 // 这件会不会被自动分解：返回原因（old 太旧 / rar 按稀有度），不分解返回 null。
 // 独特、传奇、溢彩、印记永远不分解；太旧的装备不看收藏词条，直接分解

@@ -220,6 +220,14 @@ class World extends Phaser.Scene {
     const k = p.W.key;
     if (p.mine) { const on = p.arm <= 0 && (t * 4 | 0) % 2; g.fillStyle(0x120c18, 1).fillRect(p.x - 3, p.y - 1, 6, 3); g.fillStyle(c, 1).fillRect(p.x - 2, p.y, 4, 1); if (on) g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - 1, 1, 1); return; }
     if (k === 'Shuriken' || k === 'TurbineBlades' || k === 'FlameSlinger') { const a = t * 20; g.fillStyle(k === 'FlameSlinger' ? 0xff9a3d : 0xdfe6ee, 1); for (let i = 0; i < 3; i++) { const aa = a + i * 2.1; g.fillRect(p.x + Math.cos(aa) * 2 - .5, p.y + Math.sin(aa) * 2 - .5, 1, 1); } g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - .5, 1, 1); return; }
+    if (p.spark) { // 游雷：一团跳动的电球，四周两三个电火花，脚下一道淡蓝的贴地光
+      const f = (t * 24 + p.x * 3) | 0, x = Math.round(p.x), y = Math.round(p.y);
+      this.groundG.fillStyle(0x7fc8ff, 0.22).fillRect(x - 2, y + 4, 5, 1);
+      g.fillStyle(0x120c18, 1).fillRect(x - 2, y - 2, 5, 5); g.fillStyle(f % 3 ? 0x7fc8ff : 0xbfe6ff, 1).fillRect(x - 1, y - 2, 3, 5).fillRect(x - 2, y - 1, 5, 3);
+      g.fillStyle(0xffffff, 1).fillRect(x, y - 1, 1, 2).fillRect(x - 1, y, 3, 1);
+      for (let i = 0; i < (p.forked ? 1 : 3); i++) { const aa = ((f * 5 + i * 4) % 12) / 12 * Math.PI * 2, r = 3 + ((f + i) % 2); g.fillStyle(i ? 0x7fc8ff : 0xffffff, 1).fillRect(Math.round(x + Math.cos(aa) * r), Math.round(y + Math.sin(aa) * r * 0.75), 1, 1); }
+      return;
+    }
     if (k === 'SporeBlaster' || k === 'Orbitron' || k === 'Zapper') { g.fillStyle(0x120c18, 1).fillRect(p.x - 2, p.y - 2, 4, 4); g.fillStyle(c, 1).fillRect(p.x - 1, p.y - 1, 2, 2); if (k === 'Zapper' && (t * 10 | 0) % 2) g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - .5, 1, 1); return; }
     if (p.W.b.wide) { const sp = Math.hypot(p.vx, p.vy) || 1, nx = -p.vy / sp, ny = p.vx / sp; g.fillStyle(c, 0.9); pline(g, p.x - nx * 6, p.y - ny * 6, p.x + nx * 6, p.y + ny * 6); g.fillStyle(0xffffff, 0.8); pline(g, p.x - nx * 3, p.y - ny * 3, p.x + nx * 3, p.y + ny * 3); return; }
     if (p.W.aoeR && p.W.form === 'proj') { g.fillStyle(0x120c18, 1).fillRect(p.x - 2, p.y - 2, 5, 5); g.fillStyle(0x8f5d36, 1).fillRect(p.x - 1, p.y - 1, 3, 3); g.fillStyle(0xffd36a, 1).fillRect(p.x, p.y - 3, 1, 2); return; }

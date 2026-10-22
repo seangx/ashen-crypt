@@ -19,7 +19,7 @@ const RULE_TEXT = {
   fieldHere: () => '力场符文插在这里也生效', takenKin: v => `受到的伤害有 ${v}% 按物理抗性结算`, dodge: v => `闪避 +${v}`, dodgeCap: v => ruleText('dodgeCap', v),
   dodgeSpikes: () => ruleText('dodgeSpikes'), velocity: v => `移动速度提高 ${v}%`, critLess: v => `暴击率总降 ${v}%`,
   stormEye: () => `转旋风时判定半径 +${WH.eyeRng}%，并把 ${WH.pullR} 倍半径内的怪以每秒 ${WH.pull} 像素卷向自己（Boss 不受影响）；旋风之心甩出的小旋风多飘 ${WH.eyeLifeAdd} 秒，同时最多多 ${WH.eyeMaxAdd} 个`, armorLess: v => `代价：护盾总降 ${v}%`,
-  multicrit: () => ruleText('multicrit'), dashMax: v => `冲刺槽 +${v}`, finale: () => ruleText('finale'), splitEnd: () => ruleText('splitEnd'),
+  sparkCrown: () => ruleText('sparkCrown'), multicrit: () => ruleText('multicrit'), dashMax: v => `冲刺槽 +${v}`, finale: () => ruleText('finale'), splitEnd: () => ruleText('splitEnd'),
 };
 for (const k of ['kin', 'exp', 'pla', 'ele', 'nuc']) RULE_TEXT['ail:' + k] = v => `${AIL[k].n}几率 +${v}%`;
 const ruleLines = it => { const u = UNIQUE_BY[it.u]; return u ? u.rules.map(([k], i) => RULE_TEXT[k](it.uv[i])) : []; };

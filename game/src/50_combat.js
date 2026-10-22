@@ -22,7 +22,7 @@ function startRun(L) {
   const map = S.mapArmed && S.maps.find(m => m.id === S.mapArmed);
   if (map) { S.maps = S.maps.filter(m => m !== map); S.mapArmed = null; }
   LX = lootFx(map); const mob = LX.mob;
-  RUN = { dmg: { whirl: 0, devil: 0 }, mode: 'push', L: L + LX.lvl, base: L, map, mob, bossD: bossFor(L + LX.lvl), kills: 0, prog: 0, dens: 1, eliteMul: 1, need: Math.round(killNeed(L) * (1 + (mob.need || 0) / 100)), boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, next: 0, result: null, descent: { from: L, floors: 0, prevMax: S.maxDepth, minHp: 1 }, gain: { items: [], shards: 0, shardK: {}, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
+  RUN = { dmg: { whirl: 0, devil: 0, spark: 0, fork: 0 }, mode: 'push', L: L + LX.lvl, base: L, map, mob, bossD: bossFor(L + LX.lvl), kills: 0, prog: 0, dens: 1, eliteMul: 1, need: Math.round(killNeed(L) * (1 + (mob.need || 0) / 100)), boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, next: 0, result: null, descent: { from: L, floors: 0, prevMax: S.maxDepth, minHp: 1 }, gain: { items: [], shards: 0, shardK: {}, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
   arenaReset();
 }
 /* 灯火下行：守关 Boss 倒下后直接进入下一层（护甲、灯火、旋转层数都带着走） */
@@ -144,7 +144,8 @@ function ailment(m, e, d, W, o) {
       for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < r * r) { damage(n, mitigate(n, 'kin', d * MECH.debrisPct * W.debrisMore), 'kin', false, true); if (n.dead && STATS.flag.debrisChain && (o.depth || 0) < RL.debrisChain.depth) ailment(n, 'kin', d, W, { ...o, depth: (o.depth || 0) + 1 }); }
       break; }
     case 'exp': { const k = W.afterPct || MECH.afterPct; m.after.push({ n: MECH.afterRepeats + (STATS.afterRep || 0) + (W.afterRep || 0), t: MECH.afterTick, d: d * k, k }); break; } // 余震
-    case 'ele': m.shock = Math.min(MECH.shockMax, m.shock + 1); m.shockT = MECH.shockDur; break;
+    case 'ele': m.shock = Math.min(MECH.shockMax, m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)); // 织雷之心：游雷一次叠两层
+      m.shockT = MECH.shockDur; break;
     case 'pla': m.blindT = MECH.blindDur; m.blindK = Math.min(MECH.blindMax, MECH.blindLess * W.blindMore); break;
     case 'nuc': m.rad.push({ dps: d * MECH.radPct * W.radMore * W.dotMore / MECH.radDur, t: MECH.radDur }); break;
   }
@@ -355,6 +356,12 @@ function fire(W, i) {
     for (let k = 0; k < n; k++) chainHit(W, k === 0 ? tg : nearest(px, py, W.rng, new Set([tg])) || tg, player, W.chain);
     if (rnd() < 0.3) sfx('beam'); return true;
   }
+  if (W.spark && player.soul >= SP.soulPerCast * (1 - STATS.soulLess)) { // 游雷：扇形放出一串，贴地乱窜（灯火不够时退回普通的一发）
+    const n = W.sparkN * attacks(W), vol = { last: new Map() }, life = SP.life + (STATS.flag.sparkCrown ? SP.crownLife : 0);
+    for (let k = 0; k < n; k++) shoot(W, px, py, a + (n > 1 ? (k / (n - 1) - 0.5) * SP.fan : 0) + rf(-0.08, 0.08), { pierce: W.pierce, chain: W.chain, split: 0, ret: 0, hit: new Set(), mul: W.sparkMul, life, first: true, spark: 1, vol, jt: 0, da: 0 });
+    if (RUN) player.soul = Math.max(0, player.soul - SP.soulPerCast * (1 - STATS.soulLess));
+    sfx('shoot'); return true;
+  }
   const n = attacks(W), pel = W.b.pellets || 1;
   for (let k = 0; k < n; k++) for (let j = 0; j < pel; j++) {
     const aa = a + (k - (n - 1) / 2) * 0.16 + (pel > 1 ? (j - (pel - 1) / 2) * 0.12 + rf(-0.04, 0.04) : 0);
@@ -366,7 +373,7 @@ function fire(W, i) {
 function shoot(W, x, y, a, o) {
   const p = { W, x, y, vx: Math.cos(a) * W.spd, vy: Math.sin(a) * W.spd, a, el: W.el, r: W.b.wide ? 7 : 3, ...o };
   if (W.b.spiral) { p.cx = x; p.cy = y; p.sa = a; p.sr = 0; p.life = 2.5; }
-  if (W.b.wander) p.life = Math.max(p.life, 2.5);
+  if (W.b.wander && !o.spark) p.life = Math.max(p.life, 2.5);
   projs.push(p); return p;
 }
 function projHit(p, m) {
@@ -376,6 +383,14 @@ function projHit(p, m) {
   if (p.W.aoeR && p.W.form === 'proj') { // 火油罐：命中后范围爆炸
     fx({ t: 'boom', x: m.x, y: m.y - 3, r: p.W.aoeR, el: p.el }); sfx('boom');
     for (const n of mobs) if (!n.dead && dist2(n, m) < (p.W.aoeR + n.size) ** 2) hitMob(n, p.W, { mul });
+    return true;
+  }
+  if (p.spark) { // 游雷：记下这一串打中这个敌人的时间；雷冠：第一次打中感电的敌人时分叉
+    const shocked = m.shock > 0, d = hitMob(m, p.W, { mul, spark: 1 }); p.vol.last.set(m, RUN ? RUN.t : 0);
+    if (RUN && RUN.dmg) RUN.dmg[p.forked ? 'fork' : 'spark'] = (RUN.dmg[p.forked ? 'fork' : 'spark'] || 0) + d;
+    fx({ t: 'hit', x: m.x, y: m.y - 5, el: p.el });
+    if (STATS.flag.sparkCrown && shocked && !p.forked && !p.didFork) { p.didFork = 1; for (let i = 0; i < SP.forkN; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (SP.forkN - 1) / 2) * 1.2, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set([m]), mul: p.mul * SP.forkMul, life: 0.8, spark: 1, forked: 1, vol: p.vol, jt: 0, da: 0 }); }
+    if (p.pierce > 0) { p.pierce--; p.pierced = true; return false; }
     return true;
   }
   hitMob(m, p.W, { mul });
@@ -641,11 +656,17 @@ function stepProjs(dt) {
       if (p.cx != null) { // 疫星仪：螺旋向外
         p.sa += dt * 5; p.sr += dt * 55; p.x = p.cx + Math.cos(p.sa) * p.sr; p.y = p.cy + Math.sin(p.sa) * p.sr * 0.75; p.vx = -Math.sin(p.sa); p.vy = Math.cos(p.sa);
       } else {
-        if (p.W.b.wander && !p.back) { const n = nearest(p.x, p.y, 70, p.hit); const ta = n ? Math.atan2(n.y - 5 - p.y, n.x - p.x) : p.a + rf(-1, 1); let da = ta - p.a; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2; p.a += clamp(da, -6 * dt, 6 * dt); const s = p.W.spd * 0.6; p.vx = Math.cos(p.a) * s; p.vy = Math.sin(p.a) * s; }
+        if (p.spark) { // 游雷：每隔一小段时间换一个随机偏转，附近有敌人就拐过去，碰到场边弹回
+          if ((p.jt -= dt) <= 0) { p.jt = rf(0.08, 0.22); p.da = rf(-SP.jitter, SP.jitter); }
+          const n = nearest(p.x, p.y, SP.seekR, p.hit); let da = p.da * dt; if (n) { let d = Math.atan2(n.y - 5 - p.y, n.x - p.x) - p.a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; da += clamp(d, -SP.turn * dt, SP.turn * dt); }
+          p.a += da; if (p.x < F.x0 || p.x > F.x1) { p.a = Math.PI - p.a; p.x = clamp(p.x, F.x0, F.x1); } if (p.y < F.y0 - 6 || p.y > F.y1) { p.a = -p.a; p.y = clamp(p.y, F.y0 - 6, F.y1); }
+          const s = p.W.spd * SP.speedMul; p.vx = Math.cos(p.a) * s; p.vy = Math.sin(p.a) * s;
+        } else if (p.W.b.wander && !p.back) { const n = nearest(p.x, p.y, 70, p.hit); const ta = n ? Math.atan2(n.y - 5 - p.y, n.x - p.x) : p.a + rf(-1, 1); let da = ta - p.a; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2; p.a += clamp(da, -6 * dt, 6 * dt); const s = p.W.spd * 0.6; p.vx = Math.cos(p.a) * s; p.vy = Math.sin(p.a) * s; }
         p.x += p.vx * dt; p.y += p.vy * dt;
       }
       p.life -= dt;
-      for (const m of mobs) { if (m.dead || m.rise > 0.2 || p.hit.has(m)) continue; if ((m.x - p.x) ** 2 + (m.y - 5 - p.y) ** 2 < (m.size + p.r) ** 2) { if (projHit(p, m)) { p.dead = true; break; } } }
+      if (p.spark) { const now = RUN ? RUN.t : 0; for (const m of p.hit) if (now - (p.vol.last.get(m) ?? -9) >= SP.rehit) p.hit.delete(m); } // 游雷：同一串对同一个敌人每 rehit 秒最多打一次
+      for (const m of mobs) { if (m.dead || m.rise > 0.2 || p.hit.has(m) || (p.spark && (RUN ? RUN.t : 0) - (p.vol.last.get(m) ?? -9) < SP.rehit)) continue; if ((m.x - p.x) ** 2 + (m.y - 5 - p.y) ** 2 < (m.size + p.r) ** 2) { if (projHit(p, m)) { p.dead = true; break; } } }
       if (p.life <= 0 && !p.dead && !p.back) { // 终幕 / 狂裂印记
         if (STATS.flag.finale && p.W.aoeR && p.W.form === 'proj') { fx({ t: 'boom', x: p.x, y: p.y, r: p.W.aoeR, el: p.el }); for (const n of mobs) if (!n.dead && dist2(n, p) < (p.W.aoeR + n.size) ** 2) hitMob(n, p.W); }
         if (STATS.flag.splitEnd && p.first && p.split > 0) for (let i = 0; i < p.split; i++) shoot(p.W, p.x, p.y, p.a + (i - (p.split - 1) / 2) * 0.5, { pierce: p.pierce, chain: p.chain, split: 0, ret: 0, hit: new Set(p.hit), mul: p.mul, life: 0.6 });

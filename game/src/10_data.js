@@ -123,7 +123,7 @@ for (const k in AFF_TEXT) {
   AFF.push({ k, f, stat, el, local, grp: src.grp, type: src.type, on: src.on, pair: stat === 'flat', tiers: src.tiers, tk: CHIP_TEXT[k] && CHIP_TEXT[k][1], tm: CHIP_TEXT[k] && CHIP_TEXT[k][2] });
 }
 // 流派自带的词条族（data/mechanics.json 的 whirl.affixes）：text 里的 # 填数值
-for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.mechanics.whirl.affixes, ...DATA.mechanics.defense.affixes })) AFF.push({ k, f: v => a.text.replace('#', v), stat: a.stat, el: null, local: !!a.local, grp: a.grp, type: a.type, on: a.on, tag: a.tag, pair: false, tiers: a.tiers });
+for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.mechanics.whirl.affixes, ...DATA.mechanics.spark.affixes, ...DATA.mechanics.defense.affixes })) AFF.push({ k, f: v => a.text.replace('#', v), stat: a.stat, el: null, local: !!a.local, grp: a.grp, type: a.type, on: a.on, tag: a.tag, pair: false, tiers: a.tiers });
 const AFF_BY = Object.fromEntries(AFF.map(a => [a.k, a]));
 // 原作的数值掷骰：value = lo + round((r-1)/254 * (hi-lo))，r 为 1..255 的字节
 const rollRange = (lo, hi) => lo + Math.round((ri(1, 255) - 1) / 254 * (hi - lo));
@@ -151,8 +151,10 @@ function specAt(s, L) {
 // fit：weapon / engine / tag:标签，全部满足才能插
 const fitOf = conds => it => conds.every(c => c === 'weapon' ? it.kind === 'weapon' : c === 'engine' ? it.kind === 'engine' : itemTags(it).includes(c.slice(4)));
 const WH = DATA.mechanics.whirl; // 旋风斩流派的数值
+const SP = DATA.mechanics.spark; // 游雷（电球）流派的数值
 const SOUL = DATA.mechanics.soul; // 魂火（共用资源）
 const MOD_D = {
+  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），贴地乱窜 ${SP.life} 秒，命中后继续窜（穿透 +${SP.basePierce}），同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
   Pierce: f => `投射物穿透 ${f.pierce} 个目标，穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
   Chain: f => `投射物额外连锁 ${f.chain} 次，每剩一次连锁伤害提高 ${Math.round(f.chainInc * 100)}%`,
   Split: f => `投射物分裂 ${f.split} 次，初次命中每次分裂伤害提高 ${Math.round(f.splitInc * 100)}%`,

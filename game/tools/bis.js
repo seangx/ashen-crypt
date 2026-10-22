@@ -1,6 +1,7 @@
 /* 毕业配装测试：在指定物品等级下按流派直接配一身满档装备，测秒伤、有效生命和天梯能爬到几层。
-   用法：node tools/bis.js [--build whirl,random] [--levels 30,70,100] [--seed 1] [--html ashen-crypt.html] [--override 路径=值 ...]
+   用法：node tools/bis.js [--build whirl,spark,random] [--levels 30,70,100] [--seed 1] [--html ashen-crypt.html] [--override 路径=值 ...]
      --build   whirl 旋风斩成型（回旋骨刃 + 旋身等符文、词条按 whirl.craftPref、天赋先拿旋风之心、物品等级 ≥20 戴风暴之眼）
+     --build   spark 游雷（电球）成型（雷灵 + 游雷等符文、词条按 spark.craftPref、天赋先拿织雷之心、物品等级 ≥20 戴雷冠）
                random 乱配对照（同样的词条条数和档位，但词条族、底材、天赋随机；符文随便插）
                auto 每个部位按“秒伤 × 有效生命”挑最好的词条和底材
                写多个用逗号隔开，最后输出前两个的比值
@@ -33,7 +34,7 @@ async function run(build, IL) {
   await p.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 20000 });
   const out = await p.evaluate(({ build, IL, seed, DMAX, DUMP }) => {
     const A = window.__ash; A.G.fx = false; window.__reseed(seed * 7919 + IL);
-    const S = A.S, WH = A.DATA.mechanics.whirl, rnd = Math.random, pick = a => a[Math.floor(rnd() * a.length)];
+    const S = A.S, WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, ARCH = build === 'whirl' || build === 'spark', BP = build === 'spark' ? SPK : WH, rnd = Math.random, pick = a => a[Math.floor(rnd() * a.length)];
     if (A.G.ui.closeWin) A.G.ui.closeWin();
     S.level = IL; S.maxDepth = IL + 1; S.ladder.best = IL; S.ladder.unlocked = 1;
     for (const k in S.equip) S.equip[k] = null; S.stash = []; S.mods = []; S.tree = [];
@@ -45,10 +46,10 @@ async function run(build, IL) {
     const topT = (a, it) => { let top = 0; a.tiers.forEach((t, i) => { if (it.ilvl >= t[2]) top = i; }); return Math.min(A.craftTop(a), top); };
     // 天赋
     const ids = Object.keys(A.TREE.nodes).sort((a, b) => { const na = A.TREE.nodes[a], nb = A.TREE.nodes[b]; return (na.x * na.x + na.y * na.y) - (nb.x * nb.x + nb.y * nb.y) || (a < b ? -1 : 1); });
-    const route = () => { if (S.tree.includes(WH.treeKey)) return null; const prev = { start: null }, q = ['start', ...S.tree]; for (const x of S.tree) prev[x] = null; while (q.length) { const c = q.shift(); if (c === WH.treeKey) break; for (const n of A.TREE.nodes[c].nb) if (!(n in prev)) { prev[n] = c; q.push(n); } } let c = WH.treeKey; while (prev[c] && !S.tree.includes(prev[c]) && prev[c] !== 'start') c = prev[c]; return A.treeCanAlloc(c) ? c : null; };
+    const route = () => { if (S.tree.includes(BP.treeKey)) return null; const prev = { start: null }, q = ['start', ...S.tree]; for (const x of S.tree) prev[x] = null; while (q.length) { const c = q.shift(); if (c === BP.treeKey) break; for (const n of A.TREE.nodes[c].nb) if (!(n in prev)) { prev[n] = c; q.push(n); } } let c = BP.treeKey; while (prev[c] && !S.tree.includes(prev[c]) && prev[c] !== 'start') c = prev[c]; return A.treeCanAlloc(c) ? c : null; };
     for (let go = true; go;) { go = false;
       if (build === 'random') { const c = ids.filter(id => A.treeCanAlloc(id)); if (c.length) { S.tree.push(pick(c)); go = true; } continue; }
-      const r = build === 'whirl' ? route() : null; if (r) { S.tree.push(r); go = true; continue; }
+      const r = ARCH ? route() : null; if (r) { S.tree.push(r); go = true; continue; }
       for (const id of ids) if (A.treeCanAlloc(id)) { S.tree.push(id); go = true; break; } }
     // 词条：4 条，档位 = 铁砧能做到的最高档
     const fill = (it, s) => {
@@ -57,8 +58,8 @@ async function run(build, IL) {
         const ok = A.AFF.filter(a => A.canAdd(it, a)); if (!ok.length) break;
         let a;
         if (build === 'random') a = pick(ok);
-        else if (build === 'whirl') a = WH.craftPref.map(kk => ok.find(x => x.k === kk)).find(Boolean) || null;
-        if (build === 'auto' || (build === 'whirl' && !a)) { let best = null; for (const x of ok) { const t = topT(x, it); const cl = { ...it, affs: [...it.affs, { k: x.k, t, v: mid(x, t) }] }; const v = ev({ ...S.equip, [s]: cl }); if (!best || v > best.v) best = { v, a: x }; } a = best.a; }
+        else if (ARCH) a = BP.craftPref.map(kk => ok.find(x => x.k === kk)).find(Boolean) || null;
+        if (build === 'auto' || (ARCH && !a)) { let best = null; for (const x of ok) { const t = topT(x, it); const cl = { ...it, affs: [...it.affs, { k: x.k, t, v: mid(x, t) }] }; const v = ev({ ...S.equip, [s]: cl }); if (!best || v > best.v) best = { v, a: x }; } a = best.a; }
         const t = topT(a, it); it.affs.push({ k: a.k, t, v: mid(a, t) });
       }
       it.rar = it.affs.length > 2 ? 2 : it.affs.length ? 1 : 0; it.rn = it.rar === 2 ? '毕业' : null; return it;
@@ -71,19 +72,19 @@ async function run(build, IL) {
     for (let pass = 0; pass < 2; pass++) for (const s of ['wl', 'wr', 'shield', 'core', 'engine', 'hub']) {
       const [kind, pool] = pools[s];
       let bases = Object.keys(pool).filter(b => (pool[b].req || 1) <= IL);
-      if (build === 'whirl' && s === 'wl') bases = ['TurbineBlades'];
+      if (ARCH && s === 'wl') bases = [build === 'spark' ? SPK.base : 'TurbineBlades'];
       let best = null;
-      if (build === 'whirl' && s === 'core' && IL >= 20) { best = { it: A.newUnique('StormEye', IL) }; }
+      if (ARCH && s === 'core' && IL >= 20) { best = { it: A.newUnique(build === 'spark' ? SPK.uniqueId : 'StormEye', IL) }; }
       else if (build === 'random') { const it = fill(make(kind, pick(bases)), s); best = { it }; }
-      else for (const b of bases) { let it; try { it = make(kind, b); } catch (e) { continue; } fill(it, s); if (s === 'wl' || s === 'wr') runesFor(it, build === 'whirl' && s === 'wl' ? WH.runeOrder : null); const v = ev({ ...S.equip, [s]: it }); if (!best || v > best.v) best = { v, it }; }
-      if (best.it.kind === 'weapon' && !(best.it.mods || []).some(Boolean)) runesFor(best.it, build === 'whirl' && s === 'wl' ? WH.runeOrder : null);
+      else for (const b of bases) { let it; try { it = make(kind, b); } catch (e) { continue; } fill(it, s); if (s === 'wl' || s === 'wr') runesFor(it, ARCH && s === 'wl' ? BP.runeOrder : null); const v = ev({ ...S.equip, [s]: it }); if (!best || v > best.v) best = { v, it }; }
+      if (best.it.kind === 'weapon' && !(best.it.mods || []).some(Boolean)) runesFor(best.it, ARCH && s === 'wl' ? BP.runeOrder : null);
       S.equip[s] = best.it;
     }
     A.refreshStats();
     const st = A.STATS;
-    const info = { dps: Math.round(spinDps(st)), ehp: Math.round(ehpOf(st)), panel: Math.round(st.dps), stack: (st.weapons.find(x => x && x.whirl) || {}).stackMax || 0, res: Math.round(Object.values(st.res).reduce((a, b) => a + b, 0) / 5),
+    const info = { dps: Math.round(spinDps(st)), ehp: Math.round(ehpOf(st)), panel: Math.round(st.dps), stack: (st.weapons.find(x => x && x.whirl) || {}).stackMax || 0, sparkN: (st.weapons.find(x => x && x.spark) || {}).sparkN || 0, res: Math.round(Object.values(st.res).reduce((a, b) => a + b, 0) / 5),
       eq: ['wl', 'wr', 'shield', 'core', 'engine', 'hub'].map(k => S.equip[k] ? (S.equip[k].u || S.equip[k].b) : '-').join(' '),
-      runes: (S.equip.wl.mods || []).filter(Boolean).map(m => m.mid).join(','), heart: S.tree.includes(WH.treeKey) };
+      runes: (S.equip.wl.mods || []).filter(Boolean).map(m => m.mid).join(','), heart: S.tree.includes(BP.treeKey) };
     // 天梯连打
     S.auto.ai = true; S.auto.loop = false; A.mouse.on = false;
     const dt = 1 / 30; let N = 1, best = 0, tries = 0, last = '';
@@ -99,7 +100,7 @@ async function run(build, IL) {
     let snap = null;
     if (DUMP) {
       S.maxDepth = Math.min(A.DATA.progression.run.maxDepth, 66); // 再深这身装备每层要好几分钟 S.depth = S.maxDepth; S.ladder.best = best; S.xp = 0; S.stats.missions = Math.max(S.stats.missions, 200);
-      for (const k of WH.craftPref) S.shards[k] = 40; for (const k in S.glyphs) S.glyphs[k] = 6;
+      for (const k of BP.craftPref) S.shards[k] = 40; for (const k in S.glyphs) S.glyphs[k] = 6;
       S.campSeen = A.DATA.camp.facilities.map(f => f.id); S.auto = { ...S.auto, loop: false, lock: false, fails: 0, back: false, backWins: 0 };
       snap = JSON.stringify(S);
     }
@@ -122,7 +123,7 @@ const mm = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
   for (const build of opt.builds) for (const IL of opt.levels) {
     const r = await run(build, IL); (res[build] = res[build] || {})[IL] = r;
     if (opt.dump && r.snap) { fs.writeFileSync(path.resolve(opt.dump), r.snap); console.log('存档写到 ' + opt.dump); opt.dump = null; }
-    console.log(`${build.padEnd(6)} 物品等级 ${String(IL).padStart(3)}：秒伤 ${String(r.info.dps).padStart(9)}（面板 ${String(r.info.panel).padStart(8)}${r.info.stack ? '，满 ' + r.info.stack + ' 层' : ''}）  有效生命 ${String(r.info.ehp).padStart(6)}  平均抗性 ${String(r.info.res).padStart(3)}%  天梯 ${String(r.best).padStart(3)} 层（止于 ${r.last}）  单趟 ${{ lampout: '灯灭', retreat: '撤回', dead: '阵亡', win: '到底', timeout: '超时' }[r.descent.res] || r.descent.res} ${mm(r.descent.t)} 过 ${r.descent.floors} 层${r.info.heart ? ' 旋风之心' : ''} | ${r.info.eq} | 符文 ${r.info.runes}`);
+    console.log(`${build.padEnd(6)} 物品等级 ${String(IL).padStart(3)}：秒伤 ${String(r.info.dps).padStart(9)}（面板 ${String(r.info.panel).padStart(8)}${r.info.stack ? '，满 ' + r.info.stack + ' 层' : ''}${r.info.sparkN ? '，每串 ' + r.info.sparkN + ' 颗游雷' : ''}）  有效生命 ${String(r.info.ehp).padStart(6)}  平均抗性 ${String(r.info.res).padStart(3)}%  天梯 ${String(r.best).padStart(3)} 层（止于 ${r.last}）  单趟 ${{ lampout: '灯灭', retreat: '撤回', dead: '阵亡', win: '到底', timeout: '超时' }[r.descent.res] || r.descent.res} ${mm(r.descent.t)} 过 ${r.descent.floors} 层${r.info.heart ? (build === 'spark' ? ' 织雷之心' : ' 旋风之心') : ''} | ${r.info.eq} | 符文 ${r.info.runes}`);
   }
   if (opt.builds.length >= 2) {
     const [a, b] = opt.builds; console.log(`\n${a} / ${b}：`);

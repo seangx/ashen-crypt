@@ -1,4 +1,6 @@
 {
+  "sparkHeart": { "text": "雷灵伤害 ×{spark.heartMore}；游雷每次命中叠 {spark.shockGain} 层感电。代价：其他武器伤害 ×{spark.offhandMul}" },
+  "sparkCrown": { "text": "游雷 +{spark.crownAdd} 颗、多飘 {spark.crownLife} 秒；游雷第一次打中感电的敌人时分叉成 {spark.forkN} 颗（伤害 ×{spark.forkMul}）" },
   "whirlHeart": { "text": "回旋骨刃伤害 ×{whirl.heartMore}；转旋风时每 {whirl.devilEvery} 秒甩出一个小旋风（旋势满层时间隔减半），朝外乱跑 {whirl.devilLife} 秒，伤害碰到的敌人（旋风单次伤害 ×{whirl.devilMul}），同时最多 {whirl.devilMax} 个。代价：非近战武器伤害 ×{whirl.offhandMul}，冲刺距离 ×{whirl.dashMul}", "_说明": "数值在 mechanics.json 的 whirl" },
   "_说明": "改规则的效果（核心天赋和独特装备共用）。每条有自己的参数，text 是显示的文字，{参数名} 会换成参数值，{v} 是天赋或独特装备给的数值，{别的规则.参数} 引用别的规则的参数。百分比参数按百分数写（30 = 30%）。r 是半径（像素），n 是个数。",
 

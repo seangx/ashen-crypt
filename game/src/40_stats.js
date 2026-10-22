@@ -123,6 +123,7 @@ function weaponStats(it, P, isEngine) {
   if (!b.cont && !b.aura) W.more *= TM['dmg:hit'] ?? 1;
   if (!has('AoE')) W.more *= TM['dmg:nonAoe'] ?? 1;
   if (P.flag.whirlHeart) { if (b.form === 'orbit') W.more *= WH.heartMore; else if (!isEngine && !has('Melee')) W.more *= WH.offhandMul; } // 旋风之心
+  if (P.flag.sparkHeart) { if (b.wander) W.more *= SP.heartMore; else if (!isEngine) W.more *= SP.offhandMul; } // 织雷之心
   const gain = {}, rflat = {};
   for (const { m, fx } of activeRunes(it, P)) {
     W.runes.push(m.mid);
@@ -141,6 +142,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.areaInc && has('AoE')) inc += fx.areaInc;
     if (fx.meleeInc) inc += fx.meleeInc;
     if (fx.meleeGuard) W.meleeGuard = 1;
+    if (fx.spark && b.wander) { W.spark = 1; W.sparkN = fx.sparkN; W.sparkMul = fx.sparkMul; } // 游雷符文：只对会乱窜的投射物（雷灵）生效
     if (fx.whirl && b.form === 'orbit') { W.whirl = 1; W.morePer = fx.spinMore || WH.morePer; } // 每层倍率随符文等级成长
     rangeInc += fx.rangeInc || 0; aoeInc += fx.aoeInc || 0; critInc += fx.critInc || 0; critDmg += fx.critDmg || 0; projSpd += fx.projSpd || 0;
     if (fx.ail) for (const e in fx.ail) W.ail[e] += fx.ail[e];
@@ -188,6 +190,7 @@ function weaponStats(it, P, isEngine) {
   W.dps = b.aura ? W.auraDps : W.avg * critE * W.aps * (b.form === 'stab' ? 1 : n) * (b.pellets || 1);
   if (b.form === 'reflect') W.dps = 0;
   W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : 1; // 旋转满层时的伤害倍数（dps 不含）
+  if (W.spark) { W.sparkN += (P.raw.sparkAdd || 0) + (P.flag.sparkCrown ? SP.crownAdd : 0); W.pierce += SP.basePierce; W.spinMax = W.sparkN * W.sparkMul; } // 游雷：一串的总倍数（每颗打中一次），模拟和毕业配装用它算秒伤
   return W;
 }
 let STATS = null;
