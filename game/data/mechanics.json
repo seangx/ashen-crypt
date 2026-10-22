@@ -241,7 +241,7 @@
    }
   },
   "soulOnVortex": 0.2,
-  "soulPerSpin": 0.8,
+  "soulPerSpin": 1.2,
   "soulPerStack": 0.6,
   "drPerStack": 1,
   "drCap": 40
@@ -370,6 +370,6 @@
   "revisitKillMul": 1.5,
   "returnHp": 30,
   "returnHpMelee": null,
-  "returnHpNow": 20
+  "returnHpNow": 12
  }
 }
