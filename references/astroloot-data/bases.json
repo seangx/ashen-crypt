@@ -1,0 +1,3052 @@
+{
+ "_notes": {
+  "source": "astroloot.jar (build 2026-09-25), decoded with javap. Internal code names kept; rename for our game.",
+  "quality q": "q = quality ordinal 0..10 (Scrap=0 ... Eternal=10). Divisor is 11, so the second number is never quite reached at Eternal.",
+  "stat I": "damage effectiveness multiplier: shown/used base damage = round(base * I). Default 1.0.",
+  "stat ay": "base hit damage: [slot, ?, min, max, element(, flag)]. Values are before stat I. Flag 1 seems to mark continuous (beam/DoT) damage.",
+  "D:ATTACKS_PER_SECOND": "base attack rate. Weapons without D attack on their own timing (mines, beams).",
+  "E:CRITICAL_STRIKE_CHANCE": "[slot, 0, base crit %].",
+  "F:RANGE": "targeting range in world units.",
+  "cz/U/cU/b": "implicit pierce count / chain count / split count / additional attacks, often per quality.",
+  "an/K/cM/cD": "implicit debris / blind / shock / radiation chance as a fraction.",
+  "ct/o/p": "AoE damage in radius / range / arc.",
+  "unique_affixes": "A.a(Affix, roll) = the unique always rolls this affix tier; see affixes.json for the value range. Numbers listed after are extra constants (weights or ranges) used by the unique.",
+  "not decoded": "Projectile speed and projectile count are set inside each weapon's fire routine (code, not tables) and are not extracted. Mod-slot counts are rolled per item (affixes.json OneSlot..SixSlots weights), not fixed per base.",
+  "ax/aB/aC": "base Armor / Deflector Shield / Dodge [slot, 0, value].",
+  "G:THRUST, H:MAXIMUM_VELOCITY": "engine movement stats shared by all engines (engine_shared_stats).",
+  "ag": "engine dash cost object ag(1.0,false): probably 1 dash charge per use (not fully decoded).",
+  "bo": "INCREASED_MAXIMUM_THRUST %",
+  "cG": "nexus implicit (value range per quality, element given) - label not decoded, likely elemental resistance or damage",
+  "cq:NEXUS_MODS": "nexus holds field/virus mods"
+ },
+ "Shield": [
+  {
+   "name": "TitaniumShield",
+   "id": 48,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Shield"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "5.0 + (q/11)^2*(500.0-5.0)",
+       "per_quality": {
+        "Scrap": 5.0,
+        "Rusty": 9.09,
+        "Augmented": 21.36,
+        "Enhanced": 41.82,
+        "Exceptional": 70.45,
+        "Heavy": 107.27,
+        "Elite": 152.27,
+        "Relic": 205.45,
+        "Elder": 266.82,
+        "Ancient": 336.36,
+        "Eternal": 414.09
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "PhantomShield",
+   "id": 51,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Shield"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "4.0 + (q/11)^2*(20.0-4.0)",
+       "per_quality": {
+        "Scrap": 4.0,
+        "Rusty": 4.13,
+        "Augmented": 4.53,
+        "Enhanced": 5.19,
+        "Exceptional": 6.12,
+        "Heavy": 7.31,
+        "Elite": 8.76,
+        "Relic": 10.48,
+        "Elder": 12.46,
+        "Ancient": 14.71,
+        "Eternal": 17.22
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "NebulaShield",
+   "id": 52,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Shield"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "4.0 + (q/11)^2*(220.0-4.0)",
+       "per_quality": {
+        "Scrap": 4.0,
+        "Rusty": 5.79,
+        "Augmented": 11.14,
+        "Enhanced": 20.07,
+        "Exceptional": 32.56,
+        "Heavy": 48.63,
+        "Elite": 68.26,
+        "Relic": 91.47,
+        "Elder": 118.25,
+        "Ancient": 148.6,
+        "Eternal": 182.51
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "CrystalShield",
+   "id": 78,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Shield"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "2.0 + (q/11)^2*(280.0-2.0)",
+       "per_quality": {
+        "Scrap": 2.0,
+        "Rusty": 4.3,
+        "Augmented": 11.19,
+        "Enhanced": 22.68,
+        "Exceptional": 38.76,
+        "Heavy": 59.44,
+        "Elite": 84.71,
+        "Relic": 114.58,
+        "Elder": 149.04,
+        "Ancient": 188.1,
+        "Eternal": 231.75
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "2.0 + (q/11)^2*(140.0-2.0)",
+       "per_quality": {
+        "Scrap": 2.0,
+        "Rusty": 3.14,
+        "Augmented": 6.56,
+        "Enhanced": 12.26,
+        "Exceptional": 20.25,
+        "Heavy": 30.51,
+        "Elite": 43.06,
+        "Relic": 57.88,
+        "Elder": 74.99,
+        "Ancient": 94.38,
+        "Eternal": 116.05
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "EtherealShield",
+   "id": 79,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Shield"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "2.0 + (q/11)^2*(140.0-2.0)",
+       "per_quality": {
+        "Scrap": 2.0,
+        "Rusty": 3.14,
+        "Augmented": 6.56,
+        "Enhanced": 12.26,
+        "Exceptional": 20.25,
+        "Heavy": 30.51,
+        "Elite": 43.06,
+        "Relic": 57.88,
+        "Elder": 74.99,
+        "Ancient": 94.38,
+        "Eternal": 116.05
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "2.0 + (q/11)^2*(9.0-2.0)",
+       "per_quality": {
+        "Scrap": 2.0,
+        "Rusty": 2.06,
+        "Augmented": 2.23,
+        "Enhanced": 2.52,
+        "Exceptional": 2.93,
+        "Heavy": 3.45,
+        "Elite": 4.08,
+        "Relic": 4.83,
+        "Elder": 5.7,
+        "Ancient": 6.69,
+        "Eternal": 7.79
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "PolymerShield",
+   "id": 80,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Shield"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "2.0 + (q/11)^2*(280.0-2.0)",
+       "per_quality": {
+        "Scrap": 2.0,
+        "Rusty": 4.3,
+        "Augmented": 11.19,
+        "Enhanced": 22.68,
+        "Exceptional": 38.76,
+        "Heavy": 59.44,
+        "Elite": 84.71,
+        "Relic": 114.58,
+        "Elder": 149.04,
+        "Ancient": 188.1,
+        "Eternal": 231.75
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "2.0 + (q/11)^2*(9.0-2.0)",
+       "per_quality": {
+        "Scrap": 2.0,
+        "Rusty": 2.06,
+        "Augmented": 2.23,
+        "Enhanced": 2.52,
+        "Exceptional": 2.93,
+        "Heavy": 3.45,
+        "Elite": 4.08,
+        "Relic": 4.83,
+        "Elder": 5.7,
+        "Ancient": 6.69,
+        "Eternal": 7.79
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ShieldOfArestum",
+   "id": 134,
+   "required_level": 40,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Shield"
+   ],
+   "unique_base": "a/g/o/f",
+   "unique_affixes": [
+    "a/g/a/A.a(A.ShieldOfArestumMass, roll)",
+    "a/g/a/A.a(A.ShieldOfArestumEnergy, roll)",
+    "a/g/a/A.a(A.ShieldOfArestumTime, roll)"
+   ]
+  },
+  {
+   "name": "GlassShield",
+   "id": 262,
+   "required_level": 70,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Shield"
+   ],
+   "unique_base": "a/g/o/d",
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "4.0 + (q/11)^2*(20.0-4.0)",
+       "per_quality": {
+        "Scrap": 4.0,
+        "Rusty": 4.13,
+        "Augmented": 4.53,
+        "Enhanced": 5.19,
+        "Exceptional": 6.12,
+        "Heavy": 7.31,
+        "Elite": 8.76,
+        "Relic": 10.48,
+        "Elder": 12.46,
+        "Ancient": 14.71,
+        "Eternal": 17.22
+       }
+      }
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.GlassShieldRange, roll)",
+    "a/g/a/A.a(A.GlassShieldResistances, roll)",
+    "a/g/a/A.a(A.GlassShieldBlind, roll)"
+   ]
+  },
+  {
+   "name": "Abysswalker",
+   "id": 261,
+   "required_level": 42,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Shield"
+   ],
+   "unique_base": "a/g/o/f",
+   "unique_affixes": [
+    "self.a(arg1, self.l())",
+    "self.a(arg1, self.m())",
+    "self.a(arg1, self.n())",
+    "a/g/a/A.a(A.AbysswalkerAffixesCountTwice, roll)",
+    "a/g/a/A.a(A.AbysswalkerBecomesGlitch, roll)"
+   ]
+  },
+  {
+   "name": "VoltronsPrison",
+   "id": 295,
+   "required_level": 36,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Shield"
+   ],
+   "unique_base": "a/g/o/c",
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "4.0 + (q/11)^2*(220.0-4.0)",
+       "per_quality": {
+        "Scrap": 4.0,
+        "Rusty": 5.79,
+        "Augmented": 11.14,
+        "Enhanced": 20.07,
+        "Exceptional": 32.56,
+        "Heavy": 48.63,
+        "Elite": 68.26,
+        "Relic": 91.47,
+        "Elder": 118.25,
+        "Ancient": 148.6,
+        "Eternal": 182.51
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedDeflectorShieldTier1, roll)",
+    "a/g/a/A.a(A.FlatDeflectorShieldTier1, roll)",
+    "a/g/a/A.a(A.FlatEnergyTier1, roll)",
+    "a/g/a/A.a(A.VoltronsPrisonAllResistances, roll)",
+    "a/g/a/A.a(A.VoltronsPrisonShockInRange, roll)",
+    "a/g/a/A.a(A.VoltronsPrisonMoreDamagePerShockOnYou, roll)"
+   ]
+  }
+ ],
+ "Core": [
+  {
+   "name": "TitaniumCore",
+   "id": 53,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Core"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "8.0 + (q/11)^2*(800.0-8.0)",
+       "per_quality": {
+        "Scrap": 8.0,
+        "Rusty": 14.55,
+        "Augmented": 34.18,
+        "Enhanced": 66.91,
+        "Exceptional": 112.73,
+        "Heavy": 171.64,
+        "Elite": 243.64,
+        "Relic": 328.73,
+        "Elder": 426.91,
+        "Ancient": 538.18,
+        "Eternal": 662.55
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "PhantomCore",
+   "id": 73,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Core"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "6.0 + (q/11)^2*(30.0-6.0)",
+       "per_quality": {
+        "Scrap": 6.0,
+        "Rusty": 6.2,
+        "Augmented": 6.79,
+        "Enhanced": 7.79,
+        "Exceptional": 9.17,
+        "Heavy": 10.96,
+        "Elite": 13.14,
+        "Relic": 15.72,
+        "Elder": 18.69,
+        "Ancient": 22.07,
+        "Eternal": 25.83
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "NebulaCore",
+   "id": 74,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Core"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "5.0 + (q/11)^2*(500.0-5.0)",
+       "per_quality": {
+        "Scrap": 5.0,
+        "Rusty": 9.09,
+        "Augmented": 21.36,
+        "Enhanced": 41.82,
+        "Exceptional": 70.45,
+        "Heavy": 107.27,
+        "Elite": 152.27,
+        "Relic": 205.45,
+        "Elder": 266.82,
+        "Ancient": 336.36,
+        "Eternal": 414.09
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "CrystalCore",
+   "id": 81,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Core"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "5.0 + (q/11)^2*(500.0-5.0)",
+       "per_quality": {
+        "Scrap": 5.0,
+        "Rusty": 9.09,
+        "Augmented": 21.36,
+        "Enhanced": 41.82,
+        "Exceptional": 70.45,
+        "Heavy": 107.27,
+        "Elite": 152.27,
+        "Relic": 205.45,
+        "Elder": 266.82,
+        "Ancient": 336.36,
+        "Eternal": 414.09
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "3.0 + (q/11)^2*(300.0-3.0)",
+       "per_quality": {
+        "Scrap": 3.0,
+        "Rusty": 5.45,
+        "Augmented": 12.82,
+        "Enhanced": 25.09,
+        "Exceptional": 42.27,
+        "Heavy": 64.36,
+        "Elite": 91.36,
+        "Relic": 123.27,
+        "Elder": 160.09,
+        "Ancient": 201.82,
+        "Eternal": 248.45
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "EtherealCore",
+   "id": 82,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Core"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "3.0 + (q/11)^2*(300.0-3.0)",
+       "per_quality": {
+        "Scrap": 3.0,
+        "Rusty": 5.45,
+        "Augmented": 12.82,
+        "Enhanced": 25.09,
+        "Exceptional": 42.27,
+        "Heavy": 64.36,
+        "Elite": 91.36,
+        "Relic": 123.27,
+        "Elder": 160.09,
+        "Ancient": 201.82,
+        "Eternal": 248.45
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "2.0 + (q/11)^2*(14.0-2.0)",
+       "per_quality": {
+        "Scrap": 2.0,
+        "Rusty": 2.1,
+        "Augmented": 2.4,
+        "Enhanced": 2.89,
+        "Exceptional": 3.59,
+        "Heavy": 4.48,
+        "Elite": 5.57,
+        "Relic": 6.86,
+        "Elder": 8.35,
+        "Ancient": 10.03,
+        "Eternal": 11.92
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "PolymerCore",
+   "id": 83,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Core"
+   ],
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "5.0 + (q/11)^2*(500.0-5.0)",
+       "per_quality": {
+        "Scrap": 5.0,
+        "Rusty": 9.09,
+        "Augmented": 21.36,
+        "Enhanced": 41.82,
+        "Exceptional": 70.45,
+        "Heavy": 107.27,
+        "Elite": 152.27,
+        "Relic": 205.45,
+        "Elder": 266.82,
+        "Ancient": 336.36,
+        "Eternal": 414.09
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "2.0 + (q/11)^2*(14.0-2.0)",
+       "per_quality": {
+        "Scrap": 2.0,
+        "Rusty": 2.1,
+        "Augmented": 2.4,
+        "Enhanced": 2.89,
+        "Exceptional": 3.59,
+        "Heavy": 4.48,
+        "Elite": 5.57,
+        "Relic": 6.86,
+        "Elder": 8.35,
+        "Ancient": 10.03,
+        "Eternal": 11.92
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Papyrus",
+   "id": 115,
+   "required_level": 8,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Core"
+   ],
+   "unique_base": "a/g/c/a",
+   "unique_affixes": [
+    "a/g/a/A.a(A.SixSlots, 0)",
+    "a/g/a/A.a(A.PapyrusFieldEffect, roll)"
+   ]
+  },
+  {
+   "name": "Bastion",
+   "id": 136,
+   "required_level": 50,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Core"
+   ],
+   "unique_base": "a/g/c/g",
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "8.0 + (q/11)^2*(800.0-8.0)",
+       "per_quality": {
+        "Scrap": 8.0,
+        "Rusty": 14.55,
+        "Augmented": 34.18,
+        "Enhanced": 66.91,
+        "Exceptional": 112.73,
+        "Heavy": 171.64,
+        "Elite": 243.64,
+        "Relic": 328.73,
+        "Elder": 426.91,
+        "Ancient": 538.18,
+        "Eternal": 662.55
+       }
+      }
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedArmorTier1, roll)",
+    "a/g/a/A.a(A.BastionKinetic, roll)",
+    "a/g/a/A.a(A.KineticResistanceTier1, roll)",
+    "a/g/a/A.a(A.BastionDamageTakenAsKinetic, roll)"
+   ]
+  },
+  {
+   "name": "Nullheart",
+   "id": 143,
+   "required_level": 70,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Core"
+   ],
+   "unique_base": "a/g/c/a",
+   "unique_affixes": [
+    "a/g/a/A.a(A.SixSlots, 0)",
+    "a/g/a/A.a(A.SixChipSockets, 0)"
+   ]
+  },
+  {
+   "name": "PeltOfTheMoonKing",
+   "id": 157,
+   "required_level": 50,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Core",
+    "Weapon",
+    "Hit",
+    "Melee",
+    "Attack",
+    "Range"
+   ],
+   "unique_base": "a/g/c/e",
+   "base_stats": [
+    {
+     "stat": "ax:ARMOR",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aB:DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aC:DODGE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "6.0 + (q/11)^2*(30.0-6.0)",
+       "per_quality": {
+        "Scrap": 6.0,
+        "Rusty": 6.2,
+        "Augmented": 6.79,
+        "Enhanced": 7.79,
+        "Exceptional": 9.17,
+        "Heavy": 10.96,
+        "Elite": 13.14,
+        "Relic": 15.72,
+        "Elder": 18.69,
+        "Ancient": 22.07,
+        "Eternal": 25.83
+       }
+      }
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.PeltOfTheMoonKingDodge, roll)",
+    "a/g/a/A.a(A.PeltOfTheMoonKingMaxDodge, roll)",
+    "a/g/a/A.a(A.PeltOfTheMoonKingSpikesOnDodge, roll)"
+   ]
+  }
+ ],
+ "Engine": [
+  {
+   "name": "Warp",
+   "id": 15,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Engine",
+    "Weapon",
+    "AoE",
+    "Hit"
+   ],
+   "base_stats": [
+    {
+     "call": "a/g/a/ag.p",
+     "args": []
+    },
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      4.0
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      {
+       "formula": "round(400 + (q/11)*(800-400))",
+       "per_quality": {
+        "Scrap": 400,
+        "Rusty": 436,
+        "Augmented": 473,
+        "Enhanced": 509,
+        "Exceptional": 545,
+        "Heavy": 582,
+        "Elite": 618,
+        "Relic": 655,
+        "Elder": 691,
+        "Ancient": 727,
+        "Eternal": 764
+       }
+      }
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "(qsq(12.0, 3200.0)/4.0)",
+      "(qsq(20.0, 4800.0)/4.0)",
+      "ELEM.plasma"
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "ct:AOE_DAMAGE_IN_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(400 + (q/11)*(800-400))",
+       "per_quality": {
+        "Scrap": 400,
+        "Rusty": 436,
+        "Augmented": 473,
+        "Enhanced": 509,
+        "Exceptional": 545,
+        "Heavy": 582,
+        "Elite": 618,
+        "Relic": 655,
+        "Elder": 691,
+        "Ancient": 727,
+        "Eternal": 764
+       }
+      }
+     ]
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "BlackHoleWarp",
+   "id": 58,
+   "required_level": 24,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Engine",
+    "DoT",
+    "Weapon",
+    "AoE"
+   ],
+   "base_stats": [
+    {
+     "call": "a/g/a/ag.p",
+     "args": []
+    },
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      2.4
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "20.0 + (q/11)^2*(240.0-20.0)",
+       "per_quality": {
+        "Scrap": 20.0,
+        "Rusty": 21.82,
+        "Augmented": 27.27,
+        "Enhanced": 36.36,
+        "Exceptional": 49.09,
+        "Heavy": 65.45,
+        "Elite": 85.45,
+        "Relic": 109.09,
+        "Elder": 136.36,
+        "Ancient": 167.27,
+        "Eternal": 201.82
+       }
+      },
+      {
+       "formula": "40.0 + (q/11)^2*(650.0-40.0)",
+       "per_quality": {
+        "Scrap": 40.0,
+        "Rusty": 45.04,
+        "Augmented": 60.17,
+        "Enhanced": 85.37,
+        "Exceptional": 120.66,
+        "Heavy": 166.03,
+        "Elite": 221.49,
+        "Relic": 287.02,
+        "Elder": 362.64,
+        "Ancient": 448.35,
+        "Eternal": 544.13
+       }
+      },
+      "ELEM.kinetic",
+      1
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "Y",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/bK.c",
+      0.5
+     ]
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Afterburner",
+   "id": 59,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Engine",
+    "DoT",
+    "Weapon",
+    "AoE",
+    "RelativeDashCostEngine",
+    "AttackSpeed"
+   ],
+   "base_stats": [
+    {
+     "call": "a/g/a/ag.o",
+     "args": []
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "12.0 + (q/11)^2*(120.0-12.0)",
+       "per_quality": {
+        "Scrap": 12.0,
+        "Rusty": 12.89,
+        "Augmented": 15.57,
+        "Enhanced": 20.03,
+        "Exceptional": 26.28,
+        "Heavy": 34.31,
+        "Elite": 44.13,
+        "Relic": 55.74,
+        "Elder": 69.12,
+        "Ancient": 84.3,
+        "Eternal": 101.26
+       }
+      },
+      {
+       "formula": "round(28 + (q/11)*(280-28))",
+       "per_quality": {
+        "Scrap": 28,
+        "Rusty": 51,
+        "Augmented": 74,
+        "Enhanced": 97,
+        "Exceptional": 120,
+        "Heavy": 143,
+        "Elite": 165,
+        "Relic": 188,
+        "Elder": 211,
+        "Ancient": 234,
+        "Eternal": 257
+       }
+      },
+      "ELEM.explosive",
+      1
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "a/g/f/b",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0,
+      "arg1"
+     ]
+    },
+    {
+     "stat": "a/g/f/c",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0
+     ]
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "FusionDrive",
+   "id": 103,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Engine",
+    "Hit",
+    "Weapon",
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "call": "a/g/a/ag.p",
+     "args": []
+    },
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      2.8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      {
+       "per_quality": {
+        "Scrap": 500.0,
+        "Rusty": 500.0,
+        "Augmented": 540.0,
+        "Enhanced": 540.0,
+        "Exceptional": 540.0,
+        "Heavy": 580.0,
+        "Elite": 580.0,
+        "Relic": 580.0,
+        "Elder": 620.0,
+        "Ancient": 660.0,
+        "Eternal": 700.0
+       }
+      }
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "25.0 + (q/11)^2*(250.0-25.0)",
+       "per_quality": {
+        "Scrap": 25.0,
+        "Rusty": 26.86,
+        "Augmented": 32.44,
+        "Enhanced": 41.74,
+        "Exceptional": 54.75,
+        "Heavy": 71.49,
+        "Elite": 91.94,
+        "Relic": 116.12,
+        "Elder": 144.01,
+        "Ancient": 175.62,
+        "Eternal": 210.95
+       }
+      },
+      {
+       "formula": "50.0 + (q/11)^2*(500.0-50.0)",
+       "per_quality": {
+        "Scrap": 50.0,
+        "Rusty": 53.72,
+        "Augmented": 64.88,
+        "Enhanced": 83.47,
+        "Exceptional": 109.5,
+        "Heavy": 142.98,
+        "Elite": 183.88,
+        "Relic": 232.23,
+        "Elder": 288.02,
+        "Ancient": 351.24,
+        "Eternal": 421.9
+       }
+      },
+      "ELEM.nuclear"
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "o:AOE_DAMAGE_IN_RADIUS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/e.a",
+      {
+       "per_quality": {
+        "Scrap": 200.0,
+        "Rusty": 200.0,
+        "Augmented": 250.0,
+        "Enhanced": 250.0,
+        "Exceptional": 250.0,
+        "Heavy": 300.0,
+        "Elite": 300.0,
+        "Relic": 300.0,
+        "Elder": 350.0,
+        "Ancient": 400.0,
+        "Eternal": 500.0
+       }
+      },
+      1.0
+     ]
+    },
+    {
+     "stat": "b:ADDITIONAL_ATTACKS_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 6,
+        "Eternal": 7
+       }
+      }
+     ]
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "EMP",
+   "id": 4,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Engine",
+    "Weapon",
+    "Projectile",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "call": "a/g/a/ag.p",
+     "args": []
+    },
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      5.0
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      500.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0.2,
+      {
+       "formula": "300.0 + (q/11)^2*(5000.0-300.0)",
+       "per_quality": {
+        "Scrap": 300.0,
+        "Rusty": 338.84,
+        "Augmented": 455.37,
+        "Enhanced": 649.59,
+        "Exceptional": 921.49,
+        "Heavy": 1271.07,
+        "Elite": 1698.35,
+        "Relic": 2203.31,
+        "Elder": 2785.95,
+        "Ancient": 3446.28,
+        "Eternal": 4184.3
+       }
+      },
+      "ELEM.electric"
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "cs",
+     "args": [
+      "A.IntrinsicImplicit",
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "b:ADDITIONAL_ATTACKS_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      {
+       "formula": "round(3 + (q/11)*(9-3))",
+       "per_quality": {
+        "Scrap": 3,
+        "Rusty": 4,
+        "Augmented": 4,
+        "Enhanced": 5,
+        "Exceptional": 5,
+        "Heavy": 6,
+        "Elite": 6,
+        "Relic": 7,
+        "Elder": 7,
+        "Ancient": 8,
+        "Eternal": 8
+       }
+      }
+     ]
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Thruster",
+   "id": 122,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Engine"
+   ],
+   "base_stats": [
+    {
+     "call": "a/g/a/ag.p",
+     "args": []
+    },
+    {
+     "stat": "bo:INCREASED_MAXIMUM_THRUST",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(40-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 8,
+        "Augmented": 11,
+        "Enhanced": 15,
+        "Exceptional": 18,
+        "Heavy": 21,
+        "Elite": 24,
+        "Relic": 27,
+        "Elder": 30,
+        "Ancient": 34,
+        "Eternal": 37
+       }
+      }
+     ]
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Siebenmeilen",
+   "id": 130,
+   "required_level": 1,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Engine"
+   ],
+   "unique_base": "a/g/f/m",
+   "base_stats": [
+    {
+     "call": "a/g/a/ag.p",
+     "args": []
+    },
+    {
+     "stat": "bo:INCREASED_MAXIMUM_THRUST",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(40-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 8,
+        "Augmented": 11,
+        "Enhanced": 15,
+        "Exceptional": 18,
+        "Heavy": 21,
+        "Elite": 24,
+        "Relic": 27,
+        "Elder": 30,
+        "Ancient": 34,
+        "Eternal": 37
+       }
+      }
+     ]
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.SiebenmeilenVelocity, roll)",
+    "a/g/a/A.a(A.FlatTimeTier1, roll)",
+    "a/g/a/A.a(A.IncreasedAttackSpeedTier1, roll)",
+    "a/g/a/A.a(A.ThermalResistanceTier2, roll)"
+   ]
+  },
+  {
+   "name": "Annihilator",
+   "id": 307,
+   "required_level": 24,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Engine",
+    "Hit",
+    "Weapon",
+    "AoE",
+    "Attack"
+   ],
+   "base_stats": [
+    {
+     "call": "a/g/a/ag.p",
+     "args": []
+    },
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      3.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "20.0 + (q/11)^2*(200.0-20.0)",
+       "per_quality": {
+        "Scrap": 20.0,
+        "Rusty": 21.49,
+        "Augmented": 25.95,
+        "Enhanced": 33.39,
+        "Exceptional": 43.8,
+        "Heavy": 57.19,
+        "Elite": 73.55,
+        "Relic": 92.89,
+        "Elder": 115.21,
+        "Ancient": 140.5,
+        "Eternal": 168.76
+       }
+      },
+      {
+       "formula": "40.0 + (q/11)^2*(400.0-40.0)",
+       "per_quality": {
+        "Scrap": 40.0,
+        "Rusty": 42.98,
+        "Augmented": 51.9,
+        "Enhanced": 66.78,
+        "Exceptional": 87.6,
+        "Heavy": 114.38,
+        "Elite": 147.11,
+        "Relic": 185.79,
+        "Elder": 230.41,
+        "Ancient": 280.99,
+        "Eternal": 337.52
+       }
+      },
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "o:AOE_DAMAGE_IN_RADIUS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/e.a",
+      500.0,
+      1.0
+     ]
+    },
+    {
+     "stat": "a/g/f/e",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0,
+      "arg1"
+     ]
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "GoblinFire",
+   "id": 317,
+   "required_level": 75,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Engine",
+    "DoT",
+    "Weapon",
+    "AoE",
+    "RelativeDashCostEngine",
+    "AttackSpeed"
+   ],
+   "unique_base": "a/g/f/a",
+   "base_stats": [
+    {
+     "call": "a/g/a/ag.o",
+     "args": []
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "12.0 + (q/11)^2*(120.0-12.0)",
+       "per_quality": {
+        "Scrap": 12.0,
+        "Rusty": 12.89,
+        "Augmented": 15.57,
+        "Enhanced": 20.03,
+        "Exceptional": 26.28,
+        "Heavy": 34.31,
+        "Elite": 44.13,
+        "Relic": 55.74,
+        "Elder": 69.12,
+        "Ancient": 84.3,
+        "Eternal": 101.26
+       }
+      },
+      {
+       "formula": "round(28 + (q/11)*(280-28))",
+       "per_quality": {
+        "Scrap": 28,
+        "Rusty": 51,
+        "Augmented": 74,
+        "Enhanced": 97,
+        "Exceptional": 120,
+        "Heavy": 143,
+        "Elite": 165,
+        "Relic": 188,
+        "Elder": 211,
+        "Ancient": 234,
+        "Eternal": 257
+       }
+      },
+      "ELEM.explosive",
+      1
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "a/g/f/b",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0,
+      "arg1"
+     ]
+    },
+    {
+     "stat": "a/g/f/c",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0
+     ]
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedExplosiveBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.GoblinFireFlatDamagePerForgeBoost, roll)",
+    "a/g/a/A.a(A.GoblinFireAoEDamageRadiusPerForgeBoost, roll)",
+    "a/g/a/A.a(A.GoblinFireExplosiveToElectric, roll)",
+    "a/g/a/A.a(A.GoblinFireForgeBoost, roll)",
+    "a/g/a/A.a(A.GoblinFireShardLimit, roll)"
+   ]
+  },
+  {
+   "name": "Glitch0x9",
+   "id": 306,
+   "required_level": 42,
+   "drop_weight": 4,
+   "unique": true,
+   "tags": [
+    "Engine"
+   ],
+   "unique_base": "a/g/f/m",
+   "base_stats": [
+    {
+     "stat": "a/g/g/a",
+     "args": []
+    }
+   ],
+   "engine_shared_stats": [
+    {
+     "stat": "G:THRUST",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 250,
+        "Rusty": 500,
+        "Augmented": 750,
+        "Enhanced": 1000,
+        "Exceptional": 1250,
+        "Heavy": 1500,
+        "Elite": 1750,
+        "Relic": 2000,
+        "Elder": 2000,
+        "Ancient": 2000,
+        "Eternal": 2000
+       }
+      }
+     ]
+    },
+    {
+     "stat": "H:MAXIMUM_VELOCITY",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      "({'switch_on': 'QUALITY_ORD', 'cases': {'1': 250, '2': 500, '3': 750, '4': 1000, '5': 1250, '6': 1500, '7': 1750, '8': 2000, '9': 2000, '10': 2000, '11': 2000}}/10)"
+     ]
+    }
+   ]
+  }
+ ],
+ "Nexus": [
+  {
+   "name": "AmberNexus",
+   "id": 170,
+   "required_level": 6,
+   "drop_weight": 250,
+   "unique": false,
+   "tags": [
+    "Nexus"
+   ],
+   "base_stats": [
+    {
+     "stat": "cG",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(25-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 7,
+        "Augmented": 9,
+        "Enhanced": 10,
+        "Exceptional": 12,
+        "Heavy": 14,
+        "Elite": 16,
+        "Relic": 18,
+        "Elder": 20,
+        "Ancient": 21,
+        "Eternal": 23
+       }
+      },
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ]
+  },
+  {
+   "name": "SilverNexus",
+   "id": 171,
+   "required_level": 6,
+   "drop_weight": 250,
+   "unique": false,
+   "tags": [
+    "Nexus"
+   ],
+   "base_stats": [
+    {
+     "stat": "cG",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(25-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 7,
+        "Augmented": 9,
+        "Enhanced": 10,
+        "Exceptional": 12,
+        "Heavy": 14,
+        "Elite": 16,
+        "Relic": 18,
+        "Elder": 20,
+        "Ancient": 21,
+        "Eternal": 23
+       }
+      },
+      "ELEM.electric"
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ]
+  },
+  {
+   "name": "CrystalNexus",
+   "id": 172,
+   "required_level": 6,
+   "drop_weight": 250,
+   "unique": false,
+   "tags": [
+    "Nexus"
+   ],
+   "base_stats": [
+    {
+     "stat": "cG",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(25-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 7,
+        "Augmented": 9,
+        "Enhanced": 10,
+        "Exceptional": 12,
+        "Heavy": 14,
+        "Elite": 16,
+        "Relic": 18,
+        "Elder": 20,
+        "Ancient": 21,
+        "Eternal": 23
+       }
+      },
+      "ELEM.plasma"
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ]
+  },
+  {
+   "name": "OnyxNexus",
+   "id": 173,
+   "required_level": 12,
+   "drop_weight": 250,
+   "unique": false,
+   "tags": [
+    "Nexus"
+   ],
+   "base_stats": [
+    {
+     "stat": "cG",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(25-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 7,
+        "Augmented": 9,
+        "Enhanced": 10,
+        "Exceptional": 12,
+        "Heavy": 14,
+        "Elite": 16,
+        "Relic": 18,
+        "Elder": 20,
+        "Ancient": 21,
+        "Eternal": 23
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ]
+  },
+  {
+   "name": "BaryteNexus",
+   "id": 174,
+   "required_level": 24,
+   "drop_weight": 250,
+   "unique": false,
+   "tags": [
+    "Nexus"
+   ],
+   "base_stats": [
+    {
+     "stat": "cG",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(25-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 7,
+        "Augmented": 9,
+        "Enhanced": 10,
+        "Exceptional": 12,
+        "Heavy": 14,
+        "Elite": 16,
+        "Relic": 18,
+        "Elder": 20,
+        "Ancient": 21,
+        "Eternal": 23
+       }
+      },
+      "ELEM.nuclear"
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ]
+  },
+  {
+   "name": "QuartzNexus",
+   "id": 175,
+   "required_level": 1,
+   "drop_weight": 250,
+   "unique": false,
+   "tags": [
+    "Nexus"
+   ],
+   "base_stats": [
+    {
+     "stat": "aF:FLAT_TIME",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(1 + (q/11)*(11-1))",
+       "per_quality": {
+        "Scrap": 1,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 4,
+        "Exceptional": 5,
+        "Heavy": 6,
+        "Elite": 6,
+        "Relic": 7,
+        "Elder": 8,
+        "Ancient": 9,
+        "Eternal": 10
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ]
+  },
+  {
+   "name": "ZirconNexus",
+   "id": 176,
+   "required_level": 1,
+   "drop_weight": 250,
+   "unique": false,
+   "tags": [
+    "Nexus"
+   ],
+   "base_stats": [
+    {
+     "stat": "aD:FLAT_ENERGY",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(1 + (q/11)*(11-1))",
+       "per_quality": {
+        "Scrap": 1,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 4,
+        "Exceptional": 5,
+        "Heavy": 6,
+        "Elite": 6,
+        "Relic": 7,
+        "Elder": 8,
+        "Ancient": 9,
+        "Eternal": 10
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ]
+  },
+  {
+   "name": "IridiumNexus",
+   "id": 177,
+   "required_level": 1,
+   "drop_weight": 250,
+   "unique": false,
+   "tags": [
+    "Nexus"
+   ],
+   "base_stats": [
+    {
+     "stat": "aE:FLAT_MASS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(1 + (q/11)*(11-1))",
+       "per_quality": {
+        "Scrap": 1,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 4,
+        "Exceptional": 5,
+        "Heavy": 6,
+        "Elite": 6,
+        "Relic": 7,
+        "Elder": 8,
+        "Ancient": 9,
+        "Eternal": 10
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ]
+  },
+  {
+   "name": "MoonstoneNexus",
+   "id": 178,
+   "required_level": 6,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Nexus"
+   ],
+   "unique_base": "a/g/j/r",
+   "base_stats": [
+    {
+     "stat": "aD:FLAT_ENERGY",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(1 + (q/11)*(11-1))",
+       "per_quality": {
+        "Scrap": 1,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 4,
+        "Exceptional": 5,
+        "Heavy": 6,
+        "Elite": 6,
+        "Relic": 7,
+        "Elder": 8,
+        "Ancient": 9,
+        "Eternal": 10
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.MoonstoneNexusLuck, roll)",
+    "a/g/a/A.a(A.MoonstoneNexusThermalResistances, roll)",
+    "a/g/a/A.a(A.MoonstoneNexusShardLimit, roll)"
+   ]
+  },
+  {
+   "name": "StoneOfBalu",
+   "id": 187,
+   "required_level": 28,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Nexus"
+   ],
+   "unique_base": "a/g/j/f",
+   "base_stats": [
+    {
+     "stat": "aE:FLAT_MASS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(1 + (q/11)*(11-1))",
+       "per_quality": {
+        "Scrap": 1,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 4,
+        "Exceptional": 5,
+        "Heavy": 6,
+        "Elite": 6,
+        "Relic": 7,
+        "Elder": 8,
+        "Ancient": 9,
+        "Eternal": 10
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.StoneOfBaluFlatMass, roll)",
+    "a/g/a/A.a(A.StoneOfBaluIncreasedMass, roll)",
+    "a/g/a/A.a(A.StoneOfBaluReducedEnergy, roll)",
+    "a/g/a/A.a(A.StoneOfBaluReducedTime, roll)",
+    "a/g/a/A.a(A.StoneOfBaluShipSize, roll)"
+   ]
+  },
+  {
+   "name": "LinsModesty",
+   "id": 214,
+   "required_level": 22,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Nexus"
+   ],
+   "unique_base": "a/g/j/n",
+   "base_stats": [
+    {
+     "stat": "cG",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(25-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 7,
+        "Augmented": 9,
+        "Enhanced": 10,
+        "Exceptional": 12,
+        "Heavy": 14,
+        "Elite": 16,
+        "Relic": 18,
+        "Elder": 20,
+        "Ancient": 21,
+        "Eternal": 23
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.LinsModestyMoreDamage, roll)"
+   ]
+  },
+  {
+   "name": "OctronsTangle",
+   "id": 257,
+   "required_level": 64,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Nexus"
+   ],
+   "unique_base": "a/g/j/i",
+   "base_stats": [
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.AllModsLevelTier1, roll)",
+    "a/g/a/A.a(A.OctronsTangleMass, roll)",
+    "a/g/a/A.a(A.OctronsTangleTime, roll)",
+    "a/g/a/A.a(A.OctronsTangleEnergy, roll)"
+   ]
+  },
+  {
+   "name": "Infestus",
+   "id": 259,
+   "required_level": 30,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Nexus"
+   ],
+   "unique_base": "a/g/j/b",
+   "base_stats": [
+    {
+     "stat": "cG",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(25-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 7,
+        "Augmented": 9,
+        "Enhanced": 10,
+        "Exceptional": 12,
+        "Heavy": 14,
+        "Elite": 16,
+        "Relic": 18,
+        "Elder": 20,
+        "Ancient": 21,
+        "Eternal": 23
+       }
+      },
+      "ELEM.nuclear"
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.InfestusSelfParasites, roll)",
+    "a/g/a/A.a(A.InfestusMaxParasites, roll)",
+    "a/g/a/A.a(A.InfestusParasiteMods, roll)"
+   ]
+  },
+  {
+   "name": "GoblinCrown",
+   "id": 264,
+   "required_level": 72,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Nexus"
+   ],
+   "unique_base": "a/g/j/a",
+   "base_stats": [
+    {
+     "stat": "cG",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(5 + (q/11)*(25-5))",
+       "per_quality": {
+        "Scrap": 5,
+        "Rusty": 7,
+        "Augmented": 9,
+        "Enhanced": 10,
+        "Exceptional": 12,
+        "Heavy": 14,
+        "Elite": 16,
+        "Relic": 18,
+        "Elder": 20,
+        "Ancient": 21,
+        "Eternal": 23
+       }
+      },
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "cq:NEXUS_MODS",
+     "args": []
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.GoblinCrownShardLimit, roll)"
+   ]
+  }
+ ],
+ "Chip": [
+  {
+   "name": "Chip",
+   "id": 126,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Chip"
+   ]
+  },
+  {
+   "name": "EmpoweredChip",
+   "id": 200,
+   "required_level": 70,
+   "drop_weight": 100,
+   "unique": false,
+   "tags": [
+    "Chip"
+   ],
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "CritRipper",
+   "id": 127,
+   "required_level": 50,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.CritRipperReducedCritChance, roll)",
+    "a/g/a/A.a(A.CritRipperMultiCrit, roll)"
+   ]
+  },
+  {
+   "name": "EmpoweredCritRipper",
+   "id": 276,
+   "required_level": 75,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.EmpoweredCritRipperReducedCritChance, roll)",
+    "a/g/a/A.a(A.EmpoweredCritRipperMultiCrit, roll)"
+   ]
+  },
+  {
+   "name": "EscapeCircuit",
+   "id": 128,
+   "required_level": 12,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.EscapeCircuitDashSlot, roll)"
+   ]
+  },
+  {
+   "name": "TheGrandFinale",
+   "id": 162,
+   "required_level": 16,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.RocketsExplodeOnExpiration, roll)"
+   ]
+  },
+  {
+   "name": "Singularity",
+   "id": 163,
+   "required_level": 50,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.Singularity, roll)"
+   ]
+  },
+  {
+   "name": "DroneMaster",
+   "id": 164,
+   "required_level": 6,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      3
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.DroneMasterMaxDrones, roll)",
+    "a/g/a/A.a(A.DroneMasterDroneDamage, roll)",
+    "a/g/a/A.a(A.DroneMasterDronePower, roll)"
+   ]
+  },
+  {
+   "name": "EmpoweredDroneMaster",
+   "id": 293,
+   "required_level": 72,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.EmpoweredDroneMasterMaxDrones, roll)",
+    "a/g/a/A.a(A.EmpoweredDroneMasterDroneDamage, roll)"
+   ]
+  },
+  {
+   "name": "ZedsPact",
+   "id": 188,
+   "required_level": 16,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      2
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.ZedsPactBulwarkLimit, roll)",
+    "a/g/a/A.a(A.ZedsPactBulwarkDamage, roll)"
+   ]
+  },
+  {
+   "name": "SoulStone",
+   "id": 196,
+   "required_level": 68,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(lib/random/Random.get(java/util/stream/Stream.toList()), roll)"
+   ]
+  },
+  {
+   "name": "SheakirusWrath",
+   "id": 198,
+   "required_level": 24,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.SplitWithoutEnemy, roll)"
+   ]
+  },
+  {
+   "name": "ChaosCircuit",
+   "id": 263,
+   "required_level": 36,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      2
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(lib/random/Random.get(java/util/List.of(['A.ChaosCircuitIncreasedTimeAttribute', 'A.ChaosCircuitIncreasedMassAttribute', 'A.ChaosCircuitIncreasedEnergyAttribute', 'A.ChaosCircuitMoreKineticDamageTypeAttribute', 'A.ChaosCircuitMoreElectricDamageTypeAttribute', 'A.ChaosCircuitMorePlasmaDamageTypeAttribute', 'A.ChaosCircuitMoreExplosiveDamageTypeAttribute', 'A.ChaosCircuitMoreNuclearDamageTypeAttribute', 'A.ChaosCircuitIncreasedDeflectorShieldAttribute', 'A.ChaosCircuitIncreasedArmorAttribute', 'A.ChaosCircuitMoreDamageOverTimeAttribute', 'A.ChaosCircuitMoreMinionDamageAttribute', 'A.ChaosCircuitParasiteDamageAttribute', 'A.ChaosCircuitMoreEngineDamageAttribute', 'A.ChaosCircuitMoreMeleeDamageAttribute', 'A.ChaosCircuitIncreasedAttackSpeedAttribute', 'A.ChaosCircuitLuckAttribute', 'A.ChaosCircuitFieldEffectAttribute', 'A.ChaosCircuitIncreasedMinionAttackSpeedAttribute', 'A.ChaosCircuitAreaDamageAttribute', 'A.ChaosCircuitAreaOfEffectAttribute', 'A.ChaosCircuitCritDamageAttribute', 'A.ChaosCircuitCritChanceAttribute', 'A.ChaosCircuitKineticResistanceAttribute', 'A.ChaosCircuitElectricResistanceAttribute', 'A.ChaosCircuitPlasmaResistanceAttribute', 'A.ChaosCircuitExplosiveResistanceAttribute', 'A.ChaosCircuitNuclearResistanceAttribute', 'A.ChaosCircuitRadiationChanceAttribute', 'A.ChaosCircuitRadiationDamageAttribute', 'A.ChaosCircuitAftershockChanceAttribute', 'A.ChaosCircuitAftershockDamageAttribute', 'A.ChaosCircuitBlindChanceAttribute', 'A.ChaosCircuitBlindEffectAttribute', 'A.ChaosCircuitShockChanceAttribute', 'A.ChaosCircuitShockEffectAttribute', 'A.ChaosCircuitDebrisChanceAttribute', 'A.ChaosCircuitDebrisDamageAttribute', 'A.ChaosCircuitFlatDodgeAttribute'])), roll)"
+   ]
+  },
+  {
+   "name": "DragonEye",
+   "id": 274,
+   "required_level": 40,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      3
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(lib/random/Random.get(java/util/List.of(['A.DragonEyeFlatTimeAttribute', 'A.DragonEyeFlatMassAttribute', 'A.DragonEyeFlatEnergyAttribute', 'A.DragonEyeMoreDeflectorShieldAttribute', 'A.DragonEyeMoreArmorAttribute', 'A.DragonEyeCritDamageAttribute', 'A.DragonEyeCritChanceAttribute', 'A.DragonEyeAllResistancesAttribute', 'A.DragonEyeAllMaxResistancesAttribute', 'A.DragonEyeVirusEffectAttribute', 'A.DragonEyeMaxVenomBoostAttribute', 'A.DragonEyeMaxTurboBoostAttribute', 'A.DragonEyeMaxShieldBoostAttribute', 'A.DragonEyeMaxFocusBoostAttribute', 'A.DragonEyeMaxForgeBoostAttribute', 'A.DragonEyeMinionPowerAttribute'])), roll)"
+   ]
+  },
+  {
+   "name": "NihalorsEye",
+   "id": 390,
+   "required_level": 80,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/f",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TheChosenOne",
+   "id": 309,
+   "required_level": 75,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Chip"
+   ],
+   "unique_base": "a/g/b/d",
+   "base_stats": [
+    {
+     "stat": "V:CHIP_LIMIT",
+     "args": [
+      1
+     ]
+    }
+   ]
+  }
+ ]
+}

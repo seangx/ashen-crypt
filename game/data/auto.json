@@ -33,10 +33,6 @@
   "idleResume": 3,
   "manualLootXpMul": 1.0
  },
- "loop": {
-  "_说明": "一局结束后显示 summarySec 秒结算，然后自动开下一局",
-  "summarySec": 3
- },
  "push": {
   "_说明": "自动推层：打赢就去最深层；连输 lossesToRetreat 次退一层；退下来以后赢 winsToRetry 次再回去冲最深层。锁定层数时都不变",
   "lossesToRetreat": 2,

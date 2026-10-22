@@ -1,0 +1,11593 @@
+{
+ "_notes": {
+  "source": "astroloot.a.g.a.A enum (1040 constants, 726 families) + its affix-definition classes, decoded with javap.",
+  "affix_type": "Prefix / Suffix / Augment / Slots / Mod / Implicit / Base, from the definition class. Types without tiers (unique-only, skill-tree, spirit-animal, octron/twisted) are kept for reference.",
+  "rolls_on_tags_any": "the affix can roll on an item that has ANY of these tags (Weapon / Shield / Core / Engine / Nexus / Chip). Engines also carry Weapon, but \"b/m\" means Weapon and not Engine.",
+  "rolls_on_special": "restricted pools: Chip-only, EmpoweredChip-only, Sector, SectorChip.",
+  "exclusive_group": "an item cannot hold two affixes from the same group (e.g. one flat-damage line per element).",
+  "spawn_weight / item levels": "tier weights come from the tier table: 9-tier families T1..T9 = 100,200,400,500,600,700,800,900,1000; 5-tier = 100,200,400,800,1000; 3-tier (d) = 100,200,500; 3-tier (e) = 25,50,100; single = 25. The tier can roll only when item level is in [item_level_min, item_level_max_exclusive).",
+  "values": "constructor numbers after the row id. For ranges the pattern is [low_min, low_max, high_min, high_max] for flat damage (adds X-Y where X rolls in low range and Y in high range) or [min, max] for single values. Percent stats are whole percents (56 = 56%).",
+  "roll formula": "value = lo + round((r-1)/254 * (hi-lo)), with r a byte roll in 1..255 (astroloot.a.g.a.b.d.a(III)).",
+  "rarity weights": "Common 200, Uncommon 600, Rare 200 (Unique handled separately). Prefix/suffix count limits per rarity: not decoded yet.",
+  "mod slots": "OneSlot..SixSlots are affix_type Slots: values [count, weight] = 1:1000, 2:800, 3:600, 4:300, 5:100, 6:25. LevelingSlots [count, weight] 1:1000 ... 8:200."
+ },
+ "family_count_by_type": {
+  "Base": 1,
+  "Implicit": 1,
+  "Prefix": 150,
+  "Suffix": 61,
+  "Slots": 14,
+  "Augment": 246,
+  "null": 253
+ },
+ "families": [
+  {
+   "family": "IntrinsicBase",
+   "def_class": "a/g/a/b/X",
+   "affix_type": "Base",
+   "exclusive_group": [
+    "IntrinsicBase"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "IntrinsicImplicit",
+   "def_class": "a/g/a/b/Y",
+   "affix_type": "Implicit",
+   "exclusive_group": [
+    "IntrinsicImplicit"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "FlatKineticDamage",
+   "def_class": "a/g/a/b/u",
+   "affix_type": "Prefix",
+   "element": "kinetic",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "FlatKineticDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      2,
+      3,
+      4,
+      6
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      4,
+      6,
+      8,
+      15
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      7,
+      12,
+      18,
+      24
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      13,
+      18,
+      27,
+      38
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      19,
+      25,
+      39,
+      60
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      26,
+      34,
+      61,
+      86
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      35,
+      48,
+      87,
+      109
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      49,
+      62,
+      110,
+      139
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      63,
+      80,
+      140,
+      180
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "FlatElectricDamage",
+   "def_class": "a/g/a/b/u",
+   "affix_type": "Prefix",
+   "element": "electric",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "FlatElectricDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      1,
+      1,
+      5,
+      8
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      1,
+      1,
+      10,
+      22
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      1,
+      1,
+      23,
+      38
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      1,
+      1,
+      39,
+      64
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      1,
+      1,
+      65,
+      86
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      1,
+      1,
+      87,
+      105
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      1,
+      106,
+      132
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      1,
+      1,
+      133,
+      169
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      1,
+      1,
+      170,
+      225
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "FlatExplosiveDamage",
+   "def_class": "a/g/a/b/u",
+   "affix_type": "Prefix",
+   "element": "explosive",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "FlatExplosiveDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      2,
+      3,
+      4,
+      6
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      4,
+      6,
+      8,
+      15
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      7,
+      12,
+      18,
+      24
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      13,
+      18,
+      27,
+      38
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      19,
+      25,
+      39,
+      60
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      26,
+      34,
+      61,
+      86
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      35,
+      48,
+      87,
+      109
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      49,
+      62,
+      110,
+      139
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      63,
+      80,
+      140,
+      180
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "FlatPlasmaDamage",
+   "def_class": "a/g/a/b/u",
+   "affix_type": "Prefix",
+   "element": "plasma",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "FlatPlasmaDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      2,
+      3,
+      4,
+      6
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      4,
+      6,
+      8,
+      15
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      7,
+      12,
+      18,
+      24
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      13,
+      18,
+      27,
+      38
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      19,
+      25,
+      39,
+      60
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      26,
+      34,
+      61,
+      86
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      35,
+      48,
+      87,
+      109
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      49,
+      62,
+      110,
+      139
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      63,
+      80,
+      140,
+      180
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "FlatNuclearDamage",
+   "def_class": "a/g/a/b/u",
+   "affix_type": "Prefix",
+   "element": "nuclear",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "FlatNuclearDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      2,
+      3,
+      4,
+      6
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      4,
+      6,
+      8,
+      15
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      7,
+      12,
+      18,
+      24
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      13,
+      18,
+      27,
+      38
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      19,
+      25,
+      39,
+      60
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      26,
+      34,
+      61,
+      86
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      35,
+      48,
+      87,
+      109
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      49,
+      62,
+      110,
+      139
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      63,
+      80,
+      140,
+      180
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedKineticBaseDamage",
+   "def_class": "a/g/a/b/F",
+   "affix_type": "Prefix",
+   "element": "kinetic",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "IncreasedKineticDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      9,
+      14
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      15,
+      21
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      22,
+      38
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      39,
+      62
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      63,
+      86
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      87,
+      104
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      105,
+      142
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      142,
+      170
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedElectricBaseDamage",
+   "def_class": "a/g/a/b/F",
+   "affix_type": "Prefix",
+   "element": "electric",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "IncreasedElectricDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      9,
+      14
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      15,
+      21
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      22,
+      38
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      39,
+      62
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      63,
+      86
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      87,
+      104
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      105,
+      142
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      142,
+      170
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedExplosiveBaseDamage",
+   "def_class": "a/g/a/b/F",
+   "affix_type": "Prefix",
+   "element": "explosive",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "IncreasedExplosiveDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      9,
+      14
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      15,
+      21
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      22,
+      38
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      39,
+      62
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      63,
+      86
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      87,
+      104
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      105,
+      142
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      142,
+      170
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedPlasmaBaseDamage",
+   "def_class": "a/g/a/b/F",
+   "affix_type": "Prefix",
+   "element": "plasma",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "IncreasedPlasmaDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      9,
+      14
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      15,
+      21
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      22,
+      38
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      39,
+      62
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      63,
+      86
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      87,
+      104
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      105,
+      142
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      142,
+      170
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedNuclearBaseDamage",
+   "def_class": "a/g/a/b/F",
+   "affix_type": "Prefix",
+   "element": "nuclear",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "IncreasedNuclearDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      9,
+      14
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      15,
+      21
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      22,
+      38
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      39,
+      62
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      63,
+      86
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      87,
+      104
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      105,
+      142
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      142,
+      170
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedThermalBaseDamage",
+   "def_class": "a/g/a/b/H",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "IncreasedThermalDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      2,
+      4
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      4,
+      7
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      7,
+      10
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      11,
+      19
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      19,
+      31
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      31,
+      43
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      43,
+      52
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      52,
+      71
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      71,
+      85
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedBaseAttackSpeed",
+   "def_class": "a/g/a/b/D",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "b/m: Weapon and not Engine"
+   ],
+   "exclusive_group": [
+    "AttackSpeed"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      2,
+      4
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      5,
+      7
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      8,
+      14
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      15,
+      20
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      21,
+      25
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      26,
+      32
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      33,
+      44
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      45,
+      55
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      56,
+      70
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedAttackSpeed",
+   "def_class": "a/g/a/b/C",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Engine",
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "AttackSpeed"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      2,
+      5
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      6,
+      10
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      11,
+      17
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      18,
+      25
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      26,
+      30
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "OneSlot",
+   "def_class": "a/g/a/b/bS",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      1,
+      1000
+     ]
+    }
+   ]
+  },
+  {
+   "family": "TwoSlots",
+   "def_class": "a/g/a/b/bS",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      2,
+      800
+     ]
+    }
+   ]
+  },
+  {
+   "family": "ThreeSlots",
+   "def_class": "a/g/a/b/bS",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      3,
+      600
+     ]
+    }
+   ]
+  },
+  {
+   "family": "FourSlots",
+   "def_class": "a/g/a/b/bS",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      4,
+      300
+     ]
+    }
+   ]
+  },
+  {
+   "family": "FiveSlots",
+   "def_class": "a/g/a/b/bS",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      5,
+      100
+     ]
+    }
+   ]
+  },
+  {
+   "family": "SixSlots",
+   "def_class": "a/g/a/b/bS",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      6,
+      25
+     ]
+    }
+   ]
+  },
+  {
+   "family": "OneLevelingSlot",
+   "def_class": "a/g/a/b/Z",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      1,
+      1000
+     ]
+    }
+   ]
+  },
+  {
+   "family": "TwoLevelingSlots",
+   "def_class": "a/g/a/b/Z",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      2,
+      900
+     ]
+    }
+   ]
+  },
+  {
+   "family": "ThreeLevelingSlots",
+   "def_class": "a/g/a/b/Z",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      3,
+      800
+     ]
+    }
+   ]
+  },
+  {
+   "family": "FourLevelingSlots",
+   "def_class": "a/g/a/b/Z",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      4,
+      700
+     ]
+    }
+   ]
+  },
+  {
+   "family": "FiveLevelingSlots",
+   "def_class": "a/g/a/b/Z",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      5,
+      600
+     ]
+    }
+   ]
+  },
+  {
+   "family": "SixLevelingSlots",
+   "def_class": "a/g/a/b/Z",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      6,
+      500
+     ]
+    }
+   ]
+  },
+  {
+   "family": "SevenLevelingSlots",
+   "def_class": "a/g/a/b/Z",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      7,
+      400
+     ]
+    }
+   ]
+  },
+  {
+   "family": "EightLevelingSlots",
+   "def_class": "a/g/a/b/Z",
+   "affix_type": "Slots",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Slot"
+   ],
+   "tiers": [
+    {
+     "values": [
+      8,
+      200
+     ]
+    }
+   ]
+  },
+  {
+   "family": "OneChipSocket",
+   "def_class": "a/g/a/b/o",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine"
+   ],
+   "exclusive_group": [
+    "ChipSocket"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "TwoChipSockets",
+   "def_class": "a/g/a/b/o",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine"
+   ],
+   "exclusive_group": [
+    "ChipSocket"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ElectricResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "electric",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "ElectricResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      21,
+      30
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      31,
+      40
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      41,
+      50
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "ExplosiveResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "explosive",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "ExplosiveResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      21,
+      30
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      31,
+      40
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      41,
+      50
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "KineticResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "kinetic",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "KineticResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      21,
+      30
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      31,
+      40
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      41,
+      50
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "PlasmaResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "plasma",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "PlasmaResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      21,
+      30
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      31,
+      40
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      41,
+      50
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "NuclearResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "nuclear",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "NuclearResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      21,
+      30
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      31,
+      40
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      41,
+      50
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "ThermalResistance",
+   "def_class": "a/g/a/b/bT",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "ThermalResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      1,
+      3
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      4,
+      7
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      8,
+      12
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      13,
+      18
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      19,
+      25
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "MaxKineticResistance",
+   "def_class": "a/g/a/b/ab",
+   "affix_type": "Suffix",
+   "element": "kinetic",
+   "rolls_on_tags_any": [
+    "Chip",
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "MaxKineticResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "MaxExplosiveResistance",
+   "def_class": "a/g/a/b/ab",
+   "affix_type": "Suffix",
+   "element": "explosive",
+   "rolls_on_tags_any": [
+    "Chip",
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "MaxExplosiveResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "MaxElectricResistance",
+   "def_class": "a/g/a/b/ab",
+   "affix_type": "Suffix",
+   "element": "electric",
+   "rolls_on_tags_any": [
+    "Chip",
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "MaxElectricResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "MaxPlasmaResistance",
+   "def_class": "a/g/a/b/ab",
+   "affix_type": "Suffix",
+   "element": "plasma",
+   "rolls_on_tags_any": [
+    "Chip",
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "MaxPlasmaResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "MaxNuclearResistance",
+   "def_class": "a/g/a/b/ab",
+   "affix_type": "Suffix",
+   "element": "nuclear",
+   "rolls_on_tags_any": [
+    "Chip",
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "MaxNuclearResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "FlatArmor",
+   "def_class": "a/g/a/b/t",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "FlatArmor"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      4,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      25
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      26,
+      50
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      51,
+      80
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      81,
+      120
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedArmor",
+   "def_class": "a/g/a/b/B",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "IncreasedArmor"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      21,
+      35
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      36,
+      50
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      51,
+      70
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "DashDamage",
+   "def_class": "a/g/a/b/O",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "DashDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      4,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      25
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      26,
+      50
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      51,
+      80
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      81,
+      120
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "DashRecharge",
+   "def_class": "a/g/a/b/p",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "DashRecharge"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      21,
+      35
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      36,
+      50
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      51,
+      70
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedBaseVelocity",
+   "def_class": "a/g/a/b/I",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Engine"
+   ],
+   "exclusive_group": [
+    "IncreasedBaseVelocity"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      15
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      16,
+      20
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      21,
+      25
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      26,
+      30
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "FlatTime",
+   "def_class": "a/g/a/b/A",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "FlatTime"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      1,
+      2
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      5,
+      6
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      7,
+      8
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      9,
+      10
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedCritChance",
+   "def_class": "a/g/a/b/E",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedCritChance"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      4,
+      10,
+      1,
+      0
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      11,
+      20,
+      1,
+      0
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      21,
+      30,
+      1,
+      0
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      31,
+      40,
+      1,
+      0
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      41,
+      50,
+      1,
+      0
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      51,
+      60,
+      1,
+      0
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      61,
+      75,
+      1,
+      0
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      76,
+      90,
+      1,
+      0
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      91,
+      120,
+      1,
+      0
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "FlatMass",
+   "def_class": "a/g/a/b/z",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "FlatMass"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      1,
+      2
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      5,
+      6
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      7,
+      8
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      9,
+      10
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "FlatEnergy",
+   "def_class": "a/g/a/b/y",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "FlatEnergy"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      1,
+      2
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      5,
+      6
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      7,
+      8
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      9,
+      10
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "FlatDeflectorShield",
+   "def_class": "a/g/a/b/w",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "FlatDeflectorShield"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      4,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      25
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      26,
+      50
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      51,
+      80
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      81,
+      120
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedDeflectorShield",
+   "def_class": "a/g/a/b/P",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "IncreasedDeflectorShield"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      21,
+      35
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      36,
+      50
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      51,
+      70
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "FlatDodge",
+   "def_class": "a/g/a/b/x",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "FlatDodge"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      1,
+      4
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      5,
+      8
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      9,
+      12
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      13,
+      16
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      17,
+      20
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "MinionLevel",
+   "def_class": "a/g/a/b/ad",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "MinionMod"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      2
+     ],
+     "spawn_weight": 50,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      3
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "AllModsLevel",
+   "def_class": "a/g/a/b/a",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield",
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "AllMods"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "IncreasedMinionDamage",
+   "def_class": "a/g/a/b/U",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "IncreasedMinionDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      2,
+      4
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      4,
+      7
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      7,
+      10
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      11,
+      19
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      19,
+      31
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      31,
+      43
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      43,
+      52
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      52,
+      71
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      71,
+      85
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedMinionAttackSpeed",
+   "def_class": "a/g/a/b/T",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "IncreasedMinionAttackSpeed"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      1,
+      2
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      5,
+      7
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      8,
+      12
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      13,
+      15
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      16,
+      19
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      20,
+      24
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      25,
+      30
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      31,
+      40
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedCritDamage",
+   "def_class": "a/g/a/b/K",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedCritDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      4,
+      8,
+      1,
+      0
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      9,
+      16,
+      1,
+      0
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      17,
+      25,
+      1,
+      0
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      26,
+      32,
+      1,
+      0
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      33,
+      39,
+      1,
+      0
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      40,
+      48,
+      1,
+      0
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      49,
+      50,
+      1,
+      0
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      51,
+      62,
+      1,
+      0
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      63,
+      80,
+      1,
+      0
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedDamageOverTime",
+   "def_class": "a/g/a/b/N",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedDamageOverTime"
+   ],
+   "tiers": [
+    {
+     "tier": "T9",
+     "values": [
+      2,
+      4,
+      2,
+      0,
+      1
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T8",
+     "values": [
+      5,
+      7,
+      2,
+      0,
+      1
+     ],
+     "spawn_weight": 900,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 20
+    },
+    {
+     "tier": "T7",
+     "values": [
+      8,
+      14,
+      2,
+      0,
+      1
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 8,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T6",
+     "values": [
+      15,
+      20,
+      2,
+      0,
+      1
+     ],
+     "spawn_weight": 700,
+     "item_level_min": 14,
+     "item_level_max_exclusive": 55
+    },
+    {
+     "tier": "T5",
+     "values": [
+      21,
+      25,
+      2,
+      0,
+      1
+     ],
+     "spawn_weight": 600,
+     "item_level_min": 18,
+     "item_level_max_exclusive": 60
+    },
+    {
+     "tier": "T4",
+     "values": [
+      26,
+      32,
+      2,
+      0,
+      1
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 24
+    },
+    {
+     "tier": "T3",
+     "values": [
+      33,
+      44,
+      2,
+      0,
+      1
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 30
+    },
+    {
+     "tier": "T2",
+     "values": [
+      45,
+      55,
+      2,
+      0,
+      1
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      56,
+      70,
+      2,
+      0,
+      1
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "DashSlot",
+   "def_class": "a/g/a/b/q",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Engine"
+   ],
+   "exclusive_group": [
+    "DashSlot"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1,
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2,
+      3
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "IncreasedKineticDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "kinetic",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedKineticDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      4,
+      8,
+      1,
+      0
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      9,
+      16,
+      1,
+      0
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      17,
+      24,
+      1,
+      0
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      25,
+      32,
+      1,
+      0
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      33,
+      40,
+      1,
+      0
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedElectricDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "electric",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedElectricDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      4,
+      8,
+      1,
+      0
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      9,
+      16,
+      1,
+      0
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      17,
+      24,
+      1,
+      0
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      25,
+      32,
+      1,
+      0
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      33,
+      40,
+      1,
+      0
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedPlasmaDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "plasma",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedPlasmaDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      4,
+      8,
+      1,
+      0
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      9,
+      16,
+      1,
+      0
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      17,
+      24,
+      1,
+      0
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      25,
+      32,
+      1,
+      0
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      33,
+      40,
+      1,
+      0
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedExplosiveDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "explosive",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedExplosiveDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      4,
+      8,
+      1,
+      0
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      9,
+      16,
+      1,
+      0
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      17,
+      24,
+      1,
+      0
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      25,
+      32,
+      1,
+      0
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      33,
+      40,
+      1,
+      0
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedNuclearDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "nuclear",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedNuclearDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      4,
+      8,
+      1,
+      0
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      9,
+      16,
+      1,
+      0
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      17,
+      24,
+      1,
+      0
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      25,
+      32,
+      1,
+      0
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      33,
+      40,
+      1,
+      0
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "IncreasedThermalDamage",
+   "def_class": "a/g/a/b/V",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "IncreasedThermalDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T5",
+     "values": [
+      3,
+      6
+     ],
+     "spawn_weight": 1000,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 15
+    },
+    {
+     "tier": "T4",
+     "values": [
+      7,
+      12
+     ],
+     "spawn_weight": 800,
+     "item_level_min": 1,
+     "item_level_max_exclusive": 31
+    },
+    {
+     "tier": "T3",
+     "values": [
+      13,
+      18
+     ],
+     "spawn_weight": 400,
+     "item_level_min": 14
+    },
+    {
+     "tier": "T2",
+     "values": [
+      19,
+      24
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 36
+    },
+    {
+     "tier": "T1",
+     "values": [
+      25,
+      30
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 68
+    }
+   ]
+  },
+  {
+   "family": "ChipFlatTime",
+   "def_class": "a/g/a/b/A",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "FlatTime"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      2
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      6
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipFlatMass",
+   "def_class": "a/g/a/b/z",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "FlatMass"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      2
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      6
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipFlatEnergy",
+   "def_class": "a/g/a/b/y",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "FlatEnergy"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      2
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      6
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedKineticDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "kinetic",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedKineticDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      18
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      19,
+      32
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedElectricDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "electric",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedElectricDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      18
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      19,
+      32
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedPlasmaDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "plasma",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedPlasmaDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      18
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      19,
+      32
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedExplosiveDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "explosive",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedExplosiveDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      18
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      19,
+      32
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedNuclearDamage",
+   "def_class": "a/g/a/b/L",
+   "affix_type": "Prefix",
+   "element": "nuclear",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedNuclearDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      18
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      19,
+      32
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedArmor",
+   "def_class": "a/g/a/b/B",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedArmor"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      12
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      13,
+      18
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedDeflectorShield",
+   "def_class": "a/g/a/b/P",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedDeflectorShield"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      12
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      13,
+      18
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipFlatDodge",
+   "def_class": "a/g/a/b/x",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "FlatDodge"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      4
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      5,
+      8
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      9,
+      12
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedAttackSpeed",
+   "def_class": "a/g/a/b/C",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "AttackSpeed"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      2,
+      4
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      5,
+      7
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      8,
+      12
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipKineticResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "kinetic",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "KineticResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      5
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      6,
+      10
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      10,
+      15
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipElectricResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "electric",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "ElectricResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      5
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      6,
+      10
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      10,
+      15
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipExplosiveResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "explosive",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "ExplosiveResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      5
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      6,
+      10
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      10,
+      15
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipPlasmaResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "plasma",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "PlasmaResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      5
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      6,
+      10
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      10,
+      15
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipNuclearResistance",
+   "def_class": "a/g/a/b/bP",
+   "affix_type": "Suffix",
+   "element": "nuclear",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "NuclearResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      5
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      6,
+      10
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      10,
+      15
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipThermalResistance",
+   "def_class": "a/g/a/b/bT",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "ThermalResistance"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      1,
+      2
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      6
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMinionLevel",
+   "def_class": "a/g/a/b/ad",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MinionMod"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipFieldMods",
+   "def_class": "a/g/a/b/s",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "FieldMods"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipParasiteMods",
+   "def_class": "a/g/a/b/bM",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "ParasiteMods"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipVirusMods",
+   "def_class": "a/g/a/b/bX",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "VirusMods"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipAllModsLevel",
+   "def_class": "a/g/a/b/a",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "AllMods"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "values": [
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreKineticDamage",
+   "def_class": "a/g/a/b/bk",
+   "affix_type": "Prefix",
+   "element": "kinetic",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreKineticDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      5
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      6,
+      8
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreElectricDamage",
+   "def_class": "a/g/a/b/bk",
+   "affix_type": "Prefix",
+   "element": "electric",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreElectricDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      5
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      6,
+      8
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMorePlasmaDamage",
+   "def_class": "a/g/a/b/bk",
+   "affix_type": "Prefix",
+   "element": "plasma",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MorePlasmaDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      5
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      6,
+      8
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreExplosiveDamage",
+   "def_class": "a/g/a/b/bk",
+   "affix_type": "Prefix",
+   "element": "explosive",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreExplosiveDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      5
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      6,
+      8
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreNuclearDamage",
+   "def_class": "a/g/a/b/bk",
+   "affix_type": "Prefix",
+   "element": "nuclear",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreNuclearDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      5
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      6,
+      8
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreThermalDamage",
+   "def_class": "a/g/a/b/bq",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreThermalDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      1,
+      2
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreMinionDamage",
+   "def_class": "a/g/a/b/bp",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreMinionDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      5,
+      8
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      9,
+      12
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedMass",
+   "def_class": "a/g/a/b/R",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "IncreasedMass"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      2,
+      4
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      7
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedTime",
+   "def_class": "a/g/a/b/W",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "IncreasedTime"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      2,
+      4
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      7
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedEnergy",
+   "def_class": "a/g/a/b/Q",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "IncreasedEnergy"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      2,
+      4
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      7
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipDashSlot",
+   "def_class": "a/g/a/b/q",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "DashSlot"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "values": [
+      1,
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreArmor",
+   "def_class": "a/g/a/b/bj",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreArmor"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      2,
+      4
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      7
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreDeflectorShield",
+   "def_class": "a/g/a/b/bn",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreDeflectorShield"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      2,
+      4
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      7
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipDoubleDamage",
+   "def_class": "a/g/a/b/r",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "DoubleDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      4,
+      6
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      7,
+      9
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreDamageOverTime",
+   "def_class": "a/g/a/b/bm",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreDamageOverTime"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      5
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      6,
+      8
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipMoreMinionArmor",
+   "def_class": "a/g/a/b/bo",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "EmpoweredChip only (b/i)"
+   ],
+   "exclusive_group": [
+    "MoreMinionArmor"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      5,
+      8
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      9,
+      12
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedMinionDamage",
+   "def_class": "a/g/a/b/U",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedMinionDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      21,
+      30
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedMinionAttackSpeed",
+   "def_class": "a/g/a/b/T",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedMinionAttackSpeed"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      16
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      17,
+      24
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedMinionArmor",
+   "def_class": "a/g/a/b/S",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedMinionArmor"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      5,
+      10
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      21,
+      30
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipRange",
+   "def_class": "a/g/a/b/bO",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "Range"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      4
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      5,
+      7
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipAreaOfEffect",
+   "def_class": "a/g/a/b/c",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "AreaOfEffect"
+   ],
+   "tiers": [
+    {
+     "tier": "T2",
+     "values": [
+      3,
+      5
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    },
+    {
+     "tier": "T1",
+     "values": [
+      6,
+      10
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipAreaDamage",
+   "def_class": "a/g/a/b/b",
+   "affix_type": "Prefix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "AreaDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      18
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      19,
+      32
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedCritChance",
+   "def_class": "a/g/a/b/J",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedCritChance"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      10
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      11,
+      20
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      21,
+      30
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedCritDamage",
+   "def_class": "a/g/a/b/K",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedCritDamage"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      4,
+      8
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      9,
+      16
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      17,
+      25
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipIncreasedDamageOverTime",
+   "def_class": "a/g/a/b/N",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "IncreasedDamageOverTime"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      8,
+      14
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      15,
+      21
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      22,
+      34
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "ChipProjectileSpeed",
+   "def_class": "a/g/a/b/bN",
+   "affix_type": "Suffix",
+   "rolls_on_special": [
+    "Chip/EmpoweredChip items only (b/h)"
+   ],
+   "exclusive_group": [
+    "ProjectileSpeed"
+   ],
+   "tiers": [
+    {
+     "tier": "T3",
+     "values": [
+      3,
+      5
+     ],
+     "spawn_weight": 500,
+     "item_level_min": 1
+    },
+    {
+     "tier": "T2",
+     "values": [
+      6,
+      10
+     ],
+     "spawn_weight": 200,
+     "item_level_min": 18
+    },
+    {
+     "tier": "T1",
+     "values": [
+      11,
+      15
+     ],
+     "spawn_weight": 100,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillArmorTrigger",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillAtomicBarrier",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillHiddenWaste",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillBlastPact",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillBodyguards",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillBulwarkOfTheColossus",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillChainReaction",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillChargeMultiplier",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillChickenBlitz",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillChickenOut",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillCollector",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillColossus",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillCrushingPresence",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillDangerZone",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillDashTrigger",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillDebrisWasteland",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillEngineEcho",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillFeatheredAgility",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillFocalPoint",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillFuseStretch",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillGluttony",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillGuardians",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillGuardiansFortitude",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillHeavyImpact",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillHoardHarvest",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillHostOverload",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillInfectionInfusion",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillJetstreamFury",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillKineticFusion",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillLootBarrier",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillMasochist",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillMastermind",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillMeltdown",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillMotherboard",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillMuli",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillOverclocked",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillOverwhelmingPack",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillPacifism",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillParasiticSwarm",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillParaviralWard",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillPeltOfVengeance",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillPlumageArmor",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillPlunderStrike",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillRavenousRiches",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillRetaliationInstinct",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillRoosterShield",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillSacrificialClaws",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillSerpentGhost",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillShieldTrigger",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillSnakeBite",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillSoloist",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillSwarm",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillSymbioticBond",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillThermalDetonation",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillThermalFusion",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillThickFur",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillTimeLord",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillTriggerCascade",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillTwinFang",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillUltimateFocus",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillUpload",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillVenomSneeze",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillWaddleBlast",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillWeightOfResilience",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillYang",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillYin",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillZealot",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillZuli",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillChargedCoil",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillDashLord",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillDeepReserves",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillThermalLayering",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillColonyBond",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillAvalanche",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillFeralTrance",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpiritAnimalSkillPrimalPack",
+   "def_class": "a/g/a/b/bR",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVersatileMass",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillKineticFortress",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShatterStorm",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillNuclearFortress",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPlatesOfValor",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillAtomicAssault",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFierceAmmo",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTank",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTitanFist",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillSuperHeavy",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVersatileTime",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillQuickShot",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMach42",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillSeekAndDestroy",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPhantom",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillArmorInfusion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDashArmorInfusion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCompellingEntropy",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVersatileEnergy",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGalvanicSurge",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPowerChord",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBrutalGrip",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillThermoBlitz",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBastion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRevitron",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillSnipe",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPestilence",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFallout",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMinionCommander",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillProbabilityDistortion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDeflectorCircuit",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGigaQuake",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPileOfRuins",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillNeckPunch",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMassiveImpact",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillJunkyard",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRadiantNightmare",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBattlebornCompanions",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVenomBoostMax",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGammaSurge",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFusionArmor",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFusionShield",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillNuclearStorm",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRadiantStorm",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillJackpot",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMinionMania",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBugfix",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVanguard",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDeflectiveBarrier",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCarnage",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDeadlyPrecision",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldSurge",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDeflectorForge",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFirewall",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBoomExpertise",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillIonExpertise",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillStinker",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillZapExpertise",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDashShieldInfusion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCapacitor",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEnergetic",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFlashShield",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillThunderstruck",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillElectricEel",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillThermalAbsorption",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMassImpact",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTokamak",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillArmorFlux",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEyePicker",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTnt",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPrecisionSurge",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCascade",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPrecisionProtocol",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFocusBoostMax",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillQuantumBarrier",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPowerOverload",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDroneSwarm",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBulwarkBastion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMinionEmpowerment",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillNecroticPower",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCompanionSnatch",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFarewellTribute",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMomentumStrike",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillArmyOfGreed",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillKnockout",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillLuckyPunch",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillWildFury",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDeadlyFocus",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDeadlyAssault",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRepairKit",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHeatShield",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillOverdrain",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCyclotron",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillQuantumFrenzy",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCosmicNova",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillChainFury",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPowerRipple",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillArmorBloom",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldAccelerator",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillSpearDash",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillInvasiveInfection",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHostDominance",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillScatterShot",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShatterStrike",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillNuclearEvasion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHyperFire",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGammaDecay",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTemporalRift",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEmpyrean",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHalo",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTitanium",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillSwarmFrenzy",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHordeResilience",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPackSavagery",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGrasp",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBerserk",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBrute",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillReach",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldBoostMax",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldBoostMin",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVenomBoostMin",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGammaBreach",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRadon",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTemporalWall",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTemporalAegis",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillParasiticRush",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEndlessEpidemic",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVolatileZone",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMineOfDoom",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillImperialLegion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPlague",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEvolution",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMightOfTheSwarm",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHasteOfTheSwarm",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFortressOfEvasion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRavagerAmmo",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBlazingTrajectory",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillSteelboundLegion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHeatShroud",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDuctTape",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPhantomCastle",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGalacticResonance",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillManifestedPower",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillAmplifiedRealm",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHack",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillOutbreak",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTitaniumGuardians",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillConcreteGuardians",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCeramicGuardians",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEarthQuake",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCataclysmicShatter",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMinionWorkshop",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHungerOfTheHordes",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDrillShot",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDeepImpact",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRiftPiercer",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEndlessErosion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEarthShaker",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBulwarkCommander",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFortressOfTheAncients",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCatapult",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGoliath",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFateWeaver",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRuptureBlast",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillThunderCrush",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillIonShred",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillNanoBots",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPrimordialShell",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCometShot",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBuzzShot",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBeamShot",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillLuckyGamble",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEssenceOfDestruction",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldBarrier",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEntropicBarrier",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillInfinityStrike",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEtherstream",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEmberstream",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillSuperCharged",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillSupersonic",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMountainsMight",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVoidShell",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillSuperFlux",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillAttackGlitch",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTurboCharged",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMalware",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillAdamant",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRiposte",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldBreaker",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillByteHazard",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillForgeborneMight",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCyberneticAegis",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillAssaultSwarm",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillOverclockedArsenal",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTemporalFrenzy",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDemolition",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillMineweaver",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillRecursiveBlast",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEpochOfPain",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillOverlordsWill",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGiant",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEnergyPulse",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillAnvilsBlessing",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillObliterator",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillEternalSmelter",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillGripOfDestruction",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPendulum",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBulldozer",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBreakingBlow",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillFinalRuin",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHeartOfSteel",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillAssemblyLine",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPhantomStrike",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTheUntouchable",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTyrantCruncher",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillBurdenOfCollapse",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillStressedOverlords",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillThrustwave",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillStarforgeShielding",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillNebularWard",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCelestialMantle",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVoidDash",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillWindsOfTheVoid",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillQuantumThrusters",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillHullRattler",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldStabilizer",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCoreStabilizer",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDroneSupremacy",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillReactivePlating",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillReactiveShielding",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVenomApex",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillPerfectFocus",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldApex",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldAnchor",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVenomAnchor",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillVenomHarvest",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTurboReflexes",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillDeadlyVenom",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTurboFuel",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCriticalFocus",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTurboBarrage",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillCrystalFocus",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldAccretion",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillTempering",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillThermalEntropy",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MajorSkillShieldDrinker",
+   "def_class": "a/g/a/b/aa",
+   "affix_type": "Augment",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "OctronMulticrit",
+   "def_class": "a/g/a/b/bJ",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "values": [
+      1,
+      1
+     ],
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronVirusCrumbleOnHit",
+   "def_class": "a/g/a/b/bK",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronVirusBurstOnHit",
+   "def_class": "a/g/a/b/bK",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronVirusAmpOnHit",
+   "def_class": "a/g/a/b/bK",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronVirusFlareOnHit",
+   "def_class": "a/g/a/b/bK",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronVirusNukeOnHit",
+   "def_class": "a/g/a/b/bK",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronVirusCorrodeOnHit",
+   "def_class": "a/g/a/b/bK",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronVirusChronosOnHit",
+   "def_class": "a/g/a/b/bK",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMoreKineticDamage",
+   "def_class": "a/g/a/b/bE",
+   "affix_type": "Prefix",
+   "element": "kinetic",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMoreExplosiveDamage",
+   "def_class": "a/g/a/b/bE",
+   "affix_type": "Prefix",
+   "element": "explosive",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMorePlasmaDamage",
+   "def_class": "a/g/a/b/bE",
+   "affix_type": "Prefix",
+   "element": "plasma",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMoreElectricDamage",
+   "def_class": "a/g/a/b/bE",
+   "affix_type": "Prefix",
+   "element": "electric",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMoreNuclearDamage",
+   "def_class": "a/g/a/b/bE",
+   "affix_type": "Prefix",
+   "element": "nuclear",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMoreThermalDamage",
+   "def_class": "a/g/a/b/bI",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMoreDamageOverTime",
+   "def_class": "a/g/a/b/bF",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Weapon"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMaxDodge",
+   "def_class": "a/g/a/b/bB",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronArmor",
+   "def_class": "a/g/a/b/br",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronDeflectorShield",
+   "def_class": "a/g/a/b/bu",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronLessDamageTaken",
+   "def_class": "a/g/a/b/bA",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronFieldEffect",
+   "def_class": "a/g/a/b/bw",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronChipSocket",
+   "def_class": "a/g/a/b/bs",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronIncreasedMass",
+   "def_class": "a/g/a/b/by",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronIncreasedTime",
+   "def_class": "a/g/a/b/bz",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronIncreasedEnergy",
+   "def_class": "a/g/a/b/bx",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMoreEngineDamage",
+   "def_class": "a/g/a/b/bG",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Engine"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronDamagePerDashSlot",
+   "def_class": "a/g/a/b/bt",
+   "affix_type": "Prefix",
+   "rolls_on_tags_any": [
+    "Engine"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMoreLuck",
+   "def_class": "a/g/a/b/bH",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Engine",
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMaxKineticResistance",
+   "def_class": "a/g/a/b/bC",
+   "affix_type": "Suffix",
+   "element": "kinetic",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMaxExplosiveResistance",
+   "def_class": "a/g/a/b/bC",
+   "affix_type": "Suffix",
+   "element": "explosive",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMaxPlasmaResistance",
+   "def_class": "a/g/a/b/bC",
+   "affix_type": "Suffix",
+   "element": "plasma",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMaxElectricResistance",
+   "def_class": "a/g/a/b/bC",
+   "affix_type": "Suffix",
+   "element": "electric",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMaxNuclearResistance",
+   "def_class": "a/g/a/b/bC",
+   "affix_type": "Suffix",
+   "element": "nuclear",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronMaxAllResistances",
+   "def_class": "a/g/a/b/bD",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Core",
+    "Engine",
+    "Nexus",
+    "Shield"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "OctronExperience",
+   "def_class": "a/g/a/b/bv",
+   "affix_type": "Suffix",
+   "rolls_on_tags_any": [
+    "Nexus"
+   ],
+   "exclusive_group": [
+    "Octron"
+   ],
+   "tiers": [
+    {
+     "tier": "T1",
+     "spawn_weight": 25,
+     "item_level_min": 54
+    }
+   ]
+  },
+  {
+   "family": "Knockback",
+   "def_class": "a/g/a/b/bV",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ReverseKnockback",
+   "def_class": "a/g/a/b/bV",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "RustBlasterKnockbackDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "RockCatReducedAttackSpeed",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "RockCatAftershockRepeats",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "RockCatAftershockReductionMultiplier",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpectraRailAcceleratorConversionExplosive",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpectraRailAcceleratorConversionPlasma",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpectraRailAcceleratorConversionElectric",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SpectraRailAcceleratorPierce",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "NukieConversion",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "NukieNuclearStorm",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "FungusFuryChain",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BigBerthaReducedAttackSpeed",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BigBerthaFlatDamagePerMass",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BigBerthaAreaOfEffectPerEnergy",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BigBerthaDebrisChance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "CritRipperReducedCritChance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "CritRipperMultiCrit",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "EscapeCircuitDashSlot",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SiebenmeilenVelocity",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ShieldOfArestumMass",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ShieldOfArestumEnergy",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ShieldOfArestumTime",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionKinetic",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionExplosive",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionElectric",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionPlasma",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionNuclear",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionDamageTakenAsKinetic",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionDamageTakenAsExplosive",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionDamageTakenAsElectric",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionDamageTakenAsPlasma",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "BastionDamageTakenAsNuclear",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SixChipSockets",
+   "def_class": "a/g/a/b/bW",
+   "exclusive_group": [
+    "ChipSocket"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AetherbaneDamagePerKill",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "PeltOfTheMoonKingDodge",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "PeltOfTheMoonKingMaxDodge",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "PeltOfTheMoonKingSpikesOnDodge",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "RocketsExplodeOnExpiration",
+   "def_class": "a/g/a/b/bV",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "Singularity",
+   "def_class": "a/g/a/b/bV",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DroneMasterMaxDrones",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DroneMasterDroneDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DroneMasterDronePower",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "EmpoweredDroneMasterMaxDrones",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "EmpoweredDroneMasterDroneDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MoonstoneNexusLuck",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MoonstoneNexusThermalResistances",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "MoonstoneNexusShardLimit",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DoomcloudDamageOverTime",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DoomcloudNuclearResistance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DeathRayDeathThreshold",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DeathRayDamageTakenAsKinetic",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "TheTwinDamageConversion",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "TheTwinDualTwins",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "TheTwinRadiationChance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "StoneOfBaluFlatMass",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "StoneOfBaluIncreasedMass",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "StoneOfBaluReducedEnergy",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "StoneOfBaluReducedTime",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "StoneOfBaluShipSize",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ZedsPactBulwarkLimit",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ZedsPactBulwarkDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GruvaksHornFlatMass",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GruvaksHornKnockbackDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GruvaksHornShipSize",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GruvaksHornPullCloser",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "PapyrusFieldEffect",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SplitWithoutEnemy",
+   "def_class": "a/g/a/b/bV",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "CarlosBroodfireProjectileSpeed",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "CarlosBroodfireProjectileDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "LinsModestyMoreDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SolarasFireBurnDecayReduction",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "LeesTempestsKineticDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "LeesTempestsDoubleDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "LeesTempestsShockEffect",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "LeesTempestsKineticDamageCanShock",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "SlotfatherModLevel",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "OctronsTangleMass",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "OctronsTangleTime",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "OctronsTangleEnergy",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "InfestusSelfParasites",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "InfestusMaxParasites",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "InfestusParasiteMods",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GlassShieldRange",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GlassShieldResistances",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GlassShieldBlind",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitIncreasedTimeAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitIncreasedMassAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitIncreasedEnergyAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitMoreKineticDamageTypeAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitMoreElectricDamageTypeAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitMorePlasmaDamageTypeAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitMoreExplosiveDamageTypeAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitMoreNuclearDamageTypeAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitIncreasedDeflectorShieldAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitIncreasedArmorAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitMoreDamageOverTimeAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitMoreMinionDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitParasiteDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitMoreEngineDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitMoreMeleeDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitIncreasedAttackSpeedAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitLuckAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitFieldEffectAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitIncreasedMinionAttackSpeedAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitAreaDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitAreaOfEffectAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitCritDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitCritChanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitKineticResistanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitElectricResistanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitPlasmaResistanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitExplosiveResistanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitNuclearResistanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitRadiationChanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitRadiationDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitAftershockChanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitAftershockDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitBlindChanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitBlindEffectAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitShockChanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitShockEffectAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitDebrisChanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitDebrisDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ChaosCircuitFlatDodgeAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GoblinCrownShardLimit",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeFlatTimeAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeFlatMassAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeFlatEnergyAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeMoreDeflectorShieldAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeMoreArmorAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeCritDamageAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeCritChanceAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeAllResistancesAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeAllMaxResistancesAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeVirusEffectAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeMaxVenomBoostAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeMaxTurboBoostAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeMaxShieldBoostAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeMaxFocusBoostAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeMaxForgeBoostAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DragonEyeMinionPowerAttribute",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "EmpoweredCritRipperReducedCritChance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "EmpoweredCritRipperMultiCrit",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMaxDodge",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronArmor",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronDeflectorShield",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronLessDamageTaken",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronIncreasedMass",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronIncreasedTime",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronIncreasedEnergy",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMulticrit",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMoreKineticDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMoreExplosiveDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMorePlasmaDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMoreElectricDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMoreNuclearDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMoreThermalDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMoreDamageOverTime",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMoreEngineDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronDamagePerDashSlot",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMoreLuck",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMaxKineticResistance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMaxExplosiveResistance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMaxPlasmaResistance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMaxElectricResistance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMaxNuclearResistance",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerOctronMaxAllResistances",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerAffixesCountTwice",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "AbysswalkerBecomesGlitch",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DemonFireBurn",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DemonFireFieldEffect",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DemonFireIncreasedTime",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ConduitIncreasedElectricBaseDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ConduitFlatDamagePerTurboBoost",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ConduitMaxTurboBoost",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ConduitMulticritAtMaxBoost",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GoroboroIncreasedKineticBaseDamage",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GoroboroReducedAttackSpeed",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DreamerAdditionalAttacksPerFocusBoost",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DreamerFocusBoostOnKill",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "DreamerIncreasedDamagePerFocusBoost",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "VoltronsPrisonAllResistances",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "VoltronsPrisonShockInRange",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "VoltronsPrisonMoreDamagePerShockOnYou",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GoblinFireFlatDamagePerForgeBoost",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GoblinFireAoEDamageRadiusPerForgeBoost",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GoblinFireExplosiveToElectric",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GoblinFireShardLimit",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "GoblinFireForgeBoost",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModLevel",
+   "def_class": "a/g/a/b/aN",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModAdditionalAttack",
+   "def_class": "a/g/a/b/ae",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModIncreasedAttackSpeed",
+   "def_class": "a/g/a/b/aE",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModIncreasedRange",
+   "def_class": "a/g/a/b/aI",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxVenomBoost",
+   "def_class": "a/g/a/b/an",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxTurboBoost",
+   "def_class": "a/g/a/b/an",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxShieldBoost",
+   "def_class": "a/g/a/b/an",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxFocusBoost",
+   "def_class": "a/g/a/b/an",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxForgeBoost",
+   "def_class": "a/g/a/b/an",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMinVenomBoost",
+   "def_class": "a/g/a/b/ap",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMinTurboBoost",
+   "def_class": "a/g/a/b/ap",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMinShieldBoost",
+   "def_class": "a/g/a/b/ap",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMinFocusBoost",
+   "def_class": "a/g/a/b/ap",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMinForgeBoost",
+   "def_class": "a/g/a/b/ap",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModIncreasedMeleeDamagePerShieldBoost",
+   "def_class": "a/g/a/b/aG",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModIncreasedProjectileDamagePerTurboBoost",
+   "def_class": "a/g/a/b/aH",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxDrones",
+   "def_class": "a/g/a/b/aR",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMoreDamageForDronesPerMaximumDrones",
+   "def_class": "a/g/a/b/aW",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxBulwarks",
+   "def_class": "a/g/a/b/aQ",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModIncreasedFieldEffect",
+   "def_class": "a/g/a/b/aF",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModKnockbackResistancePenetration",
+   "def_class": "a/g/a/b/aM",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModArmorLeechOnKnockbackHit",
+   "def_class": "a/g/a/b/aj",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModDeathThresholdOnKnockbackHit",
+   "def_class": "a/g/a/b/aw",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModPierceAmount",
+   "def_class": "a/g/a/b/ba",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModProjectileDamage",
+   "def_class": "a/g/a/b/bc",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModProjectileSpeed",
+   "def_class": "a/g/a/b/bd",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModChainAmount",
+   "def_class": "a/g/a/b/ar",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModAreaOfEffect",
+   "def_class": "a/g/a/b/ah",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModAreaDamage",
+   "def_class": "a/g/a/b/ag",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModDebrisChance",
+   "def_class": "a/g/a/b/ax",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModAftershockChance",
+   "def_class": "a/g/a/b/af",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModBlindChance",
+   "def_class": "a/g/a/b/am",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModShockChance",
+   "def_class": "a/g/a/b/bg",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModRadiationChance",
+   "def_class": "a/g/a/b/be",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModKineticDamage",
+   "def_class": "a/g/a/b/aL",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModExplosiveDamage",
+   "def_class": "a/g/a/b/aC",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModPlasmaDamage",
+   "def_class": "a/g/a/b/bb",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModElectricDamage",
+   "def_class": "a/g/a/b/aA",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModNuclearDamage",
+   "def_class": "a/g/a/b/aX",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModVirusEffect",
+   "def_class": "a/g/a/b/bi",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModThermalDamage",
+   "def_class": "a/g/a/b/bh",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModCriticalStrikeChance",
+   "def_class": "a/g/a/b/as",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModCriticalStrikeDamage",
+   "def_class": "a/g/a/b/at",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModDiamondFieldMaxAllResistances",
+   "def_class": "a/g/a/b/ay",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModEclipseFieldMaxResistance",
+   "def_class": "a/g/a/b/az",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModFaradayFieldMaxResistance",
+   "def_class": "a/g/a/b/aD",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModBlastGuardFieldMaxResistance",
+   "def_class": "a/g/a/b/al",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModShamrockFieldLuck",
+   "def_class": "a/g/a/b/bf",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModLevelSignificant",
+   "def_class": "a/g/a/b/aO",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMinionDamage",
+   "def_class": "a/g/a/b/aV",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMinionArmor",
+   "def_class": "a/g/a/b/aU",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModDashSlot",
+   "def_class": "a/g/a/b/av",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModEngineDamage",
+   "def_class": "a/g/a/b/aB",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModArmor",
+   "def_class": "a/g/a/b/ai",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxArmorLeech",
+   "def_class": "a/g/a/b/aP",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModDamageOverTime",
+   "def_class": "a/g/a/b/au",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModIncreasedTime",
+   "def_class": "a/g/a/b/aK",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxParasites",
+   "def_class": "a/g/a/b/aS",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModMaxParasitesOnEnemy",
+   "def_class": "a/g/a/b/aT",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModParasiteSpawnRange",
+   "def_class": "a/g/a/b/aY",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModParasiteSpawnRate",
+   "def_class": "a/g/a/b/aZ",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "ModIncreasedSplitRange",
+   "def_class": "a/g/a/b/aJ",
+   "tiers": [
+    {}
+   ]
+  },
+  {
+   "family": "OriginalGlitch",
+   "def_class": "a/g/a/b/bL",
+   "affix_type": "Prefix",
+   "exclusive_group": [
+    "Unique"
+   ],
+   "tiers": [
+    {}
+   ]
+  }
+ ]
+}

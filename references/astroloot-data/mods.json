@@ -1,0 +1,2430 @@
+{
+ "_notes": {
+  "source": "astroloot.jar enum/constructor tables decoded with javap (build 2026-09-25). Names are the game's internal code names.",
+  "fits_items_with": "boolean over the target item tags (see weapons.json tags). Engines carry the Weapon tag too, so \"!Engine && Weapon\" means a real weapon slot.",
+  "level": "Mods go from level 1 to 20 (single curve astroloot.a.b.e.ax.Default, max 20).",
+  "lerp(a,b)": "a + (b-a) * (lvl-1)/19, then rounded to 0.01 (to 0.001 if the result is < 0.01). Integer variant rounds to the nearest int.",
+  "lerp_sq(a,b)": "a + (b-a) * ((lvl-1)/19)^2 (not rounded).",
+  "lvl": "the mod level (1..20). Integer division where written, e.g. (1+(lvl/5)) = 1 + floor(lvl/5).",
+  "xp_to_reach_level": "cumulative XP thresholds: threshold[i] = 250 * (2^(i+1) - 1) for i = 0..19; level = 1 + count of thresholds already reached (cap 20). So L2 needs 250, L3 750, L4 1750, L5 3750 ... L20 ~ 262,143,750? see table.",
+  "drop_xp": "a dropped mod gets random starting XP: clamp(round(rand^(2+0.2*ilvl) * (PlayerXP(ilvl+8)+1)), threshold[0], threshold[last]) where PlayerXP is the player curve in player.json and rand is uniform 0..1.",
+  "stat names": "class:label where label is the game text key the stat uses. Args usually start with the attribute slot (IntrinsicImplicit), then values. Percent values written as fractions (0.25 = 25%) or as whole numbers, depending on the stat (check label).",
+  "unreadable": "What some unlabelled stat classes (bS, cG, ...) do exactly is not decoded; values are given raw."
+ },
+ "xp_thresholds": [
+  250,
+  750,
+  1750,
+  3750,
+  7750,
+  15750,
+  31750,
+  63750,
+  127750,
+  255750,
+  511750,
+  1023750,
+  2047750,
+  4095750,
+  8191750,
+  16383750,
+  32767750,
+  65535750,
+  131071750,
+  262143750
+ ],
+ "mods": [
+  {
+   "name": "Pierce",
+   "id": 5,
+   "required_level": 1,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "ProjectileCanPierce",
+   "stats": [
+    {
+     "stat": "cz:PROJECTILES_PIERCE_ALL_TARGETS",
+     "args": [
+      "A.IntrinsicImplicit",
+      "(1+(lvl/5))"
+     ]
+    },
+    {
+     "stat": "bU:MORE_DAMAGE_FOR_PIERCING_HITS",
+     "args": [
+      "A.IntrinsicImplicit",
+      "lerp(1.2, 1.4)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Knockback",
+   "id": 6,
+   "required_level": 1,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Hit",
+   "stats": [
+    {
+     "stat": "bu:KNOCKBACK",
+     "args": [
+      "A.IntrinsicImplicit"
+     ]
+    },
+    {
+     "stat": "bv:MORE_KNOCKBACK_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.4, 1.8)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Chain",
+   "id": 7,
+   "required_level": 1,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "ProjectileCanChain",
+   "stats": [
+    {
+     "stat": "U:PROJECTILES_CHAIN_ADDITIONAL_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "(1+(lvl/5))"
+     ]
+    },
+    {
+     "stat": "aU:INCREASED_DAMAGE_PER_REMAINING_CHAIN",
+     "args": [
+      "A.IntrinsicImplicit",
+      "lerp(0.0, 0.1)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "AreaOfEffect",
+   "id": 16,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "AoE",
+   "stats": [
+    {
+     "stat": "r:INCREASED_AREA_OF_EFFECT",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(25, 50)"
+     ]
+    },
+    {
+     "stat": "q:INCREASED_AREA_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(10, 25)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "AdditionalAttacks",
+   "id": 17,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Attack",
+   "stats": [
+    {
+     "stat": "b:ADDITIONAL_ATTACKS_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      "(1+(lvl/10))"
+     ]
+    },
+    {
+     "stat": "a:ADDITIONAL_ATTACK_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      "(0.1*(lvl%10))"
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.g(0.5)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Nuclear",
+   "id": 19,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "Y",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/bK.d",
+      0.6
+     ]
+    },
+    {
+     "stat": "Y",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/bK.g",
+      0.6
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(ELEM.nuclear, lerp(0.2, 0.4))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "GuardianDrone",
+   "id": 20,
+   "required_level": 1,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Minion"
+   ],
+   "fits_items_with": "!Engine && Weapon",
+   "stats": [
+    {
+     "stat": "cS:INCREASED_ARMOR",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/bB.a",
+      0.5,
+      "a/b/e/au.b(lvl)",
+      0.0,
+      "lvl",
+      "a/b/e/au.a"
+     ]
+    },
+    {
+     "stat": "bs",
+     "args": [
+      "a/b/b/bB.f()",
+      {
+       "stat": "bS",
+       "args": [
+        "A.IntrinsicImplicit",
+        0,
+        "a/b/b/Q.a(0.2)"
+       ]
+      }
+     ]
+    },
+    {
+     "stat": "bs",
+     "args": [
+      "a/b/b/bB.f()",
+      {
+       "stat": "bO:MORE_ACTION_SPEED",
+       "args": [
+        "A.IntrinsicImplicit",
+        0,
+        -50
+       ]
+      }
+     ]
+    },
+    {
+     "stat": "ad",
+     "args": [
+      "A.IntrinsicImplicit",
+      0.9
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Debris",
+   "id": 21,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "AoE"
+   ],
+   "fits_items_with": "Hit",
+   "stats": [
+    {
+     "stat": "an:DEBRIS_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.25
+     ]
+    },
+    {
+     "stat": "ao:MORE_DEBRIS_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.4, 1.8)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TitanBulwark",
+   "id": 22,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Minion",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "!Engine && Weapon",
+   "stats": [
+    {
+     "stat": "cS:INCREASED_ARMOR",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/bB.d",
+      0.25,
+      1,
+      "lerp(1.2, 2.0)",
+      "lvl",
+      "a/b/e/au.b"
+     ]
+    },
+    {
+     "stat": "bs",
+     "args": [
+      "a/b/b/bB.f()",
+      {
+       "stat": "bS",
+       "args": [
+        "A.IntrinsicImplicit",
+        0,
+        "a/b/b/Q.a(0.2)"
+       ]
+      }
+     ]
+    },
+    {
+     "stat": "w:SPAWN_FIELD_TO_REPAIR_ARMOR_PER_SECOND",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/h",
+       "args": [
+        500.0,
+        "lerp(0.02, 0.1)",
+        "a/b/b/l.b"
+       ]
+      },
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "GrimBulwark",
+   "id": 151,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Minion"
+   ],
+   "fits_items_with": "!Engine && Weapon",
+   "stats": [
+    {
+     "stat": "cS:INCREASED_ARMOR",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/bB.f",
+      0.25,
+      1,
+      "lerp(1.0, 1.5)",
+      "lvl",
+      "a/b/e/au.b"
+     ]
+    },
+    {
+     "stat": "bs",
+     "args": [
+      "a/b/b/bB.f()",
+      {
+       "stat": "bS",
+       "args": [
+        "A.IntrinsicImplicit",
+        0,
+        "a/b/b/Q.a(0.2)"
+       ]
+      }
+     ]
+    },
+    {
+     "stat": "a/g/i/P",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0,
+      "lvl"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "AuroraBulwark",
+   "id": 150,
+   "required_level": 32,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Minion",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "Core",
+   "stats": [
+    {
+     "stat": "cS:INCREASED_ARMOR",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/bB.e",
+      0.25,
+      1,
+      "lerp_sq(2.0, 4.0)",
+      "lvl",
+      "a/b/e/au.b"
+     ]
+    },
+    {
+     "stat": "ce:MORE_FIELD_EFFECT",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.2, 1.4)",
+      0
+     ]
+    },
+    {
+     "stat": "aw:INCREASED_FIELD_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(0.3, 0.6)"
+     ]
+    },
+    {
+     "stat": "ae:DAMAGE_TAKEN_FROM_AURORA_BULWARKS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "BetaRay",
+   "id": 23,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "DoT"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "Y",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/bK.j",
+      0.6
+     ]
+    },
+    {
+     "stat": "cD:RADIATION_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      20
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(ELEM.electric, (0.01*{'call': 'a/g/i/ao.a', 'args': [{'call': 'self.l', 'args': [), 'lvl', 5, 25)))"
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(ELEM.nuclear, (0.01*{'call': 'a/g/i/ao.a', 'args': [{'call': 'self.l', 'args': [), 'lvl', 5, 25)))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Radiation",
+   "id": 24,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "DoT"
+   ],
+   "fits_items_with": "Weapon && Hit",
+   "stats": [
+    {
+     "stat": "cD:RADIATION_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      40
+     ]
+    },
+    {
+     "stat": "cE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.3, 1.6)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Aftershock",
+   "id": 25,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Hit",
+   "stats": [
+    {
+     "stat": "f:AFTERSHOCK_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.25
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(ELEM.explosive, lerp(0.1, 0.3))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Crumble",
+   "id": 28,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Virus"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "db:DURATION",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/cJ.a",
+      "lvl"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Burst",
+   "id": 139,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Virus"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "db:DURATION",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/cJ.b",
+      "lvl"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Amp",
+   "id": 138,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Virus"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "db:DURATION",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/cJ.c",
+      "lvl"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Flare",
+   "id": 140,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Virus"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "db:DURATION",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/cJ.d",
+      "lvl"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Nuke",
+   "id": 141,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Virus"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "db:DURATION",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/cJ.e",
+      "lvl"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Chronos",
+   "id": 142,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Virus"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "db:DURATION",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/cJ.g",
+      "lvl"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Corrode",
+   "id": 65,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Virus"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "db:DURATION",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/cJ.f",
+      "lvl"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "AttackSpeed",
+   "id": 30,
+   "required_level": 1,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "AttackSpeed",
+   "stats": [
+    {
+     "stat": "bQ:MORE_ATTACK_SPEED",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "java/lang/StrictMath.round(lerp(20, 60))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ViralNexus",
+   "id": 32,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE",
+    "Virus",
+    "VirusField"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "de:VIRUS_FIELD",
+     "args": [
+      "A.IntrinsicImplicit",
+      "lerp(250, 1000)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Shamrock",
+   "id": 33,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "cL:MORE_LUCK",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/ck",
+       "args": [
+        500.0,
+        "lerp(1.1, 1.2)",
+        "self.a(arg1)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Resilience",
+   "id": 34,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "w:SPAWN_FIELD_TO_REPAIR_ARMOR_PER_SECOND",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/h",
+       "args": [
+        500.0,
+        "lerp(0.01, 0.06)",
+        "a/b/b/l.a"
+       ]
+      },
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Recharge",
+   "id": 35,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "aj:DASH_RECHARGE_PER_SECOND",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/ai",
+       "args": [
+        500.0,
+        "lerp(0.01, 0.08)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Contagion",
+   "id": 36,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "AoE",
+    "Range",
+    "DoT"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "cD:RADIATION_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      20
+     ]
+    },
+    {
+     "stat": "cE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.15, 1.3)"
+     ]
+    },
+    {
+     "stat": "X:CONTAGION",
+     "args": [
+      "A.IntrinsicImplicit"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ArmorOnHit",
+   "id": 37,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon && Hit",
+   "stats": [
+    {
+     "stat": "v:ARMOR_ON_HIT",
+     "args": [
+      "lerp(0.1, 10.0)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "DashOnHit",
+   "id": 38,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon && Hit",
+   "stats": [
+    {
+     "stat": "ah:DASH_ON_HIT",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(0.001, 0.01)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Thermal",
+   "id": 39,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.c(lerp(0.2, 0.5))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Kinetic",
+   "id": 57,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(ELEM.kinetic, lerp(0.2, 0.6))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "MinionDamage",
+   "id": 54,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Minion",
+   "stats": [
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.g(lerp(1.6, 1.8))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "MinionArmor",
+   "id": 55,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Minion",
+   "stats": [
+    {
+     "stat": "ci:MORE_MINION_ARMOR",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(40, 60)",
+      "a/g/a/z.a"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Parasite",
+   "id": 64,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Parasite"
+   ],
+   "fits_items_with": "!Engine && !Minion && Weapon",
+   "stats": [
+    {
+     "stat": "cT:SPAWN_PARASITE",
+     "args": [
+      "A.IntrinsicImplicit",
+      "lerp(1.0, 2.0)",
+      "lerp(2, 4)"
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.g(lerp(1.0, 1.3))"
+     ]
+    },
+    {
+     "stat": "bO:MORE_ACTION_SPEED",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      -25
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Agony",
+   "id": 67,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "DoT",
+   "stats": [
+    {
+     "stat": "bV:MORE_DAMAGE_OVER_TIME",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(40, 60)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "RapidProjectiles",
+   "id": 70,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Projectile",
+   "stats": [
+    {
+     "stat": "cA:INCREASED_PROJECTILE_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(60, 120)"
+     ]
+    },
+    {
+     "stat": "cB:INCREASED_PROJECTILE_SPEED",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(20, 40)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Boomerang",
+   "id": 71,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "ProjectileCanReturn",
+   "stats": [
+    {
+     "stat": "O:PROJECTILES_RETURN",
+     "args": [
+      "A.IntrinsicImplicit"
+     ]
+    },
+    {
+     "stat": "cA:INCREASED_PROJECTILE_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(-20, 20)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Grav",
+   "id": 75,
+   "required_level": 28,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Minion",
+   "stats": [
+    {
+     "stat": "aG:GRAV",
+     "args": [
+      "A.IntrinsicImplicit",
+      "(2+(lvl/10))"
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.g(lerp(0.75, 0.9))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Turbo",
+   "id": 84,
+   "required_level": 28,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Engine",
+   "stats": [
+    {
+     "stat": "R",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.b",
+      0.04
+     ]
+    },
+    {
+     "stat": "P",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.b",
+      "(0.01*{'call': 'a/g/i/ao.a', 'args': [{'call': 'self.l', 'args': [), 'lvl', 20, 40))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Venom",
+   "id": 85,
+   "required_level": 28,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon || Engine || Core",
+   "stats": [
+    {
+     "stat": "R",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.a",
+      0.04
+     ]
+    },
+    {
+     "stat": "P",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.a",
+      "(0.01*{'call': 'a/g/i/ao.a', 'args': [{'call': 'self.l', 'args': [), 'lvl', 20, 40))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Shield",
+   "id": 86,
+   "required_level": 28,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Core",
+   "stats": [
+    {
+     "stat": "Q",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.c",
+      0.05
+     ]
+    },
+    {
+     "stat": "P",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.c",
+      "(0.01*{'call': 'a/g/i/ao.a', 'args': [{'call': 'self.l', 'args': [), 'lvl', 20, 40))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Forge",
+   "id": 181,
+   "required_level": 32,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Core",
+   "stats": [
+    {
+     "stat": "Q",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.e",
+      0.05
+     ]
+    },
+    {
+     "stat": "P",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.e",
+      "(0.01*{'call': 'a/g/i/ao.a', 'args': [{'call': 'self.l', 'args': [), 'lvl', 20, 40))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Rigor",
+   "id": 87,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(100, 200)",
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Lethal",
+   "id": 88,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "ab:INCREASED_CRITICAL_STRIKE_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(60, 120)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Shock",
+   "id": 90,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Hit",
+   "stats": [
+    {
+     "stat": "cM:SHOCK_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.5
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(ELEM.electric, lerp(0.1, 0.4))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Focus",
+   "id": 93,
+   "required_level": 28,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon || Engine || Core",
+   "stats": [
+    {
+     "stat": "R",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.d",
+      0.02
+     ]
+    },
+    {
+     "stat": "P",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/v.d",
+      "(0.01*{'call': 'a/g/i/ao.a', 'args': [{'call': 'self.l', 'args': [), 'lvl', 20, 40))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Split",
+   "id": 95,
+   "required_level": 32,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "ProjectileCanSplit",
+   "stats": [
+    {
+     "stat": "cU:PROJECTILES_SPLIT_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "(2+(lvl/10))"
+     ]
+    },
+    {
+     "stat": "aQ:INCREASED_DAMAGE_FOR_INITIAL_HITS_PER_SPLIT",
+     "args": [
+      "A.IntrinsicImplicit",
+      "lerp(0.1, 0.4)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Melee",
+   "id": 96,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon && Melee",
+   "stats": [
+    {
+     "stat": "ba:INCREASED_MELEE_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      "lerp(0.4, 1.2)"
+     ]
+    },
+    {
+     "stat": "bx:LESS_DAMAGE_TAKEN_AFTER_MELEE_HIT",
+     "args": [
+      "A.IntrinsicImplicit",
+      0.9
+     ]
+    }
+   ]
+  },
+  {
+   "name": "HunterDrone",
+   "id": 97,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Minion"
+   ],
+   "fits_items_with": "!Engine && Weapon",
+   "stats": [
+    {
+     "stat": "cS:INCREASED_ARMOR",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/bB.b",
+      0.5,
+      "a/b/e/au.b(lvl)",
+      0.0,
+      "lvl",
+      "a/b/e/au.a"
+     ]
+    },
+    {
+     "stat": "bs",
+     "args": [
+      "a/b/b/bB.f()",
+      {
+       "stat": "bS",
+       "args": [
+        "A.IntrinsicImplicit",
+        0,
+        "a/b/b/Q.a(0.2)"
+       ]
+      }
+     ]
+    },
+    {
+     "stat": "bs",
+     "args": [
+      "a/b/b/bB.f()",
+      {
+       "stat": "bO:MORE_ACTION_SPEED",
+       "args": [
+        "A.IntrinsicImplicit",
+        0,
+        -50
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Blind",
+   "id": 98,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "K:BLIND_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.25
+     ]
+    },
+    {
+     "stat": "N:MORE_BLIND_EFFECT",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.2, 1.6)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Plasma",
+   "id": 99,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "java/lang/StrictMath.round(lerp_sq(3.0, 140.0))",
+      "java/lang/StrictMath.round(lerp_sq(6.0, 280.0))",
+      "ELEM.plasma"
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(ELEM.plasma, lerp(0.05, 0.2))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Electric",
+   "id": 100,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.0,
+      "java/lang/StrictMath.round(lerp_sq(9.0, 600.0))",
+      "ELEM.electric"
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(ELEM.electric, lerp(0.05, 0.2))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Overcharge",
+   "id": 101,
+   "required_level": 10,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "aT:INCREASED_DAMAGE_PER_DASH_SLOT",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(0.2, 0.4)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Eclipse",
+   "id": 107,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "ar:PLASMA_RESISTANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/ay",
+       "args": [
+        500.0,
+        "lerp(0.05, 0.25)",
+        "lerp(0.0, 0.04)",
+        "self.a(arg1)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Faraday",
+   "id": 108,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "au:ELECTRIC_RESISTANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/aM",
+       "args": [
+        500.0,
+        "lerp(0.05, 0.25)",
+        "lerp(0.0, 0.04)",
+        "self.a(arg1)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Infection",
+   "id": 109,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Parasite",
+   "stats": [
+    {
+     "stat": "cv:MORE_PARASITE_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.25, 1.5)"
+     ]
+    },
+    {
+     "stat": "cx:INCREASED_PARASITE_SPAWN_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      1.0,
+      "a/g/a/z.b"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Range",
+   "id": 116,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Range",
+   "stats": [
+    {
+     "stat": "cF:INCREASED_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(25, 50)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "BlastGuard",
+   "id": 117,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "J:EXPLOSIVE_RESISTANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/p",
+       "args": [
+        500.0,
+        "lerp(0.05, 0.25)",
+        "lerp(0.0, 0.04)",
+        "self.a(arg1)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "SteamHammer",
+   "id": 118,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "java/lang/StrictMath.round(lerp_sq(6.0, 380.0))",
+      "java/lang/StrictMath.round(lerp_sq(8.0, 460.0))",
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(ELEM.kinetic, lerp(0.07, 0.25))"
+     ]
+    },
+    {
+     "stat": "cs",
+     "args": [
+      "A.IntrinsicImplicit",
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "cs",
+     "args": [
+      "A.IntrinsicImplicit",
+      "ELEM.electric"
+     ]
+    },
+    {
+     "stat": "cs",
+     "args": [
+      "A.IntrinsicImplicit",
+      "ELEM.plasma"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Diamond",
+   "id": 119,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "ap:ALL_RESISTANCES",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/av",
+       "args": [
+        500.0,
+        "lerp(0.05, 0.25)",
+        "self.a(arg1)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "UnseenStrike",
+   "id": 120,
+   "required_level": 32,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon && Melee",
+   "stats": [
+    {
+     "stat": "ba:INCREASED_MELEE_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      "lerp(0.2, 0.6)"
+     ]
+    },
+    {
+     "stat": "da:MELEE_DAMAGE_REPEAT_CHANCE",
+     "args": [
+      "lvl"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ArmorLeech",
+   "id": 121,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon && Hit",
+   "stats": [
+    {
+     "stat": "t:ARMOR_LEECH",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.01
+     ]
+    },
+    {
+     "stat": "ca:MORE_DAMAGE_WHILE_LEECHING",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.1, 1.4)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Field",
+   "id": 135,
+   "required_level": 32,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Field",
+   "stats": [
+    {
+     "stat": "ce:MORE_FIELD_EFFECT",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.05, 1.25)",
+      0
+     ]
+    },
+    {
+     "stat": "aw:INCREASED_FIELD_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(0.1, 0.5)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Aegis",
+   "id": 144,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "d:FLAT_DEFLECTOR_SHIELD",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/a",
+       "args": [
+        500.0,
+        "lerp(40, 400)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Time",
+   "id": 153,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "cZ:INCREASED_TIME",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/cD",
+       "args": [
+        500.0,
+        "lerp(0.1, 0.2)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Energy",
+   "id": 154,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "as:INCREASED_ENERGY",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/aG",
+       "args": [
+        500.0,
+        "lerp(0.1, 0.2)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mass",
+   "id": 155,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "bC:INCREASED_MASS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/bq",
+       "args": [
+        500.0,
+        "lerp(0.1, 0.2)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "MagneticMines",
+   "id": 166,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Range"
+   ],
+   "fits_items_with": "Mine",
+   "stats": [
+    {
+     "stat": "bB:MAGNETIC_MINES",
+     "args": [
+      "A.IntrinsicImplicit"
+     ]
+    },
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.a(lerp(0.1, 0.25))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "MineShield",
+   "id": 168,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Range"
+   ],
+   "fits_items_with": "Mine",
+   "stats": [
+    {
+     "stat": "cJ:ROTATING_MINES",
+     "args": [
+      "A.IntrinsicImplicit"
+     ]
+    },
+    {
+     "stat": "aJ:INCREASED_ATTACK_SPEED",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(10, 40)"
+     ]
+    },
+    {
+     "stat": "ad",
+     "args": [
+      "A.IntrinsicImplicit",
+      "(1.0-{'call': 'a/g/i/ao.a', 'args': [{'call': 'self.l', 'args': [), 'lvl', 0.02, 0.14))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "DeathThreshold",
+   "id": 182,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "al:DEATH_THRESHOLD",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "java/lang/StrictMath.round(lerp(6, 12))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Lethality",
+   "id": 184,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Field",
+    "AoE"
+   ],
+   "fits_items_with": "always",
+   "stats": [
+    {
+     "stat": "by:INCREASED_CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "stat": "a/b/b/bl",
+       "args": [
+        500.0,
+        "lerp(0.3, 1.2)",
+        "lerp(0.1, 0.6)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "MinionResistances",
+   "id": 195,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Minion",
+   "stats": [
+    {
+     "stat": "l:ALL_RESISTANCES",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(15, 30)",
+      "app/g/a/a.H"
+     ]
+    },
+    {
+     "stat": "j:ALL_MAX_RESISTANCES",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "(lvl/10)",
+      "app/g/a/a.kh"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Hop",
+   "id": 199,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Melee"
+   ],
+   "fits_items_with": "Engine && Weapon && !RelativeDashCostEngine",
+   "stats": [
+    {
+     "stat": "a/g/i/S",
+     "args": [
+      "this",
+      "A.IntrinsicBase",
+      0
+     ]
+    },
+    {
+     "stat": "a/g/i/T",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0
+     ]
+    },
+    {
+     "stat": "af:CHANCE_TO_NOT_CONSUME_DASH",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(15, 30)"
+     ]
+    },
+    {
+     "stat": "a/g/i/U",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Crush",
+   "id": 201,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon && Melee",
+   "stats": [
+    {
+     "stat": "ch:MORE_MELEE_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      "lerp(1.2, 1.4)"
+     ]
+    },
+    {
+     "stat": "aq:DOUBLE_DAMAGE_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      20,
+      "app/g/a/a.dG"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Necromancer",
+   "id": 203,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Minion",
+   "stats": [
+    {
+     "stat": "bg:INCREASED_MINION_POWER",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(20, 40)",
+      "a/g/a/bh.a"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Agility",
+   "id": 204,
+   "required_level": 12,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Engine",
+   "stats": [
+    {
+     "stat": "cd:MORE_ENGINE_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(40, 60)"
+     ]
+    },
+    {
+     "stat": "ak:DASH_SLOT_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "(1+(lvl/10))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Inferno",
+   "id": 215,
+   "required_level": 6,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "java/lang/StrictMath.round(lerp_sq(5.0, 180.0))",
+      "java/lang/StrictMath.round(lerp_sq(9.0, 320.0))",
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "r:INCREASED_AREA_OF_EFFECT",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(10, 20)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "MinionDash",
+   "id": 232,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Minion",
+   "stats": [
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.g(lerp(1.2, 1.4))"
+     ]
+    },
+    {
+     "stat": "aJ:INCREASED_ATTACK_SPEED",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(10, 20)"
+     ]
+    },
+    {
+     "stat": "bq:INCREASED_MAX_VELOCITY",
+     "args": [
+      1.4
+     ]
+    },
+    {
+     "stat": "a/g/i/ak",
+     "args": [
+      "this",
+      2.0
+     ]
+    },
+    {
+     "stat": "a/g/i/al",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Purity",
+   "id": 248,
+   "required_level": 32,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "bS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/Q.g(lerp(1.5, 2.0))"
+     ]
+    },
+    {
+     "stat": "T:CANNOT_CONVERT_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Overdrive",
+   "id": 251,
+   "required_level": 16,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "cg:MORE_MAX_WEAPON_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "(1.0+{'call': 'a/g/i/ao.a', 'args': [{'call': 'self.l', 'args': [), 'lvl', 0.4, 1.2))"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Impurity",
+   "id": 301,
+   "required_level": 32,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod"
+   ],
+   "fits_items_with": "Weapon",
+   "stats": [
+    {
+     "stat": "bW:MORE_DAMAGE_PER_CONVERSION",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "lerp(1.15, 1.3)"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ShadowDrone",
+   "id": 302,
+   "required_level": 24,
+   "drop_weight": 450,
+   "mod_tags": [
+    "Mod",
+    "Minion"
+   ],
+   "fits_items_with": "Weapon && Engine",
+   "stats": [
+    {
+     "stat": "cS:INCREASED_ARMOR",
+     "args": [
+      "A.IntrinsicImplicit",
+      "a/b/b/bB.c",
+      0.5,
+      "a/b/e/au.b(lvl)",
+      0.0,
+      "lvl",
+      "a/b/e/au.a"
+     ]
+    },
+    {
+     "stat": "bs",
+     "args": [
+      "a/b/b/bB.f()",
+      {
+       "stat": "bS",
+       "args": [
+        "A.IntrinsicImplicit",
+        0,
+        "a/b/b/Q.b(0.5)"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

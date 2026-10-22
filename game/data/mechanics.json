@@ -247,7 +247,7 @@
   "drCap": 40
  },
  "soul": {
-  "_说明": "魂火：所有流派共用的资源条（护甲条下面那条细条）。上限 = base + 魂力 × perEnergy；每秒回复 = (regen + 魂力 × regenPerEnergy) × (1 + 魂火回复提高%)；魂火消耗降低最多 costCap%。各流派怎么花魂火写在各自的段里（目前只有 whirl）。affixes 格式同 whirl.affixes。 灯火（推关）：推关一趟从当前层出发一层接一层往下打，进入时灯火 = 魂火上限。每秒燃烧 burn + 层数 × burnPerFloor，推关中没有自然回复（regen 只在天梯里用）；击杀回 onKill（普通 / 精英 / Boss），“魂火回复提高%”提高击杀回复。灯火归 0：平安返回，拾取的全部带走。阵亡：这一趟拾取的装备、符文、碎片每件有 deathKeep% 几率保留。nextFloorDelay：打掉守关 Boss 后几秒进入下一层（期间自动拾取地上的东西）。lowWarn：灯火低于这个比例时灯火条闪烁。 startBack：推关（没锁层时）从 max(1, 最深层 − startBack) 出发，越走越难，最深层是一趟的高潮；锁层时就从锁定的层出发。超过出发前的最深层才算推层成功。 重温：比出发时的最深层浅的层，燃烧 ×revisitBurnMul、击杀回复 ×revisitKillMul，热身的几层花得少，灯火留给最深层。 returnHp：推关里某一层的最低血量（护甲比例）低于 returnHp% 时，打掉这层的守关 Boss 后自动撤回（和灯灭一样平安带走全部东西），免得挂机时在最深层反复阵亡。 撤回只看最深层附近的层（层数 ≥ 出发前最深层 − 1），热身层血量再低也不撤。returnHpMelee：近战流派（AI 在近战模式）用的撤回阈值，null 时沿用 returnHp。",
+  "_说明": "魂火：所有流派共用的资源条（护甲条下面那条细条）。上限 = base + 魂力 × perEnergy；每秒回复 = (regen + 魂力 × regenPerEnergy) × (1 + 魂火回复提高%)；魂火消耗降低最多 costCap%。各流派怎么花魂火写在各自的段里（目前只有 whirl）。affixes 格式同 whirl.affixes。 灯火（推关）：推关一趟从当前层出发一层接一层往下打，进入时灯火 = 魂火上限。每秒燃烧 burn + 层数 × burnPerFloor，推关中没有自然回复（regen 只在天梯里用）；击杀回 onKill（普通 / 精英 / Boss），“魂火回复提高%”提高击杀回复。灯火归 0：平安返回，拾取的全部带走。阵亡：这一趟拾取的装备、符文、碎片每件有 deathKeep% 几率保留。nextFloorDelay：打掉守关 Boss 后几秒进入下一层（期间自动拾取地上的东西）。lowWarn：灯火低于这个比例时灯火条闪烁。 startBack：推关（没锁层时）从 max(1, 最深层 − startBack) 出发，越走越难，最深层是一趟的高潮；锁层时就从锁定的层出发。超过出发前的最深层才算推层成功。 重温：比出发时的最深层浅的层，燃烧 ×revisitBurnMul、击杀回复 ×revisitKillMul，热身的几层花得少，灯火留给最深层。 returnHp：推关里某一层的最低血量（护甲比例）低于 returnHp% 时，打掉这层的守关 Boss 后自动撤回（和灯灭一样平安带走全部东西），免得挂机时在最深层反复阵亡。 撤回只看最深层附近的层（层数 ≥ 出发前最深层 − 1），热身层血量再低也不撤。returnHpMelee：近战流派（AI 在近战模式）用的撤回阈值，null 时沿用 returnHp。 returnHpNow：最深层附近（层数 ≥ 出发前最深层 − 1）护甲比例一旦低于 returnHpNow%，立刻紧急撤回（不等打完 Boss），同样平安带走全部东西，推层不算失败。",
   "base": 100,
   "perEnergy": 5,
   "regen": 5,
@@ -369,6 +369,7 @@
   "revisitBurnMul": 0.5,
   "revisitKillMul": 1.5,
   "returnHp": 30,
-  "returnHpMelee": null
+  "returnHpMelee": null,
+  "returnHpNow": 20
  }
 }

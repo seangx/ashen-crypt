@@ -1,0 +1,4629 @@
+{
+ "_notes": {
+  "source": "astroloot.jar (build 2026-09-25), decoded with javap. Internal code names kept; rename for our game.",
+  "quality q": "q = quality ordinal 0..10 (Scrap=0 ... Eternal=10). Divisor is 11, so the second number is never quite reached at Eternal.",
+  "stat I": "damage effectiveness multiplier: shown/used base damage = round(base * I). Default 1.0.",
+  "stat ay": "base hit damage: [slot, ?, min, max, element(, flag)]. Values are before stat I. Flag 1 seems to mark continuous (beam/DoT) damage.",
+  "D:ATTACKS_PER_SECOND": "base attack rate. Weapons without D attack on their own timing (mines, beams).",
+  "E:CRITICAL_STRIKE_CHANCE": "[slot, 0, base crit %].",
+  "F:RANGE": "targeting range in world units.",
+  "cz/U/cU/b": "implicit pierce count / chain count / split count / additional attacks, often per quality.",
+  "an/K/cM/cD": "implicit debris / blind / shock / radiation chance as a fraction.",
+  "ct/o/p": "AoE damage in radius / range / arc.",
+  "unique_affixes": "A.a(Affix, roll) = the unique always rolls this affix tier; see affixes.json for the value range. Numbers listed after are extra constants (weights or ranges) used by the unique.",
+  "not decoded": "Projectile speed and projectile count are set inside each weapon's fire routine (code, not tables) and are not extracted. Mod-slot counts are rolled per item (affixes.json OneSlot..SixSlots weights), not fixed per base."
+ },
+ "weapons": [
+  {
+   "name": "Cannon",
+   "id": 1,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.8
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(8 + (q/11)*(80-8))",
+       "per_quality": {
+        "Scrap": 8,
+        "Rusty": 15,
+        "Augmented": 21,
+        "Enhanced": 28,
+        "Exceptional": 34,
+        "Heavy": 41,
+        "Elite": 47,
+        "Relic": 54,
+        "Elder": 60,
+        "Ancient": 67,
+        "Eternal": 73
+       }
+      },
+      {
+       "formula": "round(22 + (q/11)*(240-22))",
+       "per_quality": {
+        "Scrap": 22,
+        "Rusty": 42,
+        "Augmented": 62,
+        "Enhanced": 81,
+        "Exceptional": 101,
+        "Heavy": 121,
+        "Elite": 141,
+        "Relic": 161,
+        "Elder": 181,
+        "Ancient": 200,
+        "Eternal": 220
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      4.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "cz:PROJECTILES_PIERCE_ALL_TARGETS",
+     "args": [
+      "A.IntrinsicImplicit",
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 6,
+        "Eternal": 7
+       }
+      }
+     ]
+    },
+    {
+     "stat": "an:DEBRIS_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.1
+     ]
+    }
+   ]
+  },
+  {
+   "name": "RustBlaster",
+   "id": 29,
+   "required_level": 1,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/e",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.8
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(8 + (q/11)*(80-8))",
+       "per_quality": {
+        "Scrap": 8,
+        "Rusty": 15,
+        "Augmented": 21,
+        "Enhanced": 28,
+        "Exceptional": 34,
+        "Heavy": 41,
+        "Elite": 47,
+        "Relic": 54,
+        "Elder": 60,
+        "Ancient": 67,
+        "Eternal": 73
+       }
+      },
+      {
+       "formula": "round(22 + (q/11)*(240-22))",
+       "per_quality": {
+        "Scrap": 22,
+        "Rusty": 42,
+        "Augmented": 62,
+        "Enhanced": 81,
+        "Exceptional": 101,
+        "Heavy": 121,
+        "Elite": 141,
+        "Relic": 161,
+        "Elder": 181,
+        "Ancient": 200,
+        "Eternal": 220
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      4.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "cz:PROJECTILES_PIERCE_ALL_TARGETS",
+     "args": [
+      "A.IntrinsicImplicit",
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 6,
+        "Eternal": 7
+       }
+      }
+     ]
+    },
+    {
+     "stat": "an:DEBRIS_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedKineticBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.IncreasedBaseAttackSpeedTier1, roll)",
+    "a/g/a/A.a(A.Knockback, roll)",
+    "a/g/a/A.a(A.RustBlasterKnockbackDamage, roll)"
+   ]
+  },
+  {
+   "name": "Rocket",
+   "id": 2,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "AoE",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(20 + (q/11)*(220-20))",
+       "per_quality": {
+        "Scrap": 20,
+        "Rusty": 38,
+        "Augmented": 56,
+        "Enhanced": 75,
+        "Exceptional": 93,
+        "Heavy": 111,
+        "Elite": 129,
+        "Relic": 147,
+        "Elder": 165,
+        "Ancient": 184,
+        "Eternal": 202
+       }
+      },
+      {
+       "formula": "round(30 + (q/11)*(360-30))",
+       "per_quality": {
+        "Scrap": 30,
+        "Rusty": 60,
+        "Augmented": 90,
+        "Enhanced": 120,
+        "Exceptional": 150,
+        "Heavy": 180,
+        "Elite": 210,
+        "Relic": 240,
+        "Elder": 270,
+        "Ancient": 300,
+        "Eternal": 330
+       }
+      },
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      2.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      800.0
+     ]
+    },
+    {
+     "stat": "o:AOE_DAMAGE_IN_RADIUS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/e.a",
+      200.0,
+      {
+       "formula": "round(0.3 + (q/11)*(0.6-0.3))",
+       "per_quality": {
+        "Scrap": 0,
+        "Rusty": 0,
+        "Augmented": 0,
+        "Enhanced": 0,
+        "Exceptional": 0,
+        "Heavy": 0,
+        "Elite": 0,
+        "Relic": 0,
+        "Elder": 1,
+        "Ancient": 1,
+        "Eternal": 1
+       }
+      },
+      "app/g/a/a.kk"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "RockCat",
+   "id": 31,
+   "required_level": 1,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "AoE",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/z",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(20 + (q/11)*(220-20))",
+       "per_quality": {
+        "Scrap": 20,
+        "Rusty": 38,
+        "Augmented": 56,
+        "Enhanced": 75,
+        "Exceptional": 93,
+        "Heavy": 111,
+        "Elite": 129,
+        "Relic": 147,
+        "Elder": 165,
+        "Ancient": 184,
+        "Eternal": 202
+       }
+      },
+      {
+       "formula": "round(30 + (q/11)*(360-30))",
+       "per_quality": {
+        "Scrap": 30,
+        "Rusty": 60,
+        "Augmented": 90,
+        "Enhanced": 120,
+        "Exceptional": 150,
+        "Heavy": 180,
+        "Elite": 210,
+        "Relic": 240,
+        "Elder": 270,
+        "Ancient": 300,
+        "Eternal": 330
+       }
+      },
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      2.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      800.0
+     ]
+    },
+    {
+     "stat": "o:AOE_DAMAGE_IN_RADIUS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/e.a",
+      200.0,
+      {
+       "formula": "round(0.3 + (q/11)*(0.6-0.3))",
+       "per_quality": {
+        "Scrap": 0,
+        "Rusty": 0,
+        "Augmented": 0,
+        "Enhanced": 0,
+        "Exceptional": 0,
+        "Heavy": 0,
+        "Elite": 0,
+        "Relic": 0,
+        "Elder": 1,
+        "Ancient": 1,
+        "Eternal": 1
+       }
+      },
+      "app/g/a/a.kk"
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.FlatExplosiveDamageTier1, roll)",
+    "a/g/a/A.a(A.IncreasedExplosiveBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.RockCatReducedAttackSpeed, roll)",
+    "a/g/a/A.a(A.RockCatAftershockReductionMultiplier, roll)",
+    "a/g/a/A.a(A.RockCatAftershockRepeats, roll)"
+   ]
+  },
+  {
+   "name": "Laser",
+   "id": 3,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Attack",
+    "Projectile",
+    "ProjectileCanChain",
+    "DoT",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(50 + (q/11)*(500-50))",
+       "per_quality": {
+        "Scrap": 50,
+        "Rusty": 91,
+        "Augmented": 132,
+        "Enhanced": 173,
+        "Exceptional": 214,
+        "Heavy": 255,
+        "Elite": 295,
+        "Relic": 336,
+        "Elder": 377,
+        "Ancient": 418,
+        "Eternal": 459
+       }
+      },
+      {
+       "formula": "round(60 + (q/11)*(600-60))",
+       "per_quality": {
+        "Scrap": 60,
+        "Rusty": 109,
+        "Augmented": 158,
+        "Enhanced": 207,
+        "Exceptional": 256,
+        "Heavy": 305,
+        "Elite": 355,
+        "Relic": 404,
+        "Elder": 453,
+        "Ancient": 502,
+        "Eternal": 551
+       }
+      },
+      "ELEM.plasma",
+      1
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "U:PROJECTILES_CHAIN_ADDITIONAL_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 5,
+        "Eternal": 6
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Taser",
+   "id": 18,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.2
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0.833333,
+      {
+       "formula": "round(50 + (q/11)*(500-50))",
+       "per_quality": {
+        "Scrap": 50,
+        "Rusty": 91,
+        "Augmented": 132,
+        "Enhanced": 173,
+        "Exceptional": 214,
+        "Heavy": 255,
+        "Elite": 295,
+        "Relic": 336,
+        "Elder": 377,
+        "Ancient": 418,
+        "Eternal": 459
+       }
+      },
+      "ELEM.electric"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      2.5
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      900.0
+     ]
+    },
+    {
+     "stat": "U:PROJECTILES_CHAIN_ADDITIONAL_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 6,
+        "Eternal": 7
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cM:SHOCK_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "PlutoniumBar",
+   "id": 26,
+   "required_level": 24,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "AoE",
+    "DoT",
+    "Range",
+    "Field"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "a/g/p/x",
+     "args": []
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      300.0
+     ]
+    },
+    {
+     "stat": "a/g/p/w",
+     "args": []
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aO",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(20 + (q/11)*(200-20))",
+       "per_quality": {
+        "Scrap": 20,
+        "Rusty": 36,
+        "Augmented": 53,
+        "Enhanced": 69,
+        "Exceptional": 85,
+        "Heavy": 102,
+        "Elite": 118,
+        "Relic": 135,
+        "Elder": 151,
+        "Ancient": 167,
+        "Eternal": 184
+       }
+      },
+      "ELEM.nuclear"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Hullbreaker",
+   "id": 27,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Hit",
+    "Melee"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      4.8
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "90.0 + (q/11)^2*(480.0-90.0)",
+       "per_quality": {
+        "Scrap": 90.0,
+        "Rusty": 93.22,
+        "Augmented": 102.89,
+        "Enhanced": 119.01,
+        "Exceptional": 141.57,
+        "Heavy": 170.58,
+        "Elite": 206.03,
+        "Relic": 247.93,
+        "Elder": 296.28,
+        "Ancient": 351.07,
+        "Eternal": 412.31
+       }
+      },
+      {
+       "formula": "240.0 + (q/11)^2*(1200.0-240.0)",
+       "per_quality": {
+        "Scrap": 240.0,
+        "Rusty": 247.93,
+        "Augmented": 271.74,
+        "Enhanced": 311.4,
+        "Exceptional": 366.94,
+        "Heavy": 438.35,
+        "Elite": 525.62,
+        "Relic": 628.76,
+        "Elder": 747.77,
+        "Ancient": 882.64,
+        "Eternal": 1033.39
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "ad",
+     "args": [
+      "A.IntrinsicImplicit",
+      0.7
+     ]
+    },
+    {
+     "stat": "bR:MORE_DAMAGE_AGAINST_BOSSES",
+     "args": [
+      "A.IntrinsicImplicit",
+      {
+       "formula": "round(4.0 + (q/11)*(8.0-4.0))",
+       "per_quality": {
+        "Scrap": 4,
+        "Rusty": 4,
+        "Augmented": 5,
+        "Enhanced": 5,
+        "Exceptional": 5,
+        "Heavy": 6,
+        "Elite": 6,
+        "Relic": 7,
+        "Elder": 7,
+        "Ancient": 7,
+        "Eternal": 8
+       }
+      }
+     ]
+    },
+    {
+     "stat": "bu:KNOCKBACK",
+     "args": [
+      "A.IntrinsicImplicit"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "TurbineBlades",
+   "id": 63,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Hit",
+    "Melee",
+    "Attack",
+    "AttackSpeed",
+    "AoE",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      0.5
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(6 + (q/11)*(76-6))",
+       "per_quality": {
+        "Scrap": 6,
+        "Rusty": 12,
+        "Augmented": 19,
+        "Enhanced": 25,
+        "Exceptional": 31,
+        "Heavy": 38,
+        "Elite": 44,
+        "Relic": 51,
+        "Elder": 57,
+        "Ancient": 63,
+        "Eternal": 70
+       }
+      },
+      {
+       "formula": "round(18 + (q/11)*(180-18))",
+       "per_quality": {
+        "Scrap": 18,
+        "Rusty": 33,
+        "Augmented": 47,
+        "Enhanced": 62,
+        "Exceptional": 77,
+        "Heavy": 92,
+        "Elite": 106,
+        "Relic": 121,
+        "Elder": 136,
+        "Ancient": 151,
+        "Eternal": 165
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      6.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      250.0
+     ]
+    },
+    {
+     "stat": "ad",
+     "args": [
+      "A.IntrinsicImplicit",
+      0.9
+     ]
+    }
+   ]
+  },
+  {
+   "name": "PlasmaNova",
+   "id": 40,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      3.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(4 + (q/11)*(236-4))",
+       "per_quality": {
+        "Scrap": 4,
+        "Rusty": 25,
+        "Augmented": 46,
+        "Enhanced": 67,
+        "Exceptional": 88,
+        "Heavy": 109,
+        "Elite": 131,
+        "Relic": 152,
+        "Elder": 173,
+        "Ancient": 194,
+        "Eternal": 215
+       }
+      },
+      {
+       "formula": "round(18 + (q/11)*(412-18))",
+       "per_quality": {
+        "Scrap": 18,
+        "Rusty": 54,
+        "Augmented": 90,
+        "Enhanced": 125,
+        "Exceptional": 161,
+        "Heavy": 197,
+        "Elite": 233,
+        "Relic": 269,
+        "Elder": 305,
+        "Ancient": 340,
+        "Eternal": 376
+       }
+      },
+      "ELEM.plasma"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      0.6
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      500
+     ]
+    },
+    {
+     "stat": "ct:AOE_DAMAGE_IN_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      500
+     ]
+    },
+    {
+     "stat": "K:BLIND_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.2
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Railgun",
+   "id": 41,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      0.5
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(6 + (q/11)*(76-6))",
+       "per_quality": {
+        "Scrap": 6,
+        "Rusty": 12,
+        "Augmented": 19,
+        "Enhanced": 25,
+        "Exceptional": 31,
+        "Heavy": 38,
+        "Elite": 44,
+        "Relic": 51,
+        "Elder": 57,
+        "Ancient": 63,
+        "Eternal": 70
+       }
+      },
+      {
+       "formula": "round(18 + (q/11)*(180-18))",
+       "per_quality": {
+        "Scrap": 18,
+        "Rusty": 33,
+        "Augmented": 47,
+        "Enhanced": 62,
+        "Exceptional": 77,
+        "Heavy": 92,
+        "Elite": 106,
+        "Relic": 121,
+        "Elder": 136,
+        "Ancient": 151,
+        "Eternal": 165
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      8.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "aK:INCREASED_ATTACK_SPEED",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      100
+     ]
+    }
+   ]
+  },
+  {
+   "name": "SpectraRailAccelerator",
+   "id": 42,
+   "required_level": 12,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/y",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      0.5
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(6 + (q/11)*(76-6))",
+       "per_quality": {
+        "Scrap": 6,
+        "Rusty": 12,
+        "Augmented": 19,
+        "Enhanced": 25,
+        "Exceptional": 31,
+        "Heavy": 38,
+        "Elite": 44,
+        "Relic": 51,
+        "Elder": 57,
+        "Ancient": 63,
+        "Eternal": 70
+       }
+      },
+      {
+       "formula": "round(18 + (q/11)*(180-18))",
+       "per_quality": {
+        "Scrap": 18,
+        "Rusty": 33,
+        "Augmented": 47,
+        "Enhanced": 62,
+        "Exceptional": 77,
+        "Heavy": 92,
+        "Elite": 106,
+        "Relic": 121,
+        "Elder": 136,
+        "Ancient": 151,
+        "Eternal": 165
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      8.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "aK:INCREASED_ATTACK_SPEED",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      100
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.FlatKineticDamageTier1, roll)",
+    "a/g/a/A.a(A.IncreasedKineticBaseDamageTier3, roll)",
+    "a/g/a/A.a(A.IncreasedThermalBaseDamageTier1, roll)",
+    "a/g/a/A.a({'per_quality_ordinal_1_to_11': {'0': '?', '1': '?'}}, roll)",
+    "a/g/a/A.a(A.SpectraRailAcceleratorPierce, roll)"
+   ]
+  },
+  {
+   "name": "BlastMine",
+   "id": 43,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Mine"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(28 + (q/11)*(270-28))",
+       "per_quality": {
+        "Scrap": 28,
+        "Rusty": 50,
+        "Augmented": 72,
+        "Enhanced": 94,
+        "Exceptional": 116,
+        "Heavy": 138,
+        "Elite": 160,
+        "Relic": 182,
+        "Elder": 204,
+        "Ancient": 226,
+        "Eternal": 248
+       }
+      },
+      {
+       "formula": "round(36 + (q/11)*(600-36))",
+       "per_quality": {
+        "Scrap": 36,
+        "Rusty": 87,
+        "Augmented": 139,
+        "Enhanced": 190,
+        "Exceptional": 241,
+        "Heavy": 292,
+        "Elite": 344,
+        "Relic": 395,
+        "Elder": 446,
+        "Ancient": 497,
+        "Eternal": 549
+       }
+      },
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      7
+     ]
+    },
+    {
+     "stat": "ct:AOE_DAMAGE_IN_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      400.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "PlasmaMine",
+   "id": 165,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Mine"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(10 + (q/11)*(315-10))",
+       "per_quality": {
+        "Scrap": 10,
+        "Rusty": 38,
+        "Augmented": 65,
+        "Enhanced": 93,
+        "Exceptional": 121,
+        "Heavy": 149,
+        "Elite": 176,
+        "Relic": 204,
+        "Elder": 232,
+        "Ancient": 260,
+        "Eternal": 287
+       }
+      },
+      {
+       "formula": "round(15 + (q/11)*(390-15))",
+       "per_quality": {
+        "Scrap": 15,
+        "Rusty": 49,
+        "Augmented": 83,
+        "Enhanced": 117,
+        "Exceptional": 151,
+        "Heavy": 185,
+        "Elite": 220,
+        "Relic": 254,
+        "Elder": 288,
+        "Ancient": 322,
+        "Eternal": 356
+       }
+      },
+      "ELEM.plasma"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "ct:AOE_DAMAGE_IN_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      400.0
+     ]
+    },
+    {
+     "stat": "K:BLIND_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.25
+     ]
+    }
+   ]
+  },
+  {
+   "name": "StormMine",
+   "id": 167,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range",
+    "Mine"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      1.0,
+      {
+       "formula": "round(40 + (q/11)*(900-40))",
+       "per_quality": {
+        "Scrap": 40,
+        "Rusty": 118,
+        "Augmented": 196,
+        "Enhanced": 275,
+        "Exceptional": 353,
+        "Heavy": 431,
+        "Elite": 509,
+        "Relic": 587,
+        "Elder": 665,
+        "Ancient": 744,
+        "Eternal": 822
+       }
+      },
+      "ELEM.electric"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      750.0
+     ]
+    },
+    {
+     "stat": "a/g/p/J",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "call": "self.a",
+       "args": [
+        "arg1"
+       ]
+      }
+     ]
+    },
+    {
+     "stat": "U:PROJECTILES_CHAIN_ADDITIONAL_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 6,
+        "Eternal": 7
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ShrapnelMine",
+   "id": 169,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range",
+    "Mine"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(12 + (q/11)*(105-12))",
+       "per_quality": {
+        "Scrap": 12,
+        "Rusty": 20,
+        "Augmented": 29,
+        "Enhanced": 37,
+        "Exceptional": 46,
+        "Heavy": 54,
+        "Elite": 63,
+        "Relic": 71,
+        "Elder": 80,
+        "Ancient": 88,
+        "Eternal": 97
+       }
+      },
+      {
+       "formula": "round(80 + (q/11)*(510-80))",
+       "per_quality": {
+        "Scrap": 80,
+        "Rusty": 119,
+        "Augmented": 158,
+        "Enhanced": 197,
+        "Exceptional": 236,
+        "Heavy": 275,
+        "Elite": 315,
+        "Relic": 354,
+        "Elder": 393,
+        "Ancient": 432,
+        "Eternal": 471
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      750.0
+     ]
+    },
+    {
+     "stat": "a/g/p/B",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "call": "self.a",
+       "args": [
+        "arg1"
+       ]
+      }
+     ]
+    },
+    {
+     "stat": "cU:PROJECTILES_SPLIT_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 6,
+        "Eternal": 7
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Nukie",
+   "id": 44,
+   "required_level": 6,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Mine"
+   ],
+   "unique_base": "a/g/p/a",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(28 + (q/11)*(270-28))",
+       "per_quality": {
+        "Scrap": 28,
+        "Rusty": 50,
+        "Augmented": 72,
+        "Enhanced": 94,
+        "Exceptional": 116,
+        "Heavy": 138,
+        "Elite": 160,
+        "Relic": 182,
+        "Elder": 204,
+        "Ancient": 226,
+        "Eternal": 248
+       }
+      },
+      {
+       "formula": "round(36 + (q/11)*(600-36))",
+       "per_quality": {
+        "Scrap": 36,
+        "Rusty": 87,
+        "Augmented": 139,
+        "Enhanced": 190,
+        "Exceptional": 241,
+        "Heavy": 292,
+        "Elite": 344,
+        "Relic": 395,
+        "Elder": 446,
+        "Ancient": 497,
+        "Eternal": 549
+       }
+      },
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      7
+     ]
+    },
+    {
+     "stat": "ct:AOE_DAMAGE_IN_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      400.0
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedExplosiveBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.IncreasedNuclearBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.ChipAreaDamageTier1, roll)",
+    "a/g/a/A.a(A.NukieConversion, roll)",
+    "a/g/a/A.a(A.NukieNuclearStorm, roll)",
+    "a/g/a/A.a(A.ReverseKnockback, roll)"
+   ]
+  },
+  {
+   "name": "WasteMine",
+   "id": 179,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "DoT",
+    "Mine"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      0.8
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(30 + (q/11)*(525-30))",
+       "per_quality": {
+        "Scrap": 30,
+        "Rusty": 75,
+        "Augmented": 120,
+        "Enhanced": 165,
+        "Exceptional": 210,
+        "Heavy": 255,
+        "Elite": 300,
+        "Relic": 345,
+        "Elder": 390,
+        "Ancient": 435,
+        "Eternal": 480
+       }
+      },
+      {
+       "formula": "round(55 + (q/11)*(675-55))",
+       "per_quality": {
+        "Scrap": 55,
+        "Rusty": 111,
+        "Augmented": 168,
+        "Enhanced": 224,
+        "Exceptional": 280,
+        "Heavy": 337,
+        "Elite": 393,
+        "Relic": 450,
+        "Elder": 506,
+        "Ancient": 562,
+        "Eternal": 619
+       }
+      },
+      "ELEM.nuclear",
+      1
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "ct:AOE_DAMAGE_IN_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      300.0
+     ]
+    },
+    {
+     "stat": "a/g/p/Q",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0,
+      "arg1"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Doomcloud",
+   "id": 180,
+   "required_level": 6,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "DoT",
+    "Mine"
+   ],
+   "unique_base": "a/g/p/P",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      0.8
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(30 + (q/11)*(525-30))",
+       "per_quality": {
+        "Scrap": 30,
+        "Rusty": 75,
+        "Augmented": 120,
+        "Enhanced": 165,
+        "Exceptional": 210,
+        "Heavy": 255,
+        "Elite": 300,
+        "Relic": 345,
+        "Elder": 390,
+        "Ancient": 435,
+        "Eternal": 480
+       }
+      },
+      {
+       "formula": "round(55 + (q/11)*(675-55))",
+       "per_quality": {
+        "Scrap": 55,
+        "Rusty": 111,
+        "Augmented": 168,
+        "Enhanced": 224,
+        "Exceptional": 280,
+        "Heavy": 337,
+        "Elite": 393,
+        "Relic": 450,
+        "Elder": 506,
+        "Ancient": 562,
+        "Eternal": 619
+       }
+      },
+      "ELEM.nuclear",
+      1
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "ct:AOE_DAMAGE_IN_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      300.0
+     ]
+    },
+    {
+     "stat": "a/g/p/Q",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0,
+      "arg1"
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedNuclearBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.IncreasedDamageOverTimeTier2, roll)",
+    "a/g/a/A.a(A.DoomcloudDamageOverTime, roll)",
+    "a/g/a/A.a(A.DoomcloudNuclearResistance, roll)"
+   ]
+  },
+  {
+   "name": "HulisMojo",
+   "id": 50,
+   "required_level": 40,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/R",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      38.0,
+      90.0,
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      8.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "U:PROJECTILES_CHAIN_ADDITIONAL_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      8
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedKineticBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.FlatKineticDamageTier2, roll)",
+    "a/g/a/A.a(A.IncreasedCritChanceTier2, roll)",
+    "a/g/a/A.a(A.FlatTimeTier2, roll)"
+   ]
+  },
+  {
+   "name": "Blastgun",
+   "id": 68,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(6 + (q/11)*(38-6))",
+       "per_quality": {
+        "Scrap": 6,
+        "Rusty": 9,
+        "Augmented": 12,
+        "Enhanced": 15,
+        "Exceptional": 18,
+        "Heavy": 21,
+        "Elite": 23,
+        "Relic": 26,
+        "Elder": 29,
+        "Ancient": 32,
+        "Eternal": 35
+       }
+      },
+      {
+       "formula": "round(32 + (q/11)*(220-32))",
+       "per_quality": {
+        "Scrap": 32,
+        "Rusty": 49,
+        "Augmented": 66,
+        "Enhanced": 83,
+        "Exceptional": 100,
+        "Heavy": 117,
+        "Elite": 135,
+        "Relic": 152,
+        "Elder": 169,
+        "Ancient": 186,
+        "Eternal": 203
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      600.0
+     ]
+    },
+    {
+     "stat": "a/g/p/c",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0
+     ]
+    },
+    {
+     "stat": "cz:PROJECTILES_PIERCE_ALL_TARGETS",
+     "args": [
+      "A.IntrinsicImplicit",
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Orbitron",
+   "id": 69,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "DoT"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.4
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(9 + (q/11)*(114-9))",
+       "per_quality": {
+        "Scrap": 9,
+        "Rusty": 19,
+        "Augmented": 28,
+        "Enhanced": 38,
+        "Exceptional": 47,
+        "Heavy": 57,
+        "Elite": 66,
+        "Relic": 76,
+        "Elder": 85,
+        "Ancient": 95,
+        "Eternal": 104
+       }
+      },
+      {
+       "formula": "round(48 + (q/11)*(660-48))",
+       "per_quality": {
+        "Scrap": 48,
+        "Rusty": 104,
+        "Augmented": 159,
+        "Enhanced": 215,
+        "Exceptional": 271,
+        "Heavy": 326,
+        "Elite": 382,
+        "Relic": 437,
+        "Elder": 493,
+        "Ancient": 549,
+        "Eternal": 604
+       }
+      },
+      "ELEM.nuclear"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      2.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "cz:PROJECTILES_PIERCE_ALL_TARGETS",
+     "args": [
+      "A.IntrinsicImplicit",
+      1000000
+     ]
+    },
+    {
+     "stat": "cD:RADIATION_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      50
+     ]
+    }
+   ]
+  },
+  {
+   "name": "FlameSlinger",
+   "id": 72,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "AoE",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(6 + (q/11)*(38-6))",
+       "per_quality": {
+        "Scrap": 6,
+        "Rusty": 9,
+        "Augmented": 12,
+        "Enhanced": 15,
+        "Exceptional": 18,
+        "Heavy": 21,
+        "Elite": 23,
+        "Relic": 26,
+        "Elder": 29,
+        "Ancient": 32,
+        "Eternal": 35
+       }
+      },
+      {
+       "formula": "round(18 + (q/11)*(90-18))",
+       "per_quality": {
+        "Scrap": 18,
+        "Rusty": 25,
+        "Augmented": 31,
+        "Enhanced": 38,
+        "Exceptional": 44,
+        "Heavy": 51,
+        "Elite": 57,
+        "Relic": 64,
+        "Elder": 70,
+        "Ancient": 77,
+        "Eternal": 83
+       }
+      },
+      "ELEM.explosive"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      {
+       "formula": "round(2.0 + (q/11)*(4.0-2.0))",
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 2,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 3,
+        "Elite": 3,
+        "Relic": 3,
+        "Elder": 3,
+        "Ancient": 4,
+        "Eternal": 4
+       }
+      }
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      6
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "O:PROJECTILES_RETURN",
+     "args": [
+      "A.IntrinsicImplicit"
+     ]
+    },
+    {
+     "stat": "cz:PROJECTILES_PIERCE_ALL_TARGETS",
+     "args": [
+      "A.IntrinsicImplicit",
+      1000000
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Zapper",
+   "id": 89,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      0.5
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      2.0,
+      {
+       "formula": "round(30 + (q/11)*(400-30))",
+       "per_quality": {
+        "Scrap": 30,
+        "Rusty": 64,
+        "Augmented": 97,
+        "Enhanced": 131,
+        "Exceptional": 165,
+        "Heavy": 198,
+        "Elite": 232,
+        "Relic": 265,
+        "Elder": 299,
+        "Ancient": 333,
+        "Eternal": 366
+       }
+      },
+      "ELEM.electric"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      2.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      7
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      800.0
+     ]
+    },
+    {
+     "stat": "a/g/p/T",
+     "args": [
+      {
+       "formula": "round(4 + (q/11)*(7-4))",
+       "per_quality": {
+        "Scrap": 4,
+        "Rusty": 4,
+        "Augmented": 5,
+        "Enhanced": 5,
+        "Exceptional": 5,
+        "Heavy": 5,
+        "Elite": 6,
+        "Relic": 6,
+        "Elder": 6,
+        "Ancient": 6,
+        "Eternal": 7
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cM:SHOCK_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.5
+     ]
+    }
+   ]
+  },
+  {
+   "name": "SporeBlaster",
+   "id": 94,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "DoT",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(7 + (q/11)*(116-7))",
+       "per_quality": {
+        "Scrap": 7,
+        "Rusty": 17,
+        "Augmented": 27,
+        "Enhanced": 37,
+        "Exceptional": 47,
+        "Heavy": 57,
+        "Elite": 66,
+        "Relic": 76,
+        "Elder": 86,
+        "Ancient": 96,
+        "Eternal": 106
+       }
+      },
+      {
+       "formula": "round(20 + (q/11)*(400-20))",
+       "per_quality": {
+        "Scrap": 20,
+        "Rusty": 55,
+        "Augmented": 89,
+        "Enhanced": 124,
+        "Exceptional": 158,
+        "Heavy": 193,
+        "Elite": 227,
+        "Relic": 262,
+        "Elder": 296,
+        "Ancient": 331,
+        "Eternal": 365
+       }
+      },
+      "ELEM.nuclear"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      3.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "cU:PROJECTILES_SPLIT_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 5,
+        "Eternal": 6
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cD:RADIATION_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      50
+     ]
+    }
+   ]
+  },
+  {
+   "name": "FungusFury",
+   "id": 114,
+   "required_level": 8,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "DoT",
+    "Range"
+   ],
+   "unique_base": "a/g/p/G",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(7 + (q/11)*(116-7))",
+       "per_quality": {
+        "Scrap": 7,
+        "Rusty": 17,
+        "Augmented": 27,
+        "Enhanced": 37,
+        "Exceptional": 47,
+        "Heavy": 57,
+        "Elite": 66,
+        "Relic": 76,
+        "Elder": 86,
+        "Ancient": 96,
+        "Eternal": 106
+       }
+      },
+      {
+       "formula": "round(20 + (q/11)*(400-20))",
+       "per_quality": {
+        "Scrap": 20,
+        "Rusty": 55,
+        "Augmented": 89,
+        "Enhanced": 124,
+        "Exceptional": 158,
+        "Heavy": 193,
+        "Elite": 227,
+        "Relic": 262,
+        "Elder": 296,
+        "Ancient": 331,
+        "Eternal": 365
+       }
+      },
+      "ELEM.nuclear"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      3.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "cU:PROJECTILES_SPLIT_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 5,
+        "Eternal": 6
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cD:RADIATION_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      50
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedNuclearBaseDamageTier4, roll)",
+    "a/g/a/A.a(A.FlatNuclearDamageTier6, roll)",
+    "a/g/a/A.a(A.FungusFuryChain, roll)"
+   ]
+  },
+  {
+   "name": "Thorns",
+   "id": 123,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Hit",
+    "Melee",
+    "AoE",
+    "Reflect"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.4
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(25 + (q/11)*(175-25))",
+       "per_quality": {
+        "Scrap": 25,
+        "Rusty": 39,
+        "Augmented": 52,
+        "Enhanced": 66,
+        "Exceptional": 80,
+        "Heavy": 93,
+        "Elite": 107,
+        "Relic": 120,
+        "Elder": 134,
+        "Ancient": 148,
+        "Eternal": 161
+       }
+      },
+      {
+       "formula": "round(32 + (q/11)*(207-32))",
+       "per_quality": {
+        "Scrap": 32,
+        "Rusty": 48,
+        "Augmented": 64,
+        "Enhanced": 80,
+        "Exceptional": 96,
+        "Heavy": 112,
+        "Elite": 127,
+        "Relic": 143,
+        "Elder": 159,
+        "Ancient": 175,
+        "Eternal": 191
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "ad",
+     "args": [
+      "A.IntrinsicImplicit",
+      0.85
+     ]
+    },
+    {
+     "stat": "ct:AOE_DAMAGE_IN_RANGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      250.0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "BigBertha",
+   "id": 124,
+   "required_level": 12,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/e",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.8
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(8 + (q/11)*(80-8))",
+       "per_quality": {
+        "Scrap": 8,
+        "Rusty": 15,
+        "Augmented": 21,
+        "Enhanced": 28,
+        "Exceptional": 34,
+        "Heavy": 41,
+        "Elite": 47,
+        "Relic": 54,
+        "Elder": 60,
+        "Ancient": 67,
+        "Eternal": 73
+       }
+      },
+      {
+       "formula": "round(22 + (q/11)*(240-22))",
+       "per_quality": {
+        "Scrap": 22,
+        "Rusty": 42,
+        "Augmented": 62,
+        "Enhanced": 81,
+        "Exceptional": 101,
+        "Heavy": 121,
+        "Elite": 141,
+        "Relic": 161,
+        "Elder": 181,
+        "Ancient": 200,
+        "Eternal": 220
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      4.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "cz:PROJECTILES_PIERCE_ALL_TARGETS",
+     "args": [
+      "A.IntrinsicImplicit",
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 6,
+        "Eternal": 7
+       }
+      }
+     ]
+    },
+    {
+     "stat": "an:DEBRIS_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.1
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedKineticBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.BigBerthaFlatDamagePerMass, roll)",
+    "a/g/a/A.a(A.BigBerthaAreaOfEffectPerEnergy, roll)",
+    "a/g/a/A.a(A.BigBerthaReducedAttackSpeed, roll)",
+    "a/g/a/A.a(A.BigBerthaDebrisChance, roll)"
+   ]
+  },
+  {
+   "name": "Spikes",
+   "id": 125,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Hit",
+    "Melee",
+    "Attack",
+    "AttackSpeed",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(21 + (q/11)*(175-21))",
+       "per_quality": {
+        "Scrap": 21,
+        "Rusty": 35,
+        "Augmented": 49,
+        "Enhanced": 63,
+        "Exceptional": 77,
+        "Heavy": 91,
+        "Elite": 105,
+        "Relic": 119,
+        "Elder": 133,
+        "Ancient": 147,
+        "Eternal": 161
+       }
+      },
+      {
+       "formula": "round(28 + (q/11)*(200-28))",
+       "per_quality": {
+        "Scrap": 28,
+        "Rusty": 44,
+        "Augmented": 59,
+        "Enhanced": 75,
+        "Exceptional": 91,
+        "Heavy": 106,
+        "Elite": 122,
+        "Relic": 137,
+        "Elder": 153,
+        "Ancient": 169,
+        "Eternal": 184
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      3.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      175.0
+     ]
+    },
+    {
+     "stat": "b:ADDITIONAL_ATTACKS_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      {
+       "formula": "round(3 + (q/11)*(12-3))",
+       "per_quality": {
+        "Scrap": 3,
+        "Rusty": 4,
+        "Augmented": 5,
+        "Enhanced": 5,
+        "Exceptional": 6,
+        "Heavy": 7,
+        "Elite": 8,
+        "Relic": 9,
+        "Elder": 10,
+        "Ancient": 10,
+        "Eternal": 11
+       }
+      }
+     ]
+    },
+    {
+     "stat": "ad",
+     "args": [
+      "A.IntrinsicImplicit",
+      0.85
+     ]
+    }
+   ]
+  },
+  {
+   "name": "PlasmaBlaster",
+   "id": 137,
+   "required_level": 1,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      2.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(12 + (q/11)*(120-12))",
+       "per_quality": {
+        "Scrap": 12,
+        "Rusty": 22,
+        "Augmented": 32,
+        "Enhanced": 41,
+        "Exceptional": 51,
+        "Heavy": 61,
+        "Elite": 71,
+        "Relic": 81,
+        "Elder": 91,
+        "Ancient": 100,
+        "Eternal": 110
+       }
+      },
+      {
+       "formula": "round(28 + (q/11)*(300-28))",
+       "per_quality": {
+        "Scrap": 28,
+        "Rusty": 53,
+        "Augmented": 77,
+        "Enhanced": 102,
+        "Exceptional": 127,
+        "Heavy": 152,
+        "Elite": 176,
+        "Relic": 201,
+        "Elder": 226,
+        "Ancient": 251,
+        "Eternal": 275
+       }
+      },
+      "ELEM.plasma"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      3.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      800.0
+     ]
+    },
+    {
+     "stat": "K:BLIND_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.5
+     ]
+    },
+    {
+     "stat": "bl:INCREASED_THERMAL_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      30
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Aetherbane",
+   "id": 152,
+   "required_level": 40,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Hit",
+    "Melee",
+    "Attack",
+    "AttackSpeed",
+    "Range"
+   ],
+   "unique_base": "a/g/p/F",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(21 + (q/11)*(175-21))",
+       "per_quality": {
+        "Scrap": 21,
+        "Rusty": 35,
+        "Augmented": 49,
+        "Enhanced": 63,
+        "Exceptional": 77,
+        "Heavy": 91,
+        "Elite": 105,
+        "Relic": 119,
+        "Elder": 133,
+        "Ancient": 147,
+        "Eternal": 161
+       }
+      },
+      {
+       "formula": "round(28 + (q/11)*(200-28))",
+       "per_quality": {
+        "Scrap": 28,
+        "Rusty": 44,
+        "Augmented": 59,
+        "Enhanced": 75,
+        "Exceptional": 91,
+        "Heavy": 106,
+        "Elite": 122,
+        "Relic": 137,
+        "Elder": 153,
+        "Ancient": 169,
+        "Eternal": 184
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      3.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      175.0
+     ]
+    },
+    {
+     "stat": "b:ADDITIONAL_ATTACKS_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      {
+       "formula": "round(3 + (q/11)*(12-3))",
+       "per_quality": {
+        "Scrap": 3,
+        "Rusty": 4,
+        "Augmented": 5,
+        "Enhanced": 5,
+        "Exceptional": 6,
+        "Heavy": 7,
+        "Elite": 8,
+        "Relic": 9,
+        "Elder": 10,
+        "Ancient": 10,
+        "Eternal": 11
+       }
+      }
+     ]
+    },
+    {
+     "stat": "ad",
+     "args": [
+      "A.IntrinsicImplicit",
+      0.85
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.FlatKineticDamageTier1, roll)",
+    "a/g/a/A.a(A.IncreasedBaseAttackSpeedTier2, roll)",
+    "a/g/a/A.a(A.AetherbaneDamagePerKill, roll)"
+   ]
+  },
+  {
+   "name": "DeathRay",
+   "id": 183,
+   "required_level": 28,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Attack",
+    "Projectile",
+    "ProjectileCanChain",
+    "DoT",
+    "Range"
+   ],
+   "unique_base": "a/g/p/o",
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedKineticBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.IncreasedDamageOverTimeTier2, roll)",
+    "a/g/a/A.a(A.DeathRayDeathThreshold, roll)",
+    "a/g/a/A.a(A.DeathRayDamageTakenAsKinetic, roll)"
+   ]
+  },
+  {
+   "name": "TheTwin",
+   "id": 185,
+   "required_level": 24,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/r",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      2.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(12 + (q/11)*(120-12))",
+       "per_quality": {
+        "Scrap": 12,
+        "Rusty": 22,
+        "Augmented": 32,
+        "Enhanced": 41,
+        "Exceptional": 51,
+        "Heavy": 61,
+        "Elite": 71,
+        "Relic": 81,
+        "Elder": 91,
+        "Ancient": 100,
+        "Eternal": 110
+       }
+      },
+      {
+       "formula": "round(28 + (q/11)*(300-28))",
+       "per_quality": {
+        "Scrap": 28,
+        "Rusty": 53,
+        "Augmented": 77,
+        "Enhanced": 102,
+        "Exceptional": 127,
+        "Heavy": 152,
+        "Elite": 176,
+        "Relic": 201,
+        "Elder": 226,
+        "Ancient": 251,
+        "Eternal": 275
+       }
+      },
+      "ELEM.plasma"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      3.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      800.0
+     ]
+    },
+    {
+     "stat": "K:BLIND_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.5
+     ]
+    },
+    {
+     "stat": "bl:INCREASED_THERMAL_DAMAGE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      30
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.TheTwinDualTwins, roll)",
+    "a/g/a/A.a(A.FlatNuclearDamageTier2, roll)",
+    "a/g/a/A.a(A.TheTwinDamageConversion, roll)",
+    "a/g/a/A.a(A.IncreasedBaseAttackSpeedTier2, roll)",
+    "a/g/a/A.a(A.TheTwinRadiationChance, roll)"
+   ]
+  },
+  {
+   "name": "GruvaksHorn",
+   "id": 193,
+   "required_level": 55,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Hit",
+    "Melee"
+   ],
+   "unique_base": "a/g/p/n",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      4.8
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "90.0 + (q/11)^2*(480.0-90.0)",
+       "per_quality": {
+        "Scrap": 90.0,
+        "Rusty": 93.22,
+        "Augmented": 102.89,
+        "Enhanced": 119.01,
+        "Exceptional": 141.57,
+        "Heavy": 170.58,
+        "Elite": 206.03,
+        "Relic": 247.93,
+        "Elder": 296.28,
+        "Ancient": 351.07,
+        "Eternal": 412.31
+       }
+      },
+      {
+       "formula": "240.0 + (q/11)^2*(1200.0-240.0)",
+       "per_quality": {
+        "Scrap": 240.0,
+        "Rusty": 247.93,
+        "Augmented": 271.74,
+        "Enhanced": 311.4,
+        "Exceptional": 366.94,
+        "Heavy": 438.35,
+        "Elite": 525.62,
+        "Relic": 628.76,
+        "Elder": 747.77,
+        "Ancient": 882.64,
+        "Eternal": 1033.39
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "ad",
+     "args": [
+      "A.IntrinsicImplicit",
+      0.7
+     ]
+    },
+    {
+     "stat": "bR:MORE_DAMAGE_AGAINST_BOSSES",
+     "args": [
+      "A.IntrinsicImplicit",
+      {
+       "formula": "round(4.0 + (q/11)*(8.0-4.0))",
+       "per_quality": {
+        "Scrap": 4,
+        "Rusty": 4,
+        "Augmented": 5,
+        "Enhanced": 5,
+        "Exceptional": 5,
+        "Heavy": 6,
+        "Elite": 6,
+        "Relic": 7,
+        "Elder": 7,
+        "Ancient": 7,
+        "Eternal": 8
+       }
+      }
+     ]
+    },
+    {
+     "stat": "bu:KNOCKBACK",
+     "args": [
+      "A.IntrinsicImplicit"
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedKineticBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.GruvaksHornFlatMass, roll)",
+    "a/g/a/A.a(A.GruvaksHornKnockbackDamage, roll)",
+    "a/g/a/A.a(A.GruvaksHornShipSize, roll)",
+    "a/g/a/A.a(A.GruvaksHornPullCloser, roll)"
+   ]
+  },
+  {
+   "name": "CarlosBroodfire",
+   "id": 202,
+   "required_level": 32,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/R",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.2
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(28 + (q/11)*(720-28))",
+       "per_quality": {
+        "Scrap": 28,
+        "Rusty": 91,
+        "Augmented": 154,
+        "Enhanced": 217,
+        "Exceptional": 280,
+        "Heavy": 343,
+        "Elite": 405,
+        "Relic": 468,
+        "Elder": 531,
+        "Ancient": 594,
+        "Eternal": 657
+       }
+      },
+      {
+       "formula": "round(80 + (q/11)*(2020-80))",
+       "per_quality": {
+        "Scrap": 80,
+        "Rusty": 256,
+        "Augmented": 433,
+        "Enhanced": 609,
+        "Exceptional": 785,
+        "Heavy": 962,
+        "Elite": 1138,
+        "Relic": 1315,
+        "Elder": 1491,
+        "Ancient": 1667,
+        "Eternal": 1844
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1200.0
+     ]
+    },
+    {
+     "stat": "Z:CORRUPTED_AREA_REFLECTION",
+     "args": [
+      "A.IntrinsicImplicit"
+     ]
+    },
+    {
+     "stat": "cl:MORE_PROJECTILE_LIFETIME",
+     "args": [
+      "A.IntrinsicImplicit",
+      9.0
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.IncreasedKineticBaseDamageTier1, roll)",
+    "a/g/a/A.a(A.IncreasedBaseAttackSpeedTier4, roll)",
+    "a/g/a/A.a(A.CarlosBroodfireProjectileSpeed, roll)",
+    "a/g/a/A.a(A.CarlosBroodfireProjectileDamage, roll)"
+   ]
+  },
+  {
+   "name": "CarlosForbiddenBroodfire",
+   "id": 313,
+   "required_level": 40,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range",
+    "AoE"
+   ],
+   "unique_base": "a/g/p/a/c",
+   "base_stats": [
+    {
+     "stat": "o:AOE_DAMAGE_IN_RADIUS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      "a/b/b/e.a",
+      250.0,
+      0.5,
+      "app/g/a/a.kk"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "FlameThrower",
+   "id": 212,
+   "required_level": 16,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Attack",
+    "AoE",
+    "Range",
+    "DoT"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      0.25
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(10 + (q/11)*(50-10))",
+       "per_quality": {
+        "Scrap": 10,
+        "Rusty": 14,
+        "Augmented": 17,
+        "Enhanced": 21,
+        "Exceptional": 25,
+        "Heavy": 28,
+        "Elite": 32,
+        "Relic": 35,
+        "Elder": 39,
+        "Ancient": 43,
+        "Eternal": 46
+       }
+      },
+      {
+       "formula": "round(15 + (q/11)*(75-15))",
+       "per_quality": {
+        "Scrap": 15,
+        "Rusty": 20,
+        "Augmented": 26,
+        "Enhanced": 31,
+        "Exceptional": 37,
+        "Heavy": 42,
+        "Elite": 48,
+        "Relic": 53,
+        "Elder": 59,
+        "Ancient": 64,
+        "Eternal": 70
+       }
+      },
+      "ELEM.explosive",
+      1
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      750.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "a/g/p/m",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "SolarasFire",
+   "id": 213,
+   "required_level": 32,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Attack",
+    "AoE",
+    "Range",
+    "DoT"
+   ],
+   "unique_base": "a/g/p/l",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      0.25
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(10 + (q/11)*(50-10))",
+       "per_quality": {
+        "Scrap": 10,
+        "Rusty": 14,
+        "Augmented": 17,
+        "Enhanced": 21,
+        "Exceptional": 25,
+        "Heavy": 28,
+        "Elite": 32,
+        "Relic": 35,
+        "Elder": 39,
+        "Ancient": 43,
+        "Eternal": 46
+       }
+      },
+      {
+       "formula": "round(15 + (q/11)*(75-15))",
+       "per_quality": {
+        "Scrap": 15,
+        "Rusty": 20,
+        "Augmented": 26,
+        "Enhanced": 31,
+        "Exceptional": 37,
+        "Heavy": 42,
+        "Elite": 48,
+        "Relic": 53,
+        "Elder": 59,
+        "Ancient": 64,
+        "Eternal": 70
+       }
+      },
+      "ELEM.explosive",
+      1
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      750.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "a/g/p/m",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.FlatExplosiveDamageTier1, roll)",
+    "a/g/a/A.a(A.IncreasedExplosiveBaseDamageTier2, roll)",
+    "a/g/a/A.a(A.IncreasedDamageOverTimeTier3, roll)",
+    "a/g/a/A.a(A.SolarasFireBurnDecayReduction, roll)"
+   ]
+  },
+  {
+   "name": "LeesTempests",
+   "id": 250,
+   "required_level": 80,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Hit",
+    "Melee",
+    "Attack",
+    "AttackSpeed",
+    "AoE",
+    "Range"
+   ],
+   "unique_base": "a/g/p/O",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      0.5
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(6 + (q/11)*(76-6))",
+       "per_quality": {
+        "Scrap": 6,
+        "Rusty": 12,
+        "Augmented": 19,
+        "Enhanced": 25,
+        "Exceptional": 31,
+        "Heavy": 38,
+        "Elite": 44,
+        "Relic": 51,
+        "Elder": 57,
+        "Ancient": 63,
+        "Eternal": 70
+       }
+      },
+      {
+       "formula": "round(18 + (q/11)*(180-18))",
+       "per_quality": {
+        "Scrap": 18,
+        "Rusty": 33,
+        "Augmented": 47,
+        "Enhanced": 62,
+        "Exceptional": 77,
+        "Heavy": 92,
+        "Elite": 106,
+        "Relic": 121,
+        "Elder": 136,
+        "Ancient": 151,
+        "Eternal": 165
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      6.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      250.0
+     ]
+    },
+    {
+     "stat": "ad",
+     "args": [
+      "A.IntrinsicImplicit",
+      0.9
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.LeesTempestsKineticDamage, roll)",
+    "a/g/a/A.a(A.LeesTempestsKineticDamageCanShock, roll)",
+    "a/g/a/A.a(A.LeesTempestsDoubleDamage, roll)",
+    "a/g/a/A.a(A.LeesTempestsShockEffect, roll)"
+   ]
+  },
+  {
+   "name": "Slotfather",
+   "id": 252,
+   "required_level": 76,
+   "drop_weight": 0,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/b",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(6 + (q/11)*(38-6))",
+       "per_quality": {
+        "Scrap": 6,
+        "Rusty": 9,
+        "Augmented": 12,
+        "Enhanced": 15,
+        "Exceptional": 18,
+        "Heavy": 21,
+        "Elite": 23,
+        "Relic": 26,
+        "Elder": 29,
+        "Ancient": 32,
+        "Eternal": 35
+       }
+      },
+      {
+       "formula": "round(32 + (q/11)*(220-32))",
+       "per_quality": {
+        "Scrap": 32,
+        "Rusty": 49,
+        "Augmented": 66,
+        "Enhanced": 83,
+        "Exceptional": 100,
+        "Heavy": 117,
+        "Elite": 135,
+        "Relic": 152,
+        "Elder": 169,
+        "Ancient": 186,
+        "Eternal": 203
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      600.0
+     ]
+    },
+    {
+     "stat": "a/g/p/c",
+     "args": [
+      "this",
+      "A.IntrinsicImplicit",
+      0
+     ]
+    },
+    {
+     "stat": "cz:PROJECTILES_PIERCE_ALL_TARGETS",
+     "args": [
+      "A.IntrinsicImplicit",
+      3
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.SlotfatherModLevel, roll)"
+   ]
+  },
+  {
+   "name": "Shuriken",
+   "id": 254,
+   "required_level": 12,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(3 + (q/11)*(24-3))",
+       "per_quality": {
+        "Scrap": 3,
+        "Rusty": 5,
+        "Augmented": 7,
+        "Enhanced": 9,
+        "Exceptional": 11,
+        "Heavy": 13,
+        "Elite": 14,
+        "Relic": 16,
+        "Elder": 18,
+        "Ancient": 20,
+        "Eternal": 22
+       }
+      },
+      {
+       "formula": "round(12 + (q/11)*(144-12))",
+       "per_quality": {
+        "Scrap": 12,
+        "Rusty": 24,
+        "Augmented": 36,
+        "Enhanced": 48,
+        "Exceptional": 60,
+        "Heavy": 72,
+        "Elite": 84,
+        "Relic": 96,
+        "Elder": 108,
+        "Ancient": 120,
+        "Eternal": 132
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      2.0
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      12
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      900.0
+     ]
+    },
+    {
+     "stat": "b:ADDITIONAL_ATTACKS_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      2
+     ]
+    },
+    {
+     "stat": "U:PROJECTILES_CHAIN_ADDITIONAL_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 3,
+        "Rusty": 3,
+        "Augmented": 4,
+        "Enhanced": 4,
+        "Exceptional": 4,
+        "Heavy": 5,
+        "Elite": 5,
+        "Relic": 5,
+        "Elder": 6,
+        "Ancient": 7,
+        "Eternal": 8
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "DemonFire",
+   "id": 292,
+   "required_level": 60,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "AoE",
+    "DoT",
+    "Range",
+    "Field"
+   ],
+   "unique_base": "a/g/p/R",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "a/g/p/j",
+     "args": []
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      300.0
+     ]
+    },
+    {
+     "stat": "a/g/p/i",
+     "args": []
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0
+     ]
+    },
+    {
+     "stat": "aO",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "formula": "round(20 + (q/11)*(200-20))",
+       "per_quality": {
+        "Scrap": 20,
+        "Rusty": 36,
+        "Augmented": 53,
+        "Enhanced": 69,
+        "Exceptional": 85,
+        "Heavy": 102,
+        "Elite": 118,
+        "Relic": 135,
+        "Elder": 151,
+        "Ancient": 167,
+        "Eternal": 184
+       }
+      },
+      "ELEM.explosive"
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.DemonFireBurn, roll)",
+    "a/g/a/A.a(A.IncreasedDamageOverTimeTier1, roll)",
+    "a/g/a/A.a(A.FlatTimeTier1, roll)",
+    "a/g/a/A.a(A.DemonFireIncreasedTime, roll)",
+    "a/g/a/A.a(A.DemonFireFieldEffect, roll)"
+   ]
+  },
+  {
+   "name": "PlasmaCutter",
+   "id": 300,
+   "required_level": 6,
+   "drop_weight": 1000,
+   "unique": false,
+   "tags": [
+    "Weapon",
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range",
+    "Projectile",
+    "ProjectileCanPierce",
+    "ProjectileCanReturn"
+   ],
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.8
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(3 + (q/11)*(140-3))",
+       "per_quality": {
+        "Scrap": 3,
+        "Rusty": 15,
+        "Augmented": 28,
+        "Enhanced": 40,
+        "Exceptional": 53,
+        "Heavy": 65,
+        "Elite": 78,
+        "Relic": 90,
+        "Elder": 103,
+        "Ancient": 115,
+        "Eternal": 128
+       }
+      },
+      {
+       "formula": "round(4 + (q/11)*(240-4))",
+       "per_quality": {
+        "Scrap": 4,
+        "Rusty": 25,
+        "Augmented": 47,
+        "Enhanced": 68,
+        "Exceptional": 90,
+        "Heavy": 111,
+        "Elite": 133,
+        "Relic": 154,
+        "Elder": 176,
+        "Ancient": 197,
+        "Eternal": 219
+       }
+      },
+      "ELEM.plasma"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      1.5
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      5
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      800.0
+     ]
+    },
+    {
+     "stat": "p:AOE_DAMAGE_IN_ARC",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      30.0
+     ]
+    },
+    {
+     "stat": "cz:PROJECTILES_PIERCE_ALL_TARGETS",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      1000000
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Conduit",
+   "id": 303,
+   "required_level": 30,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/L",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.2
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      0.833333,
+      {
+       "formula": "round(50 + (q/11)*(500-50))",
+       "per_quality": {
+        "Scrap": 50,
+        "Rusty": 91,
+        "Augmented": 132,
+        "Enhanced": 173,
+        "Exceptional": 214,
+        "Heavy": 255,
+        "Elite": 295,
+        "Relic": 336,
+        "Elder": 377,
+        "Ancient": 418,
+        "Eternal": 459
+       }
+      },
+      "ELEM.electric"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      2.5
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      8
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      900.0
+     ]
+    },
+    {
+     "stat": "U:PROJECTILES_CHAIN_ADDITIONAL_TIMES_ONE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      {
+       "per_quality": {
+        "Scrap": 2,
+        "Rusty": 2,
+        "Augmented": 3,
+        "Enhanced": 3,
+        "Exceptional": 3,
+        "Heavy": 4,
+        "Elite": 4,
+        "Relic": 4,
+        "Elder": 5,
+        "Ancient": 6,
+        "Eternal": 7
+       }
+      }
+     ]
+    },
+    {
+     "stat": "cM:SHOCK_CHANCE",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      0.2
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.ConduitIncreasedElectricBaseDamage, roll)",
+    "a/g/a/A.a(A.ConduitFlatDamagePerTurboBoost, roll)",
+    "a/g/a/A.a(A.ConduitMaxTurboBoost, roll)",
+    "a/g/a/A.a(A.ConduitMulticritAtMaxBoost, roll)"
+   ]
+  },
+  {
+   "name": "Goroboro",
+   "id": 304,
+   "required_level": 42,
+   "drop_weight": 40,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Hit",
+    "Melee",
+    "Attack",
+    "AttackSpeed",
+    "Range"
+   ],
+   "unique_base": "a/g/p/F",
+   "base_stats": [
+    {
+     "stat": "a/g/p/a/k",
+     "args": []
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.GoroboroIncreasedKineticBaseDamage, roll)",
+    "a/g/a/A.a(A.GoroboroReducedAttackSpeed, roll)"
+   ]
+  },
+  {
+   "name": "Dreamer",
+   "id": 305,
+   "required_level": 6,
+   "drop_weight": 100,
+   "unique": true,
+   "tags": [
+    "Weapon",
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "unique_base": "a/g/p/R",
+   "base_stats": [
+    {
+     "stat": "I",
+     "args": [
+      "A.IntrinsicBase",
+      1.0
+     ]
+    },
+    {
+     "stat": "ay",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      {
+       "formula": "round(20 + (q/11)*(220-20))",
+       "per_quality": {
+        "Scrap": 20,
+        "Rusty": 38,
+        "Augmented": 56,
+        "Enhanced": 75,
+        "Exceptional": 93,
+        "Heavy": 111,
+        "Elite": 129,
+        "Relic": 147,
+        "Elder": 165,
+        "Ancient": 184,
+        "Eternal": 202
+       }
+      },
+      {
+       "formula": "round(30 + (q/11)*(360-30))",
+       "per_quality": {
+        "Scrap": 30,
+        "Rusty": 60,
+        "Augmented": 90,
+        "Enhanced": 120,
+        "Exceptional": 150,
+        "Heavy": 180,
+        "Elite": 210,
+        "Relic": 240,
+        "Elder": 270,
+        "Ancient": 300,
+        "Eternal": 330
+       }
+      },
+      "ELEM.kinetic"
+     ]
+    },
+    {
+     "stat": "D:ATTACKS_PER_SECOND",
+     "args": [
+      "A.IntrinsicBase",
+      0.8
+     ]
+    },
+    {
+     "stat": "E:CRITICAL_STRIKE_CHANCE",
+     "args": [
+      "A.IntrinsicBase",
+      0,
+      10
+     ]
+    },
+    {
+     "stat": "F:RANGE",
+     "args": [
+      "A.IntrinsicBase",
+      1000.0
+     ]
+    },
+    {
+     "stat": "al:DEATH_THRESHOLD",
+     "args": [
+      "A.IntrinsicImplicit",
+      0,
+      10
+     ]
+    }
+   ],
+   "unique_affixes": [
+    "a/g/a/A.a(A.DreamerIncreasedDamagePerFocusBoost, roll)",
+    "a/g/a/A.a(A.DreamerAdditionalAttacksPerFocusBoost, roll)",
+    "a/g/a/A.a(A.DreamerFocusBoostOnKill, roll)"
+   ]
+  }
+ ]
+}
