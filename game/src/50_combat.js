@@ -126,7 +126,7 @@ function hitMob(m, W, o = {}) {
   if (W.cull && !m.dead && !m.boss && m.hp / m.max * 100 < W.cull) kill(m);
   if (STATS.flag.arc && !o.arc && rnd() < RL.arc.chance / 100 * (W.cont ? 1 / W.aps : 1)) { const hit = new Set([m]); for (let k = 0; k < RL.arc.n; k++) { const n = nearest(m.x, m.y - 4, RL.arc.r, hit); if (!n) break; hit.add(n); fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: n.x, y2: n.y - 5, el: 'ele' }); hitMob(n, W, { mul: RL.arc.dmg / 100, arc: 1, noDebris: o.noDebris }); } }
   const aoh = W.armorOnHit + (STATS.raw.armorOnHit || 0); // 吸髓符文 + 装备上的命中回护甲
-  if (aoh) player.armor = Math.min(STATS.armor, player.armor + aoh);
+  if (aoh) player.armor = Math.min(STATS.armor, player.armor + leech(W, aoh));
   if (W.dashOnHit) player.dash = Math.min(STATS.dashMax, player.dash + W.dashOnHit);
   if (W.meleeGuard) player.guardT = MECH.meleeGuardTime;
   if (W.pull && !m.boss) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * MECH.pull; m.ky += dy / d * MECH.pull; }
@@ -390,8 +390,19 @@ function projHit(p, m) {
 }
 
 /* ---------- 主循环 ---------- */
+// 命中回护甲的两道上限（mechanics.defense，null = 不限）：同一次挥砍/同一帧同一把武器最多 leechHitCap 个敌人算数；
+// 任意 1 秒内最多回护甲上限的 leechCapPct%（记最近 1 秒回了多少）
+let leechFrame = 0, leechClock = 0; const leechLog = [];
+function leech(W, a) {
+  if (MECH.leechHitCap != null) { const k = W.key + '|' + leechFrame; if (player.leechK !== k) { player.leechK = k; player.leechN = 0; } if (++player.leechN > MECH.leechHitCap) { player.leechCapped = 0.5; return 0; } }
+  if (MECH.leechCapPct != null) { const L = leechLog, used = L.reduce((x, e) => x + e[1], 0), g = Math.max(0, Math.min(a, STATS.armor * MECH.leechCapPct / 100 - used)); if (g < a) player.leechCapped = 0.5; if (g > 0) L.push([leechClock, g]); return g; }
+  return a;
+}
 function logic(dt) {
   const P = STATS;
+  leechFrame++;
+  leechClock += dt; while (leechLog.length && leechClock - leechLog[0][0] >= 1) leechLog.shift();
+  if (player.leechCapped > 0) player.leechCapped -= dt;
   const at = autoStep(dt); // 自动战斗的目标点；手动时为 null
   // 移动：朝鼠标加速（体魄越高越慢）
   if (player.dashT > 0) {
