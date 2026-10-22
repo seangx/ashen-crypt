@@ -77,7 +77,7 @@
   "offhandMul": 0.5,
   "dashMul": 1,
   "spinMoveMul": 0.8,
-  "soulPerSec": 6,
+  "soulPerSec": 1.5,
   "soulPerHit": 0.35,
   "soulHitCap": 6,
   "devilEvery": 0.6,
