@@ -1,8 +1,12 @@
 {
  "_说明": "成长与难度：玩家基础属性、经验曲线、怪物成长、每局节奏、精英、怪物与 Boss、起始装备、系统解锁。以 _ 开头的键是注释，构建时会被去掉。",
  "player": {
-  "_说明": "armor 护甲（就是生命）; res 基础抗性 %; maxRes 抗性上限 %; critMult 暴击倍率; dashDist 冲刺距离（像素）; dashTime 冲刺时长（秒）; dashMax 基础冲刺槽; pickup 拾取半径; deflectRate 灵障每秒回复（占上限）; baseSpeed 基础移速; thrustToSpeed 遁靴推力换算移速; accelMul 加速度 = 移速 × 它",
-  "armor": 100,
+  "_说明": "armor 基础护甲（只负责减伤，见 mechanics.defense.armorK）; life 基础生命（归零阵亡，只靠吸血和打掉 Boss 回复）; lifePerLevel 每级生命上限 +; shield 基础护盾上限（第一道血条）; shieldRegenPct 护盾每秒回复上限的百分之几（挨打也照常回）; res 基础抗性 %; maxRes 抗性上限 %; critMult 暴击倍率; dashDist 冲刺距离（像素）; dashTime 冲刺时长（秒）; dashMax 基础冲刺槽; pickup 拾取半径; baseSpeed 基础移速; thrustToSpeed 遁靴推力换算移速; accelMul 加速度 = 移速 × 它",
+  "armor": 0,
+  "life": 100,
+  "lifePerLevel": 3,
+  "shield": 40,
+  "shieldRegenPct": 8,
   "res": 0,
   "maxRes": 75,
   "critMult": 1.5,
@@ -10,7 +14,6 @@
   "dashTime": 0.16,
   "dashMax": 1,
   "pickup": 26,
-  "deflectRate": 0.25,
   "baseSpeed": 64,
   "thrustToSpeed": 0.03,
   "accelMul": 7
@@ -40,7 +43,16 @@
   "spawnInterval": 0.8,
   "spawnIntervalPerLevel": 0.02,
   "spawnIntervalMin": 0.25,
-  "horde": { "_说明": "怪海：普通怪数量 ×count（同屏上限、刷怪速度都 ×count），每只的血量 ×hp、伤害 ×dmg；每只给的推进、经验、灯火、掉落几率都 ÷count，所以一层的总量不变。一次在场边刷一群 pack[0]–pack[1] 只，挤在一起。Boss 不受影响", "count": 4, "hp": 0.3, "dmg": 0.35, "pack": [4, 8] }
+  "horde": {
+   "_说明": "怪海：普通怪数量 ×count（同屏上限、刷怪速度都 ×count），每只的血量 ×hp、伤害 ×dmg；每只给的推进、经验、灯火、掉落几率都 ÷count，所以一层的总量不变。一次在场边刷一群 pack[0]–pack[1] 只，挤在一起。Boss 不受影响",
+   "count": 4,
+   "hp": 0.3,
+   "dmg": 0.35,
+   "pack": [
+    4,
+    8
+   ]
+  }
  },
  "elite": {
   "_说明": "普通怪变精英的几率和倍率；精英的掉落几率乘 loot.drop.eliteMul",

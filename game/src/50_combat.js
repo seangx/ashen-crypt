@@ -5,13 +5,13 @@ let RUN = null;
 let mobs = [], projs = [], drops = [], fxq = [], zones = [];
 const mouse = { x: 240, y: 150, on: false, touch: false };
 const F = { x0: 10, x1: 470, y0: 62, y1: 226 };
-const player = { x: 240, y: 150, vx: 0, vy: 0, armor: 1, deflect: 0, deflT: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: [0, 0], orbitA: 0, guardT: 0, spin: [{ n: 0, g: 0, idle: 9 }, { n: 0, g: 0, idle: 9 }], swing: [0, 0], devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
+const player = { x: 240, y: 150, vx: 0, vy: 0, life: 1, shield: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: [0, 0], orbitA: 0, guardT: 0, spin: [{ n: 0, g: 0, idle: 9 }, { n: 0, g: 0, idle: 9 }], swing: [0, 0], devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
 const fx = o => { if (G.fx) fxq.push(o); };
 const MINE_MAX = MECH.mineMax;
 const RL = DATA.rules, PAT = PROG.bossPatterns, ELITE = PROG.elite;
 
 function resetPlayer() {
-  player.armor = STATS.armor; player.deflect = STATS.deflect; player.dash = STATS.dashMax; player.deflT = 0; player.hurtT = 0; player.dashT = 0;
+  player.life = STATS.life; player.shield = STATS.shield; player.dash = STATS.dashMax; player.hurtT = 0; player.dashT = 0;
 }
 // 灯火下行的出发层：没锁层时从最深层往回退 startBack 层出发，最深层是一趟的高潮
 const descentStart = () => S.auto.lock ? S.depth : Math.max(1, Math.min(S.depth, S.maxDepth) - SOUL.startBack);
@@ -78,7 +78,7 @@ function ruleMul(m) {
   if (FL.exec) k *= m.hp < m.max * RL.exec.lowHp / 100 ? 1 + RL.exec.lowMore / 100 : m.hp >= m.max ? 1 - RL.exec.fullLess / 100 : 1;
   if (FL.still && isStill()) k *= 1 + RL.still.dmgMore / 100;
   if (FL.kite) k *= isStill() ? 1 - RL.kite.stillLess / 100 : 1 + RL.kite.moveMore / 100;
-  if (FL.martyr && STATS.deflect > 0 && player.deflect >= STATS.deflect * 0.99) k *= 1 + RL.martyr.dmgMore / 100;
+  if (FL.martyr && STATS.shield > 0 && player.shield >= STATS.shield * 0.99) k *= 1 + RL.martyr.dmgMore / 100;
   if (FL.judge && m.blindT > 0) k *= 1 + RL.judge.more / 100;
   if (FL.afterDash && player.adT > 0) k *= 1 + RL.afterDash.more / 100;
   return k;
@@ -125,8 +125,8 @@ function hitMob(m, W, o = {}) {
   damage(m, total, top, crit, W.cont);
   if (W.cull && !m.dead && !m.boss && m.hp / m.max * 100 < W.cull) kill(m);
   if (STATS.flag.arc && !o.arc && rnd() < RL.arc.chance / 100 * (W.cont ? 1 / W.aps : 1)) { const hit = new Set([m]); for (let k = 0; k < RL.arc.n; k++) { const n = nearest(m.x, m.y - 4, RL.arc.r, hit); if (!n) break; hit.add(n); fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: n.x, y2: n.y - 5, el: 'ele' }); hitMob(n, W, { mul: RL.arc.dmg / 100, arc: 1, noDebris: o.noDebris }); } }
-  const aoh = W.armorOnHit + (STATS.raw.armorOnHit || 0); // 吸髓符文 + 装备上的命中回护甲
-  if (aoh) player.armor = Math.min(STATS.armor, player.armor + leech(W, aoh));
+  const aoh = W.armorOnHit + (STATS.raw.armorOnHit || 0); // 吸髓符文 + 装备词条 + 旋身符文：命中回生命（吸血）
+  if (aoh) player.life = Math.min(STATS.life, player.life + leech(W, aoh));
   if (W.dashOnHit) player.dash = Math.min(STATS.dashMax, player.dash + W.dashOnHit);
   if (W.meleeGuard) player.guardT = MECH.meleeGuardTime;
   if (W.pull && !m.boss) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * MECH.pull; m.ky += dy / d * MECH.pull; }
@@ -179,6 +179,7 @@ function kill(m) {
   if (rnd() < DROP.shard * mult * (1 + LX.dice / 100)) shardDrop();
   if (rnd() < DROP.mod * mult * (1 + LX.runes / 100)) dropThing(m, { kind: 'mod', mod: rollModDrop(L) });
   if (rnd() < DROP.map * mult * (1 + LX.mapDrop / 100)) dropThing(m, { kind: 'map', map: rollMapDrop(L) });
+  if (m.boss) player.life = Math.min(STATS.life, player.life + STATS.life * MECH.bossKillLife / 100); // 打掉守关 Boss 回一截生命
   if (m.boss && RUN.mode === 'ladder') ladderWin(m);
   else if (m.boss) {
     const BL = PROG.bossLoot;
@@ -211,7 +212,8 @@ function collect(dp) {
 }
 function gainXp(x) {
   S.xp += x; if (RUN) RUN.gain.xp += x;
-  while (S.xp >= xpNeed(S.level)) { S.xp -= xpNeed(S.level); S.level++; if (RUN) RUN.gain.lv++; fx({ t: 'text', x: player.x, y: player.y - 18, s: '升级 · 天赋点 +1', c: COL.xp }); sfx('level'); }
+  while (S.xp >= xpNeed(S.level)) { S.xp -= xpNeed(S.level); S.level++; if (RUN) RUN.gain.lv++; const before = STATS.life; refreshStats(); player.life += STATS.life - before; // 升级：生命上限变高，多出来的直接补上
+  fx({ t: 'text', x: player.x, y: player.y - 18, s: '升级 · 天赋点 +1', c: COL.xp }); sfx('level'); }
 }
 // 法阵的升级槽：插在里面的符文吃击杀经验（累计门槛）
 function modXp(x) {
@@ -225,7 +227,7 @@ function modXp(x) {
   if (up) refreshStats();
 }
 
-/* ---------- 玩家受伤：闪避 → 抗性 → 灵障 → 护甲 ---------- */
+/* ---------- 玩家受伤：闪避 → 抗性 → 护甲减伤 → 流派减伤 → 护盾 → 生命 ---------- */
 function hurtPlayer(d, el) {
   if (!RUN || RUN.ending || player.dashT > 0 || player.hurtT > 0) return;
   if (rnd() * 100 < STATS.dodge) {
@@ -238,16 +240,16 @@ function hurtPlayer(d, el) {
   if (FL.rotFlesh) { const R = RL.rotFlesh; let n = 0; for (const x of mobs) if (!x.dead && x.rad.length && dist2(x, player) < R.r * R.r) n++; d *= 1 - Math.min(R.max, n * R.per) / 100; }
   const tk = FL.takenKin || 0;
   d = d * (1 - tk) * (1 - STATS.res[el] / 100) + d * tk * (1 - STATS.res.kin / 100);
+  d *= 1 - armorDr(STATS.armor, d); // 护甲：对碎伤减得多，对重击减得少
   if (player.guardT > 0) d *= 1 - MECH.meleeGuardLess;
   d *= 1 - Math.max(0, ...STATS.weapons.map((W, i) => W && W.whirl ? Math.min(WH.drCap, WH.drPerStack * player.spin[i].n) : 0)) / 100; // 旋身：每层当前旋转减伤，有上限
-  if (player.deflect > 0) { const a = Math.min(player.deflect, d); player.deflect -= a; d -= a; fx({ t: 'shield', x: player.x, y: player.y }); }
-  player.deflT = MECH.deflectDelay * (FL.martyr ? RL.martyr.delayMul : 1);
-  if (d > 0 && FL.absorb) player.deflect = Math.min(STATS.deflect, player.deflect + d * RL.absorb.pct / 100);
+  if (player.shield > 0) { const a = Math.min(player.shield, d); player.shield -= a; d -= a; fx({ t: 'shield', x: player.x, y: player.y }); }
+  if (d > 0 && FL.absorb) player.shield = Math.min(STATS.shield, player.shield + d * RL.absorb.pct / 100); // 圣盾：扣到生命的一部分转成护盾
   if (FL.thorns) for (const m of mobs) if (!m.dead && dist2(m, player) < RL.thorns.r ** 2) { damage(m, mitigate(m, 'kin', STATS.armor * RL.thorns.armorPct / 100), 'kin', false); fx({ t: 'spike', x: m.x, y: m.y, el: 'kin' }); }
-  if (d > 0) { player.armor -= d; player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); sfx('hurt'); if (G.world && d > STATS.armor * 0.08) G.world.shake(70, 0.003); }
+  if (d > 0) { player.life -= d; player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); sfx('hurt'); if (G.world && d > STATS.life * 0.08) G.world.shake(70, 0.003); }
   // 荆棘甲：受击时伤害周围
   for (const W of STATS.weapons) if (W && W.form === 'reflect') { fx({ t: 'ring', x: player.x, y: player.y - 4, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); }
-  if (player.armor <= 0) { player.armor = 0; RUN.result = 'dead'; RUN.ending = 1.6; S.stats.deaths++; sfx('out'); if (G.ui) G.ui.banner('灯火熄灭'); }
+  if (player.life <= 0) { player.life = 0; RUN.result = 'dead'; RUN.ending = 1.6; S.stats.deaths++; sfx('out'); if (G.ui) G.ui.banner('灯火熄灭'); }
 }
 
 /* ---------- 冲刺（遁靴：冲刺即技能） ---------- */
@@ -395,7 +397,7 @@ function projHit(p, m) {
 let leechFrame = 0, leechClock = 0; const leechLog = [];
 function leech(W, a) {
   if (MECH.leechHitCap != null) { const k = W.key + '|' + leechFrame; if (player.leechK !== k) { player.leechK = k; player.leechN = 0; } if (++player.leechN > MECH.leechHitCap) { player.leechCapped = 0.5; return 0; } }
-  if (MECH.leechCapPct != null) { const L = leechLog, used = L.reduce((x, e) => x + e[1], 0), g = Math.max(0, Math.min(a, STATS.armor * MECH.leechCapPct / 100 - used)); if (g < a) player.leechCapped = 0.5; if (g > 0) L.push([leechClock, g]); return g; }
+  if (MECH.leechCapPct != null) { const L = leechLog, used = L.reduce((x, e) => x + e[1], 0), g = Math.max(0, Math.min(a, STATS.life * MECH.leechCapPct / 100 - used)); if (g < a) player.leechCapped = 0.5; if (g > 0) L.push([leechClock, g]); return g; }
   return a;
 }
 function logic(dt) {
@@ -424,11 +426,10 @@ function logic(dt) {
   if (player.adT > 0) player.adT -= dt;
   if (player.hurtT > 0) player.hurtT -= dt;
   if (player.guardT > 0) player.guardT -= dt;
-  if (player.deflT > 0) player.deflT -= dt; else player.deflect = Math.min(P.deflect, player.deflect + P.deflect * P.deflRate * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt);
-  if (P.armorRegen) player.armor = Math.min(P.armor, player.armor + P.armor * P.armorRegen * dt);
+  player.shield = Math.min(P.shield, player.shield + P.shieldRegen * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
   player.swing = player.swing.map(v => Math.max(0, v - dt));
   player.orbitA += dt * 5 * (1 + 0.12 * Math.max(player.spin[0].n, player.spin[1].n)); // 旋转层数越高转得越快
-  if (!RUN) { player.armor = P.armor; player.deflect = P.deflect; player.soul = P.soulMax; return; }
+  if (!RUN) { player.life = P.life; player.shield = P.shield; player.soul = P.soulMax; return; }
   // 魂火：天梯里每秒自然回复；推关里是灯火，每秒燃烧，越深越快，只靠击杀回。转旋风的时候每秒另外消耗 whirl.soulPerSec
   const spin = spinning(), lad = RUN.mode === 'ladder';
   if (!RUN.ending && !RUN.next) {
@@ -439,9 +440,9 @@ function logic(dt) {
     if (!lad && player.soul <= 0) { RUN.result = 'lampout'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('灯火燃尽 · 平安返回', COL.emberHi); }
   }
   RUN.t += dt;
-  if (!RUN.ending && !RUN.next && RUN.descent) RUN.descent.minHp = Math.min(RUN.descent.minHp, player.armor / P.armor);
+  if (!RUN.ending && !RUN.next && RUN.descent) RUN.descent.minHp = Math.min(RUN.descent.minHp, player.life / P.life);
   // 紧急撤回：最深层附近护甲一旦低于 returnHpNow%，立刻平安返回，不等打完 Boss
-  if (!lad && !RUN.ending && !RUN.next && RUN.base >= RUN.descent.prevMax - 1 && player.armor > 0 && player.armor / P.armor * 100 < SOUL.returnHpNow) { RUN.result = 'emergency'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('紧急撤回', COL.emberHi); }
+  if (!lad && !RUN.ending && !RUN.next && RUN.base >= RUN.descent.prevMax - 1 && player.life > 0 && player.life / P.life * 100 < SOUL.returnHpNow) { RUN.result = 'emergency'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('紧急撤回', COL.emberHi); }
   // 光环类独特规则：每秒一次
   if ((P.flag.blindAura || P.flag.shockAura) && (RUN.auraT = (RUN.auraT || 0) - dt) <= 0) {
     RUN.auraT = RL.aura.every;

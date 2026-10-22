@@ -35,7 +35,7 @@ function ladderRecord(N, jump) {
   const equip = ['wl', 'wr', 'shield', 'core', 'engine', 'hub'].filter(s => S.equip[s]).map(s => { const it = S.equip[s]; return { slot: s, b: it.b, q: it.q, rar: it.rar, u: it.u || null, affs: it.affs.map(x => [x.k, x.t]) }; });
   const keys = S.tree.filter(id => TREE.nodes[id] && TREE.nodes[id].kind === 'k');
   const rec = { v: 1, data: DATA_HASH, lvl: N, time: Math.round(RUN.t * 10) / 10, date: new Date().toISOString(), jump,
-    build: { equip, keys, dps: Math.round(STATS.dps), armor: Math.round(STATS.armor), deflect: Math.round(STATS.deflect), elem: mainElem() } };
+    build: { equip, keys, dps: Math.round(STATS.dps), armor: Math.round(STATS.armor), life: Math.round(STATS.life), shield: Math.round(STATS.shield), elem: mainElem() } };
   S.ladder.records.unshift(rec);
   if (S.ladder.records.length > LD.records.max) S.ladder.records.length = LD.records.max;
   return rec;

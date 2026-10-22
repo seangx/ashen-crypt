@@ -39,7 +39,7 @@ async function run(build, IL) {
     for (const k in S.equip) S.equip[k] = null; S.stash = []; S.mods = []; S.tree = [];
     const spinDps = n => n.weapons.reduce((s, w) => s + (w ? w.dps * (w.spinMax || 1) : 0), 0);
     // 有效生命：护甲 + 灵障，旋转满层减伤也算进去
-    const ehpOf = n => { const w = n.weapons.find(x => x && x.whirl); const dr = 1 - (1 - (w ? Math.min(WH.drCap, WH.drPerStack * w.stackMax) / 100 : 0)) * (1 - (n.weapons.some(x => x && x.meleeGuard) ? A.DATA.mechanics.defense.meleeGuardLess : 0)); return (n.armor + n.deflect) / (1 - Math.min(0.6, dr)); } // 减伤合计在分数里最多算 60%;
+    const ehpOf = n => { const w = n.weapons.find(x => x && x.whirl); const dr = 1 - (1 - (w ? Math.min(WH.drCap, WH.drPerStack * w.stackMax) / 100 : 0)) * (1 - (n.weapons.some(x => x && x.meleeGuard) ? A.DATA.mechanics.defense.meleeGuardLess : 0)); return A.defEhp(n, A.S.depth, Math.min(0.6, dr)); } // 有效生命：(生命 + 护盾 + 护盾回复×5) ÷ (1 − 护甲减伤 − 流派减伤) // 减伤合计在分数里最多算 60%;
     const ev = eq => { const n = A.computeStats(eq); return spinDps(n) * ehpOf(n); };
     const mid = (a, t) => { const v = a.tiers[t][0]; return a.pair ? [Math.round((v[0] + v[1]) / 2), Math.round((v[2] + v[3]) / 2)] : v.length === 1 ? v[0] : Math.round((v[0] + v[1]) / 2); };
     const topT = (a, it) => { let top = 0; a.tiers.forEach((t, i) => { if (it.ilvl >= t[2]) top = i; }); return Math.min(A.craftTop(a), top); };

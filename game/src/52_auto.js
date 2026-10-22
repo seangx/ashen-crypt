@@ -49,7 +49,7 @@ const MELEE_FORMS = ['orbit', 'ram', 'reflect'];
 // 环绕武器要有旋身符文或旋风之心才按近战走，否则照常风筝；撞城、荆棘类一直近战
 const meleeW = () => STATS.weapons.find(w => w && MELEE_FORMS.includes(w.form) && (w.form !== 'orbit' || w.whirl || STATS.flag.whirlHeart));
 function meleeTarget(W) {
-  const K = AU.melee, f = player.armor / STATS.armor;
+  const K = AU.melee, f = player.life / STATS.life;
   if (f < K.retreat) AUTO.retreat = true; else if (f >= K.back) AUTO.retreat = false;
   const dim = RUN && RUN.mode !== 'ladder' && player.soul < STATS.soulMax * K.lightRetreat && RUN.boss && !RUN.boss.dead; // 灯火快灭还在打 Boss：别贴脸
   if (AUTO.retreat || dim) { AUTO.pass = null; return null; }
@@ -78,7 +78,7 @@ function autoStep(dt) {
   const t = autoTarget();
   const K = AU.steer;
   // 近战流派不因为怪靠近就冲刺躲开，只在护甲低、后撤时冲
-  if ((!MW && t.near < K.dashNear) || (player.armor < STATS.armor * K.dashLowArmor && t.near < K.dashLowNear)) tryDash(t, true);
+  if ((!MW && t.near < K.dashNear) || (player.life < STATS.life * K.dashLowArmor && t.near < K.dashLowNear)) tryDash(t, true);
   return t;
 }
 // 自动循环：在营地停留 camp.idleStay 秒后出发

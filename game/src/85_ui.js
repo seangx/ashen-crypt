@@ -108,7 +108,7 @@ function baseLines(it) {
   } else {
     const p = [];
     if (b.armor) p.push(`护甲 +${Math.round(qv(b.armor, q))}`);
-    if (b.deflect) p.push(`灵障 +${Math.round(qv(b.deflect, q))}`);
+    if (b.deflect) p.push(`护盾 +${Math.round(qv(b.deflect, q))}`);
     if (b.dodge) p.push(`闪避 +${Math.round(qv(b.dodge, q))}`);
     if (b.res) p.push(`${ELEM_N[b.el]}抗性 +${qv(b.res, q)}%`);
     for (const k of ['mass', 'energy', 'time']) if (b[k]) p.push(`${ATTR_N[k]} +${qv(b[k], q)}`);
@@ -125,7 +125,7 @@ function compareLines(it) {
   const out = [];
   const d = (a, b, n) => { const p = a ? (b / a - 1) * 100 : b > 0 ? 100 : 0; if (Math.abs(b - a) < 0.5) return null; return { t: `${n} ${fmt(a)} → ${fmt(b)}（${p >= 0 ? '+' : ''}${p.toFixed(0)}%）`, c: b >= a ? COL.good : COL.bad }; };
   out.push(d(base.dps, next.dps, `装备到${SLOTS.find(s => s.id === slot).n}后秒伤`) || { t: `装备到${SLOTS.find(s => s.id === slot).n}：秒伤不变`, c: COL.dim });
-  for (const [k, n] of [['armor', '护甲'], ['deflect', '灵障']]) { const l = d(base[k], next[k], n); if (l) out.push(l); }
+  for (const [k, n] of [['armor', '护甲'], ['deflect', '护盾']]) { const l = d(base[k], next[k], n); if (l) out.push(l); }
   return out;
 }
 function modTip(m, host) {
@@ -173,8 +173,8 @@ class UI extends Phaser.Scene {
       const z = this.add.zone(6, 6, 52, 58).setOrigin(0).setInteractive(); c.add(z); z.on('pointerover', () => showTip(tip())); z.on('pointerout', hideTip);
       c.g = g; c.key = ''; return c;
     };
-    this.hpOrb = orb(1, 'orb_hp', () => [{ t: '护甲', c: '#ff8a7a' }, { t: '护甲就是生命，降到 0 任务失败。', s: 8 }, { t: '灵障（球边的青色）先吸收伤害，一段时间不受伤后回复；瘟疫伤害会无视灵障。', s: 8, c: COL.cyan }, { t: '球上方的点是冲刺槽：空格或右键冲刺，冲刺时无敌。', s: 8, c: COL.dim }, ...(MECH.leechHitCap != null || MECH.leechCapPct != null ? [{ t: `命中回护甲有上限：${MECH.leechHitCap != null ? `每次挥砍最多算 ${MECH.leechHitCap} 个敌人` : ''}${MECH.leechHitCap != null && MECH.leechCapPct != null ? '，' : ''}${MECH.leechCapPct != null ? `每秒最多回 ${fmt(STATS.armor * MECH.leechCapPct / 100)}（护甲上限的 ${MECH.leechCapPct}%）` : ''}${player.leechCapped > 0 ? '。现在已经封顶' : ''}`, s: 8, c: player.leechCapped > 0 ? COL.emberHi : COL.dim }] : [])]);
-    this.hpT = T(this, 32, 27, '', { align: 'center', parent: this.hpOrb }); this.defT = T(this, 32, 40, '', { size: 8, color: COL.cyan, align: 'center', parent: this.hpOrb });
+    this.hpOrb = orb(1, 'orb_hp', () => [{ t: `生命 ${Math.ceil(player.life)} / ${fmt(STATS.life)}`, c: '#ff8a7a' }, { t: '生命归零就阵亡。推关和天梯里不会自己回，只靠命中回生命（吸血）和打掉守关 Boss，回营地回满。', s: 8 }, { t: `护盾（球边的白蓝色）${Math.ceil(player.shield)} / ${fmt(STATS.shield)}，每秒回复 ${r1(STATS.shieldRegen)}`, s: 8, c: '#bfe0ff' }, { t: '护盾先挡伤害，挨打时也照常回复。', s: 8, c: COL.dim }, { t: `护甲 ${fmt(STATS.armor)}：本层普通怪一下（约 ${fmt(typicalHit(RUN ? RUN.L : S.depth))}）减伤 ${Math.round(armorDr(STATS.armor, typicalHit(RUN ? RUN.L : S.depth)) * 100)}%`, s: 8, c: COL.text }, { t: '护甲对小伤害减得多，对重击减得少。', s: 8, c: COL.dim }, { t: '球上方的点是冲刺槽：空格或右键冲刺，冲刺时无敌。', s: 8, c: COL.dim }, ...(MECH.leechHitCap != null || MECH.leechCapPct != null ? [{ t: `命中回护甲有上限：${MECH.leechHitCap != null ? `每次挥砍最多算 ${MECH.leechHitCap} 个敌人` : ''}${MECH.leechHitCap != null && MECH.leechCapPct != null ? '，' : ''}${MECH.leechCapPct != null ? `每秒最多回 ${fmt(STATS.armor * MECH.leechCapPct / 100)}（护甲上限的 ${MECH.leechCapPct}%）` : ''}${player.leechCapped > 0 ? '。现在已经封顶' : ''}`, s: 8, c: player.leechCapped > 0 ? COL.emberHi : COL.dim }] : [])]);
+    this.hpT = T(this, 32, 27, '', { align: 'center', parent: this.hpOrb }); this.defT = T(this, 32, 40, '', { size: 8, color: '#bfe0ff', align: 'center', parent: this.hpOrb });
     this.soulOrb = orb(W - 65, 'orb_soul', () => [{ t: `灯火 ${Math.round(player.soul)} / ${STATS.soulMax}`, c: '#b9a2ff' }, { t: `推关时每秒燃烧 ${SOUL.burn} + 层数 × ${SOUL.burnPerFloor}，击杀回（普通 ${SOUL.onKill.normal}、精英 ${SOUL.onKill.elite}、Boss ${SOUL.onKill.boss}，×${Math.round(STATS.soulGainMul * 100) / 100}）；烧完平安返回，阵亡则捡到的东西每件 ${SOUL.deathKeep}% 保住。`, s: 8 }, { t: `天梯里不燃烧，每秒回复 ${Math.round(STATS.soulRegen * 10) / 10}。`, s: 8, c: COL.dim }, { t: `旋风斩转的时候每秒消耗 ${Math.round(WH.soulPerSec * (1 - STATS.soulLess) * 100) / 100}，每砍中一个敌人回 ${WH.soulPerHit}（一次最多 ${WH.soulHitCap} 个）。`, s: 8, c: '#9a7cff' }]);
     this.soulT = T(this, 32, 27, '', { color: '#e6dcff', align: 'center', parent: this.soulOrb }); this.burnT = T(this, 32, 40, '', { size: 8, color: '#b9a2ff', align: 'center', parent: this.soulOrb });
     // 血球上方：旋转层数、冲刺槽
@@ -230,12 +230,12 @@ class UI extends Phaser.Scene {
   }
   updateHud() {
     const P = STATS;
-    const hf = clamp(player.armor / P.armor, 0, 1), df = P.deflect > 0 ? clamp(player.deflect / P.deflect, 0, 1) : 0;
-    this.drawOrb(this.hpOrb, hf, player.hurtT > 0 ? 0xffffff : 0xb52a2a, 0xff7a6a, 0x6a1418, df, 0x57e0d0);
+    const hf = clamp(player.life / P.life, 0, 1), df = P.shield > 0 ? clamp(player.shield / P.shield, 0, 1) : 0;
+    this.drawOrb(this.hpOrb, hf, player.hurtT > 0 ? 0xffffff : 0xb52a2a, 0xff7a6a, 0x6a1418, df, 0xbfe0ff); // 红色生命，球边白蓝色护盾
     const sf = clamp(player.soul / P.soulMax, 0, 1), lad = RUN && RUN.mode === 'ladder', blink = RUN && !lad && sf < SOUL.lowWarn && (G.time * 4 | 0) % 2; // 推关里灯火低于 lowWarn 时闪
     this.drawOrb(this.soulOrb, sf, player.soul <= 0 ? 0x5a4a7a : blink ? 0xd8a040 : 0x7a55d0, blink ? 0xffe08a : 0xc9b0ff, 0x3a2470, 0, 0);
-    const ht = String(Math.ceil(player.armor)); if (this.hpT.text !== ht) this.hpT.setText(ht);
-    const dt = P.deflect ? '+' + Math.ceil(player.deflect) : ''; if (this.defT.text !== dt) this.defT.setText(dt);
+    const ht = String(Math.ceil(player.life)); if (this.hpT.text !== ht) this.hpT.setText(ht);
+    const dt = P.shield ? '+' + Math.ceil(player.shield) : ''; if (this.defT.text !== dt) this.defT.setText(dt);
     const st = Math.round(sf * 100) + '%'; if (this.soulT.text !== st) this.soulT.setText(st);
     const bt = !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1(SOUL.burn + RUN.base * SOUL.burnPerFloor)}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
     const g = this.dashG; g.clear();
@@ -389,7 +389,7 @@ class UI extends Phaser.Scene {
     { const cv = dollCanvas(S.equip, 0); if (this.textures.exists('doll_ui')) this.textures.remove('doll_ui'); this.textures.addCanvas('doll_ui', cv); // 中间格：当前样子
       rect(this, 44, 46, 24, 24, '#120c18', 1, c); const im = img(this, 44 + 12 - DOLL_W / 2, 46 + 24 - DOLL_H, 'doll_ui', c); im.setCrop(DOLL_W / 2 - 12, 0, 24, DOLL_H); }
     const P = STATS;
-    const rows = [['预计秒伤', fmt(P.dps), COL.emberHi], ['护甲', fmt(P.armor), '#ff8a7a'], ['灵障', fmt(P.deflect), COL.cyan], ['闪避', P.dodge + '%'], ['冲刺槽', String(P.dashMax)],
+    const rows = [['预计秒伤', fmt(P.dps), COL.emberHi], ['生命', fmt(P.life), '#ff8a7a'], ['护盾', `${fmt(P.shield)}（每秒 +${r1(P.shieldRegen)}）`, '#bfe0ff'], ['护甲', `${fmt(P.armor)}（减伤 ${Math.round(armorDr(P.armor, typicalHit(S.depth)) * 100)}%）`], ['闪避', P.dodge + '%'], ['冲刺槽', String(P.dashMax)],
       ['属性', `${P.mass} / ${P.energy} / ${P.time}`]];
     const az = rect(this, 8, 152, 124, 10, '#000', 0, c).setInteractive();
     az.on('pointerover', () => showTip([{ t: `${ATTR_N.mass} ${P.mass} / ${ATTR_N.energy} ${P.energy} / ${ATTR_N.time} ${P.time}`, c: COL.emberHi }, { t: `${ATTR_N.mass}每点：护甲提高 2%，物理伤害总增 1%，加速降低 1%。`, s: 8 }, { t: `${ATTR_N.energy}每点：灵障提高 2%，冲刺回复提高 1%，元素伤害总增 1%。`, s: 8 }, { t: `${ATTR_N.time}每点：攻击和移动快 1%。`, s: 8 }])); az.on('pointerout', hideTip);
@@ -742,7 +742,7 @@ class UI extends Phaser.Scene {
       T(this, x, y + 9, `${r.date.slice(5, 10)} ${ELEM_N[r.build.elem]} ${wp ? nm(wp) : ''}`, { size: 8, color: COL.faint, parent: c });
       const z = this.add.zone(x - 2, y - 1, 94, 18).setOrigin(0).setInteractive(); c.add(z);
       z.on('pointerover', () => showTip([{ t: `天梯 ${r.lvl} 层 · 用时 ${mmss(r.time)} · 跳 ${r.jump} 层`, c: COL.emberHi }, { t: new Date(r.date).toLocaleString('zh-CN'), s: 8, c: COL.dim },
-        { t: `秒伤 ${fmt(r.build.dps)} · 护甲 ${fmt(r.build.armor)} · 灵障 ${fmt(r.build.deflect)} · ${ELEM_N[r.build.elem]}`, s: 8 },
+        { t: `秒伤 ${fmt(r.build.dps)} · 生命 ${fmt(r.build.life || 0)} · 护盾 ${fmt(r.build.shield ?? r.build.deflect ?? 0)} · 护甲 ${fmt(r.build.armor)} · ${ELEM_N[r.build.elem]}`, s: 8 },
         ...r.build.equip.map(q => ({ t: `${SLOTS.find(s => s.id === q.slot).n}：${nm(q)} · ${RAR[q.rar].n} · ${QN[q.q]}`, s: 8, c: RCOL[q.rar] })),
         { t: r.build.keys.length ? '核心天赋：' + r.build.keys.map(k => TREE.nodes[k].n).join('、') : '没有核心天赋', s: 8, c: '#ff9a3c' }]));
       z.on('pointerout', hideTip);

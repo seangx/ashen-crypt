@@ -65,7 +65,7 @@ if (seedsArg) {
     if (A.G.ui.closeWin) A.G.ui.closeWin();
     const WH = A.DATA.mechanics.whirl, B = opt.build;
     const spinDps = n => n.weapons.reduce((s, w) => s + (w ? w.dps * (w.spinMax || 1) : 0), 0); // 旋转满层的秒伤
-    const ehpOf = n => { const w = n.weapons.find(x => x && x.whirl); const dr = 1 - (1 - (w ? Math.min(WH.drCap, WH.drPerStack * w.stackMax) / 100 : 0)) * (1 - (n.weapons.some(x => x && x.meleeGuard) ? A.DATA.mechanics.defense.meleeGuardLess : 0)); return (n.armor + n.deflect) / (1 - Math.min(0.6, dr)); } // 减伤合计在分数里最多算 60%; // 旋转满层减伤算进有效生命
+    const ehpOf = n => { const w = n.weapons.find(x => x && x.whirl); const dr = 1 - (1 - (w ? Math.min(WH.drCap, WH.drPerStack * w.stackMax) / 100 : 0)) * (1 - (n.weapons.some(x => x && x.meleeGuard) ? A.DATA.mechanics.defense.meleeGuardLess : 0)); return A.defEhp(n, A.S.depth, Math.min(0.6, dr)); } // 有效生命：(生命 + 护盾 + 护盾回复×5) ÷ (1 − 护甲减伤 − 流派减伤) // 减伤合计在分数里最多算 60%; // 旋转满层减伤算进有效生命
     const score = () => spinDps(A.STATS) + ehpOf(A.STATS);
     const evS = eq => { const n = A.computeStats(eq); return spinDps(n) + ehpOf(n); };
     // 比较武器时把身上那把的符文挪过去再算；换上以后旧武器的符文退回符文袋，后面重新插
@@ -108,7 +108,7 @@ if (seedsArg) {
     for (let r = 0; opt.minutes ? simT < opt.minutes * 60 : r < opt.runs; r++) {
       while (!A.RUN) { A.logic(dt); simT += dt; } // 结算倒计时
       const L = A.RUN.L, depth = S.depth, mode = A.RUN.mode; let t = 0, minArmor = 1;
-      while (A.RUN && t < opt.maxT) { A.logic(dt); t += dt; simT += dt; if (A.RUN && !A.RUN.ending) minArmor = Math.min(minArmor, A.player.armor / A.STATS.armor); }
+      while (A.RUN && t < opt.maxT) { A.logic(dt); t += dt; simT += dt; if (A.RUN && !A.RUN.ending) minArmor = Math.min(minArmor, A.player.life / A.STATS.life); }
       if (A.RUN) { A.RUN.result = 'timeout'; A.RUN.ending = 0.01; A.logic(dt); }
       const res = A.AUTO.last ? A.AUTO.last.result : '?';
       const soulE = t > 0 ? A.player.soulEmpty : 0; // 这局魂火见底的秒数

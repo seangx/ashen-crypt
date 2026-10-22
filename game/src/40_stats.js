@@ -41,13 +41,14 @@ function computeStats(eq = S.equip) {
   P.mass = Math.round(((base.mass || 0) + (A.mass || 0) + (TA.mass || 0)) * Math.max(0, 1 + ((F.massInc || 0) + (TA.massInc || 0)) / 100));
   P.energy = Math.round(((base.energy || 0) + (A.energy || 0) + (TA.energy || 0)) * Math.max(0, 1 + ((F.energyInc || 0) + (TA.energyInc || 0)) / 100));
   P.time = Math.round(((base.time || 0) + (A.time || 0) + (TA.time || 0)) * Math.max(0, 1 + ((F.timeInc || 0) + (TA.timeInc || 0)) / 100));
-  // 防御：护甲就是生命
-  P.armor = Math.max(1, Math.round((PLAYER.armor + (base.armor || 0) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100) * (TM.armor ?? 1)));
-  P.deflect = Math.round(((base.deflect || 0) + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1));
-  P.deflRate = PLAYER.deflectRate * (TM.deflRate ?? 1);
+  // 防御三条（规格 design/spec-defense-v2.md）：护甲只管减伤；护盾是第一道血条，每秒回复；生命是第二道，归零阵亡，只靠吸血回
+  P.armor = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100)));
+  // 原来的灵障并进护盾；天赋/独特里“护甲总降”的代价改成护盾总降
+  P.shield = Math.round((PLAYER.shield + (base.deflect || 0) + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
+  P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
+  P.life = Math.max(1, Math.round((PLAYER.life + PLAYER.lifePerLevel * ((S.level || 1) - 1) + (A.life || 0) + (TA.life || 0)) * (1 + ((A.lifeInc || 0) + (TA.lifeInc || 0)) / 100)));
   P.dodgeCap = MECH.dodgeCap + (TS.flag.dodgeCap || 0);
   P.dodge = Math.min(P.dodgeCap, Math.round((base.dodge || 0) + (A.dodge || 0) + (TA.dodge || 0)));
-  P.armorRegen = (F.armorRegen || 0) / 100;
   P.maxRes = PLAYER.maxRes; P.maxResE = {}; P.res = {};
   for (const e of ELEM) {
     P.maxResE[e] = PLAYER.maxRes + (A['maxRes:' + e] || 0);
@@ -193,7 +194,7 @@ let STATS = null;
 // 任务中换装 / 点天赋立即生效：当前护甲、灵障、冲刺槽不超过新的上限
 function refreshStats() {
   STATS = computeStats();
-  if (typeof RUN !== 'undefined' && RUN) { player.armor = Math.min(player.armor, STATS.armor); player.deflect = Math.min(player.deflect, STATS.deflect); player.dash = Math.min(player.dash, STATS.dashMax); player.soul = Math.min(player.soul, STATS.soulMax); }
+  if (typeof RUN !== 'undefined' && RUN) { player.life = Math.min(player.life, STATS.life); player.shield = Math.min(player.shield, STATS.shield); player.dash = Math.min(player.dash, STATS.dashMax); player.soul = Math.min(player.soul, STATS.soulMax); }
 }
 // 换装比较用：秒伤 + 有效生命的粗略估值
 function itemValue(it) {
@@ -201,5 +202,14 @@ function itemValue(it) {
   if (!slot) return 0;
   const n = computeStats({ ...S.equip, [slot]: it });
   const V = DATA.mechanics.itemValue;
-  return n.dps + (n.armor + n.deflect) * V.defense + (n.engine ? n.engine.avg * V.engine : 0);
+  return n.dps + defEhp(n, S.depth) * V.defense + (n.engine ? n.engine.avg * V.engine : 0);
+}
+// 护甲减伤：护甲 ÷ (护甲 + armorK × 这一下的伤害)，有上限
+const armorDr = (A, hit) => A > 0 ? Math.min(MECH.armorCap / 100, A / (A + MECH.armorK * Math.max(1e-9, hit))) : 0;
+// 这一层普通怪一下的平均伤害（怪海按 horde.dmg 缩）
+function typicalHit(L) { const ms = Object.values(MOBS); return ms.reduce((x, m) => x + m.dmg, 0) / ms.length * monDmg(L) * PROG.run.horde.dmg; }
+// 有效生命（换装估值、模拟共用）：(生命 + 护盾 + 护盾每秒回复 × 5) ÷ (1 − 护甲减伤 − 额外减伤)
+function defEhp(n, L, extraDr = 0) {
+  const keep = (1 - armorDr(n.armor, typicalHit(L))) * (1 - extraDr);
+  return (n.life + n.shield + n.shieldRegen * 5) / Math.max(0.05, keep);
 }

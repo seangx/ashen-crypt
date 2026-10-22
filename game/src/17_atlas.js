@@ -25,7 +25,7 @@ const MAP_LIM = MP.affLimit;
 // bad: 让任务变难，同时加物品数量（q）；其余是直接的收益
 const MAP_AFF_T = {
   mobHp: v => `怪物生命总增 ${v}%`, mobDmg: v => `怪物伤害总增 ${v}%`, mobSpd: v => `怪物移动速度提高 ${v}%`, elite: v => `精英怪数量提高 ${v}%`,
-  need: v => `需要多杀 ${v}% 的怪`, bossHp: v => `Boss 生命总增 ${v}%`, mobRes: v => `怪物全部抗性 +${v}%`, noRegen: v => `灵障回复总降 ${v}%`,
+  need: v => `需要多杀 ${v}% 的怪`, bossHp: v => `Boss 生命总增 ${v}%`, mobRes: v => `怪物全部抗性 +${v}%`, noRegen: v => `护盾回复总降 ${v}%`,
   iir: v => `物品稀有度提高 ${v}%`, xp: v => `经验提高 ${v}%`, dice: v => `词条碎片掉落提高 ${v}%`, runes: v => `符文掉落提高 ${v}%`,
 };
 const MAP_AFF = MP.affixes.map(a => ({ ...a, t: MAP_AFF_T[a.k] }));

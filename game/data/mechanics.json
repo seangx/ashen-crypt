@@ -12,14 +12,192 @@
   "timeFlow": 0.01
  },
  "defense": {
-  "_说明": "deflectDelay 受伤后灵障停止回复的秒数; dodgeCap 闪避上限; hurtInvuln 受伤后的无敌时间; meleeGuardLess 近战命中后承伤总降（蛮力符文）; meleeGuardTime 持续秒数; leechHitCap 命中回护甲：同一次挥砍（同一把武器同一帧）最多按几个敌人算，null 不限; leechCapPct 命中回护甲每秒最多回护甲上限的百分之几（令牌桶），null 不限。两者对所有来源（符文、装备词条、旋身）都生效",
+  "_说明": "dodgeCap 闪避上限; hurtInvuln 受伤后的无敌时间; meleeGuardLess 近战命中后承伤总降（蛮力符文）; meleeGuardTime 持续秒数; leechHitCap 命中回生命：同一次挥砍（同一把武器同一帧）最多按几个敌人算，null 不限; leechCapPct 命中回生命每秒最多回生命上限的百分之几（令牌桶），null 不限。两者对所有来源（符文、装备词条、旋身）都生效; armorK / armorCap 护甲减伤 = 护甲 ÷ (护甲 + armorK × 这一下的伤害)，最多 armorCap%; bossKillLife 打掉守关 Boss 回生命上限的百分之几; affixes 防御词条族（格式同 whirl.affixes）",
   "leechHitCap": 3,
   "leechCapPct": 4,
-  "deflectDelay": 2,
   "dodgeCap": 75,
   "hurtInvuln": 0.25,
   "meleeGuardLess": 0.45,
-  "meleeGuardTime": 1
+  "meleeGuardTime": 1,
+  "armorK": 5,
+  "armorCap": 85,
+  "bossKillLife": 15,
+  "affixes": {
+   "FlatLife": {
+    "text": "+# 生命",
+    "stat": "life",
+    "type": "P",
+    "on": [
+     "core",
+     "engine",
+     "shield"
+    ],
+    "grp": "FlatLife",
+    "tiers": [
+     [
+      [
+       4,
+       10
+      ],
+      1000,
+      1,
+      15
+     ],
+     [
+      [
+       11,
+       25
+      ],
+      800,
+      1,
+      31
+     ],
+     [
+      [
+       26,
+       50
+      ],
+      400,
+      14,
+      999
+     ],
+     [
+      [
+       51,
+       80
+      ],
+      200,
+      36,
+      999
+     ],
+     [
+      [
+       81,
+       120
+      ],
+      100,
+      68,
+      999
+     ]
+    ]
+   },
+   "IncreasedLife": {
+    "text": "生命提高 #%",
+    "stat": "lifeInc",
+    "type": "P",
+    "on": [
+     "core",
+     "hub",
+     "shield"
+    ],
+    "grp": "IncreasedLife",
+    "tiers": [
+     [
+      [
+       5,
+       10
+      ],
+      1000,
+      1,
+      15
+     ],
+     [
+      [
+       11,
+       20
+      ],
+      800,
+      1,
+      31
+     ],
+     [
+      [
+       21,
+       35
+      ],
+      400,
+      14,
+      999
+     ],
+     [
+      [
+       36,
+       50
+      ],
+      200,
+      36,
+      999
+     ],
+     [
+      [
+       51,
+       70
+      ],
+      100,
+      68,
+      999
+     ]
+    ]
+   },
+   "ShieldRegen": {
+    "text": "护盾每秒回复 #",
+    "stat": "shieldRegen",
+    "type": "S",
+    "on": [
+     "core",
+     "engine",
+     "hub"
+    ],
+    "grp": "ShieldRegen",
+    "tiers": [
+     [
+      [
+       1,
+       3
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       4,
+       6
+      ],
+      800,
+      10,
+      999
+     ],
+     [
+      [
+       7,
+       10
+      ],
+      400,
+      25,
+      999
+     ],
+     [
+      [
+       11,
+       16
+      ],
+      200,
+      45,
+      999
+     ],
+     [
+      [
+       17,
+       24
+      ],
+      100,
+      70,
+      999
+     ]
+    ]
+   }
+  }
  },
  "offense": {
   "_说明": "multicritDecay 暴击率超过 100% 时每多一重的几率衰减; luckCap 幸运上限; dashRegen 冲刺槽每秒基础回复; unit 原作距离单位换算成像素; projSpeed / projSpeedFast 投射物速度; knockback / pull 击退 / 拉近的力度; contTicks 持续伤害武器每秒结算次数; auraTick 力场武器结算间隔; mineMax 同时存在的陷阱数; mineArm 陷阱布置后多久生效; mineLife 陷阱存在秒数; ramCd 撞击同一个敌人的间隔; ramDashMul 冲刺中撞击的倍率; ramMinMul 慢速撞击最低倍率; chainRange 连锁 / 弹射找下一个目标的距离; shredTime 降抗持续秒数",
@@ -196,7 +374,7 @@
     ]
    },
    "GearArmorOnHit": {
-    "text": "命中时回复 # 点护甲",
+    "text": "命中时回复 # 点生命",
     "stat": "armorOnHit",
     "type": "S",
     "on": [

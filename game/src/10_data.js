@@ -87,7 +87,7 @@ const AFF_TEXT = {
   MaxKineticResistance: [v => `物理抗性上限 +${v}%`, 'maxRes', 'kin'], MaxExplosiveResistance: [v => `火焰抗性上限 +${v}%`, 'maxRes', 'exp'], MaxPlasmaResistance: [v => `圣光抗性上限 +${v}%`, 'maxRes', 'pla'],
   MaxElectricResistance: [v => `闪电抗性上限 +${v}%`, 'maxRes', 'ele'], MaxNuclearResistance: [v => `瘟疫抗性上限 +${v}%`, 'maxRes', 'nuc'],
   FlatArmor: [v => `护甲 +${v}`, 'armor'], IncreasedArmor: [v => `护甲提高 ${v}%`, 'armorInc'],
-  FlatDeflectorShield: [v => `灵障 +${v}`, 'deflect'], IncreasedDeflectorShield: [v => `灵障提高 ${v}%`, 'deflectInc'], FlatDodge: [v => `闪避 +${v}`, 'dodge'],
+  FlatDeflectorShield: [v => `护盾 +${v}`, 'deflect'], IncreasedDeflectorShield: [v => `护盾提高 ${v}%`, 'deflectInc'], FlatDodge: [v => `闪避 +${v}`, 'dodge'],
   DashDamage: [v => `遁靴伤害提高 ${v}%`, 'dashDmg'], DashRecharge: [v => `冲刺回复速度提高 ${v}%`, 'dashRegen'], IncreasedBaseVelocity: [v => `基础移动速度提高 ${v}%`, 'velocity'],
   DashSlot: [v => v[0] === v[1] ? `冲刺槽 +${v[0]}` : `冲刺槽 +${v}`, 'dashMax'],
   FlatMass: [v => `${ATTR_N.mass} +${v}`, 'mass'], FlatEnergy: [v => `${ATTR_N.energy} +${v}`, 'energy'], FlatTime: [v => `${ATTR_N.time} +${v}`, 'time'],
@@ -100,11 +100,11 @@ const CHIP_TEXT = {
   IncreasedCritDamage: [v => `暴击伤害 +${v}%`, 'critDmg', 'a'], ChipIncreasedCritDamage: [v => `暴击伤害 +${v}%`, 'critDmg', 'a'],
   IncreasedDamageOverTime: [v => `持续伤害提高 ${v}%`, 'dotInc', 'a'], ChipIncreasedDamageOverTime: [v => `持续伤害提高 ${v}%`, 'dotInc', 'a'],
   ChipFlatTime: [v => `${ATTR_N.time} +${v}`, 'time', 'a'], ChipFlatMass: [v => `${ATTR_N.mass} +${v}`, 'mass', 'a'], ChipFlatEnergy: [v => `${ATTR_N.energy} +${v}`, 'energy', 'a'],
-  ChipIncreasedArmor: [v => `护甲提高 ${v}%`, 'armorInc', 'a'], ChipIncreasedDeflectorShield: [v => `灵障提高 ${v}%`, 'deflectInc', 'a'], ChipFlatDodge: [v => `闪避 +${v}`, 'dodge', 'a'],
+  ChipIncreasedArmor: [v => `护甲提高 ${v}%`, 'armorInc', 'a'], ChipIncreasedDeflectorShield: [v => `护盾提高 ${v}%`, 'deflectInc', 'a'], ChipFlatDodge: [v => `闪避 +${v}`, 'dodge', 'a'],
   ChipIncreasedAttackSpeed: [v => `攻击速度提高 ${v}%`, 'aspd', 'a'], ChipThermalResistance: [v => `元素抗性 +${v}%`, 'res:thermal', 'a'],
   ChipAllModsLevel: [v => `所有符文等级 +${v}`, 'modLvl', 'a'], ChipMoreThermalDamage: [v => `元素伤害总增 ${v}%`, 'dmg:thermal', 'm'],
   ChipIncreasedMass: [v => `${ATTR_N.mass}提高 ${v}%`, 'massInc', 'a'], ChipIncreasedTime: [v => `${ATTR_N.time}提高 ${v}%`, 'timeInc', 'a'], ChipIncreasedEnergy: [v => `${ATTR_N.energy}提高 ${v}%`, 'energyInc', 'a'],
-  ChipDashSlot: [v => `冲刺槽 +${v}`, 'dashMax', 'a'], ChipMoreArmor: [v => `护甲总增 ${v}%`, 'armor', 'm'], ChipMoreDeflectorShield: [v => `灵障总增 ${v}%`, 'deflect', 'm'],
+  ChipDashSlot: [v => `冲刺槽 +${v}`, 'dashMax', 'a'], ChipMoreArmor: [v => `护甲总增 ${v}%`, 'armor', 'm'], ChipMoreDeflectorShield: [v => `护盾总增 ${v}%`, 'deflect', 'm'],
   ChipDoubleDamage: [v => `${v}% 几率造成双倍伤害`, 'double', 'a'], ChipMoreDamageOverTime: [v => `持续伤害总增 ${v}%`, 'dot', 'm'],
   ChipRange: [v => `射程提高 ${v}%`, 'rangeInc', 'a'], ChipAreaOfEffect: [v => `范围提高 ${v}%`, 'aoeInc', 'a'], ChipAreaDamage: [v => `范围伤害提高 ${v}%`, 'areaInc', 'a'],
   ChipProjectileSpeed: [v => `投射物速度提高 ${v}%`, 'projSpd', 'a'],
@@ -123,7 +123,7 @@ for (const k in AFF_TEXT) {
   AFF.push({ k, f, stat, el, local, grp: src.grp, type: src.type, on: src.on, pair: stat === 'flat', tiers: src.tiers, tk: CHIP_TEXT[k] && CHIP_TEXT[k][1], tm: CHIP_TEXT[k] && CHIP_TEXT[k][2] });
 }
 // 流派自带的词条族（data/mechanics.json 的 whirl.affixes）：text 里的 # 填数值
-for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.mechanics.whirl.affixes })) AFF.push({ k, f: v => a.text.replace('#', v), stat: a.stat, el: null, local: !!a.local, grp: a.grp, type: a.type, on: a.on, tag: a.tag, pair: false, tiers: a.tiers });
+for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.mechanics.whirl.affixes, ...DATA.mechanics.defense.affixes })) AFF.push({ k, f: v => a.text.replace('#', v), stat: a.stat, el: null, local: !!a.local, grp: a.grp, type: a.type, on: a.on, tag: a.tag, pair: false, tiers: a.tiers });
 const AFF_BY = Object.fromEntries(AFF.map(a => [a.k, a]));
 // 原作的数值掷骰：value = lo + round((r-1)/254 * (hi-lo))，r 为 1..255 的字节
 const rollRange = (lo, hi) => lo + Math.round((ri(1, 255) - 1) / 254 * (hi - lo));
@@ -177,21 +177,21 @@ const MOD_D = {
   Agony: f => `持续伤害总增 ${f.dotMore}%`,
   Rigor: f => `暴击率提高 ${f.critInc}%`,
   Lethal: f => `暴击伤害提高 ${f.critDmg}%`,
-  ArmorOnHit: f => `命中时回复 ${f.armorOnHit} 点护甲`,
+  ArmorOnHit: f => `命中时回复 ${f.armorOnHit} 点生命`,
   Melee: f => `近战伤害提高 ${f.meleeInc}%，近战命中后承受伤害总降 ${Math.round(MECH.meleeGuardLess * 100)}%`,
-  Whirl: f => `回旋骨刃连续砍中时每秒 +${WH.gainPerSec} 层旋势（基础上限 ${WH.maxStacks} 层，${WH.decay} 秒没砍中清零）。有旋势时角色原地转起来，边转边走（移速 ×${WH.spinMoveMul}）：每层伤害总增 ${Math.round((f.spinMore - 1) * 1000) / 10}%（乘算），判定半径 +${WH.rngPer}%，承受伤害降低 ${WH.drPerStack}%（最多 ${WH.drCap}%）。转的时候每秒消耗 ${WH.soulPerSec} 灯火，每砍中一个敌人回 ${WH.soulPerHit}（一次最多按 ${WH.soulHitCap} 个算），灯火空了不再涨层。命中后 ${MECH.meleeGuardTime} 秒内承受伤害总降 ${Math.round(MECH.meleeGuardLess * 100)}%${f.armorOnHit ? `，每砍中一个敌人回复 ${Math.round(f.armorOnHit * 10) / 10} 点护甲` : ''}`,
+  Whirl: f => `回旋骨刃连续砍中时每秒 +${WH.gainPerSec} 层旋势（基础上限 ${WH.maxStacks} 层，${WH.decay} 秒没砍中清零）。有旋势时角色原地转起来，边转边走（移速 ×${WH.spinMoveMul}）：每层伤害总增 ${Math.round((f.spinMore - 1) * 1000) / 10}%（乘算），判定半径 +${WH.rngPer}%，承受伤害降低 ${WH.drPerStack}%（最多 ${WH.drCap}%）。转的时候每秒消耗 ${WH.soulPerSec} 灯火，每砍中一个敌人回 ${WH.soulPerHit}（一次最多按 ${WH.soulHitCap} 个算），灯火空了不再涨层。命中后 ${MECH.meleeGuardTime} 秒内承受伤害总降 ${Math.round(MECH.meleeGuardLess * 100)}%${f.armorOnHit ? `，每砍中一个敌人回复 ${Math.round(f.armorOnHit * 10) / 10} 点生命` : ''}`,
   Crush: f => `近战伤害总增 ${Math.round((f.meleeMore - 1) * 100)}%，${Math.round(f.doubleChance * 100)}% 几率造成双倍伤害`,
   Purity: f => `伤害总增 ${Math.round((f.more - 1) * 100)}%，但这把武器的伤害不能附加或转换成其他元素`,
   DeathThreshold: f => `敌人生命低于 ${f.cull}% 时直接击杀`,
   Overcharge: f => `每个冲刺槽使伤害提高 ${Math.round(f.perDashInc * 100)}%`,
   DashOnHit: f => `命中时回复 ${(f.dashOnHit * 100).toFixed(1)}% 冲刺槽`,
   Agility: f => `遁靴伤害总增 ${f.engineMore}%，冲刺槽 +${f.dashMax}`,
-  Aegis: f => `灵障 +${f.deflect}`,
+  Aegis: f => `护盾 +${f.deflect}`,
   Diamond: f => `全部抗性 +${f.resAll}%`,
   Eclipse: f => `圣光抗性 +${f.res.pla}%`,
   Faraday: f => `闪电抗性 +${f.res.ele}%`,
   BlastGuard: f => `火焰抗性 +${f.res.exp}%`,
-  Resilience: f => `每秒回复 ${f.armorRegen}% 最大护甲`,
+  Resilience: f => `护盾每秒回复 +${f.armorRegen}%（占护盾上限）`,
   Recharge: f => `每秒回复 ${Math.round(f.dashPerSec * 100)}% 冲刺槽`,
   Mass: f => `${ATTR_N.mass}提高 ${f.massInc}%`,
   Energy: f => `${ATTR_N.energy}提高 ${f.energyInc}%`,
