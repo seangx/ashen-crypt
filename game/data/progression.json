@@ -40,11 +40,11 @@
   "spawnInterval": 0.8,
   "spawnIntervalPerLevel": 0.02,
   "spawnIntervalMin": 0.25,
-  "horde": { "_说明": "怪海：普通怪数量 ×count（同屏上限、刷怪速度都 ×count），每只的血量 ×hp、伤害 ×dmg；每只给的推进、经验、灯火、掉落几率都 ÷count，所以一层的总量不变。一次在场边刷一群 pack[0]–pack[1] 只，挤在一起。Boss 不受影响", "count": 1, "hp": 1, "dmg": 1, "pack": [1, 1] }
+  "horde": { "_说明": "怪海：普通怪数量 ×count（同屏上限、刷怪速度都 ×count），每只的血量 ×hp、伤害 ×dmg；每只给的推进、经验、灯火、掉落几率都 ÷count，所以一层的总量不变。一次在场边刷一群 pack[0]–pack[1] 只，挤在一起。Boss 不受影响", "count": 4, "hp": 0.3, "dmg": 0.35, "pack": [4, 8] }
  },
  "elite": {
   "_说明": "普通怪变精英的几率和倍率；精英的掉落几率乘 loot.drop.eliteMul",
-  "chance": 0.06,
+  "chance": 0.03,
   "hp": 3.5,
   "dmg": 1.5,
   "spd": 1.1,

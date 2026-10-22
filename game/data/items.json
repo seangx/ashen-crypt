@@ -7,7 +7,7 @@
   "Taser": {"n": "雷符", "ic": "w_stormseal", "form": "proj"},
   "PlutoniumBar": {"n": "瘟疫香炉", "ic": "w_censer", "form": "aura"},
   "Hullbreaker": {"n": "撞城骨锤", "ic": "w_maul", "form": "ram"},
-  "TurbineBlades": {"n": "回旋骨刃", "ic": "w_bladering", "form": "orbit", "req": 1, "rngMul": 0.6},
+  "TurbineBlades": {"n": "回旋骨刃", "ic": "w_bladering", "form": "orbit", "req": 1, "rngMul": 0.8},
   "PlasmaNova": {"n": "圣钟", "ic": "w_bell", "form": "nova"},
   "Railgun": {"n": "穿心弩", "ic": "w_piercer", "form": "proj", "fast": 1},
   "BlastMine": {"n": "火药陷阱", "ic": "w_trap_exp", "form": "mine"},
