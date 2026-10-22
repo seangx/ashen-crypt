@@ -19,6 +19,11 @@ function sprite(rows, outline = '#120c18', mono = null, pal = null) {
   return c;
 }
 const ART = {
+  // 尸犬：贴地的骨狗，侧面；骨弓手：戴灰兜帽的骷髅拉骨弓
+  houndA: ['.........ww.', '........wkrw', '.g.....wwww.', 'gwbwbwbwbww.', '.wbwbwbwbg..', '..bggggggb..', '..w.w...w.w.', '.ww.w..ww.w.'],
+  houndB: ['.........ww.', '........wkrw', '.g.....wwww.', 'gwbwbwbwbww.', '.wbwbwbwbg..', '..bggggggb..', '...w.w.w..w.', '..ww.ww.w.ww'],
+  archerA: ['..SSSSS...', '.SSSSSSSn.', '.SkrwkrS.n', '.SwwgwwS.N', '..wkwkb..N', '...bbb...N', '.b.wbwbwwN', 'w.bwgwb..N', 'w..wbw...n', '...ggg..n.', '...w.b....', '...w.b....', '..ww.bb...'],
+  archerB: ['..SSSSS...', '.SSSSSSSn.', '.SkrwkrS.n', '.SwwgwwS.N', '..wkwkb..N', '...bbb...N', '.b.wbwbwwN', 'w.bwgwb..N', '.w.wbw...n', '...ggg..n.', '..w...b...', '..w...b...', '.ww...bb..'],
   skelA: ['..wwwww..', '.wwwwwwb.', '.wkrwkrb.', '.wwwgwwb.', '..wkwkb..', '...bbb...', '.b.wbw.b.', 'w.bwgwb.w', 'w..wbw..w', '...ggg...', '...w.b...', '...w.b...', '..ww.bb..'],
   skelB: ['..wwwww..', '.wwwwwwb.', '.wkrwkrb.', '.wwwgwwb.', '..wkwkb..', '...bbb...', '.b.wbw.b.', 'w.bwgwb.w', '.w.wbw.w.', '...ggg...', '..w...b..', '..w...b..', '.ww...bb.'],
   armorA: ['..sssss..', '.sssssSS.', '.sSSSSSS.', '.wkrwkrb.', '..wkwkb..', '.sSsssSs.', 'sSsssssSs', 'w.sSsSs.w', 'w..sss..w', '...SSS...', '...w.b...', '...s.S...', '..ss.SS..'],

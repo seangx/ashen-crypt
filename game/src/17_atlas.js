@@ -7,7 +7,7 @@ const ATLAS = DATA.atlas;
 // Boss 的配色（像素图换色）；数值在 data/progression.json 的 bosses
 const BOSS_PAL = { lord: {}, moon: { w: 'v', b: 'V', y: 'l', Y: 'B', P: 'p', p: 'P', g: 'V', r: 'c' }, bog: { w: 'm', b: 'g', y: 'Y', Y: 'N', P: 'h', p: 'N', g: 'h', r: 'y' }, storm: { w: 'l', b: 'B', y: 'y', Y: 'Y', P: 'C', p: 'c', g: 'B', r: 'f' } };
 const BOSSES = PROG.bosses.list.map(b => ({ ...b, pal: BOSS_PAL[b.id] || {} }));
-const MOB_SPR = ['skel', 'armor', 'thief', 'mage', 'boss', ...BOSSES.map(b => 'boss_' + b.id)];
+const MOB_SPR = ['skel', 'armor', 'thief', 'mage', 'hound', 'archer', 'boss', ...BOSSES.map(b => 'boss_' + b.id)];
 const BOSS_BY = Object.fromEntries(BOSSES.map(b => [b.id, b]));
 const bossFor = L => BOSSES[(L - 1) % BOSSES.length]; // 按层数轮换
 const BOSS_PAT_N = { ring: '向四周放骨刺，时不时冲锋', blink: '瞬移到你身边，放出旋转的月光', pool: '往你脚下丢腐沼，站在里面会持续受伤', bolt: '连射闪电，还会召唤骷髅' };

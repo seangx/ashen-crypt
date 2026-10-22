@@ -480,7 +480,12 @@ function logic(dt) {
     RUN.spawnT -= dt;
     const R = PROG.run, HD = R.horde, cap = Math.round((R.spawnCapBase + Math.min(R.spawnCapMaxExtra, RUN.L)) * RUN.dens * HD.count);
     if (RUN.spawnT <= 0 && mobs.length < cap) { // 一次刷一群，挤在场边同一处
-      const n = Math.min(cap - mobs.length, ri(HD.pack[0], HD.pack[1])), first = spawnMob(pickMob(RUN.L));
+      let o = {};
+      if (RUN.lastPack && rnd() < (HD.surround || 0)) { // 包围：刷到上一群的对面（以角色为中心对称，再贴到最近的场边）
+        let x = clamp(2 * player.x - RUN.lastPack.x, F.x0, F.x1), y = clamp(2 * player.y - RUN.lastPack.y, F.y0, F.y1);
+        const ed = [[x - F.x0, () => x = F.x0], [F.x1 - x, () => x = F.x1], [y - F.y0, () => y = F.y0], [F.y1 - y, () => y = F.y1]].sort((a, b) => a[0] - b[0]); ed[0][1](); o = { x, y };
+      }
+      const n = Math.min(cap - mobs.length, ri(HD.pack[0], HD.pack[1])), first = spawnMob(pickMob(RUN.L), o); RUN.lastPack = { x: first.x, y: first.y };
       for (let i = 1; i < n; i++) spawnMob(pickMob(RUN.L), { x: clamp(first.x + rf(-14, 14), F.x0, F.x1), y: clamp(first.y + rf(-10, 10), F.y0, F.y1) });
       RUN.spawnT = Math.max(R.spawnIntervalMin, R.spawnInterval - RUN.L * R.spawnIntervalPerLevel) / RUN.dens / HD.count * n;
     }
@@ -539,10 +544,11 @@ function logic(dt) {
     m.atkCd -= dt; m.cd -= dt;
     const MA = PROG.monsterAttack;
     if (d < m.size + MA.touch && m.atkCd <= 0) { hurtPlayer(m.dmg * bl, m.el); m.atkCd = MA.meleeCd; }
+    slamStep(m, dt, bl);
     if (m.boss && m.cd <= 0) bossAct(m, Math.atan2(dy, dx), bl);
     else if (m.d.ai === 'ranged' && m.cd <= 0) {
-      m.cd = m.d.cd; const a = Math.atan2(dy, dx);
-      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: MA.shotLife, dmg: m.dmg * bl, el: m.el });
+      m.cd = m.d.cd; const lt = m.d.lead ? d / MA.shotSpd * m.d.lead : 0, a = Math.atan2(player.y + player.vy * lt - m.y, player.x + player.vx * lt - m.x); // lead：按角色速度预判落点
+      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, el: m.el, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
     }
   }
   // 互相推开
@@ -563,6 +569,19 @@ function logic(dt) {
   drops = drops.filter(d => !d.done);
 }
 // 地面持续区域：腐尸陷阱的毒池、余烬靴的火痕、虚渊靴的漩涡
+// 红圈重击（progression.slam）：精英、Boss 每隔一段时间在角色脚下亮红圈，读条后砸下；怪死了就取消
+function slamStep(m, dt, bl) {
+  const C = m.boss ? PROG.slam.boss : m.elite ? PROG.slam.elite : null; if (!C) return;
+  if (m.slam) {
+    m.slam.t -= dt; if (m.slam.t > 0) return;
+    const s = m.slam; m.slam = null;
+    fx({ t: 'slam', x: s.x, y: s.y, r: s.r });
+    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el); }
+    return;
+  }
+  m.slamCd = (m.slamCd ?? C.every * rf(0.5, 1)) - dt;
+  if (m.slamCd <= 0 && m.rise <= 0) { m.slamCd = C.every; m.slam = { x: player.x, y: player.y, r: C.r, t: C.windup, T: C.windup }; }
+}
 // Boss 招式：每个 Boss 一套
 function bossAct(m, aim, bl) {
   const shot = (a, v, k) => projs.push({ enemy: true, x: m.x, y: m.y - 8, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: PROG.monsterAttack.shotLife, dmg: m.dmg * k * bl, el: m.el });
@@ -607,6 +626,7 @@ function stepProjs(dt) {
     if (p.enemy) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
       if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { hurtPlayer(p.dmg, p.el); p.dead = true; }
+      if (p.pool && (p.dead || p.life <= 0)) { zones.push({ enemy: true, x: p.x, y: p.y + 6, r: p.pool.r, t: p.pool.dur, tickT: p.pool.tick, dmg: p.pool.dmg, el: p.el }); p.pool = null; p.dead = true; }
     } else if (p.mine) {
       p.arm -= dt; p.life -= dt; if (p.life <= 0) p.dead = true;
       if (p.arm > 0 || p.dead) continue;

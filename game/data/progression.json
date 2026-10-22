@@ -44,14 +44,15 @@
   "spawnIntervalPerLevel": 0.02,
   "spawnIntervalMin": 0.25,
   "horde": {
-   "_说明": "怪海：普通怪数量 ×count（同屏上限、刷怪速度都 ×count），每只的血量 ×hp、伤害 ×dmg；每只给的推进、经验、灯火、掉落几率都 ÷count，所以一层的总量不变。一次在场边刷一群 pack[0]–pack[1] 只，挤在一起。Boss 不受影响",
+   "_说明": "怪海：普通怪数量 ×count（同屏上限、刷怪速度都 ×count），每只的血量 ×hp、伤害 ×dmg；每只给的推进、经验、灯火、掉落几率都 ÷count，所以一层的总量不变。一次在场边刷一群 pack[0]–pack[1] 只，挤在一起。Boss 不受影响；surround 每刷一群时有这么大几率改到上一群刷点的对面（以角色为中心对称后贴到最近的场边）",
    "count": 4,
    "hp": 0.3,
    "dmg": 0.35,
    "pack": [
     4,
     8
-   ]
+   ],
+   "surround": 0.5
   }
  },
  "elite": {
@@ -64,7 +65,7 @@
   "xp": 4
  },
  "monsters": {
-  "_说明": "1 级数值，按 monsterScaling 成长。w 刷出权重; minL 从第几层开始出现; ai chase 近身 / ranged 远程（rng 射程, cd 射击间隔）; res 抗性 %; el 伤害元素 kin 物理 exp 火焰 pla 圣光 ele 闪电 nuc 瘟疫",
+  "_说明": "1 级数值，按 monsterScaling 成长。w 刷出权重; minL 从第几层开始出现; ai chase 近身 / ranged 远程（rng 射程, cd 射击间隔）; res 抗性 %; el 伤害元素 kin 物理 exp 火焰 pla 圣光 ele 闪电 nuc 瘟疫; lead 远程瞄准时按角色当前速度预判落点（预判 = 弹飞到的时间 × 角色速度 × lead）; pool 弹落地或打中时留下的火圈 {r 半径, dur 持续秒, tick 结算间隔, dmg 每次伤害占怪伤害的比例}",
   "skel": {
    "n": "骷髅",
    "hp": 60,
@@ -115,7 +116,40 @@
    "size": 6,
    "minL": 4,
    "rng": 100,
-   "cd": 2.2
+   "cd": 2.2,
+   "pool": {
+    "r": 14,
+    "dur": 2,
+    "tick": 0.5,
+    "dmg": 0.3
+   }
+  },
+  "hound": {
+   "n": "尸犬",
+   "hp": 25,
+   "dmg": 5,
+   "spd": 75,
+   "xp": 6,
+   "w": 60,
+   "ai": "chase",
+   "el": "kin",
+   "size": 4,
+   "minL": 3
+  },
+  "archer": {
+   "n": "骨弓手",
+   "hp": 35,
+   "dmg": 9,
+   "spd": 26,
+   "xp": 12,
+   "w": 40,
+   "ai": "ranged",
+   "el": "kin",
+   "size": 6,
+   "minL": 6,
+   "rng": 150,
+   "cd": 1.8,
+   "lead": 1
   }
  },
  "monsterAttack": {
@@ -124,6 +158,21 @@
   "touch": 6,
   "shotSpd": 80,
   "shotLife": 4
+ },
+ "slam": {
+  "_说明": "红圈重击：精英 / Boss 每 every 秒在角色当时的位置亮一个半径 r 的红圈，windup 秒后砸下，圈内受 怪伤害 × mul（一次结算，可闪避，冲刺无敌可躲）",
+  "elite": {
+   "every": 5,
+   "windup": 0.8,
+   "r": 28,
+   "mul": 4
+  },
+  "boss": {
+   "every": 7,
+   "windup": 1.0,
+   "r": 36,
+   "mul": 5
+  }
  },
  "bosses": {
   "_说明": "按层数轮换：第 1 层用第一个，第 2 层第二个……（顺序就是轮换顺序）。数值是 1 级的，按 monsterScaling 成长。pat 招式见 bossPatterns",

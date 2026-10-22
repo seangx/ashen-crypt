@@ -73,7 +73,14 @@ function autoStep(dt) {
   AUTO.clock += dt;
   if (!RUN) { autoLoop(dt); return G.fx ? campTarget() : null; }
   if (!autoDriving() || RUN.ending) return null;
-  const MW = meleeW(), mt = MW ? meleeTarget(MW) : null;
+  const MW = meleeW();
+  if (AU.slamDodge) { // 红圈：在圈里就冲刺出去，没冲刺槽就走出去（近战、远程都躲）
+    let s = null; for (const m of mobs) if (m.slam && dist2(player, m.slam) < (m.slam.r + 2) ** 2 && (!s || m.slam.t < s.t)) s = m.slam;
+    if (s) { const dx = player.x - s.x, dy = player.y - s.y, dl = Math.hypot(dx, dy) || 1, ux = dl > 0.5 ? dx / dl : 1, uy = dl > 0.5 ? dy / dl : 0, out = { x: clamp(s.x + ux * (s.r + 14), F.x0, F.x1), y: clamp(s.y + uy * (s.r + 14), F.y0, F.y1), near: 0 };
+      if (player.dash >= 1 && player.dashT <= 0) { tryDash(out, true); if (player.dashT > 0) RUN.slamDash = (RUN.slamDash || 0) + 1; }
+      return out; }
+  }
+  const mt = MW ? meleeTarget(MW) : null;
   if (mt) return mt; // 近战贴身时不靠冲刺躲
   const t = autoTarget();
   const K = AU.steer;

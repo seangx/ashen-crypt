@@ -1,5 +1,5 @@
 {
- "_说明": "自动战斗、接管、自动循环和自动推层。",
+ "_说明": "自动战斗、接管、自动循环和自动推层。; slamDodge 1 = 红圈亮起且角色在圈内时冲刺出圈（没冲刺槽就走出去），0 = 不躲（测试用）",
  "steer": {
   "_说明": "自动走位：把各种“推力”加起来决定往哪走。mobRepel 怪物的排斥（按 1/距离²），bossMul Boss 的排斥倍数；projRange 敌方弹在这个距离内才躲，projRepel 躲弹的力度；zoneRepel 躲地面毒池的力度（池子半径外加 zoneMargin 像素也算）；wallRepel 墙的排斥；orbit 绕圈的力度（越大越倾向绕着怪转，而不是直线后退）；centerPull 没有威胁时回到场地中间的力度；lookAhead 每次朝推力方向走多远（像素）；lootRange 最近的怪比这个远时，去捡最近的掉落；dashNear 怪离得比这个近就冲刺；dashLowArmor 护甲低于这个比例、且怪在 dashLowNear 内也冲刺",
   "mobRepel": 1,
@@ -37,5 +37,6 @@
   "_说明": "自动推层：打赢就去最深层；连输 lossesToRetreat 次退一层；退下来以后赢 winsToRetry 次再回去冲最深层。锁定层数时都不变",
   "lossesToRetreat": 2,
   "winsToRetry": 3
- }
+ },
+ "slamDodge": 1
 }
