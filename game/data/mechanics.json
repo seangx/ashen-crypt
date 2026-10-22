@@ -13,8 +13,8 @@
  },
  "defense": {
   "_说明": "deflectDelay 受伤后灵障停止回复的秒数; dodgeCap 闪避上限; hurtInvuln 受伤后的无敌时间; meleeGuardLess 近战命中后承伤总降（蛮力符文）; meleeGuardTime 持续秒数; leechHitCap 命中回护甲：同一次挥砍（同一把武器同一帧）最多按几个敌人算，null 不限; leechCapPct 命中回护甲每秒最多回护甲上限的百分之几（令牌桶），null 不限。两者对所有来源（符文、装备词条、旋身）都生效",
-  "leechHitCap": null,
-  "leechCapPct": null,
+  "leechHitCap": 3,
+  "leechCapPct": 4,
   "deflectDelay": 2,
   "dodgeCap": 75,
   "hurtInvuln": 0.25,
