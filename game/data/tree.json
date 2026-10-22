@@ -55,7 +55,7 @@
     { "n": "圣歌", "add": { "inc:pla": 20, "deflect": 15 } },
     { "n": "守望", "add": { "deflectInc": 25, "energy": 4 } }
    ],
-   "key": { "n": "神圣屏障", "add": { "deflectInc": 100 }, "more": { "deflRate": 2, "armor": 0.6 } }
+   "key": { "n": "神圣屏障", "add": { "deflectInc": 100 }, "more": { "deflRate": 2, "life": 0.7 } }
   },
   {
    "id": "nuc",
@@ -119,11 +119,11 @@
    }
   ],
   "pla": [
-   { "small": { "deflectInc": 8 }, "nn": "庇护", "nadd": { "deflectInc": 20, "res:all": 4 }, "key": { "n": "圣盾", "flag": { "absorb": 1 }, "more": { "armor": 0.75 } }
+   { "small": { "deflectInc": 8 }, "nn": "庇护", "nadd": { "deflectInc": 20, "res:all": 4 }, "key": { "n": "圣盾", "flag": { "absorb": 1 }, "more": { "life": 0.75 } }
    },
    { "small": { "inc:pla": 8 }, "nn": "光辉", "nadd": { "inc:pla": 15, "ail:pla": 0.06 }, "key": { "n": "光环", "flag": { "blindAura": 1 }, "more": { "dmg:hit": 0.9 } }
    },
-   { "small": { "energy": 3 }, "nn": "灵泉", "nadd": { "energy": 8, "energyInc": 10 }, "key": { "n": "殉道", "flag": { "martyr": 1 } }
+   { "small": { "energy": 3 }, "nn": "灵泉", "nadd": { "energy": 8, "energyInc": 10 }, "key": { "n": "殉道", "flag": { "martyr": 1 }, "more": { "deflRate": 0.6 } }
    },
    { "small": { "bossInc": 10 }, "nn": "审判", "nadd": { "bossInc": 25, "inc:pla": 10 }, "key": { "n": "天罚", "flag": { "judge": 1 }, "more": { "dmg:nonPla": 0.85 } }
    }
