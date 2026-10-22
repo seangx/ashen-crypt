@@ -152,6 +152,22 @@ function whirlFx(ground, blade, glow, x, y, R, f, t, eye, ang) { // ang：角色
   }
   for (let k = 0; k < 8; k++) { const an = -t * spd * 0.6 + k * 0.79, rr = R * (0.4 + ((t * 2.5 + k * 0.37) % 1) * 0.7); ground.fillStyle(0x8a6a4a, 0.5 * (1 - rr / (R * 1.15))).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr), 1, 1); } // 往外甩的尘土
 }
+// 旋风之心的小旋风：和大旋风同一套红橙色月牙拖影，竖着叠成一个漏斗（每层是一道压扁的转动月牙，越往上越宽）。
+// ground 画脚下的伤害范围（半径 r），glow 是叠加发光层；a = 淡入淡出
+function devilFx(ground, glow, x, y, r, t, seed, a = 1) {
+  ground.fillStyle(0x0a0508, 0.22 * a).fillCircle(x, y, r);
+  const L = 5, h = r * 3;
+  const band = (cx, cy, rx0, rx1, sq, b0, b1) => { const n = 3, pts = []; for (let j = 0; j <= n; j++) { const an = b0 + (b1 - b0) * j / n; pts.push({ x: cx + Math.cos(an) * rx1, y: cy + Math.sin(an) * rx1 * sq }); } for (let j = n; j >= 0; j--) { const an = b0 + (b1 - b0) * j / n; pts.push({ x: cx + Math.cos(an) * rx0, y: cy + Math.sin(an) * rx0 * sq }); } glow.fillPoints(pts, true); };
+  for (let l = 0; l < L; l++) {
+    const f = l / (L - 1), cy = y - 1 - f * h, cx = x + Math.sin(t * 5 + f * 2.5 + seed) * r * 0.2 * f, rx = r * (0.4 + 0.9 * f), w = 2.5 + f * 3, a0 = -t * (16 - f * 4) + seed + l * 1.9, arc = 3.6, S = 14;
+    for (let s = 0; s < S; s++) {
+      const q = s / S, k = (1 - q) ** 0.8 * a, ww = Math.max(0.6, w * (1 - q * 0.7)), b0 = a0 + q * arc, b1 = b0 + arc / S;
+      glow.fillStyle(0xa01208, 0.45 * k); band(cx, cy, rx - ww * 1.6, rx - ww, 0.35, b0, b1);
+      glow.fillStyle(0xff3c10, 0.8 * k); band(cx, cy, rx - ww, rx - ww * 0.3, 0.35, b0, b1);
+      glow.fillStyle(0xffc070, 0.95 * k); band(cx, cy, rx - ww * 0.3, rx, 0.35, b0, b1);
+    }
+  }
+}
 /* ---------- 文字：平滑字体，按画布的实际分辨率渲染 ---------- */
 const FONT_FAM = '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", "WenQuanYi Zen Hei", sans-serif';
 const FS = { 8: [8, 500, 10], 12: [10, 500, 13], num: [7, 700, 8] }; // 字号、字重、行高（逻辑像素）
