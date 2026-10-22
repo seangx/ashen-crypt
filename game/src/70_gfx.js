@@ -132,30 +132,25 @@ function tornado(g, x, y, h, w, t, seed, a = 1) {
 // ground 画在角色和怪下面（受光照），blade 画在上面，glow 是叠加发光层；f = 旋势层数占比，eye = 风暴之眼
 function whirlFx(ground, blade, glow, x, y, R, f, t, eye, ang) { // ang：角色朝向（和转身帧同步），刀光的头在这里
   const spd = 9 + f * 9, TAU = Math.PI * 2;
-  // 地面：一片被风压暗的圆，外沿一圈转动的虚线 = 判定边缘
-  ground.fillStyle(0x0a0710, 0.22 + 0.18 * f).fillCircle(x, y, R);
-  const nd = Math.max(24, R * 0.9 | 0);
-  for (let k = 0; k < nd; k++) { const an = k / nd * TAU - t * spd * 0.35; if (k % 3 === 2) continue; ground.fillStyle(0xb8c4d8, 0.45 + 0.3 * f).fillRect(Math.round(x + Math.cos(an) * R), Math.round(y + Math.sin(an) * R), 1, 1); }
-  // 地面气流：几道向外甩的螺旋
-  for (let j = 0; j < 5; j++) {
-    const a0 = -t * spd * 0.9 + j * TAU / 5, ns = Math.ceil(R * 1.6);
-    for (let s = 0; s < ns; s++) { const q = s / ns, rr = R * (0.25 + 0.75 * q), an = a0 + q * 1.6; ground.fillStyle(0x9aa6bc, 0.35 * (1 - q) * (0.5 + f)).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr), 1, 1); }
-  }
+  // 地面：脚下一片被风压暗的圆，边缘淡淡一圈 = 判定边缘
+  ground.fillStyle(0x0a0508, 0.2 + 0.15 * f).fillCircle(x, y, R);
+  ground.lineStyle(1, 0xd06a40, 0.18 + 0.12 * f).strokeCircle(x, y, R);
   // 风暴之眼：吸扯范围外往里流的风线
-  if (eye) { const PR = R * WH.pullR; for (let k = 0; k < 14; k++) { const ph = (t * 0.9 + k * 0.37) % 1, rr = PR - (PR - R) * ph, an = k * 2.4 - t * 1.5 - ph * 1.2; for (let s = 0; s < 6; s++) { const r2 = rr + s * 1.5; ground.fillStyle(0x8fb4e0, 0.5 * Math.sin(ph * Math.PI) * (1 - s / 6)).fillRect(Math.round(x + Math.cos(an + s * 0.02) * r2), Math.round(y + Math.sin(an + s * 0.02) * r2), 1, 1); } } }
-  // 刀光：两道月牙，头粗尾细，正圆半径 R；层数越高拖得越长，满层接近整圈
-  const arc = 1.3 + f * 3.4, cy = y - 3;
+  if (eye) { const PR = R * WH.pullR; for (let k = 0; k < 14; k++) { const ph = (t * 0.9 + k * 0.37) % 1, rr = PR - (PR - R) * ph, an = k * 2.4 - t * 1.5 - ph * 1.2; for (let s = 0; s < 6; s++) { const r2 = rr + s * 1.5; ground.fillStyle(0xd08a60, 0.45 * Math.sin(ph * Math.PI) * (1 - s / 6)).fillRect(Math.round(x + Math.cos(an + s * 0.02) * r2), Math.round(y + Math.sin(an + s * 0.02) * r2), 1, 1); } } }
+  // 刀光：经典旋风斩那种粗的红橙色月牙拖影（叠加发光层，外沿 = 判定半径）。一道长的主弧 + 对面一道短的，头粗尾细
+  const g = glow || blade, cy = y - 3, W = 7 + f * 7, S = 24;
+  const band = (r0, r1, b0, b1) => { const n = 3, pts = []; for (let j = 0; j <= n; j++) { const a = b0 + (b1 - b0) * j / n; pts.push({ x: x + Math.cos(a) * r1, y: cy + Math.sin(a) * r1 }); } for (let j = n; j >= 0; j--) { const a = b0 + (b1 - b0) * j / n; pts.push({ x: x + Math.cos(a) * r0, y: cy + Math.sin(a) * r0 }); } g.fillPoints(pts, true); }; // 一小段环形扇面，相邻段首尾相接不重叠
   for (let i = 0; i < 2; i++) {
-    const a0 = (ang ?? -t * spd) + i * Math.PI, steps = Math.ceil(arc * R * 1.2);
-    for (let s = 0; s < steps; s++) {
-      const q = s / steps, an = a0 + q * arc, c = Math.cos(an), sn = Math.sin(an), w = Math.max(1, Math.round((1 - q) * (2 + f * 2)));
-      for (let k = 0; k < w; k++) { const rr = R - k; blade.fillStyle(k === 0 && q < 0.35 ? 0xffffff : q < 0.5 ? 0xdfe6f2 : 0xa8b2c8, 0.95 * (1 - q) ** 1.1); blade.fillRect(Math.round(x + c * rr), Math.round(cy + sn * rr), 1, 1); }
+    const a0 = (ang ?? -t * spd) + i * Math.PI, arc = (i ? 0.5 : 1) * (1.4 + f * 2.2), w0 = W * (i ? 0.6 : 1);
+    for (let s = 0; s < S; s++) {
+      const q = s / S, k = (1 - q) ** 0.8, w = Math.max(1, w0 * k), b0 = a0 + q * arc, b1 = b0 + arc / S;
+      g.fillStyle(0xa01208, 0.5 * k); band(R - w * 1.6, R - w, b0, b1); // 内侧暗红雾
+      g.fillStyle(0xff3c10, 0.85 * k); band(R - w, R - w * 0.3, b0, b1); // 红橙主体
+      g.fillStyle(0xffc070, k); band(R - w * 0.3, R, b0, b1); // 刃口亮边（外沿 = 判定半径）
     }
-    if (glow) { glow.lineStyle(4 + f * 4, 0x9fc8ff, 0.08 + 0.08 * f); glow.beginPath(); glow.arc(x, cy, R - 2, a0, a0 + arc * 0.6); glow.strokePath(); }
+    g.fillStyle(0xffe6b0, 0.9).fillCircle(x + Math.cos(a0) * (R - 2), cy + Math.sin(a0) * (R - 2), 1.5 + f); // 刀头
   }
-  // 贴身的风罩：角色在龙卷里转
-  tornado(blade, x, y + 2, 20 + f * 8, 14 + f * 6, t, 0, 0.25 + 0.3 * f);
-  for (let k = 0; k < 12; k++) { const an = -t * spd * 0.6 + k * 0.52, rr = R * (0.4 + ((t * 2.5 + k * 0.37) % 1) * 0.7); ground.fillStyle(0x9a8f78, 0.55 * (1 - rr / (R * 1.15))).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr), 1, 1); } // 往外甩的尘土
+  for (let k = 0; k < 8; k++) { const an = -t * spd * 0.6 + k * 0.79, rr = R * (0.4 + ((t * 2.5 + k * 0.37) % 1) * 0.7); ground.fillStyle(0x8a6a4a, 0.5 * (1 - rr / (R * 1.15))).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr), 1, 1); } // 往外甩的尘土
 }
 /* ---------- 文字：平滑字体，按画布的实际分辨率渲染 ---------- */
 const FONT_FAM = '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", "WenQuanYi Zen Hei", sans-serif';

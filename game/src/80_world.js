@@ -125,8 +125,8 @@ class World extends Phaser.Scene {
     const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.hurtT > 0.15 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
     this.hero.setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(10 + player.y / 100).setAlpha(player.dashT > 0 ? 0.5 : 1);
-    if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x6a78a8));
-    this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(-ph * Math.PI / 2 - i) * (i + 1), player.y).setDepth(10 + player.y / 100 - 0.01).setAlpha(0.35 - i * 0.15); });
+    if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x7a2a1a));
+    this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(-ph * Math.PI / 2 - i) * (i + 1) * 1.5, player.y).setDepth(10 + player.y / 100 - 0.01).setAlpha(0.4 - i * 0.15); });
     this.heroSh.setPosition(player.x, player.y + 1);
     { const hub = S.equip.hub, hg = this.hubG; hg.clear(); if (hub) { const b = baseOf(hub); const c = hex(b.el ? ELEM_C[b.el] : b.mass ? '#e9e0c9' : b.energy ? '#c08aff' : '#57e0d0'); const n = 22; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.7; hg.fillStyle(c, 0.35 + 0.3 * Math.sin(i * 1.3 + t * 3)); hg.fillRect(Math.round(player.x + Math.cos(a) * 9), Math.round(player.y + 1 + Math.sin(a) * 3), 1, 1); } } }
     if (player.dashT > 0 && this.frame % 2 === 0) {
