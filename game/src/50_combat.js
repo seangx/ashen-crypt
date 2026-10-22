@@ -140,7 +140,7 @@ function hitMob(m, W, o = {}) {
 function ailment(m, e, d, W, o) {
   switch (e) {
     case 'kin': { if (o.noDebris) break; // 碎骨：周围一圈，命中伤害的 20%
-      const r = W.debrisR || MECH.debrisR * UNIT; fx({ t: 'ring', x: m.x, y: m.y - 4, r, el: 'kin' });
+      const r = W.debrisR || MECH.debrisR * UNIT; if (mobs.length <= 15 || rnd() < 0.15) fx({ t: 'ring', x: m.x, y: m.y - 4, r, el: 'kin' }); // 怪海里碎骨圈只偶尔画
       for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < r * r) { damage(n, mitigate(n, 'kin', d * MECH.debrisPct * W.debrisMore), 'kin', false, true); if (n.dead && STATS.flag.debrisChain && (o.depth || 0) < RL.debrisChain.depth) ailment(n, 'kin', d, W, { ...o, depth: (o.depth || 0) + 1 }); }
       break; }
     case 'exp': { const k = W.afterPct || MECH.afterPct; m.after.push({ n: MECH.afterRepeats + (STATS.afterRep || 0) + (W.afterRep || 0), t: MECH.afterTick, d: d * k, k }); break; } // 余震
