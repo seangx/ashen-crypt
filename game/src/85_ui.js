@@ -154,87 +154,122 @@ class UI extends Phaser.Scene {
     kb.on('keydown-ESC', () => this.closeWin());
     ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN'].forEach((k, i) => kb.on('keydown-' + k, () => this.toggleWin(MENU[i].id)));
   }
-  /* --- HUD --- */
+  /* --- HUD：顶部绶带 + 骨头条，左下血球，右下灯火瓶，中间石台底栏 --- */
   buildHud() {
-    const top = this.add.container(0, 0).setDepth(10);
-    top.add(nine(this, 0, 0, W, TOP_H, 'f_bar'));
-    this.hpG = this.add.graphics(); top.add(this.hpG);
-    this.hpT = T(this, 6, 5, '', { size: 8, color: '#ffe0d0', parent: top });
-    this.spinT = T(this, 134, 5, '', { size: 8, align: 'right', color: '#dfe6ee', parent: top }); // 旋转层数：写在护甲条右端
-    const hz = this.add.zone(0, 0, 170, TOP_H).setOrigin(0).setInteractive(); top.add(hz);
-    hz.on('pointerover', () => showTip([{ t: '护甲', c: '#ff8a7a' }, { t: '护甲就是生命，降到 0 任务失败。', s: 8 }, { t: '灵障（青色）先吸收伤害，一段时间不受伤后回复；瘟疫伤害会无视灵障。', s: 8, c: COL.cyan }, { t: `灯火（紫色细条）${Math.round(player.soul)} / ${STATS.soulMax}。推关时每秒燃烧 ${SOUL.burn} + 层数 × ${SOUL.burnPerFloor}，击杀回（普通 ${SOUL.onKill.normal}、精英 ${SOUL.onKill.elite}、Boss ${SOUL.onKill.boss}，×${Math.round(STATS.soulGainMul * 100) / 100}）；烧完平安返回，阵亡则捡到的东西每件 ${SOUL.deathKeep}% 保住。天梯里不燃烧，每秒回复 ${Math.round(STATS.soulRegen * 10) / 10}。流派技能消耗它：旋转每层每秒 -${Math.round(WH.soulPerStack * (1 - STATS.soulLess) * 100) / 100}，环绕武器每次攻击打中回 ${WH.soulPerSpin}。`, s: 8, c: '#9a7cff' }, { t: '下方的点是冲刺槽：空格或右键冲刺，冲刺时无敌。', s: 8, c: COL.dim }]));
-    hz.on('pointerout', hideTip);
-    this.depthT = T(this, W / 2, 4, '', { align: 'center', parent: top });
-    this.dPrev = mkBtn(this, top, 172, 3, 16, 14, '<', () => { if (S.depth > 1 && !RUN) { S.depth--; S.auto.lock = true; } }, { size: 8, tip: [{ t: '降低难度（会锁定层数）', s: 8 }] });
-    this.dNext = mkBtn(this, top, 292, 3, 16, 14, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; } }, { size: 8, tip: () => [{ t: S.maxDepth >= PROG.run.maxDepth ? `已到最深层（第 ${PROG.run.maxDepth} 层），之后自动推层就一直刷这层` : '提高难度（通关后解锁下一层；不是最深层时会锁定层数）', s: 8 }] });
-    img(this, 318, 6, 'skull', top);
-    this.bossG = this.add.graphics(); top.add(this.bossG);
-    this.bossT = T(this, 476, 5, '', { size: 8, align: 'right', parent: top });
-    const bz = this.add.zone(316, 0, 164, TOP_H).setOrigin(0).setInteractive(); top.add(bz);
+    const top = this.add.container(0, 0).setDepth(10); this.topC = top;
+    this.ribbon = this.add.nineslice(0, 2, 'ribbon', null, 120, 22, 14, 14, 0, 0).setOrigin(0); top.add(this.ribbon);
+    this.depthT = T(this, W / 2, 7, '', { align: 'center', color: COL.emberHi, parent: top });
+    this.dPrev = mkBtn(this, top, 0, 6, 14, 14, '<', () => { if (S.depth > 1 && !RUN) { S.depth--; S.auto.lock = true; } }, { size: 8, tip: [{ t: '降低难度（会锁定层数）', s: 8 }] });
+    this.dNext = mkBtn(this, top, 0, 6, 14, 14, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; } }, { size: 8, tip: () => [{ t: S.maxDepth >= PROG.run.maxDepth ? `已到最深层（第 ${PROG.run.maxDepth} 层），之后自动推层就一直刷这层` : '提高难度（通关后解锁下一层；不是最深层时会锁定层数）', s: 8 }] });
+    const bc = this.add.container(W / 2 - 100, 26); top.add(bc); this.bossC = bc;
+    this.bossT = T(this, 100, 0, '', { size: 8, align: 'center', parent: bc });
+    bc.add(img(this, 0, 10, 'bonebar')); this.bossG = this.add.graphics(); bc.add(this.bossG);
+    const bz = this.add.zone(0, 0, 200, 26).setOrigin(0).setInteractive(); bc.add(bz);
     bz.on('pointerover', () => showTip(ladderBusy() ? [{ t: '天梯进度', c: COL.boss }, { t: `普通怪 ${LD.run.normalP} 点，精英 ${LD.run.eliteP} 点，攒满 ${RUN.need} 点后 ${RUN.bossD.n} 出现。${mmss(RUN.limit)} 内击败它算通过，剩的时间越多跳得越多。`, s: 8 }] : [{ t: '任务进度', c: COL.boss }, { t: `击杀数达到要求后 ${(RUN ? RUN.bossD : bossFor(S.depth + (armedMap() ? armedMap().tier : 0))).n} 出现：${BOSS_PAT_N[(RUN ? RUN.bossD : bossFor(S.depth)).pat]}。击败它完成任务。Boss 出现 ${MECH.fatigueStart} 秒后会疲惫，每秒承伤 +${Math.round((MECH.fatigueStep - 1) * 100)}%。`, s: 8 }])); bz.on('pointerout', hideTip);
 
-    const bot = this.add.container(0, BOT_Y).setDepth(10); this.bot = bot;
-    bot.add(nine(this, 0, 0, W, H - BOT_Y, 'f_bar'));
-    this.lvT = T(this, 6, 4, '', { size: 8, color: COL.xp, parent: bot });
+    // 两个球：底图、液体（图形）、高光
+    const orb = (x, key, tip) => {
+      const c = this.add.container(x, H - 65).setDepth(11); c.add(img(this, 0, 0, key)); const g = this.add.graphics(); c.add(g); c.add(img(this, 0, 0, 'orb_hi'));
+      const z = this.add.zone(6, 6, 52, 58).setOrigin(0).setInteractive(); c.add(z); z.on('pointerover', () => showTip(tip())); z.on('pointerout', hideTip);
+      c.g = g; c.key = ''; return c;
+    };
+    this.hpOrb = orb(1, 'orb_hp', () => [{ t: '护甲', c: '#ff8a7a' }, { t: '护甲就是生命，降到 0 任务失败。', s: 8 }, { t: '灵障（球边的青色）先吸收伤害，一段时间不受伤后回复；瘟疫伤害会无视灵障。', s: 8, c: COL.cyan }, { t: '球上方的点是冲刺槽：空格或右键冲刺，冲刺时无敌。', s: 8, c: COL.dim }]);
+    this.hpT = T(this, 32, 27, '', { align: 'center', parent: this.hpOrb }); this.defT = T(this, 32, 40, '', { size: 8, color: COL.cyan, align: 'center', parent: this.hpOrb });
+    this.soulOrb = orb(W - 65, 'orb_soul', () => [{ t: `灯火 ${Math.round(player.soul)} / ${STATS.soulMax}`, c: '#b9a2ff' }, { t: `推关时每秒燃烧 ${SOUL.burn} + 层数 × ${SOUL.burnPerFloor}，击杀回（普通 ${SOUL.onKill.normal}、精英 ${SOUL.onKill.elite}、Boss ${SOUL.onKill.boss}，×${Math.round(STATS.soulGainMul * 100) / 100}）；烧完平安返回，阵亡则捡到的东西每件 ${SOUL.deathKeep}% 保住。`, s: 8 }, { t: `天梯里不燃烧，每秒回复 ${Math.round(STATS.soulRegen * 10) / 10}。`, s: 8, c: COL.dim }, { t: `流派技能消耗它：旋转每层每秒 -${Math.round(WH.soulPerStack * (1 - STATS.soulLess) * 100) / 100}，环绕武器每次攻击打中回 ${WH.soulPerSpin}。`, s: 8, c: '#9a7cff' }]);
+    this.soulT = T(this, 32, 27, '', { color: '#e6dcff', align: 'center', parent: this.soulOrb }); this.burnT = T(this, 32, 40, '', { size: 8, color: '#b9a2ff', align: 'center', parent: this.soulOrb });
+    // 血球上方：旋转层数、冲刺槽
+    this.dashG = this.add.graphics().setDepth(11);
+    this.spinC = this.add.container(5, H - 88).setDepth(11); img(this, 0, 0, 'mod_Whirl', this.spinC); this.spinT = T(this, 13, 1, '', { parent: this.spinC });
+
+    const bot = this.add.container(66, BOT_Y).setDepth(10); this.bot = bot; const DW = W - 132;
+    bot.add(this.add.tileSprite(0, 0, DW, H - BOT_Y, 'dock').setOrigin(0));
     this.xpG = this.add.graphics(); bot.add(this.xpG);
-    this.dpsT = T(this, 6, 15, '', { size: 8, color: COL.emberHi, parent: bot });
-    this.diceT = T(this, 6, 25, '', { size: 8, color: '#a9c4ff', parent: bot });
-    const dz = this.add.zone(4, 2, 170, 32).setOrigin(0).setInteractive(); bot.add(dz);
-    dz.on('pointerover', () => showTip([{ t: `等级 ${S.level}`, c: COL.xp }, { t: `经验 ${fmt(S.xp)} / ${fmt(xpNeed(S.level))}`, s: 8 }, { t: `预计秒伤 ${fmt(STATS.dps)}：两把武器的单体期望，含暴击。`, s: 8 }, { t: `词条碎片 ${Object.values(S.shards).reduce((a, b) => a + b, 0)}（${Object.values(S.shards).filter(n => n > 0).length} 种）`, s: 8, c: '#d9cfb8' }, ...GLYPHS.map(g => ({ t: `${g.n} ×${glyphN(g.id)}`, c: g.c, s: 8 }))])); dz.on('pointerout', hideTip);
-    rect(this, 173, 3, 1, 30, '#33293f', 1, bot);
+    bot.add(nine(this, 3, 9, 20, 20, 'sock_h'));
+    this.lvT = T(this, 13, 14, '', { color: COL.xp, align: 'center', parent: bot });
+    this.dpsT = T(this, DW - 4, 9, '', { size: 8, color: COL.emberHi, align: 'right', parent: bot });
+    this.diceT = T(this, DW - 4, 19, '', { size: 8, color: '#d9cfb8', align: 'right', parent: bot }); this.shardI = img(this, 0, 20, 'shard', bot);
+    const tipLv = () => showTip([{ t: `等级 ${S.level}`, c: COL.xp }, { t: `经验 ${fmt(S.xp)} / ${fmt(xpNeed(S.level))}（石台上沿的蓝线）`, s: 8 }, { t: `预计秒伤 ${fmt(STATS.dps)}：两把武器的单体期望，含暴击。`, s: 8 }, { t: `词条碎片 ${Object.values(S.shards).reduce((a, b) => a + b, 0)}（${Object.values(S.shards).filter(n => n > 0).length} 种）`, s: 8, c: '#d9cfb8' }, ...GLYPHS.map(g => ({ t: `${g.n} ×${glyphN(g.id)}`, c: g.c, s: 8 }))]);
+    for (const [zx, zw] of [[0, 26], [DW - 40, 40]]) { const z = this.add.zone(zx, 6, zw, 24).setOrigin(0).setInteractive(); bot.add(z); z.on('pointerover', tipLv); z.on('pointerout', hideTip); }
+    // 系统入口：嵌在石台里的凹槽，只放图标，角上是快捷键
     this.menuBtns = MENU.map((m, i) => {
-      const b = mkBtn(this, bot, 177 + i * 25, 3, 24, 30, '', () => this.toggleWin(m.id), { tip: () => [{ t: `${m.n}  [${i + 1}]`, c: COL.emberHi }, ...(!unlocked(m.id) ? [{ t: unlockText(m.id), s: 8, c: COL.dim }] : [])] });
-      const tex = this.textures.get(m.ic).getSourceImage(); img(this, Math.round(12 - tex.width / 2), Math.round(10 - tex.height / 2), m.ic, b); T(this, 12, 18, m.n, { size: 8, align: 'center', parent: b });
-      b.badge = T(this, 23, 1, '', { size: 'num', color: COL.ember, align: 'right', parent: b });
-      return b;
+      const b = this.add.container(28 + i * 25, 7); bot.add(b);
+      const bg = nine(this, 0, 0, 24, 24, 'sock'), hl = nine(this, 0, 0, 24, 24, 'sock_h').setVisible(false); b.add([bg, hl]);
+      const tex = this.textures.get(m.ic).getSourceImage(); b.ic = img(this, Math.round(12 - tex.width / 2), Math.round(12 - tex.height / 2), m.ic, b);
+      T(this, 2, 0, String(i + 1), { size: 'num', color: COL.faint, parent: b });
+      b.badge = T(this, 23, -2, '', { size: 'num', color: COL.ember, align: 'right', parent: b });
+      const z = this.add.zone(0, 0, 24, 24).setOrigin(0).setInteractive(); b.add(z);
+      z.on('pointerover', () => { b.hov = true; showTip([{ t: `${m.n}  [${i + 1}]`, c: COL.emberHi }, ...(!unlocked(m.id) ? [{ t: unlockText(m.id), s: 8, c: COL.dim }] : [])]); });
+      z.on('pointerout', () => { b.hov = false; b.y = 7; hideTip(); });
+      z.on('pointerdown', () => { if (unlocked(m.id)) b.y = 8; });
+      z.on('pointerup', () => { b.y = 7; if (!unlocked(m.id)) { toast(`${m.n}：${unlockText(m.id)}`); return; } sfx('click'); this.toggleWin(m.id); });
+      b.hl = hl; return b;
     });
+    const bx = 28 + 7 * 25 + 4;
+    this.aiBtn = mkBtn(this, bot, bx, 7, 34, 12, '自动', () => { S.auto.ai = !S.auto.ai; if (S.auto.ai) AUTO.manualT = -1e9; save(); }, { size: 8, tip: () => [{ t: S.auto.ai ? '自动战斗：开' : '自动战斗：关', c: COL.emberHi }, { t: '开着时角色自己走位和冲刺。在场地上动鼠标或触摸就临时接管，几秒不动后交还。', s: 8 }] });
+    this.lockBtn = mkBtn(this, bot, bx, 19, 34, 12, '推层', () => { S.auto.lock = !S.auto.lock; save(); }, { size: 8, tip: () => [{ t: S.auto.lock ? '锁定层数：开' : '锁定层数：关（自动推层）', c: COL.emberHi }, { t: S.auto.lock ? `一直打难度 ${S.depth}。` : '打赢去最深层；连输两次退一层，退下来赢三次再回去冲。', s: 8 }] });
+    this.sndBtn = mkBtn(this, bot, bx + 36, 7, 15, 24, '音', () => { S.settings.sound = !S.settings.sound; ac(); save(); }, { size: 8, tip: () => [{ t: S.settings.sound ? '音效：开' : '音效：关' }] });
     // 开始 / 暂停自动循环；暂停后打完这一局就停
-    this.mainBtn = mkBtn(this, bot, 353, 3, 58, 30, '开始', () => { ac(); this.toggleLoop(); }, { style: 'w', icon: 'torch', iconX: 6, labelX: 18, tip: () => [
+    this.mainBtn = mkBtn(this, bot, bx + 53, 7, 52, 24, '开始', () => { ac(); this.toggleLoop(); }, { style: 'w', icon: 'torch', iconX: 5, labelX: 16, tip: () => [
       { t: S.auto.loop ? '暂停  [回车]' : '开始自动刷  [回车]', c: COL.emberHi },
-      { t: S.auto.loop ? '打完这一局就停下。' : '一局接一局自动打：打赢去最深层，连输两次退一层，退下来赢三次再回去冲。', s: 8 },
-      { t: `下一局：难度 ${S.depth}，怪物等级和掉落的物品等级都等于它。${S.depth >= PROG.run.maxDepth ? `（已到最深层）` : ''}`, s: 8, c: COL.dim },
+      { t: S.auto.loop ? '打完这一局就停下。' : '一趟接一趟自动打，每趟回营地后停留几秒再出发。', s: 8 },
+      { t: `下一趟：从第 ${descentStart()} 层出发${S.depth >= PROG.run.maxDepth ? `（已到最深层）` : ''}`, s: 8, c: COL.dim },
       ...(armedMap() ? [{ t: `会消耗墓图台上的${mapName(armedMap())}（怪物等级 +${armedMap().tier}）`, s: 8, c: RCOL[armedMap().rar] }] : [])] });
-    this.aiBtn = mkBtn(this, bot, 413, 3, 39, 14, '自动', () => { S.auto.ai = !S.auto.ai; if (S.auto.ai) AUTO.manualT = -1e9; save(); }, { size: 8, tip: () => [{ t: S.auto.ai ? '自动战斗：开' : '自动战斗：关', c: COL.emberHi }, { t: '开着时角色自己走位和冲刺。在场地上动鼠标或触摸就临时接管，几秒不动后交还。', s: 8 }] });
-    this.lockBtn = mkBtn(this, bot, 413, 19, 39, 14, '推层', () => { S.auto.lock = !S.auto.lock; save(); }, { size: 8, tip: () => [{ t: S.auto.lock ? '锁定层数：开' : '锁定层数：关（自动推层）', c: COL.emberHi }, { t: S.auto.lock ? `一直打难度 ${S.depth}。` : '打赢去最深层；连输两次退一层，退下来赢三次再回去冲。', s: 8 }] });
-    this.sndBtn = mkBtn(this, bot, 454, 3, 22, 30, '音', () => { S.settings.sound = !S.settings.sound; ac(); save(); }, { tip: () => [{ t: S.settings.sound ? '音效：开' : '音效：关' }] });
+  }
+  // 球里的液体：按行画，留出 2 像素暗边；灵障是沿球边从下往上包的青色
+  drawOrb(o, f, liq, hi, dark, rim, rimCol) {
+    const key = Math.round(f * 46) + ':' + Math.round(rim * 40) + ':' + liq; if (o.key === key) return; o.key = key;
+    const g = o.g, { cx, cy, r } = ORB, ri = r - 2.5; g.clear();
+    const top = Math.round(cy + ri - f * 2 * ri);
+    for (let j = Math.max(top, Math.ceil(cy - ri)); j < cy + ri; j++) {
+      const dy = j + 0.5 - cy, hw = Math.sqrt(Math.max(0, ri * ri - dy * dy)); if (hw < 0.5) continue;
+      const x0 = Math.round(cx - hw), x1 = Math.round(cx + hw), w = x1 - x0;
+      g.fillStyle(j < top + 2 ? hi : liq, 1).fillRect(x0, j, w, 1);
+      if (j >= top + 2) g.fillStyle(dark, 1).fillRect(x0, j, Math.max(1, Math.round(w * 0.22)), 1);
+    }
+    if (rim > 0) { g.fillStyle(rimCol, 1); const n = Math.round(rim * 60); for (let i = 0; i < n; i++) for (const s of [-1, 1]) { const a = Math.PI / 2 + s * (i / 60) * Math.PI; g.fillRect(Math.round(cx - 0.5 + Math.cos(a) * (r - 1.5)), Math.round(cy - 0.5 + Math.sin(a) * (r - 1.5)), 1, 1); } }
   }
   updateHud() {
-    const g = this.hpG; g.clear();
-    const P = STATS; const hw = 130;
-    g.fillStyle(0x120c18, 1).fillRect(5, 3, hw + 2, 9); g.fillStyle(0x3a1418, 1).fillRect(6, 4, hw, 7);
-    g.fillStyle(player.hurtT > 0 ? 0xffffff : 0xc23a3a, 1).fillRect(6, 4, Math.round(hw * clamp(player.armor / P.armor, 0, 1)), 7); g.fillStyle(0xff8a7a, 1).fillRect(6, 4, Math.round(hw * clamp(player.armor / P.armor, 0, 1)), 1);
-    if (P.deflect > 0) { g.fillStyle(0x0f2a2e, 1).fillRect(6, 12, hw, 2); g.fillStyle(0x57e0d0, 1).fillRect(6, 12, Math.round(hw * clamp(player.deflect / P.deflect, 0, 1)), 2); }
-    // 魂火：护甲（和灵障）下面的细条
-    const sy = P.deflect > 0 ? 15 : 13; g.fillStyle(0x120c18, 1).fillRect(5, sy - 1, hw + 2, 4); g.fillStyle(0x241a3a, 1).fillRect(6, sy, hw, 2); const sf = clamp(player.soul / P.soulMax, 0, 1), blink = RUN && RUN.mode !== 'ladder' && sf < SOUL.lowWarn && (G.time * 4 | 0) % 2; g.fillStyle(player.soul <= 0 ? 0x5a4a7a : blink ? 0xffd27a : 0x9a7cff, 1).fillRect(6, sy, Math.round(hw * sf), 2); // 推关里灯火低于 lowWarn 时闪
-    for (let i = 0; i < P.dashMax; i++) { const f = clamp(player.dash - i, 0, 1); g.fillStyle(0x120c18, 1).fillRect(140 + i * 8, 4, 6, 6); g.fillStyle(f >= 1 ? 0xc08aff : 0x3a2a4e, 1).fillRect(141 + i * 8, 5, 4, 4); if (f < 1) g.fillStyle(0xc08aff, 1).fillRect(141 + i * 8, 9 - Math.round(f * 4), 4, Math.round(f * 4)); }
-    this.hpT.setText(`${Math.ceil(player.armor)}${P.deflect ? ' +' + Math.ceil(player.deflect) : ''}`);
+    const P = STATS;
+    const hf = clamp(player.armor / P.armor, 0, 1), df = P.deflect > 0 ? clamp(player.deflect / P.deflect, 0, 1) : 0;
+    this.drawOrb(this.hpOrb, hf, player.hurtT > 0 ? 0xffffff : 0xb52a2a, 0xff7a6a, 0x6a1418, df, 0x57e0d0);
+    const sf = clamp(player.soul / P.soulMax, 0, 1), lad = RUN && RUN.mode === 'ladder', blink = RUN && !lad && sf < SOUL.lowWarn && (G.time * 4 | 0) % 2; // 推关里灯火低于 lowWarn 时闪
+    this.drawOrb(this.soulOrb, sf, player.soul <= 0 ? 0x5a4a7a : blink ? 0xd8a040 : 0x7a55d0, blink ? 0xffe08a : 0xc9b0ff, 0x3a2470, 0, 0);
+    const ht = String(Math.ceil(player.armor)); if (this.hpT.text !== ht) this.hpT.setText(ht);
+    const dt = P.deflect ? '+' + Math.ceil(player.deflect) : ''; if (this.defT.text !== dt) this.defT.setText(dt);
+    const st = Math.round(sf * 100) + '%'; if (this.soulT.text !== st) this.soulT.setText(st);
+    const bt = !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1(SOUL.burn + RUN.base * SOUL.burnPerFloor)}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
+    const g = this.dashG; g.clear();
+    for (let i = 0; i < P.dashMax; i++) { const f = clamp(player.dash - i, 0, 1), x = 7 + i * 9, y = H - 74; g.fillStyle(0x0b080e, 1).fillRect(x, y, 7, 7); g.fillStyle(f >= 1 ? 0xc08aff : 0x2a1e3a, 1).fillRect(x + 1, y + 1, 5, 5); if (f >= 1) g.fillStyle(0xe6c8ff, 1).fillRect(x + 1, y + 1, 5, 1); else g.fillStyle(0xc08aff, 1).fillRect(x + 1, y + 6 - Math.round(f * 5), 5, Math.round(f * 5)); }
     const wi = P.weapons.findIndex(w => w && w.whirl), sw = P.weapons[wi]; // 旋转层数（看第一把带旋身的武器）
-    const sp = sw ? player.spin[wi].n : -1, spt = sw ? `旋 ${sp}/${sw.stackMax}` : ''; if (this.spinT.text !== spt) this.spinT.setText(spt).setTint(hex(sw && sp >= sw.stackMax ? COL.emberHi : '#dfe6ee'));
+    this.spinC.setVisible(!!sw && !!RUN);
+    if (sw) { const sp = player.spin[wi].n, spt = `${sp}`; if (this.spinT.text !== spt) this.spinT.setText(spt).setTint(hex(sp >= sw.stackMax ? COL.emberHi : COL.text)); }
     const L = RUN ? RUN.L : S.depth;
-    const dl = ladderBusy() ? `天梯 ${L} 层 · 剩余 ${mmss(Math.max(0, RUN.limit - RUN.t))}` : RUN && RUN.map ? `墓图 ${RUN.map.tier} 阶 · 怪物等级 ${L}` : !RUN && armedMap() ? `难度 ${L} · 墓图 ${armedMap().tier} 阶` : RUN ? `第 ${L} 层 · ${themeFor(L).n}` : `营地 · 下一趟从第 ${descentStart()} 层出发`; if (this.depthT.text !== dl) { this.depthT.setText(dl); const w2 = Math.ceil(textW(dl) / 2); this.dPrev.x = W / 2 - w2 - 22; this.dNext.x = W / 2 + w2 + 6; }
+    const dl = ladderBusy() ? `天梯 ${L} 层 · ${mmss(Math.max(0, RUN.limit - RUN.t))}` : RUN && RUN.map ? `墓图 ${RUN.map.tier} 阶 · 怪物等级 ${L}` : !RUN && armedMap() ? `难度 ${L} · 墓图 ${armedMap().tier} 阶` : RUN ? `第 ${L} 层 · ${themeFor(L).n}` : `营地 · 下一趟从第 ${descentStart()} 层出发`;
+    if (this.depthT.text !== dl) { this.depthT.setText(dl); const tw = textW(dl), rw = tw + 44; this.ribbon.setSize(rw, 22); this.ribbon.x = Math.round(W / 2 - rw / 2); this.dPrev.x = this.ribbon.x - 16; this.dNext.x = this.ribbon.x + rw + 2; }
     this.dPrev.setVisible(!RUN).setDisabled(S.depth <= 1); this.dNext.setVisible(!RUN).setDisabled(S.depth >= S.maxDepth);
-    const b = this.bossG; b.clear(); b.fillStyle(0x120c18, 1).fillRect(329, 6, 102, 7);
+    this.bossC.setVisible(!!RUN); this.topC.setVisible(!this.winId);
+    const b = this.bossG; b.clear();
     if (RUN && RUN.boss && !RUN.boss.dead) {
-      const f = RUN.boss.hp / RUN.boss.max;
-      b.fillStyle(0x2a1430, 1).fillRect(330, 7, 100, 5); b.fillStyle(0xc23a5a, 1).fillRect(330, 7, Math.round(100 * f), 5); b.fillStyle(0xff8aa0, 1).fillRect(330, 7, Math.round(100 * f), 1);
-      const fat = Math.round((fatigue(RUN.boss) - 1) * 100); this.bossT.setText(fat > 0 ? `疲惫 +${fat}%` : RUN.bossD.n).setTint(hex('#ff9aa8'));
-    } else {
-      const f = RUN ? Math.min(1, RUN.prog / RUN.need) : 0;
-      b.fillStyle(0x231a2e, 1).fillRect(330, 7, 100, 5); b.fillStyle(RUN && RUN.result === 'win' ? 0xffd36a : 0x7a55a0, 1).fillRect(330, 7, Math.round(100 * f), 5);
-      this.bossT.setText(RUN ? (RUN.result === 'win' ? '完成' : `${RUN.prog}/${RUN.need}`) : `0/${killNeed(S.depth)}`).setTint(hex(COL.text));
+      const f = RUN.boss.hp / RUN.boss.max, fw = Math.round(184 * f);
+      b.fillStyle(0xc23a5a, 1).fillRect(8, 15, fw, 6); b.fillStyle(0xff8aa0, 1).fillRect(8, 15, fw, 1); b.fillStyle(0x8a2440, 1); for (let i = 6; i < fw; i += 7) b.fillRect(8 + i, 16, 1, 5);
+      const fat = Math.round((fatigue(RUN.boss) - 1) * 100), t = RUN.bossD.n + (fat > 0 ? `  疲惫 +${fat}%` : ''); if (this.bossT.text !== t) this.bossT.setText(t).setTint(hex('#ff9aa8'));
+    } else if (RUN) {
+      const f = Math.min(1, RUN.prog / RUN.need), fw = Math.round(184 * f), won = RUN.result === 'win';
+      b.fillStyle(won ? 0xffd36a : 0x7a55a0, 1).fillRect(8, 15, fw, 6); b.fillStyle(won ? 0xfff0b0 : 0xa888d0, 1).fillRect(8, 15, fw, 1);
+      const t = won ? '完成' : `${RUN.prog} / ${RUN.need}`; if (this.bossT.text !== t) this.bossT.setText(t).setTint(hex(COL.text));
     }
-    this.lvT.setText('Lv ' + S.level);
-    const xg = this.xpG; xg.clear(); xg.fillStyle(0x120c18, 1).fillRect(34, 6, 80, 5); xg.fillStyle(0x223448, 1).fillRect(35, 7, 78, 3); xg.fillStyle(0x9fd8ff, 1).fillRect(35, 7, Math.round(78 * clamp(S.xp / xpNeed(S.level), 0, 1)), 3);
-    this.dpsT.setText('秒伤 ' + fmt(STATS.dps));
-    this.diceT.setText('碎片 ' + Object.values(S.shards).reduce((a, b) => a + b, 0) + '  铸符 ' + GLYPHS.reduce((a, g) => a + glyphN(g.id), 0) + '  符文 ' + S.mods.length);
+    const lt = String(S.level); if (this.lvT.text !== lt) this.lvT.setText(lt);
+    const xg = this.xpG; xg.clear(); const DW = W - 132; xg.fillStyle(0x14202c, 1).fillRect(0, 3, DW, 3); xg.fillStyle(0x9fd8ff, 1).fillRect(0, 3, Math.round(DW * clamp(S.xp / xpNeed(S.level), 0, 1)), 2); xg.fillStyle(0x0b080e, 1); for (let i = 34; i < DW; i += 34) xg.fillRect(i, 3, 1, 3);
+    const dps = fmt(STATS.dps); if (this.dpsT.text !== dps) this.dpsT.setText(dps);
+    const sh = fmt(Object.values(S.shards).reduce((a, b) => a + b, 0)); if (this.diceT.text !== sh) { this.diceT.setText(sh); this.shardI.x = DW - 6 - textW(sh, 8) - 5; }
     this.menuBtns.forEach((bt, i) => {
-      const id = MENU[i].id; bt.setDisabled(!unlocked(id)); let badge = '';
+      const id = MENU[i].id, on = unlocked(id); let badge = '';
       if (id === 'gear') { const n = S.stash.filter(x => x.isNew).length; badge = n ? String(n) : ''; }
       if (id === 'mods' && S.mods.some(m => m.isNew)) badge = '!';
       if (id === 'tree' && treePoints() > 0) badge = String(treePoints());
       if (id === 'atlas') { const n = S.maps.filter(m => m.isNew).length; badge = marblePoints() > 0 ? String(marblePoints()) : n ? String(n) : ''; }
-      bt.badge.setText(unlocked(id) ? badge : '');
-      bt.lab.setTint(hex(this.winId === id ? COL.emberHi : COL.text));
+      bt.badge.setText(on ? badge : '');
+      bt.hl.setVisible(on && (this.winId === id || bt.hov)); bt.ic.setAlpha(on ? 1 : 0.3);
     });
     this.mainBtn.setLabel(S.auto.loop ? '暂停' : RUN ? '继续' : '开始');
     this.aiBtn.setLabel(S.auto.ai ? '自动' : '手动'); this.aiBtn.lab.setTint(hex(S.auto.ai ? COL.good : COL.dim));
@@ -270,14 +305,15 @@ class UI extends Phaser.Scene {
     if (!G.fx) return;
     const list0 = this.toastC.list; if (list0.length && list0[list0.length - 1].msg === msg && list0[list0.length - 1].alpha > 0.5) return;
     while (this.toastC.list.length >= 3) this.toastC.list[0].destroy();
-    const c = this.add.container(W / 2, 30); c.msg = msg; this.toastC.add(c);
+    const c = this.add.container(W / 2, RUN ? 58 : 28); c.msg = msg; // 推关时在骨头条下面，营地里贴着顶部 this.toastC.add(c);
     const w = Math.min(300, textW(msg) + 14); c.add(nine(this, -w / 2, 0, w, 19, 'f_tip', 2)); T(this, 0, 4, msg, { color, align: 'center', parent: c });
     this.toastC.list.forEach(o => { if (o !== c) o.y += 22; });
     this.tweens.add({ targets: c, alpha: 0, delay: 1800, duration: 400, onComplete: () => c.destroy() });
   }
-  feed(msg, color = COL.text) { if (!G.fx) return; this.feeds.unshift({ msg, color, t: G.time }); this.feeds = this.feeds.slice(0, 4); this.renderFeed(); }
-  feedItem(it) { this.feed(`${itemName(it)} · ${QN[it.q]} · ${rarName(it)}`, icol(it)); }
-  renderFeed() { this.feedC.removeAll(true); this.feeds.forEach((f, i) => { const t = T(this, 6, FIELD_B - 12 - i * 10, f.msg, { size: 8, color: f.color, parent: this.feedC }); t.feed = f; }); }
+  // 拾取记录：右下灯火瓶上方，右对齐，名字右边是像素图标
+  feed(msg, color = COL.text, icon) { if (!G.fx) return; this.feeds.unshift({ msg, color, icon, t: G.time }); this.feeds = this.feeds.slice(0, 5); this.renderFeed(); }
+  feedItem(it) { this.feed(itemName(it), icol(it), 'i_' + iconOf(it)); }
+  renderFeed() { this.feedC.removeAll(true); this.feeds.forEach((f, i) => { const y = H - 84 - i * 15, c = this.add.container(0, 0); this.feedC.add(c); c.feed = f; if (f.icon && this.textures.exists(f.icon)) { const s = this.textures.get(f.icon).getSourceImage(); img(this, W - 6 - 14 + Math.round((14 - s.width) / 2), y + Math.round((14 - s.height) / 2), f.icon, c); } T(this, W - 24, y + 2, f.msg, { color: f.color, align: 'right', parent: c }); }); }
   banner(text, color = COL.boss) { if (!G.fx) return; this.bannerT.setText(text).setTint(hex(color)).setAlpha(1); this.tweens.killTweensOf(this.bannerT); this.tweens.add({ targets: this.bannerT, alpha: 0, delay: 1400, duration: 500 }); }
   /* --- 窗口 --- */
   // 开始 / 暂停自动循环
@@ -288,8 +324,8 @@ class UI extends Phaser.Scene {
   }
   // 自动战斗提示 + 一局结束后的结算条（不挡操作）
   buildAuto() {
-    this.autoT = T(this, 6, BOT_Y - 11, '', { size: 8, color: COL.faint }).setDepth(12);
-    const c = this.add.container(W / 2 - 110, TOP_H + 4).setDepth(40).setVisible(false); this.sumC = c;
+    this.autoT = T(this, 70, BOT_Y - 11, '', { size: 8, color: COL.faint }).setDepth(12);
+    const c = this.add.container(6, 28).setDepth(40).setVisible(false); this.sumC = c;
     c.add(nine(this, 0, 0, 220, 44, 'f_win', 8));
     this.sumT = [T(this, 110, 5, '', { align: 'center', parent: c }), T(this, 110, 19, '', { size: 8, color: COL.dim, align: 'center', parent: c }), T(this, 110, 31, '', { size: 8, color: COL.faint, align: 'center', parent: c })];
   }
@@ -322,14 +358,16 @@ class UI extends Phaser.Scene {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) return;
     if (!this.dimR) { this.dimR = rect(this, 0, TOP_H, W, BOT_Y - TOP_H, COL.ink, 0.6).setDepth(90).setInteractive(); this.dimR.on('pointerup', () => { if (this.winId !== 'summary') this.closeWin(); }); }
-    const [w, h] = { summary: [372, 202], depart: [300, 134] }[this.winId] || [470, 210];
+    const [w, h] = { summary: [372, 176], depart: [300, 134] }[this.winId] || [470, 210];
     const x = Math.round((W - w) / 2), y = TOP_H + Math.round((BOT_Y - TOP_H - h) / 2);
     const c = this.add.container(x, y).setDepth(100); this.winC = c;
-    const bg = nine(this, 0, 0, w, h, 'f_win', 8); c.add(bg); bg.setInteractive();
+    const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[this.winId] || 'f_win'; // 装备皮革、铁砧石板、其余铁框
+    c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0)); // 九宫格拉伸会把噪点拉成色块，底纹单独平铺
+    const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + this.winId](c, w, h);
     const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', atlas: '墓图', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛' }[this.winId];
     if (title) {
-      const pw = textW(title) + 24; c.add(nine(this, Math.round((w - pw) / 2), -5, pw, 18, 'f_plaque')); T(this, w / 2, -2, title, { color: COL.emberHi, align: 'center', parent: c });
+      const pw = textW(title) + 44; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: COL.emberHi, align: 'center', parent: c });
       mkBtn(this, c, w - 20, 4, 15, 14, 'x', () => this.closeWin(), { size: 8, tip: [{ t: '关闭  [Esc]', s: 8 }] });
       if (RUN && ['gear', 'mods', 'craft', 'tree'].includes(this.winId)) { const hs = '任务进行中 · 修改立即生效', hw = textW(hs, 8) + 8, hx = Math.round(w / 2 + pw / 2 + 6); c.add(nine(this, hx, -3, hw, 13, 'f_plaque')); T(this, hx + 4, -1, hs, { size: 8, color: COL.dim, parent: c }); }
     }
@@ -731,37 +769,48 @@ class UI extends Phaser.Scene {
     T(this, 92, 186, '系统与数值参考 Astroloot 复刻；画面、名字和文字为原创。', { size: 8, color: COL.faint, parent: c });
   }
   /* 结算 */
+  // 一趟结算：绶带标题，一排带图标的数，凹槽里的装备，拿到的符文和铸符只放图标
   win_summary(c, w, h) {
     const r = this.winArg; if (!r) return;
     const lad = r.mode === 'ladder', lamp = r.result === 'lampout', back = r.result === 'retreat', emg = r.result === 'emergency';
     const win = r.result === 'win' || (!lad && (lamp || back || emg)); // 推关：灯火燃尽、撤回、紧急撤回都是平安返回
-    T(this, w / 2, 10, lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '时间到' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? `紧急撤回 · 第 ${r.base} 层` : win ? '抵达最深处' : '阵亡', { color: win ? COL.emberHi : COL.bad, align: 'center', scale: 2, parent: c });
-    if (lad) T(this, w / 2, 38, `天梯 ${r.L} 层 · 击杀 ${r.kills} · 用时 ${mmss(r.t)}${win ? ` · 跳 ${r.lad.jump} 层，已解锁到第 ${S.ladder.unlocked} 层` : ' · 没有损失'}`, { size: 8, color: COL.dim, align: 'center', parent: c });
-    else T(this, w / 2, 38, `${r.map ? `墓图 ${r.map.tier} 阶 · ` : ''}第 ${r.descent.from === r.base ? r.base : r.descent.from + '–' + r.base} 层 · 通过 ${r.descent.floors} 层 · 击杀 ${r.kills} · 用时 ${mmss(r.t)}`, { size: 8, color: COL.dim, align: 'center', parent: c });
-    if (lad && win && r.lad.tierUp.length) T(this, w / 2, 50, `晋升${LADDER_TIERS[r.lad.tierUp[r.lad.tierUp.length - 1]].n}：送每种铸符各 ${LD.tiers.firstGlyphs} 张`, { size: 8, color: COL.emberHi, align: 'center', parent: c });
-    else if (r.gain.boon) { const bb = r.gain.boon; T(this, w / 2, 50, `${BOSS_BY[bb.b].n}的祝福：${BOONS[bb.b][bb.i].n}（${treeText(...Object.entries(BOONS[bb.b][bb.i].add)[0])}）`, { size: 8, color: COL.emberHi, align: 'center', parent: c }); }
-    else if (emg) T(this, w / 2, 50, `护甲跌到 ${SOUL.returnHpNow}% 以下，立刻撤回，东西全部带走（推层不算失败）`, { size: 8, color: COL.emberHi, align: 'center', parent: c });
-    else if (back) T(this, w / 2, 50, `最后一层最低血量 ${Math.round(r.descent.minHp * 100)}%（低于 ${SOUL.returnHp}%），打完守关 Boss 自动撤回，东西全部带走`, { size: 8, color: COL.emberHi, align: 'center', parent: c });
-    else if (!lad && r.descent.floors) T(this, w / 2, 50, `这一趟打通到第 ${r.descent.from + r.descent.floors - 1} 层 · 最深纪录第 ${S.maxDepth - 1} 层`, { size: 8, color: COL.good, align: 'center', parent: c });
+    const title = lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '时间到' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
+    const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
     const g = r.gain;
-    T(this, 16, 66, `经验 +${fmt(g.xp)}${g.lv ? `  升 ${g.lv} 级` : ''}`, { size: 8, color: COL.xp, parent: c });
-    const gz = Object.entries(g.glyphs); T(this, 16, 78, `词条碎片 ${g.shards} 个` + (gz.length ? '  ' + gz.map(([k, n]) => `${GLYPH_BY[k].n}×${n}`).join(' ') : ''), { size: 8, color: '#a9c4ff', parent: c });
-    T(this, 16, 90, '符文：' + (g.mods.length ? g.mods.map(m => MOD_BY[m.mid].n).join(' ') : '无') + (g.maps.length ? `    墓图 ${g.maps.length} 张` : ''), { size: 8, color: COL.cyan, parent: c });
+    const note = lad && win && r.lad.tierUp.length ? [`晋升${LADDER_TIERS[r.lad.tierUp[r.lad.tierUp.length - 1]].n}：送每种铸符各 ${LD.tiers.firstGlyphs} 张`, COL.emberHi]
+      : g.boon ? [`${BOSS_BY[g.boon.b].n}的祝福：${BOONS[g.boon.b][g.boon.i].n}（${treeText(...Object.entries(BOONS[g.boon.b][g.boon.i].add)[0])}）`, COL.emberHi]
+      : emg ? [`护甲跌到 ${SOUL.returnHpNow}% 以下，带着全部东西撤回`, COL.emberHi]
+      : back ? [`最后一层最低血量 ${Math.round(r.descent.minHp * 100)}%，打完守关 Boss 撤回，东西全部带走`, COL.emberHi]
+      : lad ? [win ? `跳 ${r.lad.jump} 层，已解锁到第 ${S.ladder.unlocked} 层` : '天梯失败没有损失', COL.dim]
+      : r.descent.floors ? [`打通到第 ${r.descent.from + r.descent.floors - 1} 层 · 最深纪录第 ${S.maxDepth - 1} 层`, COL.good] : null;
+    if (note) T(this, w / 2, 16, note[0], { size: 8, color: note[1], align: 'center', parent: c });
+    const floors = lad ? `${r.L}` : r.descent.from === r.base ? `${r.base}` : `${r.descent.from}–${r.base}`;
+    const cols = [['i_ladder', floors, r.map ? `墓图 ${r.map.tier} 阶` : '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
+    cols.forEach(([ic, v, l], i) => { const cx = Math.round(w / 2 + (i - 2) * 66), s2 = this.textures.get(ic).getSourceImage(); img(this, cx - Math.round(s2.width / 2), 38 - Math.round(s2.height / 2), ic, c); T(this, cx, 48, v, { align: 'center', color: i === 3 ? COL.xp : COL.text, parent: c }); T(this, cx, 62, l, { size: 8, color: COL.dim, align: 'center', parent: c }); });
     const kept = g.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it) || Object.values(S.chips).includes(it));
-    T(this, 16, 104, r.salv && r.salv.n ? `装备 ${g.items.length} 件 · 分解 ${r.salv.n} 件，得到碎片 ${r.salv.shards} 个 · 留下 ${kept.length} 件（绿色箭头是更好的）` : `装备 ${g.items.length} 件（按价值排序，绿色箭头是更好的）`, { size: 8, color: COL.dim, parent: c });
-    const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q).slice(0, 16);
-    best.forEach((it, i) => mkCell(this, c, 16 + i * 21, 116, it, { size: 20, upg: true }));
-    if (!lad && r.lost) TW(this, 16, 142, `阵亡：捡到的东西每件 ${SOUL.deathKeep}% 几率保住，这次丢了装备 ${r.lost.items} 件、符文 ${r.lost.mods} 个、碎片 ${r.lost.shards} 个（上面列的是捡到的全部）。`, 340, { size: 8, color: COL.bad, parent: c });
-    else if (!win) TW(this, 16, 142, '失败不会丢掉已经捡起的东西。地上没捡的会消失。', 340, { size: 8, color: COL.faint, parent: c });
-    mkBtn(this, c, w / 2 - 110, h - 30, 104, 20, '查看装备', () => { this.closeWin(); this.openWin('gear'); }, { size: 8 });
-    mkBtn(this, c, w / 2 + 6, h - 30, 104, 20, lad ? '再打天梯' : '再来一次', () => { this.closeWin(); if (lad) ladderChallenge(S.ladder.unlocked); else startRun(); }, { size: 8, style: 'w' });
+    const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q).slice(0, 15), x0 = Math.round(w / 2 - best.length * 21 / 2);
+    best.forEach((it, i) => mkCell(this, c, x0 + i * 21, 80, it, { size: 20, upg: true }));
+    if (!best.length) T(this, w / 2, 86, '没有留下装备', { size: 8, color: COL.faint, align: 'center', parent: c });
+    else if (kept.length > best.length) T(this, x0 + best.length * 21 + 2, 86, `+${kept.length - best.length}`, { size: 8, color: COL.dim, parent: c });
+    // 符文、铸符、墓图：只放图标
+    const extra = [...g.mods.map(m => ['mod_' + m.mid, '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n]), ...(g.maps.length ? [['i_a_map', '×' + g.maps.length]] : [])];
+    let ex = Math.round(w / 2 - extra.reduce((a, [ic, t]) => a + this.textures.get(ic).getSourceImage().width + textW(t, 8) + 6, 0) / 2);
+    for (const [ic, t] of extra) { const s2 = this.textures.get(ic).getSourceImage(); img(this, ex, 112 - Math.round(s2.height / 2), ic, c); ex += s2.width + 1; if (t) { T(this, ex, 107, t, { size: 8, parent: c }); ex += textW(t, 8); } ex += 5; }
+    if (!lad && r.lost) TW(this, 16, 126, `阵亡：捡到的东西每件 ${SOUL.deathKeep}% 几率保住，这次丢了装备 ${r.lost.items} 件、符文 ${r.lost.mods} 个、碎片 ${r.lost.shards} 个。`, w - 32, { size: 8, color: COL.bad, parent: c });
+    else if (!win) TW(this, 16, 126, '失败不会丢掉已经捡起的东西。地上没捡的会消失。', w - 32, { size: 8, color: COL.faint, parent: c });
+    mkBtn(this, c, w / 2 - 128, h - 32, 72, 22, '装备', () => { this.closeWin(); this.openWin('gear'); }, { size: 8, icon: 'i_w_crossbow', iconX: 6, labelX: 26 });
+    mkBtn(this, c, w / 2 - 52, h - 32, 72, 22, '铁砧', () => { this.closeWin(); this.openWin('craft'); }, { size: 8, icon: 'i_anvil', iconX: 6, labelX: 26, disabled: !unlocked('craft') });
+    mkBtn(this, c, w / 2 + 24, h - 32, 104, 22, lad ? '再打天梯' : `再下行 · ${descentStart()} 层`, () => { this.closeWin(); if (lad) ladderChallenge(S.ladder.unlocked); else startRun(); }, { size: 8, style: 'w', icon: 'torch', iconX: 6, labelX: 18 });
   }
   /* --- 营地 --- */
   // 每个设施一个点击区和名字；没解锁的点了只提示
   buildCamp() {
     const c = this.add.container(0, 0).setDepth(8); this.campC = c; this.campG = this.add.graphics(); c.add(this.campG);
     this.facs = CAMP.facilities.map(f => {
-      const lab = T(this, f.x, f.y + 4, f.n, { size: 8, color: COL.dim, align: 'center', parent: c });
+      const mi = MENU.findIndex(m => m.id === f.win), cw = mi >= 0 ? 11 : 0, lw = textW(f.n, 8);
+      const lab = T(this, f.x - cw / 2, f.y + 4, f.id === 'gate' ? '' : f.n, { size: 8, color: COL.dim, align: 'center', parent: c });
+      if (mi >= 0) { const kx = Math.round(f.x - cw / 2 + lw / 2 + 2); c.add(nine(this, kx, f.y + 4, 9, 10, 'f_btn_w', 3)); T(this, kx + 5, f.y + 5, String(mi + 1), { size: 'num', color: '#2a1306', align: 'center', shadow: false, parent: c }); } // 快捷键小铜牌
+      if (f.id === 'gate') this.goBtn = mkBtn(this, c, f.x - 40, f.y + 2, 80, 15, '', () => { if (RUN || this.winId) return; ac(); startRun(); }, { style: 'w', size: 8, icon: 'torch', iconX: 4, labelX: 14, tip: () => [{ t: '下行', c: COL.emberHi }, { t: `从第 ${descentStart()} 层出发，一直往下走到灯火燃尽。点入口本身可以选层。`, s: 8 }] });
       const z = this.add.zone(f.x - f.r, f.y - f.r * 1.6, f.r * 2, f.r * 1.6 + 6).setOrigin(0).setInteractive(); c.add(z);
       const o = { f, lab, hover: false };
       z.on('pointerover', () => { o.hover = true; showTip(facOpen(f) ? [{ t: f.n, c: COL.emberHi }, { t: FAC_TIP[f.id](), s: 8 }] : [{ t: '被碎石堵住了', c: COL.dim }, { t: `${f.n}：${unlockText(f.unlock)}`, s: 8, c: COL.faint }]); });
@@ -778,9 +827,10 @@ class UI extends Phaser.Scene {
     S.campSeen ??= CAMP.facilities.filter(facOpen).map(f => f.id);
     for (const o of this.facs) if (facOpen(o.f) && !S.campSeen.includes(o.f.id)) { S.campSeen.push(o.f.id); o.flashT = G.time + 4; toast(`营地里清出了${o.f.n}`, COL.emberHi); save(); }
     if (!show) return;
+    const gl = `下行 · 第 ${descentStart()} 层`; if (this.goBtn.lab.text !== gl) this.goBtn.setLabel(gl);
     const g = this.campG; g.clear();
     for (const o of this.facs) {
-      const op = facOpen(o.f), col = o.hover ? COL.emberHi : op ? COL.dim : COL.faint;
+      const op = facOpen(o.f), col = o.hover ? COL.emberHi : op ? COL.text : COL.faint;
       if (o.lab.tintTopLeft !== hex(col)) o.lab.setTint(hex(col));
       if (op && o.flashT > G.time) { const k = (o.flashT - G.time) / 4, r = o.f.r * (1.4 - 0.4 * ((G.time * 1.5) % 1)); g.fillStyle(0xffd36a, 0.7 * k); for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; g.fillRect(Math.round(o.f.x + Math.cos(a) * r), Math.round(o.f.y - 8 + Math.sin(a) * r * 0.55), 1, 1); } }
     }

@@ -200,9 +200,9 @@ function collect(dp) {
   const g = RUN && RUN.gain;
   if (dp.kind === 'item') { addItem(dp.item); g && g.items.push(dp.item); if (G.ui) G.ui.feedItem(dp.item); }
   else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
-  else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c); }
-  else if (dp.kind === 'map') { S.maps.push(dp.map); g && g.maps.push(dp.map); if (G.ui) G.ui.feed(`墓图：${mapName(dp.map)}`, RCOL[dp.map.rar]); }
-  else if (dp.kind === 'mod') { S.mods.push(dp.mod); g && g.mods.push(dp.mod); if (G.ui) G.ui.feed(`符文：${MOD_BY[dp.mod.mid].n}`, COL.cyan); }
+  else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
+  else if (dp.kind === 'map') { S.maps.push(dp.map); g && g.maps.push(dp.map); if (G.ui) G.ui.feed(mapName(dp.map), RCOL[dp.map.rar], 'i_a_map'); }
+  else if (dp.kind === 'mod') { S.mods.push(dp.mod); g && g.mods.push(dp.mod); if (G.ui) G.ui.feed(MOD_BY[dp.mod.mid].n, COL.cyan, 'mod_' + dp.mod.mid); }
   fx({ t: 'pick', x: dp.x, y: dp.y, kind: dp.kind });
   sfx(dp.kind === 'shard' || dp.kind === 'glyph' ? 'die' : 'pick');
 }
@@ -217,7 +217,7 @@ function modXp(x) {
   for (const m of hub.mods) {
     if (!m || m.lvl >= MOD_MAX) continue;
     m.xp += x; const L = modLevelOf(m.xp);
-    if (L > m.lvl) { m.lvl = L; up = true; if (G.ui) G.ui.feed(`${MOD_BY[m.mid].n} 升到 ${m.lvl} 级`, COL.cyan); }
+    if (L > m.lvl) { m.lvl = L; up = true; if (G.ui) G.ui.feed(`${MOD_BY[m.mid].n} ${m.lvl} 级`, COL.cyan, 'mod_' + m.mid); }
   }
   if (up) refreshStats();
 }

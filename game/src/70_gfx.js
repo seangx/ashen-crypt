@@ -38,6 +38,8 @@ function buildTextures(sc) {
   add('f_plaque', bevelCanvas(12, 12, '#4a2e10', '#d8a048', '#22140a'));
   add('f_bar', bevelCanvas(12, 12, '#1b1520', '#33293f', '#0f0b14'));
   add('f_slot', cvs(8, 8, x => { px(x, COL.ink, 0, 0, 8, 8); px(x, '#140f1b', 1, 1, 6, 6); px(x, '#0a070d', 1, 1, 6, 1); px(x, '#0a070d', 1, 1, 1, 6); px(x, '#30283c', 1, 6, 6, 1); px(x, '#30283c', 6, 1, 1, 6); }));
+  // 凹槽内圈的稀有度光：最外一圈实色，往里两圈渐淡
+  add('f_glow', cvs(8, 8, x => { for (const [k, a] of [[0, 0.95], [1, 0.4], [2, 0.15]]) { x.strokeStyle = `rgba(255,255,255,${a})`; x.lineWidth = 1; x.strokeRect(k + 0.5, k + 0.5, 8 - 2 * k - 1, 8 - 2 * k - 1); } }));
   add('f_rar', cvs(6, 6, x => { px(x, '#fff', 0, 0, 6, 1); px(x, '#fff', 0, 5, 6, 1); px(x, '#fff', 0, 0, 1, 6); px(x, '#fff', 5, 0, 1, 6); }));
   add('f_tip', cvs(6, 6, x => { px(x, COL.ink, 0, 0, 6, 6); px(x, '#5a4d6e', 1, 1, 4, 4); px(x, 'rgba(15,11,20,.97)', 2, 2, 2, 2); }));
   add('f_win', cvs(24, 24, x => {
@@ -52,6 +54,7 @@ function buildTextures(sc) {
     px(x, '#2a2236', 5, 5, w - 10, 1);
     for (const [a, b] of [[2, 2], [w - 4, 2], [2, h - 4], [w - 4, h - 4]]) { px(x, '#ffe08a', a, b, 2, 2); px(x, '#5a3a14', a + 1, b + 1); }
   }));
+  chromeTextures(add);
   add('node', cvs(22, 22, x => {
     const o = [[7, 0, 8, 1], [4, 1, 14, 1], [2, 2, 18, 2], [1, 4, 20, 3], [0, 7, 22, 8], [1, 15, 20, 3], [2, 18, 18, 2], [4, 20, 14, 1], [7, 21, 8, 1]];
     for (const [a, b, w, h] of o) px(x, '#fff', a, b, w, h);
@@ -61,6 +64,54 @@ function buildTextures(sc) {
     for (const [a, b, w, h] of o) px(x, '#fff', a, b, w, h);
   }));
 }
+/* ---------- 游戏化界面外框：铁框 + 青铜、凹槽、血球、骨头条、石台 ---------- */
+const CH = { ink: '#0b080e', iron: '#2e2638', iron2: '#45394f', ironH: '#5d4f6b', br: '#7a4c16', brH: '#c9893a', gold: '#e8b84a' };
+function chromeTextures(add) {
+  let seed = 7; const R = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+  // 九宫格外框：铁边、青铜细线、四角铆钉；fill 是两种底色交替的噪点
+  const frame = (w, cn, fill) => cvs(w, w, x => {
+    const h = w, P = (c, a, b, ww = 1, hh = 1) => px(x, c, a, b, ww, hh);
+    if (fill) for (let j = 3; j < h - 3; j++) for (let i = 3; i < w - 3; i++) P(typeof fill === 'function' ? fill() : R() < 0.5 ? fill[0] : fill[1], i, j);
+    P(CH.ink, 1, 0, w - 2, 1); P(CH.ink, 1, h - 1, w - 2, 1); P(CH.ink, 0, 1, 1, h - 2); P(CH.ink, w - 1, 1, 1, h - 2);
+    P(CH.iron2, 1, 1, w - 2, 2); P(CH.iron, 1, h - 3, w - 2, 2); P(CH.iron2, 1, 1, 2, h - 2); P(CH.iron, w - 3, 1, 2, h - 2);
+    P(CH.ironH, 1, 1, w - 2, 1); P(CH.ironH, 1, 1, 1, h - 2);
+    P(CH.br, 3, 3, w - 6, 1); P(CH.br, 3, h - 4, w - 6, 1); P(CH.br, 3, 3, 1, h - 6); P(CH.br, w - 4, 3, 1, h - 6);
+    const k = cn; for (const [cx, cy] of [[0, 0], [w - k, 0], [0, h - k], [w - k, h - k]]) { P(CH.ink, cx, cy + 2, k, k - 4); P(CH.ink, cx + 2, cy, k - 4, k); P(CH.iron2, cx + 1, cy + 3, k - 2, k - 6); P(CH.iron2, cx + 3, cy + 1, k - 6, k - 2); P(CH.ironH, cx + 3, cy + 1, k - 6, 1); P(CH.br, cx + 3, cy + 3, k - 6, k - 6); P(CH.gold, cx + 4, cy + 4, k - 8, k - 8); P('#fff2c8', cx + 4, cy + 4, 1, 1); }
+  });
+  // 外框的中间是纯色，噪点纹理另用平铺贴图（九宫格拉伸会把噪点拉成色块）
+  const noise = pick => cvs(16, 16, x => { for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) px(x, pick(), i, j); });
+  add('f_win', frame(24, 8, ['#1e1827', '#1e1827'])); add('n_win', noise(() => R() < 0.5 ? '#1d1726' : '#1f1929'));
+  add('f_stone', frame(24, 8, ['#251e2e', '#251e2e'])); add('n_stone', noise(() => R() < 0.5 ? '#241d2d' : R() < 0.8 ? '#272030' : '#211a29'));
+  add('f_leather', frame(24, 8, ['#29190f', '#29190f'])); add('o_frame', frame(24, 8, null)); add('n_leather', noise(() => R() < 0.35 ? '#2a1a14' : R() < 0.5 ? '#24160f' : '#2e1d16'));
+  // 按钮：铁（普通）、青铜（主要），四角小铆钉
+  const btn = (fill, hi, hi2, lo, rv, rvh) => cvs(12, 12, x => { const P = (c, a, b, ww = 1, hh = 1) => px(x, c, a, b, ww, hh); P(CH.ink, 1, 0, 10, 12); P(CH.ink, 0, 1, 12, 10); P(fill, 1, 1, 10, 10); P(hi, 2, 1, 8, 2); if (hi2) P(hi2, 2, 1, 8, 1); P(lo, 1, 9, 10, 2); for (const [a, b] of [[2, 3], [9, 3], [2, 8], [9, 8]]) { P(rv, a, b); } P(rvh, 2, 3); });
+  add('f_btn', btn('#3a3047', '#4a3d58', '#5d4f6b', '#241c2d', '#1a1422', '#7a6896'));
+  add('f_btn_h', btn('#4b3e60', '#5d4f74', '#7a6896', '#2a2236', '#1a1422', '#9a88b6'));
+  add('f_btn_d', btn('#211b29', '#262030', null, '#18131e', '#15101b', '#2a2333'));
+  add('f_btn_w', btn('#b8752a', '#e8b84a', '#ffe08a', '#7a4614', '#5a3008', '#ffe08a'));
+  add('f_btn_wh', btn('#cc8836', '#f4c65a', '#fff0b0', '#8a5218', '#5a3008', '#fff0b0'));
+  add('f_btn_s', btn('#5a3a14', '#8a5a20', '#e0b050', '#2e1c08', '#2e1c08', '#e0b050'));
+  add('f_btn_r', btn('#5a1c22', '#7a2a30', '#c0505a', '#2a0c10', '#2a0c10', '#c0505a'));
+  add('f_plaque', cvs(12, 12, x => { px(x, CH.ink, 1, 0, 10, 12); px(x, CH.ink, 0, 1, 12, 10); px(x, '#3a1e1a', 1, 1, 10, 10); px(x, '#5a2a22', 1, 1, 10, 2); px(x, '#2a1210', 1, 9, 10, 2); px(x, CH.br, 1, 2, 10, 1); px(x, CH.br, 1, 9, 10, 1); }));
+  // 凹槽：系统入口、身上槽位
+  add('sock', cvs(12, 12, x => { px(x, CH.ink, 0, 0, 12, 12); px(x, '#0f0b14', 1, 1, 10, 10); px(x, '#08060b', 1, 1, 10, 2); px(x, '#08060b', 1, 1, 2, 10); px(x, CH.iron2, 1, 10, 10, 1); px(x, CH.iron2, 10, 1, 1, 10); px(x, '#1a1422', 3, 3, 6, 6); }));
+  add('sock_h', cvs(12, 12, x => { px(x, CH.br, 0, 0, 12, 12); px(x, CH.gold, 0, 0, 12, 1); px(x, CH.ink, 1, 1, 10, 10); px(x, '#08060b', 2, 2, 8, 2); px(x, '#2a1e1a', 3, 3, 6, 6); }));
+  // 绶带（三宫格：左右燕尾）
+  add('ribbon', cvs(40, 22, x => { const w = 40, P = (c, a, b, ww = 1, hh = 1) => px(x, c, a, b, ww, hh); P(CH.ink, 10, 2, w - 20, 18); P('#3a1e1a', 11, 3, w - 22, 16); P('#5a2a22', 11, 3, w - 22, 2); P('#2a1210', 11, 16, w - 22, 3); P(CH.br, 11, 4, w - 22, 1); P(CH.br, 11, 17, w - 22, 1);
+    for (const sd of [-1, 1]) { const x0 = sd < 0 ? 0 : w - 12; for (let j = 0; j < 16; j++) { const k = Math.abs(j - 8) >> 1; for (let i = 0; i < 12; i++) { const ii = sd < 0 ? i : 11 - i; if (ii >= k) P(j === 0 || j === 15 || ii === k ? CH.ink : '#2e1814', x0 + i, 3 + j); } } } }));
+  // 骨头条（Boss / 进度），两端骷髅，中间 184×6 留给填充
+  add('bonebar', cvs(200, 16, x => { const w = 200, P = (c, a, b, ww = 1, hh = 1) => px(x, c, a, b, ww, hh); P(CH.ink, 6, 3, w - 12, 10); P('#d9cfb8', 7, 4, w - 14, 1); P('#9a8f78', 7, 11, w - 14, 1); P('#1c1022', 8, 5, w - 16, 6);
+    for (const xx of [0, w - 14]) { P(CH.ink, xx, 0, 14, 16); P('#d9cfb8', xx + 1, 1, 12, 11); P('#ece3cb', xx + 1, 1, 12, 2); P(CH.ink, xx + 3, 5, 3, 3); P(CH.ink, xx + 8, 5, 3, 3); P('#ff5a4a', xx + 4, 6, 1, 1); P('#ff5a4a', xx + 9, 6, 1, 1); P(CH.ink, xx + 6, 9, 2, 2); P('#b9ad94', xx + 3, 12, 8, 3); P(CH.ink, xx + 5, 12, 1, 3); P(CH.ink, xx + 8, 12, 1, 3); } }));
+  // 血球 / 灯火瓶：底（玻璃 + 铜圈 + 顶上骷髅）和高光分两张，液体在中间用图形画
+  const OC = 32, OY = 33, ORr = 24;
+  const orbBg = glass => cvs(64, 64, x => { for (let j = 0; j < 64; j++) for (let i = 0; i < 64; i++) { const d = Math.hypot(i + 0.5 - OC, j + 0.5 - OY); if (d < ORr) px(x, d > ORr - 3 ? '#0d0912' : glass, i, j); else if (d < ORr + 2) px(x, CH.ink, i, j); else if (d < ORr + 5) px(x, ((i + j) >> 1) % 5 === 0 ? CH.brH : CH.br, i, j); else if (d < ORr + 6) px(x, CH.ink, i, j); }
+    const P = (c, a, b, ww = 1, hh = 1) => px(x, c, a, b, ww, hh); P(CH.ink, OC - 5, 1, 10, 9); P('#d9cfb8', OC - 4, 2, 8, 6); P('#ece3cb', OC - 4, 2, 8, 1); P(CH.ink, OC - 3, 4, 2, 2); P(CH.ink, OC + 1, 4, 2, 2); P(CH.ink, OC - 1, 7, 2, 1); P('#b9ad94', OC - 3, 8, 6, 1); });
+  add('orb_hp', orbBg('#1a0d12')); add('orb_soul', orbBg('#120c1c'));
+  add('orb_hi', cvs(64, 64, x => { for (let a = 3.6; a < 4.5; a += 0.05) px(x, 'rgba(255,255,255,.55)', Math.round(OC + Math.cos(a) * (ORr - 6)), Math.round(OY + Math.sin(a) * (ORr - 6))); for (let a = 3.4; a < 4.7; a += 0.04) px(x, 'rgba(255,255,255,.12)', Math.round(OC + Math.cos(a) * (ORr - 8)), Math.round(OY + Math.sin(a) * (ORr - 8))); }));
+  // 石台底栏：可横向平铺
+  add('dock', cvs(32, 30, x => { for (let j = 2; j < 30; j++) for (let i = 0; i < 32; i++) px(x, R() < 0.5 ? '#231c2c' : '#262030', i, j); px(x, CH.ink, 0, 0, 32, 2); px(x, CH.ironH, 0, 2, 32, 1); px(x, CH.br, 0, 6, 32, 1); px(x, CH.ink, 0, 29, 32, 1); for (let i = 2; i < 32; i += 8) px(x, '#1a1422', i, 12 + (i % 3) * 4, 3, 1); }));
+}
+const ORB = { cx: 32, cy: 33, r: 24 };
 /* ---------- 文字：平滑字体，按画布的实际分辨率渲染 ---------- */
 const FONT_FAM = '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", "WenQuanYi Zen Hei", sans-serif';
 const FS = { 8: [8, 500, 10], 12: [10, 500, 13], num: [7, 700, 8] }; // 字号、字重、行高（逻辑像素）
@@ -148,10 +199,10 @@ function mkCheck(sc, parent, x, y, label, on, onToggle, o = {}) {
 function mkCell(sc, parent, x, y, it, o = {}) {
   const s = o.size || 20;
   const c = sc.add.container(x, y); parent.add(c);
-  c.add(nine(sc, 0, 0, s, s, 'f_slot', 3));
+  c.add(nine(sc, 0, 0, s, s, 'sock', 3));
   if (it) {
     const isMod = it.kind === 'mod';
-    if (!isMod) c.add(nine(sc, 1, 1, s - 2, s - 2, 'f_rar', 2).setTint(hex(icol(it))).setAlpha(0.9));
+    if (!isMod) c.add(nine(sc, 1, 1, s - 2, s - 2, 'f_glow', 3).setTint(hex(icol(it))).setAlpha(it.rar ? 1 : 0.45));
     const key = isMod ? 'mod_' + it.mid : 'i_' + iconOf(it); const tw = sc.textures.get(key).getSourceImage().width, th = sc.textures.get(key).getSourceImage().height;
     img(sc, Math.round((s - tw) / 2), Math.round((s - th) / 2), key, c);
     if (isMod) T(sc, 1, s - 8, String(it.lvl), { size: 'num', color: modActiveHere(it, o.host) ? COL.text : COL.bad, parent: c });
