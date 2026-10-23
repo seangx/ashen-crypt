@@ -33,7 +33,7 @@
     { "id": "ArmorOnHit", "n": "吸髓符文", "fit": ["weapon", "tag:Hit"], "req": 6, "fx": { "armorOnHit": ["lp", 0.1, 10, 2] } },
     { "id": "Melee", "n": "蛮力符文", "fit": ["weapon", "tag:Melee"], "req": 6, "fx": { "meleeInc": ["lp", 40, 120, 0], "meleeGuard": 1 } },
     { "id": "Whirl", "n": "旋身符文", "fit": ["weapon", "tag:Melee", "tag:AoE"], "req": 6, "w": 900, "fx": { "whirl": 1, "spinMore": ["lp", 1.06, 1.12, 3], "meleeGuard": 1, "armorOnHit": ["lp", 1, 6, 2] } },
-    { "id": "Spark", "n": "游雷符文", "fit": ["weapon", "tag:Projectile"], "req": 6, "w": 900, "fx": { "spark": 1, "sparkN": ["step", 4, 4], "chain": ["step", 1, 8], "sparkMul": ["lp", 1.5, 2.0, 2], "ail": { "ele": 0.15 } }, "_说明": "只对雷灵生效；chain 是基础弹射次数（走通用弹射）（1 级 1 次，8 / 16 级各 +1），见 mechanics.json 的 spark" },
+    { "id": "Spark", "n": "游雷符文", "fit": ["weapon", "tag:Projectile"], "req": 6, "w": 900, "fx": { "spark": 1, "sparkN": ["step", 3, 5], "chain": ["step", 1, 8], "sparkMul": ["lp", 1.6, 2.2, 2], "ail": { "ele": 0.15 } }, "_说明": "只对雷灵生效；chain 是基础弹射次数（走通用弹射）（1 级 1 次，8 / 16 级各 +1），见 mechanics.json 的 spark" },
     { "id": "Crush", "n": "碾碎符文", "fit": ["weapon", "tag:Melee"], "req": 12, "fx": { "meleeMore": ["lp", 1.2, 1.4, 2], "doubleChance": 0.2 } },
     { "id": "Purity", "n": "纯净符文", "fit": ["weapon"], "req": 32, "fx": { "more": ["lp", 1.5, 2.0, 2], "pure": 1 } },
     { "id": "DeathThreshold", "n": "斩首符文", "fit": ["weapon"], "req": 24, "fx": { "cull": ["lp", 6, 12, 0] } },

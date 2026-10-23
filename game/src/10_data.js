@@ -50,7 +50,7 @@ const SOCKET_KINDS = { weapon: 1, core: 1, engine: 1 };
 // 标签（原作同名机制）
 const TAG_N = {
   Attack: '攻击', AttackSpeed: '攻速', Range: '射程', AoE: '范围', Projectile: '投射物', ProjectileCanReturn: '可返回', ProjectileCanPierce: '可穿透',
-  ProjectileCanChain: '可连锁', ProjectileCanSplit: '可分裂', DoT: '持续伤害', Hit: '命中', Melee: '近战', Mine: '陷阱', Field: '力场', Reflect: '反伤',
+  ProjectileCanChain: '可弹射', ProjectileCanSplit: '可分裂', DoT: '持续伤害', Hit: '命中', Melee: '近战', Mine: '陷阱', Field: '力场', Reflect: '反伤',
   Weapon: '武器', Engine: '遁靴', Core: '头冠', Minion: '召唤物',
 };
 // 原作的距离单位换算成本作像素
@@ -154,9 +154,9 @@ const WH = DATA.mechanics.whirl; // 旋风斩流派的数值
 const SP = DATA.mechanics.spark; // 游雷（电球）流派的数值
 const SOUL = DATA.mechanics.soul; // 魂火（共用资源）
 const MOD_D = {
-  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），贴地乱窜 ${SP.life} 秒，命中后按穿透继续窜（穿透 +${SP.basePierce}），打中敌人后（穿透用完时）每有一次弹射就转向附近另一个敌人（每弹一次伤害 ×${SP.chainMul}），碰到屏幕边自由反弹直到寿命结束，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次；弹射 +${f.chain}；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。游雷数量按投射物 +N 成倍增加（投射物 +1 = 两串），寿命吃持续时间。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
-  Pierce: f => `投射物穿透 ${f.pierce} 个目标，穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
-  Chain: f => `投射物额外弹射 ${f.chain} 次（打中敌人后转向附近另一个敌人），每剩一次弹射伤害提高 ${Math.round(f.chainInc * 100)}%`,
+  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），沿波浪线飞 ${SP.life} 秒（吃持续时间和投射物持续时间，弹速决定飞多远）；碰到屏幕边按弹射次数反弹（每弹一次伤害 ×${SP.chainMul}），弹射用完就飞出屏幕；有穿透时无限穿透，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次，没有穿透时打中就消失；弹射 +${f.chain}；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。投射物 +N 让每次多放 N 颗（相加）。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
+  Pierce: f => `投射物无限穿透（同一个敌人每 ${MECH.projRehit} 秒最多打一次），穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
+  Chain: f => `投射物弹射 +${f.chain}（碰到屏幕边反弹；闪电链类则在敌人之间多连锁 ${f.chain} 次），每剩一次弹射伤害提高 ${Math.round(f.chainInc * 100)}%`,
   Split: f => `投射物分裂 ${f.split} 次，初次命中每次分裂伤害提高 ${Math.round(f.splitInc * 100)}%`,
   Boomerang: f => `投射物飞到尽头后返回，投射物伤害${f.projInc >= 0 ? '提高' : '降低'} ${Math.abs(f.projInc)}%`,
   Persist: f => `投射物持续时间总增 ${f.projDurMore}%，投射物速度降低 ${-f.projSpd}%（游雷飞得慢但在屏幕里来回更久）`,

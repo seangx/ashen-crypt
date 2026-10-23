@@ -198,12 +198,17 @@ function weaponStats(it, P, isEngine) {
   W.stackMax = WH.maxStacks + spinCap + (P.raw.spinCap || 0);
   W.avg = ELEM.reduce((s, e) => s + (W.min[e] + W.max[e]) / 2, 0);
   const critE = 1 + Math.min(1, W.crit) * (W.critMult - 1);
-  const n = 1 + W.extra + W.extraChance;
+  const n = W.spark ? W.sparkN + W.extra + W.extraChance : 1 + W.extra + W.extraChance; // 游雷：颗数 = sparkN + 投射物（相加）
   W.dps = b.aura ? W.auraDps : W.avg * critE * W.aps * (b.form === 'stab' ? 1 : n) * (b.pellets || 1);
   W.dps *= 1 + W.meleeRe;
   if (b.form === 'reflect') W.dps = 0;
   W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : 1; // 旋转满层时的伤害倍数（dps 不含）
-  if (W.spark) { W.pierce += SP.basePierce; let ch = 1; for (let i = 1; i <= W.chain; i++) ch += SP.chainMul ** i * (1 + W.chainStep * i) * 0.8; const reh = 1 + 0.2 * Math.max(0, SP.life * W.sparkLifeMul * Math.sqrt(Math.min(3, 1 + W.projSpdInc / 100)) - 2); W.spinMax = W.sparkN * W.sparkMul * ch * reh; } // 游雷：一串的总倍数（颗数 × (1 + 投射物) 已在 dps 里）；弹射 = 打中敌人后转向附近另一个敌人，按 chainMul 衰减、chainStep 递增，约八成能找到下一个目标；屏幕边反弹不耗弹射，寿命越长来回越多趟、隔 rehit 秒能重复打中，按（寿命 × √弹速倍数）每多 1 秒约多 20% 命中估；模拟和毕业配装用它算秒伤
+  if (W.spark) { // 游雷：每颗的倍数（颗数 sparkN + 投射物 已在 dps 里）。穿透是无限的（有就穿过所有敌人），弹射 = 碰屏幕边反弹的次数
+    W.pierce += SP.basePierce; const L = SP.life * W.sparkLifeMul, v = W.spd * SP.speedMul, pr = W.pierce > 0;
+    const legs = Math.min(W.chain, Math.floor(L * v / SP.estLeg)); // 寿命内飞得到几次屏幕边（约 estLeg 像素一趟），再受弹射次数限制
+    let ch = 1; for (let i = 1; i <= legs; i++) ch += SP.chainMul ** i * (1 + W.chainStep * i) * (pr ? SP.estLegHit : SP.estLegHit * 0.5); // 每反弹一趟再扫一遍敌人；不穿透时打中一个就没了，回头趟只补打漏的
+    const reh = pr ? 1 + SP.estRehit * Math.max(0, Math.min(L, (1 + legs) * SP.estLeg / v) - 1) : 1; // 穿透：飞在屏幕里的时间越长，隔 rehit 秒重复打中越多
+    W.spinMax = W.sparkMul * ch * reh * (pr ? Math.sqrt(W.pierceMore) : 1); W.sparkLegs = legs; }
   return W;
 }
 let STATS = null;

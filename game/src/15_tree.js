@@ -15,7 +15,7 @@ const TREE_TEXT = {
   massInc: v => `${ATTR_N.mass}提高 ${v}%`, energyInc: v => `${ATTR_N.energy}提高 ${v}%`, timeInc: v => `${ATTR_N.time}提高 ${v}%`,
   aspd: v => `攻击速度提高 ${v}%`, aoeInc: v => `范围提高 ${v}%`, areaInc: v => `范围武器伤害提高 ${v}%`, dotInc: v => `持续伤害提高 ${v}%`, dashRegen: v => `冲刺回复${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`, velocity: v => `移动速度提高 ${v}%`,
   dashMax: v => `冲刺槽 +${v}`, critInc: v => `暴击率提高 ${v}%`, critDmg: v => `暴击伤害 ${v >= 0 ? '+' : ''}${v}%`, 'res:all': v => `全部抗性 ${v >= 0 ? '+' : ''}${v}%`, 'inc:all': v => `全部伤害提高 ${v}%`,
-  projSpd: v => `投射物速度提高 ${v}%`, projDur: v => `投射物持续时间提高 ${v}%`, bossInc: v => `对 Boss 伤害总增 ${v}%`, chain: v => `弹射 +${v}（打中敌人后转向附近另一个敌人；游雷碰屏幕边自由反弹直到寿命结束）`, projAdd: v => `投射物 +${v}`, durInc: v => `持续时间提高 ${v}%`, pierce: v => `额外穿透 ${v}`, double: v => `${v}% 几率造成双倍伤害`,
+  projSpd: v => `投射物速度提高 ${v}%`, projDur: v => `投射物持续时间提高 ${v}%`, bossInc: v => `对 Boss 伤害总增 ${v}%`, chain: v => `弹射 +${v}（投射物碰到屏幕边反弹的次数，用完就飞出屏幕；闪电链类的瞬发电弧则是在敌人之间连锁）`, projAdd: v => `投射物 +${v}`, durInc: v => `持续时间提高 ${v}%`, pierce: () => '投射物无限穿透', double: v => `${v}% 几率造成双倍伤害`,
 };
 const INC_N = { proj: '投射物', melee: '近战', engine: '遁靴' };
 const treeText = (k, v) => k.startsWith('inc:') && k !== 'inc:all' ? `${INC_N[k.slice(4)] || ELEM_N[k.slice(4)]}伤害提高 ${v}%` : k.startsWith('ail:') ? `${AIL[k.slice(4)].n}几率 +${Math.round(v * 100)}%` : k.startsWith('res:') && k !== 'res:all' ? `${ELEM_N[k.slice(4)]}抗性 +${v}%` : TREE_TEXT[k](v);

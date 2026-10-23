@@ -200,7 +200,7 @@
   }
  },
  "offense": {
-  "_说明": "multicritDecay 暴击率超过 100% 时每多一重的几率衰减; luckCap 幸运上限; dashRegen 冲刺槽每秒基础回复; unit 原作距离单位换算成像素; projSpeed / projSpeedFast 投射物速度; knockback / pull 击退 / 拉近的力度; contTicks 持续伤害武器每秒结算次数; auraTick 力场武器结算间隔; mineMax 同时存在的陷阱数; mineArm 陷阱布置后多久生效; mineLife 陷阱存在秒数; ramCd 撞击同一个敌人的间隔; ramDashMul 冲刺中撞击的倍率; ramMinMul 慢速撞击最低倍率; chainRange 连锁 / 弹射找下一个目标的距离; shredTime 降抗持续秒数",
+  "_说明": "multicritDecay 暴击率超过 100% 时每多一重的几率衰减; luckCap 幸运上限; dashRegen 冲刺槽每秒基础回复; unit 原作距离单位换算成像素; projSpeed / projSpeedFast 投射物速度; knockback / pull 击退 / 拉近的力度; contTicks 持续伤害武器每秒结算次数; auraTick 力场武器结算间隔; mineMax 同时存在的陷阱数; mineArm 陷阱布置后多久生效; mineLife 陷阱存在秒数; ramCd 撞击同一个敌人的间隔; ramDashMul 冲刺中撞击的倍率; ramMinMul 慢速撞击最低倍率; chainRange 闪电链（瞬发电弧）连锁找下一个目标的距离（投射物的弹射是碰屏幕边反弹，不用它）; projRehit 无限穿透的普通投射物对同一个敌人的重复命中间隔（秒）; shredTime 降抗持续秒数",
   "multicritDecay": 0.8,
   "luckCap": 80,
   "dashRegen": 0.12,
@@ -218,6 +218,7 @@
   "ramDashMul": 1.5,
   "ramMinMul": 0.25,
   "chainRange": 80,
+  "projRehit": 0.5,
   "shredTime": 3
  },
  "ailments": {
@@ -421,8 +422,7 @@
   "drCap": 40
  },
  "spark": {
-  "_说明": "游雷（电球）流派（规格 design/spec-spark.md，照流放之路 2 的电球）。游雷符文：插在雷灵（form proj + wander）上，每次出手改成朝目标扇形放出一串游雷，数量 = 符文的 sparkN × (1 + 投射物数量)，投射物数量来自通用的“投射物 +#”（词条、天赋、百骨冠）；每颗游雷的伤害 = 武器单发 × 符文的 sparkMul。游雷的轨迹是固定的正弦波：沿出手方向（扇形散开）直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，相邻两颗相位差半个周期，整串像编织的辫子；不追踪、不随机。速度 = 武器弹速 × speedMul；持续 life 秒（× (1 + 持续时间提高% + 投射物持续时间提高%) × 缓流符文总增），弹速（投射物速度提高、疾流 / 彗尾 / 疾矢符文、疾星冠）决定这段时间飞多远；同屏最多 maxAlive 颗，超出时最老的消失。碰到屏幕边（场地无限大，边界跟着相机）时中心线镜面反射，不消耗弹射，一直弹到寿命结束（照流放之路电球碰墙）。打中敌人时先看穿透（basePierce + 穿透），穿透用完再看弹射：还有弹射次数就转向 chainR 像素内最近的、这一颗没打过的敌人（照流放之路的连锁），从命中点起重新走波形，每弹射一次伤害 ×chainMul，都用完就消失。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、导雷、链电、织雷之心、雷冠）。同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋，【投射物·弹射】）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每弹一次这一下伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，【弹射】，数值在 rules.json chainCrown）：游雷第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉出来的不再分叉，也不弹射）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
-  "life": 3.5,
+  "_说明": "游雷（电球）流派（规格 design/spec-spark.md、design/spec-pierce-chain.md；2026-10-24 用户定稿：寿命按本地方案，穿透保持无限穿透，弹射是指弹屏幕边缘）。游雷符文：插在雷灵（form proj + wander）上，每次出手朝目标扇形放出一串游雷，数量 = 符文的 sparkN + 投射物数量（相加，照流放之路；投射物 +N 来自词条、天赋、百骨冠）；每颗伤害 = 武器单发 × 符文的 sparkMul。轨迹是固定的正弦波：沿出手方向直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，不追踪、不随机。速度 = 武器弹速 × speedMul；寿命 life 秒 × (1 + 持续时间提高% + 投射物持续时间提高%) × 缓流等符文总增，寿命到了就消失（反弹不补寿命），弹速决定这段时间飞多远；同屏最多 maxAlive 颗，超出时最老的消失。弹射 = 中心线碰到当前屏幕边（视野去掉顶部状态栏，左右各留 10 像素）镜面反射的次数，每反弹一次耗 1 次弹射、之后的伤害 ×chainMul，反弹后继续走波形；弹射用完再碰到屏幕边就飞出去消失。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、织雷之心、雷冠）。穿透是布尔的：有任何穿透来源（basePierce、穿刺符文、穿透词条）就无限穿透，同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）；没有穿透时打中一个敌人就消失。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每反弹一次之后的命中伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，数值在 rules.json chainCrown）：反弹过的游雷打中的敌人感电；第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉的不再分叉、不弹射）。estLeg / estLegHit / estRehit 只给秒伤估算用：一趟屏幕约 estLeg 像素，每多一趟按 estLegHit 估多打的命中，穿透时飞在屏幕里每多 1 秒按 estRehit 估重复命中。chainR / chainLife 已不用（投射物不再在敌人之间转向）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",  "life": 3.5,
   "rehit": 0.66,
   "speedMul": 1.1,
   "fan": 1.3,
@@ -539,7 +539,10 @@
   "chainMul": 0.85,
   "chainLife": 0.9,
   "chainStepInc": 15,
-  "maxAlive": 160
+  "maxAlive": 160,
+  "estLeg": 240,
+  "estLegHit": 0.15,
+  "estRehit": 0.25
  },
  "soul": {
   "_说明": "魂火：所有流派共用的资源条（护甲条下面那条细条）。上限 = base + 魂力 × perEnergy；每秒回复 = (regen + 魂力 × regenPerEnergy) × (1 + 魂火回复提高%)；魂火消耗降低最多 costCap%。各流派怎么花魂火写在各自的段里（目前只有 whirl）。affixes 格式同 whirl.affixes。 灯火（推关）：推关一趟从当前层出发一层接一层往下打，进入时灯火 = 魂火上限。每秒燃烧 burn + 层数 × burnPerFloor，推关中没有自然回复（regen 只在天梯里用）；击杀回 onKill（普通 / 精英 / Boss），“魂火回复提高%”提高击杀回复。灯火归 0：平安返回，拾取的全部带走。阵亡：这一趟拾取的装备、符文、碎片每件有 deathKeep% 几率保留。nextFloorDelay：打掉守关 Boss 后几秒进入下一层（期间自动拾取地上的东西）。lowWarn：灯火低于这个比例时灯火条闪烁。 startBack：推关（没锁层时）从 max(1, 最深层 − startBack) 出发，越走越难，最深层是一趟的高潮；锁层时就从锁定的层出发。超过出发前的最深层才算推层成功。 重温：比出发时的最深层浅的层，燃烧 ×revisitBurnMul、击杀回复 ×revisitKillMul，热身的几层花得少，灯火留给最深层。 returnHp：推关里某一层的最低血量（护甲比例）低于 returnHp% 时，打掉这层的守关 Boss 后自动撤回（和灯灭一样平安带走全部东西），免得挂机时在最深层反复阵亡。 撤回只看最深层附近的层（层数 ≥ 出发前最深层 − 1），热身层血量再低也不撤。returnHpMelee：近战流派（AI 在近战模式）用的撤回阈值，null 时沿用 returnHp。 returnHpNow：最深层附近（层数 ≥ 出发前最深层 − 1）护甲比例一旦低于 returnHpNow%，立刻紧急撤回（不等打完 Boss），同样平安带走全部东西，推层不算失败。",
