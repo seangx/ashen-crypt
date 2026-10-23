@@ -669,5 +669,12 @@
   "returnHp": 30,
   "returnHpMelee": null,
   "returnHpNow": 12
+ },
+ "tags": {
+  "_说明": "通用标签词条（规格 design/spec-tags.md）。aoeInc 范围提高%：对有 AoE 标签的武器的爆炸 / 光环半径和旋风判定半径生效；durInc 持续时间提高%：小旋风、游雷、玩家留在地上的效果存在更久。格式同 whirl.affixes",
+  "affixes": {
+   "IncreasedArea": {"text": "范围提高 #%", "stat": "aoeInc", "type": "S", "on": ["core", "hub", "weapon"], "tag": "AoE", "grp": "IncreasedArea", "tiers": [[[4, 8], 1000, 1, 999], [[9, 14], 700, 15, 999], [[15, 22], 400, 35, 999], [[23, 30], 150, 65, 999]]},
+   "IncreasedDuration": {"text": "持续时间提高 #%", "stat": "durInc", "type": "S", "on": ["core", "hub", "engine"], "grp": "IncreasedDuration", "tiers": [[[5, 10], 1000, 1, 999], [[11, 18], 700, 15, 999], [[19, 28], 400, 35, 999], [[29, 40], 150, 65, 999]]}
+  }
  }
 }
