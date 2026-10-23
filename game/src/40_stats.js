@@ -200,7 +200,7 @@ function weaponStats(it, P, isEngine) {
   W.dps *= 1 + W.meleeRe;
   if (b.form === 'reflect') W.dps = 0;
   W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : 1; // 旋转满层时的伤害倍数（dps 不含）
-  if (W.spark) { W.pierce += SP.basePierce; let ch = 1; for (let i = 1; i <= W.chain; i++) ch += SP.chainMul ** i * (1 + W.chainStep * i) * 0.8; W.spinMax = W.sparkN * W.sparkMul * ch; } // 游雷：一串的总倍数（每颗打中一次，颗数 × (1 + 投射物) 已在 dps 里），弹射每弹一次按 chainMul 衰减、chainStep 递增，约八成能找到下一个目标；模拟和毕业配装用它算秒伤
+  if (W.spark) { W.pierce += SP.basePierce; let ch = 1; for (let i = 1; i <= W.chain; i++) ch += SP.chainMul ** i * (1 + W.chainStep * i) * 0.5; W.spinMax = W.sparkN * W.sparkMul * ch; } // 游雷：一串的总倍数（颗数 × (1 + 投射物) 已在 dps 里）；弹射改成在场边反弹，每弹一次多横穿一趟场地，按 chainMul 衰减、chainStep 递增，一趟平均约打中半个目标；模拟和毕业配装用它算秒伤
   return W;
 }
 let STATS = null;

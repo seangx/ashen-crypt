@@ -387,7 +387,7 @@ function shoot(W, x, y, a, o) {
 }
 function projHit(p, m) {
   p.hit.add(m);
-  let mul = p.mul * (p.pierced ? p.W.pierceMore : 1) * (1 + p.W.chainInc * p.chain);
+  let mul = p.mul * (p.pierced ? p.W.pierceMore : 1) * (1 + p.W.chainInc * (p.spark ? p.sch || 0 : p.chain));
   if (p.first && p.split > 0) mul *= 1 + p.W.splitInc * p.split;
   if (p.W.aoeR && p.W.form === 'proj') { // 火油罐：命中后范围爆炸
     fx({ t: 'boom', x: m.x, y: m.y - 3, r: p.W.aoeR, el: p.el }); sfx('boom'); aoePull(m.x, m.y, p.W.aoeR);
@@ -398,16 +398,11 @@ function projHit(p, m) {
     const shocked = m.shock > 0, d = hitMob(m, p.W, { mul: mul * (1 + p.W.chainStep * (p.bn || 0)), spark: 1 }); if (p.bn && STATS.flag.chainCrown) shockOn(m); p.vol.last.set(m, RUN ? RUN.t : 0);
     if (RUN && RUN.dmg) RUN.dmg[p.forked ? 'fork' : 'spark'] = (RUN.dmg[p.forked ? 'fork' : 'spark'] || 0) + d;
     if (STATS.flag.chainCrown && shocked && !p.forked && !p.didFork) { p.didFork = 1; for (let i = 0; i < SP.forkN; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (SP.forkN - 1) / 2) * 1.2, { pierce: 0, chain: 0, sch: 0, split: 0, ret: 0, hit: new Set([m]), mul: p.mul * SP.forkMul, life: 0.8, spark: 1, forked: 1, vol: p.vol, ph: i ? Math.PI : 0 }); }
-    if (p.sch > 0) { // 弹射：转向附近最近的、这一颗没打过的敌人，从命中点起重新走波形；电弧就是真实的弹射路线
-      let n = null, bd = SP.chainR ** 2; for (const x of mobs) { if (x === m || x.dead || x.rise > 0.2 || p.hit.has(x) || (p.chd && p.chd.has(x))) continue; const d = (x.x - m.x) ** 2 + (x.y - m.y) ** 2; if (d < bd) { bd = d; n = x; } }
-      (p.chd || (p.chd = new Set())).add(m);
-      if (n) { p.sch--; p.bn = (p.bn || 0) + 1; p.mul *= SP.chainMul; p.a = Math.atan2(n.y - 5 - (m.y - 5), n.x - m.x); p.wx = m.x; p.wy = m.y - 5; p.wd = 0; p.life = Math.max(p.life, SP.chainLife); fx({ t: 'sarc', x: m.x, y: m.y - 5, ts: [[n.x, n.y - 5]] }); return false; }
-    }
     fx({ t: 'sflash', x: m.x, y: m.y - 5 });
     if (p.pierce > 0) { p.pierce--; p.pierced = true; return false; }
     return true;
   }
-  const bn = Math.max(0, p.W.chain - p.chain); // 已经弹了几次
+  const bn = p.bn || 0; // 已经在场边弹了几次
   hitMob(m, p.W, { mul: mul * (1 + p.W.chainStep * bn) }); if (bn && STATS.flag.chainCrown) shockOn(m);
   fx({ t: 'hit', x: m.x, y: m.y - 5, el: p.el });
   if (p.first && p.split > 0) { // 分裂：向前方散开
@@ -416,7 +411,6 @@ function projHit(p, m) {
     return true;
   }
   p.first = false;
-  if (p.chain > 0) { const n = nearest(m.x, m.y - 4, MECH.chainRange, p.hit); if (n) { p.chain--; p.a = Math.atan2(n.y - 4 - p.y, n.x - p.x); p.vx = Math.cos(p.a) * p.W.spd; p.vy = Math.sin(p.a) * p.W.spd; p.life = 0.6; return false; } }
   if (p.pierce > 0) { p.pierce--; p.pierced = true; return false; }
   return true;
 }
@@ -677,12 +671,15 @@ function stepProjs(dt) {
           if (p.wd == null) { p.wd = 0; p.wx = p.x; p.wy = p.y; }
           const s = p.W.spd * SP.speedMul, ux = Math.cos(p.a), uy = Math.sin(p.a);
           p.wx += ux * s * dt; p.wy += uy * s * dt; p.wd += s * dt;
-          if (p.wx < F.x0 || p.wx > F.x1) { p.a = Math.PI - p.a; p.wx = clamp(p.wx, F.x0, F.x1); } if (p.wy < F.y0 - 6 || p.wy > F.y1) { p.a = -p.a; p.wy = clamp(p.wy, F.y0 - 6, F.y1); }
+          { const hx = p.wx < F.x0 || p.wx > F.x1, hy = p.wy < F.y0 - 6 || p.wy > F.y1; // 弹射：中心线碰到场边时，有弹射次数就镜面反射（每次消耗一次），没有就飞出去
+            if ((hx || hy) && !p.out) { if (p.sch > 0) { p.sch--; p.bn = (p.bn || 0) + 1; p.mul *= SP.chainMul; if (hx) p.a = Math.PI - p.a; if (hy) p.a = -p.a; p.wx = clamp(p.wx, F.x0, F.x1); p.wy = clamp(p.wy, F.y0 - 6, F.y1); p.hit.clear(); p.life = Math.max(p.life, SP.chainLife); fx({ t: 'bounce', x: p.wx, y: p.wy }); } else p.out = 1; } }
           const k = Math.PI * 2 / SP.waveL, ph = k * p.wd + p.ph, amp = SP.waveA * Math.min(1, p.wd / 12), nx = -Math.sin(p.a), ny = Math.cos(p.a), off = amp * Math.sin(ph), slope = amp * k * Math.cos(ph);
           p.x = p.wx + nx * off; p.y = p.wy + ny * off;
           p.vx = (Math.cos(p.a) + nx * slope) * s; p.vy = (Math.sin(p.a) + ny * slope) * s; // 只给画面定朝向
         } else if (p.W.b.wander && !p.back) { const n = nearest(p.x, p.y, 70, p.hit); const ta = n ? Math.atan2(n.y - 5 - p.y, n.x - p.x) : p.a + rf(-1, 1); let da = ta - p.a; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2; p.a += clamp(da, -6 * dt, 6 * dt); const s = p.W.spd * 0.6; p.vx = Math.cos(p.a) * s; p.vy = Math.sin(p.a) * s; }
         if (!p.spark) { p.x += p.vx * dt; p.y += p.vy * dt; }
+        if (!p.spark && !p.back && !p.out) { const hx = p.x < F.x0 || p.x > F.x1, hy = p.y < F.y0 - 6 || p.y > F.y1; // 弹射：碰到场边镜面反射，每次消耗一次弹射
+          if (hx || hy) { if (p.chain > 0) { p.chain--; p.bn = (p.bn || 0) + 1; p.first = false; if (hx) p.vx = -p.vx; if (hy) p.vy = -p.vy; p.a = Math.atan2(p.vy, p.vx); p.x = clamp(p.x, F.x0, F.x1); p.y = clamp(p.y, F.y0 - 6, F.y1); p.hit.clear(); p.life = Math.max(p.life, 0.9); fx({ t: 'bounce', x: p.x, y: p.y }); } else p.out = 1; } }
       }
       p.life -= dt;
       if (p.spark) { const now = RUN ? RUN.t : 0; for (const m of p.hit) if (now - (p.vol.last.get(m) ?? -9) >= SP.rehit) p.hit.delete(m); } // 游雷：同一串对同一个敌人每 rehit 秒最多打一次
