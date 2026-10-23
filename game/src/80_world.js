@@ -90,6 +90,10 @@ class World extends Phaser.Scene {
         case 'ring': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.18, max: 0.18, el: e.el }); break;
         case 'shield': this.rings.push({ x: e.x, y: e.y - 6, r: 11, life: 0.2, max: 0.2, el: 'cyan' }); break;
         case 'cone': { const n = 4; for (let i = 0; i < n; i++) { const a = e.a + rf(-0.5, 0.5), d = rf(8, e.r); this.em.fire.explode(1, e.x + Math.cos(a) * d, e.y + Math.sin(a) * d); } break; }
+        case 'sarc': { // 游雷命中（照流放之路 2 闪电箭）：白青闪光 + 跳向附近敌人的锯齿电弧，每帧重新抖，0.12–0.22 秒消失
+          if (this.lines.length < 90) for (const [x2, y2] of e.ts) this.lines.push({ x1: e.x, y1: e.y, x2, y2, life: rf(0.12, 0.22), arc: 1 });
+          if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 6, life: 0.1, max: 0.1, el: 'flash' });
+          this.em.spark2.particleTint = 0xd8f4ff; this.em.spark2.explode(3, e.x, e.y); break; }
         case 'hit': this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(2, e.x, e.y); break;
         case 'impact': this.em.spark2.particleTint = hex(e.crit ? '#ffe6a0' : ELEM_C[e.el]); this.em.spark2.explode(e.big ? (e.crit ? 10 : 4) : 4, e.x, e.y); if (e.crit) this.em.chip.explode(e.big ? 4 : 1, e.x, e.y); if (e.big && e.crit) this.hitStop(0.05, 1.2); break;
         case 'burn': this.em.fire.explode(2, e.x, e.y - 6); break;
@@ -160,10 +164,10 @@ class World extends Phaser.Scene {
     for (const W_ of STATS.weapons) if (W_ && W_.form === 'aura') { const c = hex(ELEM_C[W_.el]); const n = 28; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.8; pg.fillStyle(c, 0.25 + 0.25 * Math.sin(i + t * 4)); pg.fillRect(player.x + Math.cos(a) * W_.rng, player.y - 2 + Math.sin(a) * W_.rng * 0.6, 1, 1); } }
     // 特效线与环
     const fg = this.fxG; fg.clear();
-    for (const l of this.lines) { l.life -= dt; const c = hex(ELEM_C[l.el] || '#ffffff'); fg.fillStyle(c, 1); if (l.jag) jag(fg, l.x1, l.y1, l.x2, l.y2); else { pline(fg, l.x1, l.y1, l.x2, l.y2); fg.fillStyle(0xffffff, 0.8); pline(fg, l.x1, l.y1 - 1, l.x2, l.y2 - 1); } }
+    for (const l of this.lines) { l.life -= dt; if (l.arc) { arcFx(fg, this.glowG, l); continue; } const c = hex(ELEM_C[l.el] || '#ffffff'); fg.fillStyle(c, 1); if (l.jag) jag(fg, l.x1, l.y1, l.x2, l.y2); else { pline(fg, l.x1, l.y1, l.x2, l.y2); fg.fillStyle(0xffffff, 0.8); pline(fg, l.x1, l.y1 - 1, l.x2, l.y2 - 1); } }
     this.lines = this.lines.filter(l => l.life > 0);
     for (const r of this.rings) {
-      r.life -= dt; const k = 1 - r.life / r.max; const rr = r.r * (0.4 + 0.6 * k); const c = r.el === 'cyan' ? 0x57e0d0 : hex(ELEM_C[r.el]);
+      r.life -= dt; const k = 1 - r.life / r.max; const rr = r.r * (0.4 + 0.6 * k); const c = r.el === 'cyan' ? 0x57e0d0 : r.el === 'flash' ? 0xe8fbff : hex(ELEM_C[r.el]);
       if (r.fill) { fg.fillStyle(c, 0.25 * (1 - k)); fg.fillCircle(r.x, r.y, rr); }
       fg.fillStyle(c, 1 - k); const n = Math.max(12, rr * 2 | 0); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; fg.fillRect(r.x + Math.cos(a) * rr - .5, r.y + Math.sin(a) * rr * 0.75 - .5, 1, 1); }
     }
@@ -208,7 +212,7 @@ class World extends Phaser.Scene {
   drawProj(g, p, t) {
     // 光晕 + 短拖尾（叠加发光层）
     const gg = this.glowG;
-    if (gg && !p.mine) {
+    if (gg && !p.mine && !p.spark) {
       const c = p.enemy ? 0xff5a4a : hex(ELEM_C[p.el]), y0 = p.lob ? p.y - p.z : p.y, tr = p._tr || (p._tr = []);
       tr.unshift(p.x, y0); if (tr.length > 12) tr.length = 12;
       for (let i = 2; i < tr.length; i += 2) { gg.fillStyle(c, 0.4 * (1 - i / 12)); gg.fillCircle(tr[i], tr[i + 1], 2 - i * 0.1); }
@@ -220,12 +224,16 @@ class World extends Phaser.Scene {
     const k = p.W.key;
     if (p.mine) { const on = p.arm <= 0 && (t * 4 | 0) % 2; g.fillStyle(0x120c18, 1).fillRect(p.x - 3, p.y - 1, 6, 3); g.fillStyle(c, 1).fillRect(p.x - 2, p.y, 4, 1); if (on) g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - 1, 1, 1); return; }
     if (k === 'Shuriken' || k === 'TurbineBlades' || k === 'FlameSlinger') { const a = t * 20; g.fillStyle(k === 'FlameSlinger' ? 0xff9a3d : 0xdfe6ee, 1); for (let i = 0; i < 3; i++) { const aa = a + i * 2.1; g.fillRect(p.x + Math.cos(aa) * 2 - .5, p.y + Math.sin(aa) * 2 - .5, 1, 1); } g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - .5, 1, 1); return; }
-    if (p.spark) { // 游雷：一团跳动的电球，四周两三个电火花，脚下一道淡蓝的贴地光
-      const f = (t * 24 + p.x * 3) | 0, x = Math.round(p.x), y = Math.round(p.y);
-      this.groundG.fillStyle(0x7fc8ff, 0.22).fillRect(x - 2, y + 4, 5, 1);
-      g.fillStyle(0x120c18, 1).fillRect(x - 2, y - 2, 5, 5); g.fillStyle(f % 3 ? 0x7fc8ff : 0xbfe6ff, 1).fillRect(x - 1, y - 2, 3, 5).fillRect(x - 2, y - 1, 5, 3);
-      g.fillStyle(0xffffff, 1).fillRect(x, y - 1, 1, 2).fillRect(x - 1, y, 3, 1);
-      for (let i = 0; i < (p.forked ? 1 : 3); i++) { const aa = ((f * 5 + i * 4) % 12) / 12 * Math.PI * 2, r = 3 + ((f + i) % 2); g.fillStyle(i ? 0x7fc8ff : 0xffffff, 1).fillRect(Math.round(x + Math.cos(aa) * r), Math.round(y + Math.sin(aa) * r * 0.75), 1, 1); }
+    if (p.spark) { // 游雷（照流放之路 2 闪电箭）：顺着速度拉长的亮白箭头 + 一条抖动的锯齿电尾
+      const sp = Math.hypot(p.vx, p.vy) || 1, ux = p.vx / sp, uy = p.vy / sp, nx = -uy, ny = ux, x = p.x, y = p.y;
+      const st = p._st || (p._st = []); st.unshift(x, y); if (st.length > 12) st.length = 12; // 最近 6 帧的位置
+      const fl = (t * 30 + x) | 0;
+      g.fillStyle(0x7fc8ff, 0.85); let px_ = x, py = y; // 电尾：沿历史位置，每段横向乱抖，越往后越暗
+      for (let i = 2; i < st.length; i += 2) { const j = rf(-2, 2), qx = st[i] + nx * j, qy = st[i + 1] + ny * j; if (i > 6) g.fillStyle(0x4f8fd8, 0.6); pline(g, px_, py, qx, qy); px_ = qx; py = qy; }
+      if (this.glowG) { this.glowG.fillStyle(0x9fdcff, 0.25); pline(this.glowG, x - ux * 6, y - uy * 6, x + ux * 3, y + uy * 3); this.glowG.fillCircle(x + ux * 2, y + uy * 2, 2); }
+      g.fillStyle(0xbfe6ff, 1); pline(g, x - ux * 4, y - uy * 4, x + ux * 2, y + uy * 2); // 箭身
+      g.fillStyle(0xffffff, 1); pline(g, x - ux * 1, y - uy * 1, x + ux * 3, y + uy * 3); // 亮白箭头
+      if (!p.forked && fl % 3 === 0) { const s2 = fl % 2 ? 1 : -1; g.fillStyle(0xd8f4ff, 1); pline(g, x - ux * 2, y - uy * 2, x - ux * 4 + nx * 3 * s2, y - uy * 4 + ny * 3 * s2); } // 偶尔劈出一根小叉
       return;
     }
     if (k === 'SporeBlaster' || k === 'Orbitron' || k === 'Zapper') { g.fillStyle(0x120c18, 1).fillRect(p.x - 2, p.y - 2, 4, 4); g.fillStyle(c, 1).fillRect(p.x - 1, p.y - 1, 2, 2); if (k === 'Zapper' && (t * 10 | 0) % 2) g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - .5, 1, 1); return; }
@@ -293,5 +301,15 @@ function pline(g, x0, y0, x1, y1) {
   x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
   const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let err = dx + dy, n = 0;
   while (n++ < 600) { g.fillRect(x0, y0, 1, 1); if (x0 === x1 && y0 === y1) break; const e2 = 2 * err; if (e2 >= dy) { err += dy; x0 += sx; } if (e2 <= dx) { err += dx; y0 += sy; } }
+}
+// 游雷命中电弧：外层青色锯齿 + 内层白芯，中途劈出一根短叉，每帧重新随机；发光层上铺一层淡光
+function arcFx(g, gg, l) {
+  const k = Math.min(1, l.life / 0.12), dx = l.x2 - l.x1, dy = l.y2 - l.y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, seg = Math.max(3, L / 7 | 0);
+  let px_ = l.x1, py = l.y1, bx = 0, by = 0;
+  for (let i = 1; i <= seg; i++) { const q = i / seg, o = i === seg ? 0 : rf(-4, 4), qx = l.x1 + dx * q + nx * o, qy = l.y1 + dy * q + ny * o;
+    g.fillStyle(0x6fc4ff, 0.9 * k); pline(g, px_ + nx, py + ny, qx + nx, qy + ny); g.fillStyle(0xffffff, k); pline(g, px_, py, qx, qy);
+    if (i === (seg >> 1)) { bx = qx; by = qy; } px_ = qx; py = qy; }
+  if (bx) { const s = rf(-1, 1) < 0 ? -1 : 1; g.fillStyle(0xbfe6ff, 0.8 * k); pline(g, bx, by, bx + dx / L * 5 + nx * 6 * s, by + dy / L * 5 + ny * 6 * s); }
+  if (gg) { gg.fillStyle(0x7fc8ff, 0.18 * k); gg.fillCircle(l.x2, l.y2, 4); gg.fillCircle((l.x1 + l.x2) / 2, (l.y1 + l.y2) / 2, 3); }
 }
 function jag(g, x1, y1, x2, y2) { let px_ = x1, py = y1; for (let i = 1; i <= 5; i++) { const t = i / 5; const nx = i === 5 ? x2 : x1 + (x2 - x1) * t + rf(-3, 3), ny = i === 5 ? y2 : y1 + (y2 - y1) * t + rf(-3, 3); pline(g, px_, py, nx, ny); px_ = nx; py = ny; } }

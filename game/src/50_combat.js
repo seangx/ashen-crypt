@@ -388,7 +388,7 @@ function projHit(p, m) {
   if (p.spark) { // 游雷：记下这一串打中这个敌人的时间；雷冠：第一次打中感电的敌人时分叉
     const shocked = m.shock > 0, d = hitMob(m, p.W, { mul, spark: 1 }); p.vol.last.set(m, RUN ? RUN.t : 0);
     if (RUN && RUN.dmg) RUN.dmg[p.forked ? 'fork' : 'spark'] = (RUN.dmg[p.forked ? 'fork' : 'spark'] || 0) + d;
-    fx({ t: 'hit', x: m.x, y: m.y - 5, el: p.el });
+    fx({ t: 'sarc', x: m.x, y: m.y - 5, ts: near2(m, 50, p.forked ? 1 : 3) }); // 闪电箭式命中：几道锯齿电弧跳向附近的敌人（只是画面，不造成伤害）
     if (STATS.flag.sparkCrown && shocked && !p.forked && !p.didFork) { p.didFork = 1; for (let i = 0; i < SP.forkN; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (SP.forkN - 1) / 2) * 1.2, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set([m]), mul: p.mul * SP.forkMul, life: 0.8, spark: 1, forked: 1, vol: p.vol, jt: 0, da: 0 }); }
     if (p.pierce > 0) { p.pierce--; p.pierced = true; return false; }
     return true;
@@ -704,3 +704,6 @@ function finishRun() {
   refreshStats(); resetPlayer(); save();
   if (G.ui) G.ui.backToCamp(r);
 }
+
+// 游雷命中画面用：离 m 最近的 n 个活着的敌人（r 像素内），只返回坐标
+function near2(m, r, n) { const out = []; for (const x of mobs) { if (x === m || x.dead || x.rise > 0.2) continue; const d = (x.x - m.x) ** 2 + (x.y - m.y) ** 2; if (d < r * r) { out.push([d, x.x, x.y - 5]); } } out.sort((a, b) => a[0] - b[0]); return out.slice(0, n).map(o => [o[1], o[2]]); }

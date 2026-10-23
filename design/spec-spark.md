@@ -50,3 +50,10 @@
 - `python3 tools/build.py`，然后 `node tools/sim.js --build spark --seeds 1,2,3 --minutes 90 --tree auto --craft auto`
 - `node tools/bis.js --build spark`
 - 截图：mockups/spark-v1-field.png、spark-v1-field2.png
+
+## 视觉第二版：照闪电箭（用户 2026-10-23 09:24：“感觉可以闪电箭类似的视觉”）
+参考 poe2wiki Lightning Arrow：箭命中敌人或墙时，朝附近的敌人放出连锁闪电。
+- 游雷本体：顺着速度方向拉长的亮白箭头和青色箭身，后面拖一条锯齿电尾（最近 6 帧的位置，每段横向乱抖，越往后越暗）；偶尔劈出一根小叉。发光层只铺一条淡光线，不用圆光团。
+- 命中：白青小闪光 + 3 道锯齿电弧跳向 50 像素内最近的敌人（分叉游雷只跳 1 道）。电弧每帧重新抖，0.12–0.22 秒消失。这些电弧只是画面，不造成伤害，也不改变数值；模拟结果不变（spark 90 分钟仍是 29 / 28）。
+- 性能：同屏特效线最多 90 条，闪光环最多 40 个，超过的就不画。
+- 截图：mockups/spark-v2-field.png、spark-v2-field2.png、spark-v2-arcs.png；动图：spark-v2-clip.gif / .mp4
