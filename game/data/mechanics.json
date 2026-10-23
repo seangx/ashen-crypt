@@ -537,8 +537,8 @@
     ]
    }
   },
-  "waveA": 10,
-  "waveL": 60,
+  "waveA": 4,
+  "waveL": 80,
   "chainR": 90,
   "chainMul": 0.85,
   "chainLife": 0.9,
