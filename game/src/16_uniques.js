@@ -6,7 +6,7 @@ const UNIQUES = DATA.uniques.list; // data/uniques.json
 const UNIQUE_BY = Object.fromEntries(UNIQUES.map(u => [u.id, u]));
 const RULE_TEXT = {
   knock: () => '命中击退敌人', knockMore: v => `伤害总增 ${v}%`, aspdLess: v => `攻击速度总降 ${v}%`,
-  afterPct: v => `余震每次保留 ${v}% 伤害`, afterRep: v => `余震多重复 ${v} 次`, convKinThermal: v => `${v}% 的物理伤害平均转换为火焰、圣光、闪电`,
+  afterPct: v => `余震每次保留 ${v}% 伤害`, afterRep: v => `余震多重复 ${v} 次`, convKinThermal: v => `${v}% 的物理伤害平均转换为火焰、圣光、闪电、寒霜`,
   pierce: () => '投射物无限穿透', convExpNuc: v => `${v}% 的火焰伤害转换为瘟疫伤害`, pull: () => '命中把敌人拉近',
   dotMore: v => `持续伤害总增 ${v}%`, 'shred:nuc': v => `命中使敌人瘟疫抗性 -${v}%（3 秒）`, chain: v => `弹射 +${v}（投射物碰到屏幕边反弹的次数，用完就飞出屏幕；闪电链类的瞬发电弧则是在敌人之间连锁）`,
   flatPerMass: v => `每点${ATTR_N.mass}附加 ${v}–${v * 2} 物理伤害`, debrisPerEnergy: v => `每点${ATTR_N.energy}使碎骨范围提高 ${v}%`,
@@ -21,6 +21,6 @@ const RULE_TEXT = {
   areaEye: () => ruleText('areaEye'), projLess: v => `代价：投射物伤害总降 ${v}%`, armorLess: v => `代价：护盾总降 ${v}%`,
   chainCrown: () => ruleText('chainCrown'), projCrown: () => ruleText('projCrown'), durCrown: () => ruleText('durCrown'), velCrown: () => ruleText('velCrown'), meleeCrown: () => ruleText('meleeCrown'), multicrit: () => ruleText('multicrit'), dashMax: v => `冲刺槽 +${v}`, finale: () => ruleText('finale'), splitEnd: () => ruleText('splitEnd'),
 };
-for (const k of ['kin', 'exp', 'pla', 'ele', 'nuc']) RULE_TEXT['ail:' + k] = v => `${AIL[k].n}几率 +${v}%`;
+for (const k of ELEM) RULE_TEXT['ail:' + k] = v => `${AIL[k].n}几率 +${v}%`;
 const ruleLines = it => { const u = UNIQUE_BY[it.u]; return u ? u.rules.map(([k], i) => RULE_TEXT[k](it.uv[i])) : []; };
 const uval = (it, k) => { const u = it && UNIQUE_BY[it.u]; if (!u) return 0; let s = 0; u.rules.forEach(([kk], i) => { if (kk === k) s += it.uv[i]; }); return s; };

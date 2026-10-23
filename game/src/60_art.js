@@ -24,6 +24,9 @@ const ART = {
   houndB: ['.........ww.', '........wkrw', '.g.....wwww.', 'gwbwbwbwbww.', '.wbwbwbwbg..', '..bggggggb..', '...w.w.w..w.', '..ww.ww.w.ww'],
   archerA: ['..SSSSS...', '.SSSSSSSn.', '.SkrwkrS.n', '.SwwgwwS.N', '..wkwkb..N', '...bbb...N', '.b.wbwbwwN', 'w.bwgwb..N', 'w..wbw...n', '...ggg..n.', '...w.b....', '...w.b....', '..ww.bb...'],
   archerB: ['..SSSSS...', '.SSSSSSSn.', '.SkrwkrS.n', '.SwwgwwS.N', '..wkwkb..N', '...bbb...N', '.b.wbwbwwN', 'w.bwgwb..N', '.w.wbw...n', '...ggg..n.', '..w...b...', '..w...b...', '.ww...bb..'],
+  // 霜魂：飘着的冰蓝兜帽魂影，手里一团寒气（远程，寒霜）；下摆是碎冰拖尾，两帧摆动
+  wraithA: ['...VVVV...', '..VvvvvV..', '.VvBBBBvV.', '.VBkllkBV.', '.VBBllBBV.', '..VvvvvV..', '.lVvBBvVl.', 'lvVBvvBVvl', '.l.VvvV.l.', '...VBBV...', '...vBBv...', '....Vv.l..', '...l..V...'],
+  wraithB: ['...VVVV...', '..VvvvvV..', '.VvBBBBvV.', '.VBkllkBV.', '.VBBllBBV.', '..VvvvvV..', '.lVvBBvVl.', 'lvVBvvBVvl', '.l.VvvV.l.', '...VBBV...', '...vBBv...', '...lvV....', '....V..l..'],
   skelA: ['..wwwww..', '.wwwwwwb.', '.wkrwkrb.', '.wwwgwwb.', '..wkwkb..', '...bbb...', '.b.wbw.b.', 'w.bwgwb.w', 'w..wbw..w', '...ggg...', '...w.b...', '...w.b...', '..ww.bb..'],
   skelB: ['..wwwww..', '.wwwwwwb.', '.wkrwkrb.', '.wwwgwwb.', '..wkwkb..', '...bbb...', '.b.wbw.b.', 'w.bwgwb.w', '.w.wbw.w.', '...ggg...', '..w...b..', '..w...b..', '.ww...bb.'],
   armorA: ['..sssss..', '.sssssSS.', '.sSSSSSS.', '.wkrwkrb.', '..wkwkb..', '.sSsssSs.', 'sSsssssSs', 'w.sSsSs.w', 'w..sss..w', '...SSS...', '...w.b...', '...s.S...', '..ss.SS..'],
@@ -117,7 +120,7 @@ Object.assign(ART, {
   a_doomstep: recolor(['............', '...NNN......', '...NnN......', '...NnN......', '...NnN......', '...NnNN.....', '..NnnnnNN...', '.NnnnnnnNN..', '.NNNNNNNNNN.', 'e.o.e.o.e.o.', '............', '............'], { N: 'k', n: 'e' }),
 });
 const CIRCLE = ['....gggg....', '..gg.y..gg..', '.g...y....g.', '.g.yyyyy..g.', 'g...y.y...g.', 'g..y...y..g.', '.g.yyyyy..g.', '.g........g.', '..gg....gg..', '....gggg....', '............', '............'];
-Object.assign(ART, { a_circle_exp: recolor(CIRCLE, { y: 'o' }), a_circle_ele: recolor(CIRCLE, { y: 'l' }), a_circle_pla: recolor(CIRCLE, { y: 'f' }), a_circle_kin: recolor(CIRCLE, { y: 'w', g: 'S' }), a_circle_nuc: recolor(CIRCLE, { y: 'm' }) });
+Object.assign(ART, { a_circle_exp: recolor(CIRCLE, { y: 'o' }), a_circle_ele: recolor(CIRCLE, { y: 'l' }), a_circle_pla: recolor(CIRCLE, { y: 'f' }), a_circle_kin: recolor(CIRCLE, { y: 'w', g: 'S' }), a_circle_nuc: recolor(CIRCLE, { y: 'm' }), a_circle_cold: recolor(CIRCLE, { y: 'l', g: 'V' }) });
 const SPR = {};
 function silhouette(c, color) {
   const s = document.createElement('canvas'); s.width = c.width; s.height = c.height;

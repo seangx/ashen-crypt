@@ -59,7 +59,8 @@
   "BaryteNexus": {"req":24,"w":250,"res":[5,7,9,10,12,14,16,18,20,21,23],"el":"nuc"},
   "QuartzNexus": {"req":1,"w":250,"time":[1,2,3,4,5,6,6,7,8,9,10]},
   "ZirconNexus": {"req":1,"w":250,"energy":[1,2,3,4,5,6,6,7,8,9,10]},
-  "IridiumNexus": {"req":1,"w":250,"mass":[1,2,3,4,5,6,6,7,8,9,10]}
+  "IridiumNexus": {"req":1,"w":250,"mass":[1,2,3,4,5,6,6,7,8,9,10]},
+  "FrostNexus": {"req":12,"w":250,"res":[5,7,9,10,12,14,16,18,20,21,23],"el":"cold"}
  },
  "thrust": [250,500,750,1000,1250,1500,1750,2000,2000,2000,2000],
  "affixes": {
@@ -162,7 +163,15 @@
   "ChipIncreasedCritChance": {"type":"S","el":null,"on":["chip"],"grp":"IncreasedCritChance","tiers":[[[4,10],500,1,999],[[11,20],200,18,999],[[21,30],100,54,999]]},
   "ChipIncreasedCritDamage": {"type":"S","el":null,"on":["chip"],"grp":"IncreasedCritDamage","tiers":[[[4,8],500,1,999],[[9,16],200,18,999],[[17,25],100,54,999]]},
   "ChipIncreasedDamageOverTime": {"type":"S","el":null,"on":["chip"],"grp":"IncreasedDamageOverTime","tiers":[[[8,14],500,1,999],[[15,21],200,18,999],[[22,34],100,54,999]]},
-  "ChipProjectileSpeed": {"type":"S","el":null,"on":["chip"],"grp":"ProjectileSpeed","tiers":[[[3,5],500,1,999],[[6,10],200,18,999],[[11,15],100,54,999]]}
+  "ChipProjectileSpeed": {"type":"S","el":null,"on":["chip"],"grp":"ProjectileSpeed","tiers":[[[3,5],500,1,999],[[6,10],200,18,999],[[11,15],100,54,999]]},
+  "ColdResistance": {"type":"S","el":"cold","on":["core","engine","hub","shield"],"grp":"ColdResistance","tiers":[[[5,10],1000,1,15],[[11,20],800,1,31],[[21,30],400,14,999],[[31,40],200,36,999],[[41,50],100,68,999]]},
+  "MaxColdResistance": {"type":"S","el":"cold","on":["core","engine","hub","shield"],"grp":"MaxColdResistance","tiers":[[[1],25,54,999],[[2],25,54,999]]},
+  "FlatColdDamage": {"type":"P","el":"cold","on":["weapon"],"grp":"FlatColdDamage","tiers":[[[2,3,4,6],1000,1,15],[[4,6,8,15],900,1,20],[[7,12,18,24],800,8,31],[[13,18,27,38],700,14,55],[[19,25,39,60],600,18,60],[[26,34,61,86],500,24,999],[[35,48,87,109],400,30,999],[[49,62,110,139],200,36,999],[[63,80,140,180],100,68,999]]},
+  "IncreasedColdBaseDamage": {"type":"P","el":"cold","on":["weapon"],"grp":"IncreasedColdDamage","tiers":[[[4,8],1000,1,15],[[9,14],900,1,20],[[15,21],800,8,31],[[22,38],700,14,55],[[39,62],600,18,60],[[63,86],500,24,999],[[87,104],400,30,999],[[105,142],200,36,999],[[142,170],100,68,999]]},
+  "IncreasedColdDamage": {"type":"P","el":"cold","on":["chip"],"grp":"IncreasedColdDamage","tiers":[[[4,8,1,0],1000,1,15],[[9,16,1,0],800,1,31],[[17,24,1,0],400,14,999],[[25,32,1,0],200,36,999],[[33,40,1,0],100,68,999]]},
+  "ChipIncreasedColdDamage": {"type":"P","el":"cold","on":["chip"],"grp":"IncreasedColdDamage","tiers":[[[4,8],500,1,999],[[9,18],200,18,999],[[19,32],100,54,999]]},
+  "ChipColdResistance": {"type":"S","el":"cold","on":["chip"],"grp":"ColdResistance","tiers":[[[1,5],500,1,999],[[6,10],200,18,999],[[10,15],100,54,999]]},
+  "ChipMoreColdDamage": {"type":"P","el":"cold","on":["chipE"],"grp":"MoreColdDamage","tiers":[[[3,5],25,54,999],[[6,8],25,54,999]]}
  },
  "modXp": [250,750,1750,3750,7750,15750,31750,63750,127750,255750,511750,1023750,2047750,4095750,8191750,16383750,32767750,65535750,131071750,262143750],
  "mods": {

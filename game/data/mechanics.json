@@ -222,7 +222,7 @@
   "shredTime": 3
  },
  "ailments": {
-  "_说明": "元素异常。碎骨 debris：半径 debrisR（原作单位）内造成命中伤害的 debrisPct；余震 after：重复 afterRepeats 次，每次是上一次的 afterPct；感电 shock：每层全抗 -shockAll%、闪电抗 -shockEle%，持续 shockDur 秒，最多 shockMax 层；致盲 blind：blindDur 秒内伤害总降 blindLess，最多 blindMax；疫病 rad：radDur 秒内造成命中伤害的 radPct；灼烧 burn：火焰伤害的 burnFromFire 进入灼烧池，每 burnTick 秒造成池子的 burnTickPct，并衰减 burnDecay",
+  "_说明": "元素异常。碎骨 debris：半径 debrisR（原作单位）内造成命中伤害的 debrisPct；余震 after：重复 afterRepeats 次，每次是上一次的 afterPct；感电 shock：每层全抗 -shockAll%、闪电抗 -shockEle%，持续 shockDur 秒，最多 shockMax 层；致盲 blind：blindDur 秒内伤害总降 blindLess，最多 blindMax；疫病 rad：radDur 秒内造成命中伤害的 radPct；冰缓 / 冻结见 _冰缓；灼烧 burn：火焰伤害的 burnFromFire 进入灼烧池，每 burnTick 秒造成池子的 burnTickPct，并衰减 burnDecay",
   "debrisR": 150,
   "debrisPct": 0.2,
   "afterPct": 0.75,
@@ -240,7 +240,15 @@
   "burnFromFire": 0.25,
   "burnTick": 0.25,
   "burnTickPct": 0.1,
-  "burnDecay": 0.01
+  "burnDecay": 0.01,
+  "_冰缓": "寒霜（spec-bd-gear §1）：每层冰缓移速、攻速 -chillPer%，最多 chillMax 层，chillDur 秒（每次叠层刷新）；叠满冻结 freezeDur 秒（不能移动、攻击、重击，蓄力中的重击取消），精英 / Boss ×freezeBossMul；冻结结束后 freezeImmune 秒不能再冻结、层数清零。冰缓效果提高% 同时乘在每层减速和冻结时间上。角色被寒霜怪打中也会叠冰缓（不会被冻结），playerChillMax 是角色身上的层数上限",
+  "chillPer": 4,
+  "chillMax": 10,
+  "chillDur": 2,
+  "freezeDur": 1.0,
+  "freezeBossMul": 0.3,
+  "freezeImmune": 4,
+  "playerChillMax": 10
  },
  "itemValue": {
   "_说明": "装备界面里比较好坏用的估值 = 秒伤 + (护甲 + 灵障) × defense + 遁靴平均伤害 × engine",

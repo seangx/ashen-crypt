@@ -65,7 +65,7 @@
   "xp": 4
  },
  "monsters": {
-  "_说明": "1 级数值，按 monsterScaling 成长。w 刷出权重; minL 从第几层开始出现; ai chase 近身 / ranged 远程（rng 射程, cd 射击间隔）; res 抗性 %; el 伤害元素 kin 物理 exp 火焰 pla 圣光 ele 闪电 nuc 瘟疫; lead 远程瞄准时按角色当前速度预判落点（预判 = 弹飞到的时间 × 角色速度 × lead）; pool 弹落地或打中时留下的火圈 {r 半径, dur 持续秒, tick 结算间隔, dmg 每次伤害占怪伤害的比例}",
+  "_说明": "1 级数值，按 monsterScaling 成长。w 刷出权重; minL 从第几层开始出现; ai chase 近身 / ranged 远程（rng 射程, cd 射击间隔）; res 抗性 %; el 伤害元素 kin 物理 exp 火焰 pla 圣光 ele 闪电 nuc 瘟疫 cold 寒霜; chill 弹打中角色时叠几层冰缓; lead 远程瞄准时按角色当前速度预判落点（预判 = 弹飞到的时间 × 角色速度 × lead）; pool 弹落地或打中时留下的火圈 {r 半径, dur 持续秒, tick 结算间隔, dmg 每次伤害占怪伤害的比例}",
   "skel": {
    "n": "骷髅",
    "hp": 60,
@@ -150,6 +150,22 @@
    "rng": 150,
    "cd": 1.8,
    "lead": 1
+  },
+  "wraith": {
+   "n": "霜魂",
+   "hp": 35,
+   "dmg": 9,
+   "spd": 26,
+   "xp": 12,
+   "w": 40,
+   "ai": "ranged",
+   "el": "cold",
+   "size": 6,
+   "minL": 12,
+   "rng": 150,
+   "cd": 1.8,
+   "lead": 1,
+   "chill": 2
   }
  },
  "monsterAttack": {

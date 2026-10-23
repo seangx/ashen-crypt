@@ -1,7 +1,7 @@
 /* ---------------- 属性计算 ----------------
    原作规则：固定附加 → 提高（同类相加）→ 总增（彼此相乘）。
    武器的 flat / baseInc / baseAspd 词条是局部的，只作用于那把武器。 */
-const THERMAL_E = ['exp', 'pla', 'ele'];
+const THERMAL_E = ['exp', 'pla', 'ele', 'cold'];
 const ARMOR_KINDS = ['shield', 'core', 'hub'];
 
 // 全局词条按 stat + 元素汇总：G['res:kin']、G.armor ...

@@ -3,7 +3,7 @@
    中心起点 → 六条主题分支（小节点 → 中节点 → 带代价的大型节点），相邻分支之间有桥接节点。
    每升一级得 1 点；只能点和已点节点相连的节点。
    效果写法：add 里是“提高 / 附加”（相加），more 里是“总增 / 总降”（相乘），flag 是规则改写（参数在 data/rules.json）。 */
-const TREE_C = { kin: ELEM_C.kin, exp: ELEM_C.exp, ele: ELEM_C.ele, pla: ELEM_C.pla, nuc: ELEM_C.nuc, agi: '#c08aff' };
+const TREE_C = { kin: ELEM_C.kin, exp: ELEM_C.exp, ele: ELEM_C.ele, pla: ELEM_C.pla, nuc: ELEM_C.nuc, cold: ELEM_C.cold, agi: '#c08aff' };
 // 节点效果都在 data/tree.json：主路（小 → 中 → 大型节点）、4 个小团（3 小 → 中 → 2 小 → 改规则的核心天赋；顺序：内左、内右、外左、外右）、桥
 const TREE_BRANCH = DATA.tree.branches.map(B => ({ ...B, c: B.c || TREE_C[B.id] || '#ffffff' }));
 const TREE_CLUSTERS = DATA.tree.clusters;
@@ -156,18 +156,18 @@ const TREE_TAGS = [
 const TREE_ICONS = {
   bolt: ['..##.', '.##..', '#####', '..##.', '.##..'], fire: ['..#..', '.##..', '.###.', '#####', '.###.'],
   bone: ['##...', '###..', '.###.', '..###', '...##'], sun: ['#.#.#', '.###.', '#####', '.###.', '#.#.#'],
-  spore: ['.#.#.', '#.#.#', '.###.', '#.#.#', '.#.#.'], crit: ['..#..', '.#.#.', '##.##', '.#.#.', '..#..'],
+  spore: ['.#.#.', '#.#.#', '.###.', '#.#.#', '.#.#.'], frost: ['#.#.#', '.###.', '##.##', '.###.', '#.#.#'], crit: ['..#..', '.#.#.', '##.##', '.#.#.', '..#..'],
   shield: ['#####', '#####', '#####', '.###.', '..#..'], speed: ['#.#..', '.#.#.', '..#.#', '.#.#.', '#.#..'],
   sword: ['....#', '...#.', '#.#..', '.#...', '#.#..'], arrow: ['..###', '...##', '..#.#', '.#...', '#....'],
   aoe: ['.###.', '#...#', '#.#.#', '#...#', '.###.'], trap: ['#.#.#', '#####', '#...#', '#####', '#.#.#'],
   life: ['.#.#.', '#####', '#####', '.###.', '..#..'], time: ['#####', '.#.#.', '..#..', '.#.#.', '#####'],
 };
-const ELEM_ICON = { ele: 'bolt', exp: 'fire', kin: 'bone', pla: 'sun', nuc: 'spore', agi: 'speed', melee: 'sword', area: 'aoe', proj: 'arrow', dot: 'time', guard: 'shield', lamp: 'life' }; // 后六个是按标签分的区
+const ELEM_ICON = { ele: 'bolt', exp: 'fire', kin: 'bone', pla: 'sun', nuc: 'spore', cold: 'frost', agi: 'speed', melee: 'sword', area: 'aoe', proj: 'arrow', dot: 'time', guard: 'shield', lamp: 'life' }; // 后六个是按标签分的区
 function treeIcon(nd) {
   if (nd.icon) return nd.icon;
   const ks = [...Object.keys(nd.add || {}), ...Object.keys(nd.more || {}), ...Object.keys(nd.flag || {})].join(' ');
   const R = [[/crit/i, 'crit'], [/deathBoom|fireTrail|still/, 'trap'], [/chain|proj|pierce|arc/, 'arrow'], [/melee|whirl|exec/, 'sword'], [/aoe|area|shockAura|blindAura/, 'aoe'],
-    [/:ele|spark|shock/, 'bolt'], [/:exp|burn/, 'fire'], [/:kin|corrode/, 'bone'], [/:pla|judge|martyr/, 'sun'], [/:nuc|rad|rot|contagion/, 'spore'],
+    [/:ele|spark|shock/, 'bolt'], [/:exp|burn/, 'fire'], [/:kin|corrode/, 'bone'], [/:pla|judge|martyr/, 'sun'], [/:nuc|rad|rot|contagion/, 'spore'], [/:cold|chill|frozen/, 'frost'],
     [/dot|dur|time/, 'time'], [/armor|deflect|deflRate|res:|dodge|absorb|thorns/, 'shield'], [/aspd|velocity|dash|speed/, 'speed'], [/life|energy|mass/, 'life']];
   for (const [re, ic] of R) if (re.test(ks)) return nd.icon = ic;
   return nd.icon = ELEM_ICON[TREE_BRANCH[nd.b]?.id] || 'sun';

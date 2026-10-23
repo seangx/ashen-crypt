@@ -113,6 +113,9 @@ def dump(o):
         if isinstance(v, dict): rows.append(f' {json.dumps(k)}: {{\n' + ',\n'.join(f'  {json.dumps(kk, ensure_ascii=False)}: {json.dumps(vv, ensure_ascii=False, separators=(",", ":"))}' for kk, vv in v.items()) + '\n }')
         else: rows.append(f' {json.dumps(k)}: {json.dumps(v, ensure_ascii=False, separators=(",", ":"))}')
     return '{\n' + ',\n'.join(rows) + '\n}\n'
+import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from cold_patch import patch as cold_patch
+cold_patch(out)  # 寒霜元素：原作没有，照抄同类档位补上（spec-bd-gear §1）
 txt = dump(out)
 open(OUT, 'w', encoding='utf8').write(txt)
 print('weapons', len(out['weapons']), 'engines', len(out['engines']), 'affixes', len(aff), 'mods', len(out['mods']), 'bytes', len(txt))

@@ -57,7 +57,7 @@ function deathLoss(r) {
 }
 function arenaReset() {
   mobs = []; projs = []; drops = []; zones = [];
-  player.x = 240; player.y = 150; player.vx = player.vy = 0; player.wcd = [0, 0]; camSnap(); if (typeof AUTO !== 'undefined') AUTO.anchor = null;
+  player.x = 240; player.y = 150; player.vx = player.vy = 0; player.chill = 0; player.chillT = 0; player.wcd = [0, 0]; camSnap(); if (typeof AUTO !== 'undefined') AUTO.anchor = null;
   player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.swing = [0, 0]; player.devilT = 0; player.soul = STATS.soulMax; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
   resetPlayer();
   sfx('start');
@@ -74,7 +74,7 @@ function spawnMob(type, o = {}) {
   const HD = o.boss ? null : PROG.run.horde; // 怪海：普通怪更多更脆
   const hp = d.hp * monHp(L) * (elite ? ELITE.hp : 1) * (1 + (mx.mobHp || 0) / 100) * (HD ? HD.hp : 1);
   const m = { type, d, x, y, hp, max: hp, dmg: d.dmg * monDmg(L) * (elite ? ELITE.dmg : 1) * (1 + (mx.mobDmg || 0) / 100) * (HD ? HD.dmg : 1), spd: d.spd * (elite ? ELITE.spd : 1) * (1 + (mx.mobSpd || 0) / 100), size: d.size + (elite ? ELITE.size : 0), res: Object.fromEntries(ELEM.map(e => [e, ((d.res || {})[e] || 0) + (mx.mobRes || 0)])), el: d.el,
-    elite, boss: !!o.boss, rise: o.boss ? 0.8 : 0.4, atkCd: 1, cd: rf(0.5, d.cd || 2), fl: 0, shock: 0, shockT: 0, blindT: 0, blindK: 0, burn: 0, burnT: 0, rad: [], after: [], t: 0, face: 1, vx: 0, vy: 0, kx: 0, ky: 0, ramT: 0, fat: 0 };
+    elite, boss: !!o.boss, rise: o.boss ? 0.8 : 0.4, atkCd: 1, cd: rf(0.5, d.cd || 2), fl: 0, shock: 0, shockT: 0, chill: 0, chillT: 0, frzT: 0, frzImm: 0, blindT: 0, blindK: 0, burn: 0, burnT: 0, rad: [], after: [], t: 0, face: 1, vx: 0, vy: 0, kx: 0, ky: 0, ramT: 0, fat: 0 };
   mobs.push(m); return m;
 }
 function spawnBoss() {
@@ -160,6 +160,18 @@ function aoePull(x, y, r) {
   if (!STATS.flag.areaEye) return; const E = RL.areaEye, pr = r * E.pullR, k = E.pull * 0.3;
   for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = x - m.x, dy = y - m.y, d = Math.hypot(dx, dy); if (d > 4 && d < pr) { const s = Math.min(k, d - 4); m.x += dx / d * s; m.y += dy / d * s; } }
 }
+// 寒霜：冰缓叠层（每层移速、攻速 -chillPer%），叠满冻结；冻结后 freezeImmune 秒免疫、层数清零（spec-bd-gear §1）
+const chillEff = () => 1 + ((STATS.raw && STATS.raw['ailEff:cold']) || 0) / 100; // 冰缓效果提高%（第二步的 AilEffect 词条接这里）
+const chillK = m => m.frzT > 0 ? 0 : 1 - Math.min(0.9, m.chill * MECH.chillPer / 100 * chillEff()); // 速度倍率：冻结时 0
+function chillOn(m, n, W) {
+  if (m.dead || m.frzT > 0) return;
+  if (m.frzImm > 0) { m.chill = Math.min(MECH.chillMax - 1, m.chill + n); m.chillT = MECH.chillDur; return; } // 免疫期：照常冰缓，但叠不到冻结
+  m.chill = Math.min(MECH.chillMax, m.chill + n); m.chillT = MECH.chillDur;
+  if (m.chill >= MECH.chillMax) { m.frzT = MECH.freezeDur * chillEff() * (m.boss || m.elite ? MECH.freezeBossMul : 1); m.slam = null; m.chill = 0; m.chillT = 0; if (RUN) RUN.freezes = (RUN.freezes || 0) + 1; fx({ t: 'freeze', x: m.x, y: m.y - m.size }); }
+}
+// 角色被寒霜怪打中：叠冰缓（移速、攻速降低），不会被冻结
+function chillPlayer(n) { player.chill = Math.min(MECH.playerChillMax, (player.chill || 0) + n); player.chillT = MECH.chillDur; }
+const pChillK = () => 1 - (player.chill || 0) * MECH.chillPer / 100;
 function ailment(m, e, d, W, o) {
   switch (e) {
     case 'kin': { if (o.noDebris) break; // 碎骨：周围一圈，命中伤害的 20%
@@ -170,6 +182,7 @@ function ailment(m, e, d, W, o) {
     case 'ele': m.shock = Math.min(MECH.shockMax, m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)); // 织雷之心：游雷一次叠两层
       m.shockT = MECH.shockDur; break;
     case 'pla': m.blindT = MECH.blindDur; m.blindK = Math.min(MECH.blindMax, MECH.blindLess * W.blindMore); break;
+    case 'cold': chillOn(m, o.chill || 1, W); break;
     case 'nuc': m.rad.push({ dps: d * MECH.radPct * W.radMore * W.dotMore / MECH.radDur, t: MECH.radDur }); break;
   }
 }
@@ -274,6 +287,7 @@ function hurtPlayer(d, el) {
   // 荆棘甲：受击时伤害周围
   for (const W of STATS.weapons) if (W && W.form === 'reflect') { fx({ t: 'ring', x: player.x, y: player.y - 4, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); }
   if (player.life <= 0) { player.life = 0; RUN.result = 'dead'; RUN.ending = 1.6; S.stats.deaths++; sfx('out'); if (G.ui) G.ui.banner('灯火熄灭'); }
+  return true;
 }
 
 /* ---------- 冲刺（遁靴：冲刺即技能） ---------- */
@@ -455,7 +469,7 @@ function logic(dt) {
   } else {
     let tvx = 0, tvy = 0;
     const tg = at || (fieldActive() ? { x: mouse.x + CAM.x, y: mouse.y + 4 + CAM.y } : null); // 鼠标是屏幕坐标，换成世界坐标
-    if (tg) { const dx = tg.x - player.x, dy = tg.y - player.y, d = Math.hypot(dx, dy); if (d > 2) { const s = P.speed * Math.min(1, d / 24) * (spinning() ? WH.spinMoveMul : 1); tvx = dx / d * s; tvy = dy / d * s; } }
+    if (tg) { const dx = tg.x - player.x, dy = tg.y - player.y, d = Math.hypot(dx, dy); if (d > 2) { const s = P.speed * Math.min(1, d / 24) * (spinning() ? WH.spinMoveMul : 1) * pChillK(); tvx = dx / d * s; tvy = dy / d * s; } }
     const ax = tvx - player.vx, ay = tvy - player.vy, al = Math.hypot(ax, ay), step = P.accel * dt;
     if (al <= step) { player.vx = tvx; player.vy = tvy; } else { player.vx += ax / al * step; player.vy += ay / al * step; }
     player.x += player.vx * dt; player.y += player.vy * dt;
@@ -552,11 +566,12 @@ function logic(dt) {
       if (st.idle >= WH.decay * (STATS.flag.spinDecay || 1)) { st.n = 0; st.g = 0; }
       else if (st.n < W.stackMax && player.soul > 0 && (st.g += dt * WH.gainPerSec) >= 1) { st.g -= 1; st.n++; } // 魂火空了不再涨层
     }
-    player.wcd[i] -= dt;
+    player.wcd[i] -= dt * pChillK();
     if (player.wcd[i] <= 0) { if (fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
   });
   stepProjs(dt);
   stepZones(dt);
+  if (player.chillT > 0) { player.chillT -= dt; if (player.chillT <= 0) player.chill = 0; }
   // 敌人
   for (const m of mobs) {
     if (m.dead) continue;
@@ -565,6 +580,8 @@ function logic(dt) {
     if (m.boss && m.t > MECH.fatigueStart) m.fat = Math.min(MECH.fatigueMax, Math.floor(m.t - MECH.fatigueStart));
     // 异常
     if (m.shockT > 0) { m.shockT -= dt; if (m.shockT <= 0) m.shock = 0; }
+    if (m.chillT > 0) { m.chillT -= dt; if (m.chillT <= 0) m.chill = 0; }
+    if (m.frzImm > 0) m.frzImm -= dt;
     if (m.shredT > 0) m.shredT -= dt;
     if (m.blindT > 0) m.blindT -= dt;
     if (m.burn > 0.5) { m.burnT -= dt; if (m.burnT <= 0) { m.burnT = MECH.burnTick; const tk = m.burn * MECH.burnTickPct, keep = STATS.flag.burnKeep; m.burn -= tk * (1 - (m.burnSlow || 0)) * (keep ? RL.burnKeep.drainMul : 1) + (keep ? 0 : m.burn * MECH.burnDecay); damage(m, mitigate(m, 'exp', tk * (keep ? RL.burnKeep.dmgMul : 1)), 'exp', false, true); if (rnd() < 0.3) fx({ t: 'burn', x: m.x, y: m.y }); } }
@@ -573,6 +590,7 @@ function logic(dt) {
     for (const a of m.after) { a.t -= dt; if (a.t <= 0 && a.n > 0) { a.n--; a.t = MECH.afterTick; damage(m, mitigate(m, 'exp', a.d), 'exp', false, true); a.d *= a.k || MECH.afterPct; fx({ t: 'ring', x: m.x, y: m.y - 4, r: 10, el: 'exp' }); } }
     m.after = m.after.filter(a => a.n > 0);
     if (m.dead) continue;
+    if (m.frzT > 0) { m.frzT -= dt; if (m.frzT <= 0) { m.frzT = 0; m.frzImm = MECH.freezeImmune; m.chill = 0; } m.vx = m.vy = 0; m.x += m.kx * dt; m.y += m.ky * dt; const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd; continue; } // 冻结：不能移动、攻击、重击
     // 行动
     const bl = m.blindT > 0 ? 1 - m.blindK : 1;
     const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy) || 1;
@@ -580,17 +598,17 @@ function logic(dt) {
     let want = m.d.ai === 'ranged' ? (d > m.d.rng * 0.8 ? 1 : d < m.d.rng * 0.5 ? -1 : 0) : 1;
     if (m.boss && m.d.pat === 'ring' && m.t % PAT.ring.chargeEvery > PAT.ring.chargeFrom) want = PAT.ring.chargeSpeed; // 骸骨领主冲锋
     if (m.boss && m.d.pat === 'blink') want = d < PAT.blink.keepAway ? PAT.blink.awaySpeed : PAT.blink.nearSpeed;
-    const sl = m.slowT > 0 ? 1 - RL.timeStop.slow / 100 : 1; m.vx = dx / d * m.spd * want * sl; m.vy = dy / d * m.spd * want * sl;
+    const ck = chillK(m), sl = (m.slowT > 0 ? 1 - RL.timeStop.slow / 100 : 1) * ck; m.vx = dx / d * m.spd * want * sl; m.vy = dy / d * m.spd * want * sl;
     m.x += (m.vx + m.kx) * dt; m.y += (m.vy + m.ky) * dt;
     const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd;
-    m.atkCd -= dt; m.cd -= dt;
+    m.atkCd -= dt * ck; m.cd -= dt * ck; // 冰缓也降攻速
     const MA = PROG.monsterAttack;
     if (d < m.size + MA.touch && m.atkCd <= 0) { hurtPlayer(m.dmg * bl, m.el); m.atkCd = MA.meleeCd; }
-    slamStep(m, dt, bl);
+    slamStep(m, dt * ck, bl);
     if (m.boss && m.cd <= 0) bossAct(m, Math.atan2(dy, dx), bl);
     else if (m.d.ai === 'ranged' && m.cd <= 0) {
       m.cd = m.d.cd; const lt = m.d.lead ? d / MA.shotSpd * m.d.lead : 0, a = Math.atan2(player.y + player.vy * lt - m.y, player.x + player.vx * lt - m.x); // lead：按角色速度预判落点
-      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, el: m.el, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
+      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, el: m.el, chill: m.d.chill, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
     }
   }
   // 互相推开
@@ -668,7 +686,7 @@ function stepProjs(dt) {
   for (const p of projs) {
     if (p.enemy) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
-      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { hurtPlayer(p.dmg, p.el); p.dead = true; }
+      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el) && p.chill) chillPlayer(p.chill); p.dead = true; }
       if (p.pool && (p.dead || p.life <= 0)) { zones.push({ enemy: true, x: p.x, y: p.y + 6, r: p.pool.r, t: p.pool.dur, tickT: p.pool.tick, dmg: p.pool.dmg, el: p.el }); p.pool = null; p.dead = true; }
     } else if (p.mine) {
       p.arm -= dt; p.life -= dt; if (p.life <= 0) p.dead = true;

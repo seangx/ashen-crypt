@@ -5,10 +5,10 @@
 const ASTRO = DATA.astro;
 const PROG = DATA.progression, LOOT = DATA.loot;
 // 伤害类型（原作：动能 / 爆炸 / 等离子 / 电能 / 核能；热能 = 爆炸 + 等离子 + 电能）
-const ELEM = ['kin', 'exp', 'pla', 'ele', 'nuc'];
-const ELEM_N = { kin: '物理', exp: '火焰', pla: '圣光', ele: '闪电', nuc: '瘟疫' };
-const ELEM_C = { kin: '#e9e0c9', exp: '#ff8a3d', pla: '#ffe27a', ele: '#7fc8ff', nuc: '#8fe05a' };
-const THERMAL = { exp: 1, pla: 1, ele: 1 };
+const ELEM = ['kin', 'exp', 'pla', 'ele', 'nuc', 'cold'];
+const ELEM_N = { kin: '物理', exp: '火焰', pla: '圣光', ele: '闪电', nuc: '瘟疫', cold: '寒霜' };
+const ELEM_C = { kin: '#e9e0c9', exp: '#ff8a3d', pla: '#ffe27a', ele: '#7fc8ff', nuc: '#8fe05a', cold: '#9fe3ff' };
+const THERMAL = { exp: 1, pla: 1, ele: 1, cold: 1 }; // 元素 = 火焰 + 圣光 + 闪电 + 寒霜（spec-bd-gear §1）
 const THERMAL_N = '元素';
 // 各元素专属异常
 const AIL = {
@@ -17,6 +17,7 @@ const AIL = {
   ele: { id: 'shock', n: '感电', d: '叠层降低目标全部抗性' },
   pla: { id: 'blind', n: '致盲', d: '目标伤害与速度总降，随时间减弱' },
   nuc: { id: 'rad', n: '疫病', d: '按命中伤害的比例持续造成伤害，可以叠加' },
+  cold: { id: 'chill', n: '冰缓', d: '每层降低移速和攻速，叠满冻结：不能移动、不能攻击、不能重击' },
 };
 const BURN = { n: '灼烧', d: '火焰伤害累积成伤害池，每跳衰减' };
 
@@ -76,16 +77,16 @@ const ENGINE_THRUST = ASTRO.thrust; // 原作：所有引擎共享的推力 / �
 const AFF_TEXT = {
   FlatKineticDamage: [v => `附加 ${v[0]}–${v[1]} 物理伤害`, 'flat', 'kin'], FlatExplosiveDamage: [v => `附加 ${v[0]}–${v[1]} 火焰伤害`, 'flat', 'exp'],
   FlatPlasmaDamage: [v => `附加 ${v[0]}–${v[1]} 圣光伤害`, 'flat', 'pla'], FlatElectricDamage: [v => `附加 ${v[0]}–${v[1]} 闪电伤害`, 'flat', 'ele'],
-  FlatNuclearDamage: [v => `附加 ${v[0]}–${v[1]} 瘟疫伤害`, 'flat', 'nuc'],
+  FlatNuclearDamage: [v => `附加 ${v[0]}–${v[1]} 瘟疫伤害`, 'flat', 'nuc'], FlatColdDamage: [v => `附加 ${v[0]}–${v[1]} 寒霜伤害`, 'flat', 'cold'],
   IncreasedKineticBaseDamage: [v => `物理基础伤害提高 ${v}%`, 'baseInc', 'kin'], IncreasedExplosiveBaseDamage: [v => `火焰基础伤害提高 ${v}%`, 'baseInc', 'exp'],
   IncreasedPlasmaBaseDamage: [v => `圣光基础伤害提高 ${v}%`, 'baseInc', 'pla'], IncreasedElectricBaseDamage: [v => `闪电基础伤害提高 ${v}%`, 'baseInc', 'ele'],
-  IncreasedNuclearBaseDamage: [v => `瘟疫基础伤害提高 ${v}%`, 'baseInc', 'nuc'], IncreasedThermalBaseDamage: [v => `元素基础伤害提高 ${v}%`, 'baseInc', 'thermal'],
+  IncreasedNuclearBaseDamage: [v => `瘟疫基础伤害提高 ${v}%`, 'baseInc', 'nuc'], IncreasedThermalBaseDamage: [v => `元素基础伤害提高 ${v}%`, 'baseInc', 'thermal'], IncreasedColdBaseDamage: [v => `寒霜基础伤害提高 ${v}%`, 'baseInc', 'cold'],
   IncreasedBaseAttackSpeed: [v => `基础攻速提高 ${v}%`, 'baseAspd'],
   IncreasedAttackSpeed: [v => `攻击速度提高 ${v}%`, 'aspd'],
   KineticResistance: [v => `物理抗性 +${v}%`, 'res', 'kin'], ExplosiveResistance: [v => `火焰抗性 +${v}%`, 'res', 'exp'], PlasmaResistance: [v => `圣光抗性 +${v}%`, 'res', 'pla'],
-  ElectricResistance: [v => `闪电抗性 +${v}%`, 'res', 'ele'], NuclearResistance: [v => `瘟疫抗性 +${v}%`, 'res', 'nuc'], ThermalResistance: [v => `元素抗性 +${v}%`, 'res', 'thermal'],
+  ElectricResistance: [v => `闪电抗性 +${v}%`, 'res', 'ele'], NuclearResistance: [v => `瘟疫抗性 +${v}%`, 'res', 'nuc'], ThermalResistance: [v => `元素抗性 +${v}%`, 'res', 'thermal'], ColdResistance: [v => `寒霜抗性 +${v}%`, 'res', 'cold'],
   MaxKineticResistance: [v => `物理抗性上限 +${v}%`, 'maxRes', 'kin'], MaxExplosiveResistance: [v => `火焰抗性上限 +${v}%`, 'maxRes', 'exp'], MaxPlasmaResistance: [v => `圣光抗性上限 +${v}%`, 'maxRes', 'pla'],
-  MaxElectricResistance: [v => `闪电抗性上限 +${v}%`, 'maxRes', 'ele'], MaxNuclearResistance: [v => `瘟疫抗性上限 +${v}%`, 'maxRes', 'nuc'],
+  MaxElectricResistance: [v => `闪电抗性上限 +${v}%`, 'maxRes', 'ele'], MaxNuclearResistance: [v => `瘟疫抗性上限 +${v}%`, 'maxRes', 'nuc'], MaxColdResistance: [v => `寒霜抗性上限 +${v}%`, 'maxRes', 'cold'],
   FlatArmor: [v => `护甲 +${v}`, 'armor'], IncreasedArmor: [v => `护甲提高 ${v}%`, 'armorInc'],
   FlatDeflectorShield: [v => `护盾 +${v}`, 'deflect'], IncreasedDeflectorShield: [v => `护盾提高 ${v}%`, 'deflectInc'], FlatDodge: [v => `闪避 +${v}`, 'dodge'],
   DashDamage: [v => `遁靴伤害提高 ${v}%`, 'dashDmg'], DashRecharge: [v => `冲刺回复速度提高 ${v}%`, 'dashRegen'], IncreasedBaseVelocity: [v => `基础移动速度提高 ${v}%`, 'velocity'],
@@ -94,7 +95,7 @@ const AFF_TEXT = {
   AllModsLevel: [v => `所有符文等级 +${v}`, 'modLvl'], IncreasedThermalDamage: [v => `元素伤害提高 ${v}%`, 'thermalInc'],
 };
 // 印记（原作：芯片）专属词条：插在天赋树的印记槽里，效果并入天赋汇总。[文字, 天赋键, a=提高/附加 m=总增]
-const ELN = { Kinetic: 'kin', Explosive: 'exp', Plasma: 'pla', Electric: 'ele', Nuclear: 'nuc' };
+const ELN = { Kinetic: 'kin', Explosive: 'exp', Plasma: 'pla', Electric: 'ele', Nuclear: 'nuc', Cold: 'cold' };
 const CHIP_TEXT = {
   IncreasedCritChance: [v => `暴击率提高 ${v}%`, 'critInc', 'a'], ChipIncreasedCritChance: [v => `暴击率提高 ${v}%`, 'critInc', 'a'],
   IncreasedCritDamage: [v => `暴击伤害 +${v}%`, 'critDmg', 'a'], ChipIncreasedCritDamage: [v => `暴击伤害 +${v}%`, 'critDmg', 'a'],
@@ -174,7 +175,7 @@ const MOD_D = {
   Blind: f => `${AIL.pla.n}几率 +${Math.round(f.ail.pla * 100)}%，致盲效果总增 ${Math.round((f.blindMore - 1) * 100)}%`,
   Radiation: f => `${AIL.nuc.n}几率 +${Math.round(f.ail.nuc * 100)}%，疫病伤害总增 ${Math.round((f.radMore - 1) * 100)}%`,
   Kinetic: f => `额外获得 ${Math.round(f.gain.kin * 100)}% 伤害作为物理伤害`,
-  Thermal: f => `额外获得 ${Math.round(f.thermalGain * 100)}% 伤害作为元素伤害（火焰、圣光、闪电均分）`,
+  Thermal: f => `额外获得 ${Math.round(f.thermalGain * 100)}% 伤害作为元素伤害（火焰、圣光、闪电、寒霜均分）`,
   Plasma: f => `附加 ${f.flat.pla[0]}–${f.flat.pla[1]} 圣光伤害，额外获得 ${Math.round(f.gain.pla * 100)}% 伤害作为圣光伤害`,
   Electric: f => `附加 1–${f.flat.ele[1]} 闪电伤害，额外获得 ${Math.round(f.gain.ele * 100)}% 伤害作为闪电伤害`,
   Inferno: f => `附加 ${f.flat.exp[0]}–${f.flat.exp[1]} 火焰伤害，范围提高 ${f.aoeInc}%`,
@@ -203,7 +204,7 @@ const MOD_D = {
   Time: f => `${ATTR_N.time}提高 ${f.timeInc}%`,
 };
 const MODS = DATA.runes.list.map(r => ({ id: r.id, n: r.n, field: r.field, req: r.req, w: r.w, fit: r.field ? undefined : fitOf(r.fit),
-  fx: L => { const f = specAt(r.fx, L); if (f.thermalGain != null) f.gain = { exp: f.thermalGain / 3, pla: f.thermalGain / 3, ele: f.thermalGain / 3 }; return f; }, d: MOD_D[r.id] }));
+  fx: L => { const f = specAt(r.fx, L); if (f.thermalGain != null) f.gain = { exp: f.thermalGain / 4, pla: f.thermalGain / 4, ele: f.thermalGain / 4, cold: f.thermalGain / 4 }; return f; }, d: MOD_D[r.id] }));
 for (const m of MODS) { const a = ASTRO.mods[m.id]; m.req = a ? a.req : (m.req || 1); m.w = a ? a.w : (m.w || 450); }
 const MOD_BY = Object.fromEntries(MODS.map(m => [m.id, m]));
 const MOD_MAX = LOOT.runeDrop.maxLevel;

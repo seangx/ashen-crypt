@@ -58,6 +58,7 @@
   "CrystalNexus": ["水晶法阵", "a_circle_pla"],
   "OnyxNexus": ["黑曜法阵", "a_circle_kin"],
   "BaryteNexus": ["腐土法阵", "a_circle_nuc"],
+  "FrostNexus": ["霜棺法阵", "a_circle_cold"],
   "QuartzNexus": ["沙漏法阵", "a_circle"],
   "ZirconNexus": ["月石法阵", "a_circle"],
   "IridiumNexus": ["灰石法阵", "a_circle"]

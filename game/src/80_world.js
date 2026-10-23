@@ -104,6 +104,9 @@ class World extends Phaser.Scene {
           if (this.lines.length < 120) for (const [x2, y2] of e.ts) this.lines.push({ x1: e.x, y1: e.y, x2, y2, life: rf(0.15, 0.24), arc: 1 });
           if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 6, life: 0.1, max: 0.1, el: 'flash' });
           this.em.spark2.particleTint = 0xd8f4ff; this.em.spark2.explode(3, e.x, e.y); break;
+        case 'freeze': // 冻结：冰蓝闪一下 + 碎冰粒子
+          if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 9, life: 0.2, max: 0.2, el: 'cold' });
+          this.em.spark2.particleTint = 0x9fe3ff; this.em.spark2.explode(6, e.x, e.y); if (this.em.chip) this.em.chip.explode(2, e.x, e.y); break;
         case 'bounce': // 弹射：投射物在场边反弹时的小火花
           if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 6, life: 0.1, max: 0.1, el: 'flash' });
           this.em.spark2.particleTint = 0xd8f4ff; this.em.spark2.explode(4, e.x, e.y); break;
@@ -155,6 +158,7 @@ class World extends Phaser.Scene {
     const SPIN = [['doll_0', false], ['doll_v1', false], ['doll_v2', false], ['doll_v1', true]], ph = this.spinRate ? (this.spinPh = (this.spinPh || 0) + dt * this.spinRate * 4) : 0;
     const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.hurtT > 0.15 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
+    if (player.chill > 0) this.hero.setTint(0xb8e6ff); else if (this.hero.isTinted) this.hero.clearTint(); // 角色被冰缓
     this.hero.setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(ySort(player.y)).setAlpha(player.dashT > 0 ? 0.5 : 1);
     if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x7a2a1a));
     this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(-ph * Math.PI / 2 - i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
@@ -300,7 +304,7 @@ class World extends Phaser.Scene {
     let sx = m.x, sy = m.y;
     if (m.kbT > 0) { const k = 2.5 * m.kbT / 0.12; sx += Math.cos(m.kbA) * k; sy += Math.sin(m.kbA) * k * 0.6; m.kbT -= this.dt || 0.016; } // 挨打时往后一顿
     const moving = Math.abs(m.vx) + Math.abs(m.vy) > 2; const fr = moving ? ((t * 6 + m.x * 0.1) | 0) % 2 : 0;
-    const key = `m_${m.type}_${fr}${m.fl > 0 ? '_fl' : m.elite ? '_e' : ''}`;
+    const frz = m.frzT > 0, key = `m_${m.type}_${frz ? 0 : fr}${m.fl > 0 ? '_fl' : frz ? '_ice' : m.elite ? '_e' : ''}`; // 冻结：整只变成冰蓝剪影、不摆动
     if (o.key !== key) { o.img.setTexture(key); o.key = key; }
     const h = o.img.height, w = o.img.width;
     const rise = m.rise > 0 ? Math.round(h * clamp(m.rise / 0.45, 0, 1)) : 0;
@@ -308,15 +312,19 @@ class World extends Phaser.Scene {
     if (rise) o.img.setCrop(0, 0, w, h - rise); else if (o.img.isCropped) o.img.setCrop();
     // 异常着色
     if (m.fl > 0) o.img.clearTint();
+    else if (frz) o.img.clearTint();
+    else if (m.chill > 0) o.img.setTint(m.chill >= 6 ? 0x8fd0ff : 0xc4ecff); // 冰缓：越深越蓝
     else if (m.shock && (t * 8 | 0) % 2) o.img.setTint(0xa8dcff);
     else if (m.rad.length) o.img.setTint(0xb8f08a);
     else if (m.burn > 1) o.img.setTint(0xffc090);
     else if (m.blind > 0.2) o.img.setTint(0xfff0a0);
     else o.img.clearTint();
     o.sh.setPosition(sx, sy + 1).setScale(m.boss ? 2 : 1, 1);
+    if (frz) { const hw = (w >> 1) + 1; bar.fillStyle(0xe8fbff, 0.9); for (let i = -hw; i <= hw; i += 2) bar.fillRect(Math.round(sx + i), Math.round(sy - ((i * 7 + 13) % 3)), 1, 2); bar.fillStyle(0x9fe3ff, 0.7).fillRect(Math.round(sx - hw), Math.round(sy), hw * 2 + 1, 1); } // 冻结：脚下一圈冰凌
     if (m.hp < m.max && !m.boss) {
       const bw = m.elite ? 14 : 10; const bx = Math.round(sx - (bw >> 1)), by = Math.round(sy - h - 3);
       bar.fillStyle(0x120c18, 1).fillRect(bx - 1, by - 1, bw + 2, 3); bar.fillStyle(0x4a1c22, 1).fillRect(bx, by, bw, 1); bar.fillStyle(0xff5a4a, 1).fillRect(bx, by, Math.max(1, Math.round(bw * m.hp / m.max)), 1);
+      if (m.chill > 0) { bar.fillStyle(0x9fe3ff, 1); for (let i = 0; i < Math.min(m.chill, 10); i++) bar.fillRect(bx + i, by + 2, 1, 1); } // 冰缓层数：血条下一排点
       if (m.shock) { bar.fillStyle(0x7fc8ff, 1); for (let i = 0; i < Math.min(m.shock, 5); i++) bar.fillRect(bx + i * 2, by - 3, 1, 1); }
     }
   }

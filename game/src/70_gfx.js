@@ -13,7 +13,7 @@ function buildTextures(sc) {
   const T = sc.textures;
   const add = (k, c) => { if (T.exists(k)) T.remove(k); T.addCanvas(k, c); };
   buildSprites(); makeSmallIcons();
-  for (const k of MOB_SPR) SPR[k].forEach((f, i) => { add(`m_${k}_${i}`, f.n); add(`m_${k}_${i}_e`, f.e2); add(`m_${k}_${i}_fl`, f.fl); });
+  for (const k of MOB_SPR) SPR[k].forEach((f, i) => { add(`m_${k}_${i}`, f.n); add(`m_${k}_${i}_e`, f.e2); add(`m_${k}_${i}_fl`, f.fl); add(`m_${k}_${i}_ice`, f.ice); });
   SPR.hero.forEach((c, i) => { add('hero_' + i, c); add('hero_fl_' + i, SPR.heroFl[i]); });
   for (const m of MODS) add('mod_' + m.id, SPR.mods[m.id] || SPR.mods[m.icon || 'RapidProjectiles']);
   add('ghost', SPR.ghost); add('chest', SPR.chest); add('chestG', SPR.chestG); add('skull', SPR.skull); add('torch', SPR.torch);

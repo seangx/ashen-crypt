@@ -395,7 +395,7 @@ class UI extends Phaser.Scene {
     az.on('pointerover', () => showTip([{ t: `${ATTR_N.mass} ${P.mass} / ${ATTR_N.energy} ${P.energy} / ${ATTR_N.time} ${P.time}`, c: COL.emberHi }, { t: `${ATTR_N.mass}每点：护甲提高 2%，物理伤害总增 1%，加速降低 1%。`, s: 8 }, { t: `${ATTR_N.energy}每点：灵障提高 2%，冲刺回复提高 1%，元素伤害总增 1%。`, s: 8 }, { t: `${ATTR_N.time}每点：攻击和移动快 1%。`, s: 8 }])); az.on('pointerout', hideTip);
     rows.forEach(([a, b, col], i) => { const y = 102 + i * 10; T(this, 10, y, a, { size: 8, color: COL.dim, parent: c }); T(this, 128, y, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); });
     T(this, 10, 164, '抗性', { size: 8, color: COL.dim, parent: c });
-    ELEM.forEach((e, i) => T(this, 10 + i * 24, 175, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
+    ELEM.forEach((e, i) => T(this, 10 + i * 20, 175, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
     T(this, 10, 186, `上限 ${P.maxRes}%`, { size: 8, color: COL.faint, parent: c });
     const rz = rect(this, 8, 162, 124, 34, '#000', 0, c).setInteractive();
     rz.on('pointerover', () => showTip([{ t: '抗性', c: COL.emberHi }, ...ELEM.map(e => ({ t: `${ELEM_N[e]} ${P.res[e]}%`, c: ELEM_C[e], s: 8 })), { t: `按百分比减少对应元素的伤害，上限 ${P.maxRes}%。`, s: 8 }])); rz.on('pointerout', hideTip);
