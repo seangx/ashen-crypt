@@ -1,5 +1,5 @@
 {
-  "sparkHeart": { "text": "【投射物·弹射】可弹射的武器伤害 ×{spark.heartMore}，每在场边反弹一次，之后的命中伤害 +{spark.chainStepInc}%（叠加）；游雷每次命中叠 {spark.shockGain} 层感电。代价：其他武器伤害 ×{spark.offhandMul}" },
+  "sparkHeart": { "text": "【投射物·弹射】可弹射的武器伤害 ×{spark.heartMore}，每在屏幕边反弹一次，之后的命中伤害 +{spark.chainStepInc}%（叠加）；游雷每次命中叠 {spark.shockGain} 层感电。代价：其他武器伤害 ×{spark.offhandMul}" },
   "chainCrown": { "chain": 1, "stepInc": 15, "text": "【弹射】弹射 +{chain}；每弹一次这一下伤害 +{stepInc}%；游雷第一次打中感电的敌人时分叉成 {spark.forkN} 颗（伤害 ×{spark.forkMul}），反弹过的投射物打中的敌人感电" },
   "areaEye": { "aoeInc": 25, "pullR": 2, "pull": 40, "text": "【范围】范围提高 {aoeInc}%；范围伤害命中时，把命中点 {pullR} 倍半径内的普通怪往命中点拉（转旋风时持续以每秒 {pull} 像素卷向自己）", "_说明": "pull：每秒像素；单次的范围命中（圣钟、爆炸、陷阱）按 pull × 0.3 一次性拉近" },
   "projCrown": { "extra": 1, "less": 10, "text": "【投射物】投射物 +{extra}；投射物伤害总降 {less}%" },

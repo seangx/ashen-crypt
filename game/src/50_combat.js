@@ -4,7 +4,22 @@
 let RUN = null;
 let mobs = [], projs = [], drops = [], fxq = [], zones = [];
 const mouse = { x: 240, y: 150, on: false, touch: false };
+const FIX = { x0: 10, x1: 470, y0: 62, y1: 226 }; // 营地（固定房间）的边界
+// 无限场地：相机跟着角色走。CAM = 视野左上角的世界坐标；F = 当前视野里的“场边”（左右各留 10，上面让开顶栏，下面让开底栏），弹射就在这里反弹
+const CAM = { x: 0, y: 0 };
 const F = { x0: 10, x1: 470, y0: 62, y1: 226 };
+const VIEW_CY = (TOP_H + BOT_Y) / 2; // 视野里战斗区的竖直中心（屏幕坐标）
+function updView() { F.x0 = CAM.x + 10; F.x1 = CAM.x + W - 10; F.y0 = CAM.y + TOP_H + 8; F.y1 = CAM.y + BOT_Y - 8; }
+function camSnap() { if (RUN) { CAM.x = player.x - W / 2; CAM.y = player.y - VIEW_CY; } else { CAM.x = 0; CAM.y = 0; } updView(); }
+function camStep(dt) { if (!RUN) return camSnap(); const k = 1 - Math.exp(-dt * 8); CAM.x += (player.x - W / 2 - CAM.x) * k; CAM.y += (player.y - VIEW_CY - CAM.y) * k; updView(); }
+// 视野外一圈上的随机点（刷怪用）：视野往外扩 m 像素的矩形边上；给了方向 a 就取那个方向上的点
+function ringPoint(m = 18, a) {
+  const cx = CAM.x + W / 2, cy = CAM.y + VIEW_CY, hw = W / 2 + m, hh = (BOT_Y - TOP_H) / 2 + m;
+  if (a == null) a = rnd() * Math.PI * 2;
+  const c = Math.cos(a), s = Math.sin(a), k = Math.min(hw / Math.max(1e-6, Math.abs(c)), hh / Math.max(1e-6, Math.abs(s)));
+  return { x: cx + c * k, y: cy + s * k };
+}
+const offView = (o, m) => o.x < CAM.x - m || o.x > CAM.x + W + m || o.y < CAM.y + TOP_H - m || o.y > CAM.y + BOT_Y + m;
 const player = { x: 240, y: 150, vx: 0, vy: 0, life: 1, shield: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: [0, 0], orbitA: 0, guardT: 0, spin: [{ n: 0, g: 0, idle: 9 }, { n: 0, g: 0, idle: 9 }], swing: [0, 0], devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
 const fx = o => { if (G.fx) fxq.push(o); };
 const MINE_MAX = MECH.mineMax;
@@ -42,7 +57,7 @@ function deathLoss(r) {
 }
 function arenaReset() {
   mobs = []; projs = []; drops = []; zones = [];
-  player.x = 240; player.y = 150; player.vx = player.vy = 0; player.wcd = [0, 0];
+  player.x = 240; player.y = 150; player.vx = player.vy = 0; player.wcd = [0, 0]; camSnap(); if (typeof AUTO !== 'undefined') AUTO.anchor = null;
   player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.swing = [0, 0]; player.devilT = 0; player.soul = STATS.soulMax; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
   resetPlayer();
   sfx('start');
@@ -53,8 +68,8 @@ const fieldActive = () => RUN && (mouse.on || mouse.touch) && !(G.ui && G.ui.win
 function pickMob(L) { const pool = Object.entries(MOBS).filter(([, m]) => L >= (m.minL || 1)); return wpick(pool, ([, m]) => m.w)[0]; }
 function spawnMob(type, o = {}) {
   const d = o.d || MOBS[type] || BOSS; const L = RUN.L; const mx = RUN.mob || {};
-  const side = ri(0, 2);
-  const x = o.x ?? (side === 0 ? rf(F.x0, F.x1) : side === 1 ? F.x0 : F.x1), y = o.y ?? (side === 0 ? F.y0 : rf(F.y0, F.y1));
+  const rp = o.x == null ? ringPoint() : null; // 默认刷在视野外一圈
+  const x = o.x ?? rp.x, y = o.y ?? rp.y;
   const elite = !o.boss && rnd() < ELITE.chance * (RUN.eliteMul || 1) * (1 + (mx.elite || 0) / 100);
   const HD = o.boss ? null : PROG.run.horde; // 怪海：普通怪更多更脆
   const hp = d.hp * monHp(L) * (elite ? ELITE.hp : 1) * (1 + (mx.mobHp || 0) / 100) * (HD ? HD.hp : 1);
@@ -64,7 +79,7 @@ function spawnMob(type, o = {}) {
 }
 function spawnBoss() {
   const B = RUN.bossD;
-  const m = spawnMob('boss_' + B.id, { boss: true, d: B, x: 240, y: F.y0 + 10 });
+  const m = spawnMob('boss_' + B.id, { boss: true, d: B, x: player.x, y: F.y0 + 10 });
   m.hp = m.max = B.hp * monHp(RUN.L) * (1 + ((RUN.mob.mobHp || 0) + (RUN.mob.bossHp || 0)) / 100); m.dmg = B.dmg * monDmg(RUN.L) * (1 + (RUN.mob.mobDmg || 0) / 100);
   RUN.boss = m; sfx('boss');
   if (G.ui) G.ui.banner(`${B.n} 现身`);
@@ -275,7 +290,7 @@ function tryDash(to = mouse, byAuto = false) {
   if (STATS.flag.timeStop && RUN) { const R = RL.timeStop; for (const m of mobs) if (!m.dead && dist2(m, player) < R.r * R.r) m.slowT = R.dur; fx({ t: 'ring', x: player.x, y: player.y - 4, r: R.r, el: 'ele' }); }
   if (kind === 'warp' && E) { // 魂跃：瞬移到落点并炸开
     const d = Math.min(dl, E.rng || 64);
-    player.x = clamp(player.x + dx / dl * d, F.x0, F.x1); player.y = clamp(player.y + dy / dl * d, F.y0, F.y1);
+    player.x += dx / dl * d; player.y += dy / dl * d; if (!RUN) { player.x = clamp(player.x, FIX.x0, FIX.x1); player.y = clamp(player.y, FIX.y0, FIX.y1); }
     if (RUN) engineBlast(E, player.x, player.y, Math.min(E.aoeR || 48, 70));
     return;
   }
@@ -438,14 +453,15 @@ function logic(dt) {
     if (player.dashT <= 0 && player.dashEnd) { const k = player.dashEnd; player.dashEnd = null; dashEnd(k); }
   } else {
     let tvx = 0, tvy = 0;
-    const tg = at || (fieldActive() ? { x: mouse.x, y: mouse.y + 4 } : null);
+    const tg = at || (fieldActive() ? { x: mouse.x + CAM.x, y: mouse.y + 4 + CAM.y } : null); // 鼠标是屏幕坐标，换成世界坐标
     if (tg) { const dx = tg.x - player.x, dy = tg.y - player.y, d = Math.hypot(dx, dy); if (d > 2) { const s = P.speed * Math.min(1, d / 24) * (spinning() ? WH.spinMoveMul : 1); tvx = dx / d * s; tvy = dy / d * s; } }
     const ax = tvx - player.vx, ay = tvy - player.vy, al = Math.hypot(ax, ay), step = P.accel * dt;
     if (al <= step) { player.vx = tvx; player.vy = tvy; } else { player.vx += ax / al * step; player.vy += ay / al * step; }
     player.x += player.vx * dt; player.y += player.vy * dt;
     if (Math.abs(player.vx) > 4) player.face = player.vx > 0 ? 1 : -1;
   }
-  player.x = clamp(player.x, F.x0, F.x1); player.y = clamp(player.y, F.y0, F.y1);
+  if (!RUN) { player.x = clamp(player.x, FIX.x0, FIX.x1); player.y = clamp(player.y, FIX.y0, FIX.y1); }
+  camStep(dt);
   player.dash = Math.min(P.dashMax, player.dash + P.dashRegen * dt);
   if (player.adT > 0) player.adT -= dt;
   if (player.hurtT > 0) player.hurtT -= dt;
@@ -508,11 +524,10 @@ function logic(dt) {
     if (RUN.spawnT <= 0 && mobs.length < cap) { // 一次刷一群，挤在场边同一处
       let o = {};
       if (RUN.lastPack && rnd() < (HD.surround || 0)) { // 包围：刷到上一群的对面（以角色为中心对称，再贴到最近的场边）
-        let x = clamp(2 * player.x - RUN.lastPack.x, F.x0, F.x1), y = clamp(2 * player.y - RUN.lastPack.y, F.y0, F.y1);
-        const ed = [[x - F.x0, () => x = F.x0], [F.x1 - x, () => x = F.x1], [y - F.y0, () => y = F.y0], [F.y1 - y, () => y = F.y1]].sort((a, b) => a[0] - b[0]); ed[0][1](); o = { x, y };
+        o = ringPoint(18, Math.atan2(player.y - RUN.lastPack.y, player.x - RUN.lastPack.x) + rf(-0.3, 0.3));
       }
       const n = Math.min(cap - mobs.length, ri(HD.pack[0], HD.pack[1])), first = spawnMob(pickMob(RUN.L), o); RUN.lastPack = { x: first.x, y: first.y };
-      for (let i = 1; i < n; i++) spawnMob(pickMob(RUN.L), { x: clamp(first.x + rf(-14, 14), F.x0, F.x1), y: clamp(first.y + rf(-10, 10), F.y0, F.y1) });
+      for (let i = 1; i < n; i++) spawnMob(pickMob(RUN.L), { x: first.x + rf(-14, 14), y: first.y + rf(-10, 10) });
       RUN.spawnT = Math.max(R.spawnIntervalMin, R.spawnInterval - RUN.L * R.spawnIntervalPerLevel) / RUN.dens / HD.count * n;
     }
     if (RUN.prog >= RUN.need - 1e-6) spawnBoss();
@@ -583,7 +598,8 @@ function logic(dt) {
     const dx = b.x - a.x, dy = b.y - a.y, r = a.size + b.size, dd = dx * dx + dy * dy;
     if (dd < r * r && dd > 0.01) { const d = Math.sqrt(dd), push = (r - d) / 2; const ux = dx / d * push, uy = dy / d * push; if (!a.boss) { a.x -= ux; a.y -= uy; } if (!b.boss) { b.x += ux; b.y += uy; } }
   }
-  for (const m of mobs) { m.x = clamp(m.x, F.x0, F.x1); m.y = clamp(m.y, F.y0, F.y1); }
+  // 离得太远的怪（被甩在身后）挪回视野外一圈，保持怪的密度；Boss 不挪，屏幕边有箭头指着
+  for (const m of mobs) if (!m.dead && !m.boss && offView(m, 170)) { const q = ringPoint(18, Math.atan2(player.vy || rf(-1, 1), player.vx || rf(-1, 1)) + rf(-0.9, 0.9)); m.x = q.x; m.y = q.y; m.slam = null; }
   mobs = mobs.filter(m => !m.dead);
   // 掉落：拾取范围内飞向玩家
   for (const dp of drops) {
@@ -617,7 +633,7 @@ function bossAct(m, aim, bl) {
     case 'blink': {
       m.cd = B.cd; const a = rf(0, Math.PI * 2);
       fx({ t: 'ring', x: m.x, y: m.y - 8, r: 16, el: 'pla' });
-      m.x = clamp(player.x + Math.cos(a) * B.distX, F.x0 + 10, F.x1 - 10); m.y = clamp(player.y + Math.sin(a) * B.distY, F.y0 + 10, F.y1);
+      m.x = clamp(player.x + Math.cos(a) * B.distX, F.x0 + 10, F.x1 - 10); m.y = clamp(player.y + Math.sin(a) * B.distY, F.y0 + 10, F.y1); // 视野内
       fx({ t: 'ring', x: m.x, y: m.y - 8, r: 16, el: 'pla' });
       for (let w = 0; w < B.waves; w++) for (let k = 0; k < B.shots; k++) shot(k / B.shots * Math.PI * 2 + w * 0.35, B.shotSpd + w * B.shotSpdStep, B.shotDmg);
       break;
@@ -638,8 +654,8 @@ function stepZones(dt) {
     z.t -= dt; z.tick = (z.tick || 0) - dt;
     if (z.devil) { // 小旋风：带随机偏转的直线，碰到场地边缘就弹回来
       z.ang += rf(-WH.devilTurn, WH.devilTurn) * dt; z.x += Math.cos(z.ang) * z.spd * dt; z.y += Math.sin(z.ang) * z.spd * 0.7 * dt;
-      if (z.x < 8 || z.x > W - 8) { z.ang = Math.PI - z.ang; z.x = clamp(z.x, 8, W - 8); }
-      if (z.y < FLOOR_Y + 6 || z.y > FIELD_B - 4) { z.ang = -z.ang; z.y = clamp(z.y, FLOOR_Y + 6, FIELD_B - 4); }
+      if (z.x < F.x0 - 2 || z.x > F.x1 + 2) { z.ang = Math.PI - z.ang; z.x = clamp(z.x, F.x0 - 2, F.x1 + 2); } // 视野边缘弹回
+      if (z.y < F.y0 || z.y > F.y1) { z.ang = -z.ang; z.y = clamp(z.y, F.y0, F.y1); }
     }
     if (z.enemy) { if (z.tick <= 0) { z.tick = z.tickT || 0.5; if (dist2(player, z) < (z.r + 3) ** 2) hurtPlayer(z.dmg, z.el); } continue; }
     if (z.pull) for (const m of mobs) if (!m.dead && !m.boss && dist2(m, z) < (z.pullR || z.r * 1.6) ** 2) { const dx = z.x - m.x, dy = z.y - m.y, d = Math.hypot(dx, dy) || 1; m.x += dx / d * z.pull * dt; m.y += dy / d * z.pull * dt; }
@@ -671,14 +687,14 @@ function stepProjs(dt) {
           if (p.wd == null) { p.wd = 0; p.wx = p.x; p.wy = p.y; }
           const s = p.W.spd * SP.speedMul, ux = Math.cos(p.a), uy = Math.sin(p.a);
           p.wx += ux * s * dt; p.wy += uy * s * dt; p.wd += s * dt;
-          { const hx = p.wx < F.x0 || p.wx > F.x1, hy = p.wy < F.y0 - 6 || p.wy > F.y1; // 弹射：中心线碰到场边时，有弹射次数就镜面反射（每次消耗一次），没有就飞出去
+          { const hx = p.wx < F.x0 || p.wx > F.x1, hy = p.wy < F.y0 - 6 || p.wy > F.y1; // 弹射：中心线碰到屏幕边（F 跟着相机）时，有弹射次数就镜面反射（每次消耗一次），没有就飞出去
             if ((hx || hy) && !p.out) { if (p.sch > 0) { p.sch--; p.bn = (p.bn || 0) + 1; p.mul *= SP.chainMul; if (hx) p.a = Math.PI - p.a; if (hy) p.a = -p.a; p.wx = clamp(p.wx, F.x0, F.x1); p.wy = clamp(p.wy, F.y0 - 6, F.y1); p.hit.clear(); p.life = Math.max(p.life, SP.chainLife); fx({ t: 'bounce', x: p.wx, y: p.wy }); } else p.out = 1; } }
           const k = Math.PI * 2 / SP.waveL, ph = k * p.wd + p.ph, amp = SP.waveA * Math.min(1, p.wd / 12), nx = -Math.sin(p.a), ny = Math.cos(p.a), off = amp * Math.sin(ph), slope = amp * k * Math.cos(ph);
           p.x = p.wx + nx * off; p.y = p.wy + ny * off;
           p.vx = (Math.cos(p.a) + nx * slope) * s; p.vy = (Math.sin(p.a) + ny * slope) * s; // 只给画面定朝向
         } else if (p.W.b.wander && !p.back) { const n = nearest(p.x, p.y, 70, p.hit); const ta = n ? Math.atan2(n.y - 5 - p.y, n.x - p.x) : p.a + rf(-1, 1); let da = ta - p.a; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2; p.a += clamp(da, -6 * dt, 6 * dt); const s = p.W.spd * 0.6; p.vx = Math.cos(p.a) * s; p.vy = Math.sin(p.a) * s; }
         if (!p.spark) { p.x += p.vx * dt; p.y += p.vy * dt; }
-        if (!p.spark && !p.back && !p.out) { const hx = p.x < F.x0 || p.x > F.x1, hy = p.y < F.y0 - 6 || p.y > F.y1; // 弹射：碰到场边镜面反射，每次消耗一次弹射
+        if (!p.spark && !p.back && !p.out) { const hx = p.x < F.x0 || p.x > F.x1, hy = p.y < F.y0 - 6 || p.y > F.y1; // 弹射：碰到屏幕边（F 跟着相机）镜面反射，每次消耗一次弹射
           if (hx || hy) { if (p.chain > 0) { p.chain--; p.bn = (p.bn || 0) + 1; p.first = false; if (hx) p.vx = -p.vx; if (hy) p.vy = -p.vy; p.a = Math.atan2(p.vy, p.vx); p.x = clamp(p.x, F.x0, F.x1); p.y = clamp(p.y, F.y0 - 6, F.y1); p.hit.clear(); p.life = Math.max(p.life, 0.9); fx({ t: 'bounce', x: p.x, y: p.y }); } else p.out = 1; } }
       }
       p.life -= dt;
@@ -694,7 +710,7 @@ function stepProjs(dt) {
       }
       if (p.back && !p.dead) { const dx = player.x - p.x, dy = player.y - 6 - p.y, d = Math.hypot(dx, dy); if (d < 6) p.dead = true; else { p.vx = dx / d * p.W.spd; p.vy = dy / d * p.W.spd; } }
     }
-    if (p.x < -20 || p.x > W + 20 || p.y < 0 || p.y > H + 10) p.dead = true;
+    if (p.x < CAM.x - 20 || p.x > CAM.x + W + 20 || p.y < CAM.y - 10 || p.y > CAM.y + H + 10) p.dead = true; // 飞出屏幕就消失
   }
   projs = projs.filter(p => !p.dead);
 }

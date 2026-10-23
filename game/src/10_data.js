@@ -154,9 +154,9 @@ const WH = DATA.mechanics.whirl; // 旋风斩流派的数值
 const SP = DATA.mechanics.spark; // 游雷（电球）流派的数值
 const SOUL = DATA.mechanics.soul; // 魂火（共用资源）
 const MOD_D = {
-  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），贴地乱窜 ${SP.life} 秒，命中后按穿透继续窜（穿透 +${SP.basePierce}），碰到场边时每有一次弹射就反弹一次（每弹一次伤害 ×${SP.chainMul}），弹射用完就飞出场外，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次；弹射 +${f.chain}；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。游雷数量按投射物 +N 成倍增加（投射物 +1 = 两串），寿命吃持续时间。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
+  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），贴地乱窜 ${SP.life} 秒，命中后按穿透继续窜（穿透 +${SP.basePierce}），碰到屏幕边时每有一次弹射就反弹一次（每弹一次伤害 ×${SP.chainMul}），弹射用完就飞出屏幕，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次；弹射 +${f.chain}；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。游雷数量按投射物 +N 成倍增加（投射物 +1 = 两串），寿命吃持续时间。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
   Pierce: f => `投射物穿透 ${f.pierce} 个目标，穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
-  Chain: f => `投射物碰到场边额外反弹 ${f.chain} 次，每剩一次弹射伤害提高 ${Math.round(f.chainInc * 100)}%`,
+  Chain: f => `投射物碰到屏幕边额外反弹 ${f.chain} 次，每剩一次弹射伤害提高 ${Math.round(f.chainInc * 100)}%`,
   Split: f => `投射物分裂 ${f.split} 次，初次命中每次分裂伤害提高 ${Math.round(f.splitInc * 100)}%`,
   Boomerang: f => `投射物飞到尽头后返回，投射物伤害${f.projInc >= 0 ? '提高' : '降低'} ${Math.abs(f.projInc)}%`,
   RapidProjectiles: f => `投射物伤害提高 ${f.projInc}%，速度提高 ${f.projSpd}%`,

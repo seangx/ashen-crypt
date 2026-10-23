@@ -336,6 +336,66 @@ function drawBackground(x, theme, seed) {
   x.fillStyle = vg; x.fillRect(0, 0, W, H);
 }
 
+/* ---------- 无限场地：可平铺的地砖 + 按区块随机的装饰 ---------- */
+// 地砖底图 256×256（16×16 的错缝砖，横 16 块、竖 16 行，首尾相接，平铺没有接缝；边长取 2 的幂，WebGL 平铺时不会被重采样）
+const FLOOR_TW = 256, FLOOR_TH = 256, CHUNK = 240;
+function drawFloorTile(x, theme, seed) { // mulberry32 随机
+  let ms = seed >>> 0; const R = () => { ms = (ms + 0x6D2B79F5) | 0; let t = Math.imul(ms ^ ms >>> 15, 1 | ms); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; const rp = a => a[Math.floor(R() * a.length)];
+  x.fillStyle = theme.mortar; x.fillRect(0, 0, FLOOR_TW, FLOOR_TH);
+  for (let ty = 0; ty < FLOOR_TH; ty += 16) {
+    const off = (ty / 16) % 2 ? 8 : 0;
+    for (let tx = 0; tx < FLOOR_TW; tx += 16) {
+      const bx = tx + off;
+      const col = rp(theme.floor), noise = []; for (let n = 0; n < 6; n++) noise.push([R() < 0.5 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.12)', R() * 15 | 0, R() * 15 | 0]);
+      const crack = R() < 0.18 ? [3 + R() * 8, 2 + R() * 8, Array.from({ length: 6 }, () => [R() < 0.5, R() < 0.6])] : null;
+      for (const sh of bx + 15 > FLOOR_TW ? [bx, bx - FLOOR_TW] : [bx]) { // 跨右边界的砖在左边补一半
+        x.fillStyle = col; x.fillRect(sh, ty, 15, 15);
+        x.fillStyle = 'rgba(255,255,255,.05)'; x.fillRect(sh, ty, 15, 1);
+        x.fillStyle = 'rgba(0,0,0,.18)'; x.fillRect(sh, ty + 14, 15, 1);
+        for (const [c, nx, ny] of noise) { x.fillStyle = c; x.fillRect(sh + nx, ty + ny, 1, 1); }
+        if (crack) { x.fillStyle = theme.mortar; let cx = sh + crack[0], cy = ty + crack[1]; for (const [a, b] of crack[2]) { x.fillRect(cx | 0, cy | 0, 1, 1); cx += a ? 1 : 0; cy += b ? 1 : 0; } }
+      }
+    }
+  }
+}
+// 一个区块（CHUNK×CHUNK）的装饰：苔藓/余烬点、骨头、头骨、碎石、偶尔一圈蜡烛或一个火盆。返回光源位置（区块内坐标）
+function drawChunkDecor(x, theme, seed) {
+  const R = seeded(seed), lights = [];
+  x.clearRect(0, 0, CHUNK, CHUNK);
+  for (let n = 0; n < 34; n++) {
+    const px_ = R() * (CHUNK - 6) + 3 | 0, py = R() * (CHUNK - 6) + 3 | 0;
+    if (theme === THEMES[0] || theme === THEMES[3]) { x.fillStyle = R() < 0.5 ? theme.acc : theme.acc2; x.fillRect(px_, py, 1 + (R() * 3 | 0), 1); x.fillRect(px_ + 1, py - 1, 1, 1); }
+    else if (theme === THEMES[2]) { if (R() < 0.5) { x.fillStyle = theme.acc; let cx = px_, cy = py; for (let i = 0; i < 5; i++) { x.fillRect(cx, cy, 1, 1); cx += 1; cy += R() < 0.5 ? 1 : -1; } } }
+    else { x.fillStyle = theme.acc2; x.fillRect(px_, py, 3, 1); x.fillStyle = theme.acc; x.fillRect(px_, py + 1, 1, 1); x.fillRect(px_ + 2, py + 1, 1, 1); }
+  }
+  const nb = 3 + (R() * 5 | 0);
+  for (let n = 0; n < nb; n++) {
+    const px_ = 8 + R() * (CHUNK - 16) | 0, py = 8 + R() * (CHUNK - 16) | 0, k = R();
+    if (k < 0.35) x.drawImage(SPR.skull, px_, py);
+    else if (k < 0.75) { x.fillStyle = '#b9ad94'; x.fillRect(px_, py, 5, 1); x.fillStyle = '#ece3cb'; x.fillRect(px_ - 1, py - 1, 1, 1); x.fillRect(px_ + 5, py - 1, 1, 1); x.fillRect(px_ - 1, py + 1, 1, 1); x.fillRect(px_ + 5, py + 1, 1, 1); }
+    else { for (let i = 0; i < 6; i++) { x.fillStyle = R() < 0.5 ? theme.mortar : '#3a3240'; x.fillRect(px_ + (R() * 9 | 0), py + (R() * 5 | 0), 2 + (R() * 2 | 0), 2); } } // 碎石堆
+  }
+  if (R() < 0.3) { // 一摊暗色血迹/水渍
+    const cx = 30 + R() * (CHUNK - 60), cy = 30 + R() * (CHUNK - 60); x.fillStyle = 'rgba(0,0,0,.22)';
+    for (let i = 0; i < 40; i++) { const a = R() * 6.28, r = R() * 12; x.fillRect(cx + Math.cos(a) * r | 0, cy + Math.sin(a) * r * 0.6 | 0, 2, 1); }
+  }
+  if (R() < 0.45) { // 蜡烛（火苗是动态画的，这里只画蜡柱）
+    const cx = 20 + R() * (CHUNK - 40) | 0, cy = 20 + R() * (CHUNK - 40) | 0, n = 2 + (R() * 3 | 0);
+    for (let i = 0; i < n; i++) { const ox = cx + (i * 5) - n * 2, oy = cy + ((i * 3) % 4); x.fillStyle = '#e8dcc0'; x.fillRect(ox, oy, 2, 4); x.fillStyle = '#9a8f78'; x.fillRect(ox, oy + 3, 2, 1); lights.push({ x: ox + 1, y: oy, s: 1 }); }
+  } else if (R() < 0.25) { // 火盆
+    const cx = 24 + R() * (CHUNK - 48) | 0, cy = 24 + R() * (CHUNK - 48) | 0;
+    x.fillStyle = '#2a2016'; x.fillRect(cx - 4, cy, 9, 3); x.fillStyle = '#5a4630'; x.fillRect(cx - 3, cy + 3, 7, 2); x.fillRect(cx - 1, cy + 5, 3, 4); x.fillStyle = '#1a140e'; x.fillRect(cx - 3, cy + 9, 7, 1);
+    lights.push({ x: cx, y: cy, s: 2 });
+  }
+  return lights;
+}
+// 屏幕暗角（固定在屏幕上）
+function drawVignette(x) {
+  x.clearRect(0, 0, W, H); const cy = (TOP_H + BOT_Y) / 2;
+  const vg = x.createRadialGradient(W / 2, cy, 90, W / 2, cy, 300); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)');
+  x.fillStyle = vg; x.fillRect(0, 0, W, H);
+}
+
 /* ---------- 光照（低分辨率 + 抖动） ---------- */
 const LW = 240, LHt = 135;
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + .5) / 16);

@@ -11,6 +11,17 @@ function autoTouch(dist) {
   if (dist < 0 || AUTO.moved >= AU.takeover.moveThreshold) { AUTO.manualT = AUTO.clock; AUTO.moved = 0; }
 }
 
+// 虚拟场地：营地里就是房间；推关里是以 AUTO.anchor 为中心、和旧场地一样大的框，anchor 每秒最多漂 AU.steer.anchorDrift 像素去追角色
+function autoBox() {
+  if (!RUN) return { ...FIX, cx: 240, cy: 144 };
+  const A = AUTO.anchor || (AUTO.anchor = { x: player.x, y: player.y - 6 });
+  return { x0: A.x - 230, x1: A.x + 230, y0: A.y - 82, y1: A.y + 82, cx: A.x, cy: A.y };
+}
+function autoAnchorStep(dt) {
+  if (!RUN) { AUTO.anchor = null; return; }
+  const A = autoBox(), d = AU.steer.anchorDrift ?? 12, dx = player.x - A.cx, dy = player.y - 6 - A.cy, l = Math.hypot(dx, dy);
+  if (l > 1e-6) { const k = Math.min(l, d * dt) / l; AUTO.anchor.x += dx * k; AUTO.anchor.y += dy * k; }
+}
 // 走位：怪、敌方弹、毒池、墙都往外推，再加一点绕圈；附近没有怪就去捡东西
 function autoTarget() {
   const P = player, K = AU.steer;
@@ -30,8 +41,9 @@ function autoTarget() {
     const dx = P.x - z.x, dy = P.y - z.y, d = Math.hypot(dx, dy) || 1, edge = Math.max(1, d - z.r);
     if (d < z.r + K.zoneMargin + 20) { const w = K.zoneRepel / (edge * edge); fx += dx / d * w; fy += dy / d * w; }
   }
-  const wall = (a, b) => K.wallRepel * (1 / Math.max(4, a) ** 2 - 1 / Math.max(4, b) ** 2);
-  fx += wall(P.x - F.x0, F.x1 - P.x); fy += wall(P.y - F.y0, F.y1 - P.y);
+  // 场地无限大：AI 心里还是按一块和原来一样大的“虚拟场地”走位（中心是 AUTO.anchor，慢慢跟着角色漂移），免得一直往一个方向跑、把怪甩在身后
+  const B = autoBox();
+  const wall = (a, b) => K.wallRepel * (1 / Math.max(4, a) ** 2 - 1 / Math.max(4, b) ** 2); fx += wall(P.x - B.x0, B.x1 - P.x); fy += wall(P.y - B.y0, B.y1 - P.y);
   // 绕圈：推力转 90° 的分量，免得被逼进角落
   const tx = -fy * K.orbit, ty = fx * K.orbit; fx += tx; fy += ty;
   // 附近没怪：去捡最近的掉落，否则慢慢回中间
@@ -39,10 +51,10 @@ function autoTarget() {
     let best = null, bd = 1e9; for (const dp of drops) { const d = dist2(dp, P); if (d < bd) { bd = d; best = dp; } }
     if (best) return { x: best.x, y: best.y, near };
   }
-  fx += (240 - P.x) * K.centerPull; fy += (144 - P.y) * K.centerPull;
+  fx += (B.cx - P.x) * K.centerPull; fy += (B.cy - P.y) * K.centerPull;
   const l = Math.hypot(fx, fy);
   if (l < 1e-9) return { x: P.x, y: P.y, near };
-  return { x: clamp(P.x + fx / l * K.lookAhead, F.x0, F.x1), y: clamp(P.y + fy / l * K.lookAhead, F.y0, F.y1), near };
+  return { x: clamp(P.x + fx / l * K.lookAhead, B.x0, B.x1), y: clamp(P.y + fy / l * K.lookAhead, B.y0, B.y1), near };
 }
 // 近战模式：找怪最密的地方，从怪堆里来回穿过（穿到另一边 pass 像素再折返），这样风暴之眼能沿路留龙卷风；护甲低时后撤（风筝模式），回复后再冲
 const MELEE_FORMS = ['orbit', 'ram', 'reflect'];
@@ -64,19 +76,19 @@ function meleeTarget(W) {
   if (stale) { // 新的穿越点：从自己穿过怪堆中心，到另一边 pass 像素
     let dx = cx - player.x, dy = cy - player.y, l = Math.hypot(dx, dy);
     if (l < 1) { const a = rnd() * Math.PI * 2; dx = Math.cos(a); dy = Math.sin(a); l = 1; }
-    AUTO.pass = { x: clamp(cx + dx / l * K.pass, F.x0, F.x1), y: clamp(cy + dy / l * K.pass, F.y0, F.y1), cx, cy, t: AUTO.clock };
+    AUTO.pass = { x: clamp(cx + dx / l * K.pass, autoBox().x0, autoBox().x1), y: clamp(cy + dy / l * K.pass, autoBox().y0, autoBox().y1), cx, cy, t: AUTO.clock };
   }
   return { x: AUTO.pass.x, y: AUTO.pass.y, near, melee: 1 };
 }
 // 每帧：返回 AI 的目标点（不由 AI 驾驶时返回 null），需要时冲刺
 function autoStep(dt) {
-  AUTO.clock += dt;
+  AUTO.clock += dt; autoAnchorStep(dt);
   if (!RUN) { autoLoop(dt); return G.fx ? campTarget() : null; }
   if (!autoDriving() || RUN.ending) return null;
   const MW = meleeW();
   if (AU.slamDodge) { // 红圈：在圈里就冲刺出去，没冲刺槽就走出去（近战、远程都躲）
     let s = null; for (const m of mobs) if (m.slam && dist2(player, m.slam) < (m.slam.r + 2) ** 2 && (!s || m.slam.t < s.t)) s = m.slam;
-    if (s) { const dx = player.x - s.x, dy = player.y - s.y, dl = Math.hypot(dx, dy) || 1, ux = dl > 0.5 ? dx / dl : 1, uy = dl > 0.5 ? dy / dl : 0, out = { x: clamp(s.x + ux * (s.r + 14), F.x0, F.x1), y: clamp(s.y + uy * (s.r + 14), F.y0, F.y1), near: 0 };
+    if (s) { const dx = player.x - s.x, dy = player.y - s.y, dl = Math.hypot(dx, dy) || 1, ux = dl > 0.5 ? dx / dl : 1, uy = dl > 0.5 ? dy / dl : 0, out = { x: s.x + ux * (s.r + 14), y: s.y + uy * (s.r + 14), near: 0 };
       if (player.dash >= 1 && player.dashT <= 0) { tryDash(out, true); if (player.dashT > 0) RUN.slamDash = (RUN.slamDash || 0) + 1; }
       return out; }
   }

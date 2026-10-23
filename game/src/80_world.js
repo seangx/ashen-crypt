@@ -1,4 +1,5 @@
 /* ---------- 场景：Boot ---------- */
+function newCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
 class Boot extends Phaser.Scene {
   constructor() { super('boot'); }
   create() { buildTextures(this); this.scene.start('world'); this.scene.launch('ui'); }
@@ -10,7 +11,13 @@ class World extends Phaser.Scene {
   create() {
     G.world = this; this.cameras.main.setZoom(Z).centerOn(W / 2, H / 2);
     this.roomTex = this.textures.exists('room') ? this.textures.get('room') : this.textures.createCanvas('room', W, H);
-    this.add.image(0, 0, 'room').setOrigin(0).setDepth(0); this.roomL = null;
+    this.roomImg = this.add.image(0, 0, 'room').setOrigin(0).setDepth(0); this.roomL = null;
+    this.cameras.main.setRoundPixels(true);
+    // 无限场地：平铺地砖（跟着相机挪，纹理偏移 = 相机位置，所以地面不动）+ 按区块生成的装饰 + 固定在屏幕上的暗角
+    this.floorTS = Array.from({ length: 9 }, () => this.add.image(0, 0, 'px').setOrigin(0).setDepth(0).setVisible(false)); // 3×3 块地砖图拼起来盖住视野
+    this.chunks = new Map(); this.chunkN = 0;
+    const vt = this.textures.exists('vig') ? this.textures.get('vig') : this.textures.createCanvas('vig', W, H); drawVignette(vt.getContext()); vt.refresh();
+    this.vig = this.add.image(0, 0, 'vig').setOrigin(0).setDepth(1).setVisible(false);
     this.wallG = this.add.graphics().setDepth(5);
     if (this.renderer.type === Phaser.WEBGL && CryptFX) {
       // 彩色光照：半分辨率的光照图，先填冷色环境光，再叠加各个光源；用“两倍正片叠底”盖在场景上（0.5 = 原色，更亮的地方会提亮）
@@ -22,7 +29,7 @@ class World extends Phaser.Scene {
       this.glowG = this.add.graphics().setDepth(57.5).setBlendMode(Phaser.BlendModes.ADD); // 弹道的光晕和拖尾
     } else {
       this.lightTex = this.textures.exists('light') ? this.textures.get('light') : this.textures.createCanvas('light', LW, LHt);
-      this.add.image(0, 0, 'light').setOrigin(0).setScale(2).setDepth(50);
+      this.lightImg = this.add.image(0, 0, 'light').setOrigin(0).setScale(2).setDepth(50);
     }
     this.glows = SCONCES.map(s => this.add.image(s.x, s.y + 2, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(51));
     this.heroGlow = this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(51).setScale(1.1);
@@ -74,6 +81,8 @@ class World extends Phaser.Scene {
   update(_, delta) {
     const dt = Math.min(0.05, delta / 1000); G.time += dt; this.dt = dt;
     if (G.time >= (this.stopUntil || 0)) logic(dt); // 顿帧：世界停几十毫秒，画面照常
+    if (!RUN) camSnap();
+    this.cx = Math.round(CAM.x); this.cy = Math.round(CAM.y); this.cameras.main.centerOn(this.cx + W / 2, this.cy + H / 2); // 相机跟着角色，按整像素对齐
 
     this.consume();
     this.render(dt);
@@ -111,10 +120,22 @@ class World extends Phaser.Scene {
     const L = RUN ? RUN.L : S.depth; const theme = RUN ? themeFor(L) : THEMES[0];
     // 不在任务里就是营地：底图按解锁了哪些设施重画
     const open = Object.fromEntries(CAMP.facilities.map(f => [f.id, facOpen(f)])), key = RUN ? L : 'camp' + CAMP.facilities.map(f => +open[f.id]).join('');
-    if (this.roomL !== key) { if (RUN) drawBackground(this.roomTex.getContext(), theme, L * 7919 + 13); else drawCamp(this.roomTex.getContext(), open); this.roomTex.refresh(); this.roomL = key; }
+    if (this.roomL !== key) {
+      if (RUN) { // 换层：重画地砖、清掉旧区块装饰
+        if (this.textures.exists('floorT')) this.textures.remove('floorT');
+        const fc = newCanvas(FLOOR_TW, FLOOR_TH); drawFloorTile(fc.getContext('2d'), theme, L * 7919 + 13); this.textures.addCanvas('floorT', fc); this.floorTS.forEach(im => im.setTexture('floorT')); // 用新画布：Phaser 的 CanvasPool 复用旧画布不清空，会留下暗块
+        this.clearChunks(); this.theme = theme;
+      } else { drawCamp(this.roomTex.getContext(), open); this.roomTex.refresh(); this.clearChunks(); }
+      this.roomL = key;
+    }
+    this.roomImg.setVisible(!RUN); this.floorTS.forEach(im => im.setVisible(!!RUN)); this.vig.setVisible(!!RUN).setPosition(this.cx, this.cy); // 跟相机走（缩放相机下 scrollFactor 0 会错位） this.glows.forEach(gl => gl.setVisible(!RUN));
+    const cx = this.cx, cy = this.cy, decoL = RUN ? this.syncChunks(L, cx, cy) : []; // 视野附近的蜡烛、火盆（世界坐标）
+    if (RUN) { const fx0 = Math.floor(cx / FLOOR_TW) * FLOOR_TW, fy0 = Math.floor(cy / FLOOR_TH) * FLOOR_TH; this.floorTS.forEach((im, k) => im.setPosition(fx0 + (k % 3) * FLOOR_TW, fy0 + (k / 3 | 0) * FLOOR_TH)); }
+    const SC = RUN ? [] : SCONCES;
     const t = G.time; this.frame++;
     const g = this.wallG; g.clear();
-    for (const s of SCONCES) flame(g, s.x, s.y - 1, t);
+    for (const s of SC) flame(g, s.x, s.y - 1, t);
+    for (const d of decoL) if (d.s === 2) flame(g, d.x, d.y, t); else { const h = 2 + ((t * 9 + d.x) | 0) % 2; g.fillStyle(0xff9a3d, 1).fillRect(d.x - 1, d.y - h, 2, h); g.fillStyle(0xffe7a0, 1).fillRect(d.x - 1, d.y - 1, 1, 1); }
     if (!RUN) campFx(g, t, open);
     // 玩家
     const fr = (t * 4 | 0) % 2, bob = Math.round(Math.sin(t * 3) * 1);
@@ -130,9 +151,9 @@ class World extends Phaser.Scene {
     const SPIN = [['doll_0', false], ['doll_v1', false], ['doll_v2', false], ['doll_v1', true]], ph = this.spinRate ? (this.spinPh = (this.spinPh || 0) + dt * this.spinRate * 4) : 0;
     const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.hurtT > 0.15 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
-    this.hero.setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(10 + player.y / 100).setAlpha(player.dashT > 0 ? 0.5 : 1);
+    this.hero.setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(ySort(player.y)).setAlpha(player.dashT > 0 ? 0.5 : 1);
     if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x7a2a1a));
-    this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(-ph * Math.PI / 2 - i) * (i + 1) * 1.5, player.y).setDepth(10 + player.y / 100 - 0.01).setAlpha(0.4 - i * 0.15); });
+    this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(-ph * Math.PI / 2 - i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
     this.heroSh.setPosition(player.x, player.y + 1);
     { const hub = S.equip.hub, hg = this.hubG; hg.clear(); if (hub) { const b = baseOf(hub); const c = hex(b.el ? ELEM_C[b.el] : b.mass ? '#e9e0c9' : b.energy ? '#c08aff' : '#57e0d0'); const n = 22; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.7; hg.fillStyle(c, 0.35 + 0.3 * Math.sin(i * 1.3 + t * 3)); hg.fillRect(Math.round(player.x + Math.cos(a) * 9), Math.round(player.y + 1 + Math.sin(a) * 3), 1, 1); } } }
     if (player.dashT > 0 && this.frame % 2 === 0) {
@@ -172,9 +193,14 @@ class World extends Phaser.Scene {
       fg.fillStyle(c, 1 - k); const n = Math.max(12, rr * 2 | 0); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; fg.fillRect(r.x + Math.cos(a) * rr - .5, r.y + Math.sin(a) * rr * 0.75 - .5, 1, 1); }
     }
     this.rings = this.rings.filter(r => r.life > 0);
+    if (RUN) { // 屏幕外的 Boss、稀有掉落：屏幕边上画个小箭头指过去
+      const tg = mobs.filter(m => m.boss && !m.dead).map(m => [m, 0xff5a4a]).concat(drops.filter(d => (d.kind === 'item' && d.item.rar >= 2) || d.kind === 'map' || d.kind === 'glyph').map(d => [d, hex(d.item ? icol(d.item) : '#ffd36a')]));
+      for (const [o, c] of tg) { if (!offView(o, -4)) continue; this.edgeArrow(fg, o.x, o.y - 6, c, t); }
+    }
     // 光照：每个光源有颜色；WebGL 下画进彩色光照图，否则沿用旧的暗部遮罩
     const fl = 1 + Math.sin(t * 9) * .04 + Math.sin(t * 23) * .03;
-    const WARM = 0xff9a4a, lights = SCONCES.map(s => ({ x: s.x, y: s.y + 6, r2: (64 * fl) ** 2, i: .75, c: WARM }));
+    const WARM = 0xff9a4a, lights = SC.map(s => ({ x: s.x, y: s.y + 6, r2: (64 * fl) ** 2, i: .75, c: WARM }));
+    for (const d of decoL) if (lights.length < 8) lights.push({ x: d.x, y: d.y + 2, r2: ((d.s === 2 ? 70 : 34) * fl) ** 2, i: d.s === 2 ? .75 : .5, c: WARM });
     lights.push({ x: player.x + player.face * 4, y: player.y - 6, r2: (110 * fl) ** 2, i: .38, c: 0x7fd0e0 }); // 提灯亡魂身上的青色魂光
     if (!RUN) { const gt = FAC_BY.gate; lights.push({ x: gt.x - 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: gt.x + 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: 240, y: 178, r2: (80 * fl) ** 2, i: .75, c: 0xffa050 });
       const FC = { altar: 0xc08aff, runes: 0x57e0d0, stele: 0xffd36a };
@@ -183,22 +209,42 @@ class World extends Phaser.Scene {
     for (const r of this.rings) if (r.fill && lights.length < 22) lights.push({ x: r.x, y: r.y, r2: (r.r * 1.5) ** 2, i: .6, c: hex(ELEM_C[r.el] || '#ffd36a') });
     for (const dp of drops) if (dp.kind === 'item' && dp.item.rar >= 1 && lights.length < 24) lights.push({ x: dp.x, y: dp.y - 8, r2: 520, i: .45, c: hex(icol(dp.item)) });
     if (this.lightRT) {
-      const rt = this.lightRT; rt.fill(RUN ? 0x34324c : 0x2e2c44);
-      for (const l of lights) rt.stamp('ldisc', null, l.x / 2, l.y / 2, { scale: Math.sqrt(l.r2) / 64, tint: l.c, alpha: l.i * 0.85, blendMode: Phaser.BlendModes.ADD });
+      const rt = this.lightRT; rt.setPosition(cx, cy); rt.fill(RUN ? 0x34324c : 0x2e2c44);
+      for (const l of lights) rt.stamp('ldisc', null, (l.x - cx) / 2, (l.y - cy) / 2, { scale: Math.sqrt(l.r2) / 64, tint: l.c, alpha: l.i * 0.85, blendMode: Phaser.BlendModes.ADD });
       // 热浪：墙上的火把、营地的火盆和篝火
-      const hz = SCONCES.map(s => ({ x: s.x, y: s.y - 6, w: 6, h: 18 }));
+      const hz = SC.map(s => ({ x: s.x, y: s.y - 6, w: 6, h: 18 })); for (const d of decoL) if (d.s === 2) hz.push({ x: d.x, y: d.y - 6, w: 6, h: 18 });
       if (!RUN) { const gt = FAC_BY.gate; hz.push({ x: gt.x - 36, y: gt.y - 18, w: 8, h: 26 }, { x: gt.x + 36, y: gt.y - 18, w: 8, h: 26 }, { x: 240, y: 176, w: 9, h: 28 }); }
       this.post.hazes = hz;
-    } else { const amb = RUN ? 0.4 : 0.32; renderLight(this.lightTex.getContext(), lights, amb, theme.fog); this.lightTex.refresh(); }
+    } else { const amb = RUN ? 0.4 : 0.32; this.lightImg.setPosition(cx, cy); renderLight(this.lightTex.getContext(), lights.map(l => ({ ...l, x: l.x - cx, y: l.y - cy })), amb, theme.fog); this.lightTex.refresh(); }
     this.glows.forEach(gl => gl.setAlpha(.16 * fl));
     this.heroGlow.setPosition(player.x + player.face * 4, player.y - 6).setAlpha((this.lightRT ? .07 : .14) * fl);
     // 投影：火把、营地火光把角色和怪的影子投到地上；怪的影子也背着提灯亡魂的光
-    const casters = SCONCES.map(s => ({ x: s.x, y: s.y + 6, r: 140 }));
+    const casters = [...SC, ...decoL.filter(d => d.s === 2)].map(s => ({ x: s.x, y: s.y + 6, r: 140 }));
     if (!RUN) casters.push({ x: FAC_BY.gate.x - 36, y: FAC_BY.gate.y - 10, r: 100 }, { x: FAC_BY.gate.x + 36, y: FAC_BY.gate.y - 10, r: 100 }, { x: 240, y: 180, r: 120 });
     this.heroCS = this.heroCS || {}; this.castShadow(this.heroCS, this.hero.texture.key, player.x, player.y + bob, player.face < 0, casters);
     const mc = [...casters, { x: player.x, y: player.y + 2, r: 115 }];
     for (const m of mobs) { const o = this.spr.get(m); if (o) this.castShadow(o, o.key, o.img.x, m.y + 1, m.face < 0, mc); }
   }
+  // 屏幕边缘的指向箭头（世界坐标画，位置贴着视野边）
+  edgeArrow(g, x, y, c, t) {
+    const cx = this.cx + W / 2, cy = this.cy + VIEW_CY, dx = x - cx, dy = y - cy, a = Math.atan2(dy, dx), hw = W / 2 - 8, hh = (BOT_Y - TOP_H) / 2 - 8;
+    const k = Math.min(hw / Math.max(1e-6, Math.abs(dx)), hh / Math.max(1e-6, Math.abs(dy))), px = Math.round(cx + dx * k), py = Math.round(cy + dy * k), ux = Math.cos(a), uy = Math.sin(a), b = 1 + 0.5 * Math.sin(t * 8);
+    g.fillStyle(0x0d0a12, 0.8).fillTriangle(px + ux * 6, py + uy * 6, px - uy * 5 - ux * 3, py + ux * 5 - uy * 3, px + uy * 5 - ux * 3, py - ux * 5 - uy * 3);
+    g.fillStyle(c, 0.7 + 0.3 * Math.sin(t * 8)).fillTriangle(px + ux * 5 * b, py + uy * 5 * b, px - uy * 3 - ux * 2, py + ux * 3 - uy * 2, px + uy * 3 - ux * 2, py - ux * 3 - uy * 2);
+  }
+  // 无限地面的装饰区块：视野周围的区块按（层, 区块坐标）定随机种子生成，离开视野就回收
+  syncChunks(L, cx, cy) {
+    const i0 = Math.floor((cx - 8) / CHUNK), i1 = Math.floor((cx + W + 8) / CHUNK), j0 = Math.floor((cy - 8) / CHUNK), j1 = Math.floor((cy + H + 8) / CHUNK), want = new Set(), out = [];
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const key = L + ':' + i + ':' + j; want.add(key); let c = this.chunks.get(key);
+      if (!c) { const tk = 'chunk_' + (this.chunkN++), cv = newCanvas(CHUNK, CHUNK); const ls = drawChunkDecor(cv.getContext('2d'), this.theme || themeFor(L), (Math.imul(i, 73856093) ^ Math.imul(j, 19349663) ^ Math.imul(L, 83492791)) >>> 0); this.textures.addCanvas(tk, cv);
+        c = { tk, img: this.add.image(i * CHUNK, j * CHUNK, tk).setOrigin(0).setDepth(0.5), lights: ls.map(l => ({ ...l, x: l.x + i * CHUNK, y: l.y + j * CHUNK })) }; this.chunks.set(key, c); }
+      for (const l of c.lights) if (l.x > cx - 40 && l.x < cx + W + 40 && l.y > cy - 40 && l.y < cy + H + 40) out.push(l);
+    }
+    for (const [key, c] of this.chunks) if (!want.has(key)) { c.img.destroy(); this.textures.remove(c.tk); this.chunks.delete(key); }
+    return out;
+  }
+  clearChunks() { for (const c of this.chunks.values()) { c.img.destroy(); this.textures.remove(c.tk); } this.chunks.clear(); }
   // 一个影子：取最近的强光源，把精灵压扁、翻过来、朝背光方向铺在地上
   castShadow(o, key, x, y, flip, list) {
     if (!this.lightRT) return;
@@ -254,7 +300,7 @@ class World extends Phaser.Scene {
     if (o.key !== key) { o.img.setTexture(key); o.key = key; }
     const h = o.img.height, w = o.img.width;
     const rise = m.rise > 0 ? Math.round(h * clamp(m.rise / 0.45, 0, 1)) : 0;
-    o.img.setPosition(sx, sy + 1 + rise).setDepth(10 + sy / 100).setFlipX(m.face < 0);
+    o.img.setPosition(sx, sy + 1 + rise).setDepth(ySort(sy)).setFlipX(m.face < 0);
     if (rise) o.img.setCrop(0, 0, w, h - rise); else if (o.img.isCropped) o.img.setCrop();
     // 异常着色
     if (m.fl > 0) o.img.clearTint();
@@ -277,7 +323,7 @@ class World extends Phaser.Scene {
     const key = dp.kind === 'shard' ? 'shard' : dp.kind === 'glyph' ? 'glyph_' + dp.id : dp.kind === 'mod' ? 'mod_' + dp.mod.mid : dp.kind === 'map' ? 'i_a_map' : 'i_' + iconOf(dp.item);
     if (o.key !== key) { o.img.setTexture(key); o.key = key; }
     const bob = dp.z === 0 ? Math.round(Math.sin(t * 4 + dp.x) * .8) : 0;
-    o.img.setPosition(Math.round(dp.x), Math.round(dp.y - dp.z) + bob).setDepth(dp.kind === 'item' ? 57 : 10 + dp.y / 100);
+    o.img.setPosition(Math.round(dp.x), Math.round(dp.y - dp.z) + bob).setDepth(dp.kind === 'item' ? 57 : ySort(dp.y));
     o.sh.setPosition(Math.round(dp.x), Math.round(dp.y) + 1);
   }
   beam(g, dp, t) {
@@ -289,6 +335,8 @@ class World extends Phaser.Scene {
     if (rnd() < .25) { this.em.loot.particleTint = c; this.em.loot.explode(1, x + rf(-3, 3), y - rf(0, h * .5)); }
   }
 }
+// 按 y 排前后：只看在视野里的相对位置，深度保持在 10–12.9（场地无限大，世界坐标的 y 可能很大或是负数）
+const ySort = y => 10 + clamp((y - CAM.y) / 100, 0, 2.9);
 function flame(g, x, y, t) {
   const tt = t * 12 + x; const h = 5 + Math.round(Math.sin(tt) + Math.sin(tt * 1.7));
   g.fillStyle(0xe8533a, 1).fillRect(x - 2, y - h + 2, 5, h - 1);

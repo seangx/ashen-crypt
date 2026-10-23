@@ -57,8 +57,8 @@ const CryptFX = window.Phaser && Phaser.Renderer.WebGL ? class extends Phaser.Re
   onPreRender() {
     const w = new Float32Array(16), h = new Float32Array(32);
     this.waves = this.waves.filter(o => G.time - o.t0 < o.life);
-    this.waves.slice(-4).forEach((o, i) => { const a = (G.time - o.t0) / o.life; w.set([o.x, o.y, a * o.r, (1 - a) * o.k], i * 4); });
-    this.hazes.slice(0, 8).forEach((o, i) => h.set([o.x, o.y, o.w, o.h], i * 4));
+    this.waves.slice(-4).forEach((o, i) => { const a = (G.time - o.t0) / o.life; w.set([o.x - CAM.x, o.y - CAM.y, a * o.r, (1 - a) * o.k], i * 4); });
+    this.hazes.slice(0, 8).forEach((o, i) => h.set([o.x - CAM.x, o.y - CAM.y, o.w, o.h], i * 4));
     this.set1f('uTime', G.time); this.set1f('uBloom', this.bloom); this.set1f('uFlipY', this.flip);
     this.set4fv('uWave', w); this.set4fv('uHaze', h);
   }
