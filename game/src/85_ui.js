@@ -543,78 +543,94 @@ class UI extends Phaser.Scene {
       craftLog.unshift(craftFuse(u, r)); fuseId = null; sfx('craft'); save(); this.refresh();
     }, { style: confirmKey === 'fuse' ? 'r' : 'w', size: 8, disabled: !!why, tip: why ? [{ t: why, s: 8, c: COL.bad }] : [{ t: `转移 ${Math.min(u.lp, r.affs.length)} 条词条`, s: 8 }] });
   }
-  /* 天赋树 */
+  /* 天赋树 · 星空版（设计稿见 Open Design ashen-crypt-talent-tree）
+     节点按品级区分：小节点 = 星点，中节点 = 青环宝珠 + 图标，大型节点 = 金色宝珠 + 光芒 + 分支色内环 + 图标，印记槽 = 青色菱形。
+     左栏：天赋点、搜索、标签筛选、构筑预设、印记、重置；右栏：汇总。两栏都能收起。 */
   win_tree(c, w, h) {
-    const pts = treePoints();
-    T(this, 10, 6, `天赋点 ${pts}`, { color: pts ? COL.emberHi : COL.dim, parent: c });
-    const keys = S.tree.filter(id => TREE.nodes[id]?.kind === 'k').length;
-    T(this, 10, 20, `已点 ${S.tree.length} · 大型 ${keys}`, { size: 8, color: COL.faint, parent: c });
-    mkBtn(this, c, 10, 186, 76, 16, confirmKey === 'respec' ? '确认' : '全部重置', () => { if (!S.tree.length) return; if (confirm2('respec')) { treeKeep([]); refreshStats(); save(); } this.refresh(); }, { size: 8, style: confirmKey === 'respec' ? 'r' : 'n', tip: [{ t: '退回全部天赋点（目前免费），插着的印记回到背包', s: 8 }] });
-    // 仓库里的印记
-    const chips = S.stash.filter(x => x.kind === 'chip');
-    if (chips.length) T(this, 10, 36, '印记', { size: 8, color: COL.cyan, parent: c });
-    chips.slice(0, 15).forEach((it, i) => {
-      const bx = 10 + (i % 5) * 15, by = 48 + Math.floor(i / 5) * 15;
-      rect(this, bx, by, 14, 14, it.rar === 3 ? '#5a3a14' : '#2a2236', 1, c); img(this, bx + 1, by + 1, 'i_' + iconOf(it), c);
-      const z = this.add.zone(bx, by, 14, 14).setOrigin(0).setInteractive(); c.add(z);
-      z.on('pointerover', () => showTip([{ t: itemName(it), c: RCOL[it.rar] }, ...it.affs.map(x => ({ t: affText(x), s: 8 })), ...ruleLines(it).map(t => ({ t, s: 8, c: '#ff9a3c' })), { t: '点击插到空的印记槽', s: 8, c: COL.dim }]));
-      z.on('pointerout', hideTip);
-      z.on('pointerup', () => { hideTip(); if (equipChip(it)) { sfx('craft'); save(); } this.refresh(); });
-    });
-    TW(this, 10, 100, '拖动平移，滚轮或右下角按钮缩放。点亮和已点节点相连的节点；点已点的节点可以退回。青色方块是印记槽。', 80, { size: 8, color: COL.faint, parent: c });
-    // 视口
-    const VX = 92, VY = 4, VW = w - 96, VH = h - 8, V = treeView;
-    rect(this, VX, VY, VW, VH, '#120c18', 0.6, c);
-    const g = this.add.graphics(); c.add(g);
+    const pts = treePoints(), U = treeUI, V = treeView;
     const on = id => id === 'start' || S.tree.includes(id);
-    const sx = x => VX + VW / 2 + (x - V.x) * V.z, sy = y => VY + VH / 2 + (y - V.y) * V.z;
-    const size = nd => (nd.kind === 'k' ? 9 : nd.kind === 'n' || nd.kind === 'sock' || nd.kind === 'start' ? 7 : 5) * Math.min(1.3, Math.max(0.7, V.z));
+    // ---- 星空底图（只生成一次）----
+    const BW = w - 6, BH = h - 6;
+    if (!this.textures.exists('tree_sky')) treeSkyTex(this, BW, BH);
+    c.add(this.add.image(3, 3, 'tree_sky').setOrigin(0));
+    const tw = this.add.graphics(); c.add(tw);
+    const stars = treeTwinkles(BW, BH);
+    const twinkle = () => { if (!tw.scene) return; tw.clear(); const t = performance.now() / 1000; for (const s of stars) { const a = 0.35 + 0.65 * Math.max(0, Math.sin(t * s.sp + s.ph)); tw.fillStyle(s.c, a).fillRect(3 + s.x, 3 + s.y, 1, 1); if (s.big && a > 0.7) tw.fillStyle(s.c, (a - 0.7) * 1.6).fillRect(2 + s.x, 3 + s.y, 3, 1).fillRect(3 + s.x, 2 + s.y, 1, 3); } };
+    const tev = this.time.addEvent({ delay: 120, loop: true, callback: twinkle }); c.once('destroy', () => tev.remove()); twinkle();
+    // ---- 视口：两栏之间 ----
+    const LW = 88, RW = 106;
+    const VL = U.left ? LW + 2 : 4, VR = U.right ? w - RW - 2 : w - 4;
+    const VX = 3, VY = 3, VW = w - 6, VH = h - 6; // 画在整块面板上，栏位半透明盖在上面
+    const CX = (VL + VR) / 2, CY = VY + VH / 2;
+    const g = this.add.graphics(); c.add(g);
+    const sx = x => Math.round(CX + (x - V.x) * V.z), sy = y => Math.round(CY + (y - V.y) * V.z);
+    const k = clamp(V.z, 0.75, 1.5);
+    const rad = nd => Math.round((nd.kind === 'k' || nd.kind === 'start' ? 5.5 : nd.kind === 'n' ? 4 : nd.kind === 'sock' ? 3.5 : 1.5) * k);
+    // 搜索 / 标签 / 预设
+    const txt = nd => (nd.n || '') + ' ' + treeLines(nd).join(' ') + ' ' + (nd.kind === 'sock' ? '印记槽' : '');
+    const tag = TREE_TAGS.find(t => t.n === U.tag);
+    const match = id => { const nd = TREE.nodes[id]; if (nd.kind === 'start') return false; const s = txt(nd); return (!U.q || s.includes(U.q)) && (!tag || tag.re.test(s)); };
+    const filt = !!(U.q || tag), hit = new Set(filt ? Object.keys(TREE.nodes).filter(match) : []);
+    const pre = U.preset && DEMO_SAVES[U.preset] ? new Set(JSON.parse(DEMO_SAVES[U.preset]).tree) : null;
+    let hov = null, path = new Set();
     const labels = [];
-    for (const id in TREE.nodes) { const nd = TREE.nodes[id]; if (nd.kind !== 'k') continue; labels.push([nd, T(this, 0, 0, nd.n, { size: 8, color: on(id) ? COL.emberHi : '#8a7d9c', align: 'center', parent: c })]); }
+    for (const id in TREE.nodes) { const nd = TREE.nodes[id]; if (nd.kind !== 'k') continue; labels.push([nd, T(this, 0, 0, nd.n, { size: 8, color: on(id) ? COL.emberHi : '#8f8ab8', align: 'center', parent: c })]); }
     const brL = TREE_BRANCH.map(B => [TREE.nodes[B.id + '4'], T(this, 0, 0, B.n, { size: 8, color: B.c, align: 'center', parent: c })]);
+    const inV = (x, y, m = 0) => x >= VL + m && x <= VR - m && y >= VY + m && y <= VY + VH - m;
     const clip = (x1, y1, x2, y2) => { // Liang–Barsky
       let t0 = 0, t1 = 1; const dx = x2 - x1, dy = y2 - y1;
-      for (const [p, q] of [[-dx, x1 - VX], [dx, VX + VW - x1], [-dy, y1 - VY], [dy, VY + VH - y1]]) { if (p === 0) { if (q < 0) return null; } else { const r = q / p; if (p < 0) { if (r > t1) return null; if (r > t0) t0 = r; } else { if (r < t0) return null; if (r < t1) t1 = r; } } }
+      for (const [p, q] of [[-dx, x1 - VL], [dx, VR - x1], [-dy, y1 - VY], [dy, VY + VH - y1]]) { if (p === 0) { if (q < 0) return null; } else { const r = q / p; if (p < 0) { if (r > t1) return null; if (r > t0) t0 = r; } else { if (r < t0) return null; if (r < t1) t1 = r; } } }
       return [x1 + t0 * dx, y1 + t0 * dy, x1 + t1 * dx, y1 + t1 * dy];
     };
-    const inside = (x, y, m = 0) => x >= VX + m && x <= VX + VW - m && y >= VY + m && y <= VY + VH - m;
     const draw = () => {
       g.clear();
+      // 连线：像素线（星座线）
       for (const [a, b] of TREE.edges) {
         const A = TREE.nodes[a], B = TREE.nodes[b]; const l = clip(sx(A.x), sy(A.y), sx(B.x), sy(B.y)); if (!l) continue;
-        const lit = on(a) && on(b), half = on(a) || on(b);
-        g.lineStyle(1, hex(lit ? COL.emberHi : half ? '#6a5a7e' : '#33293f'), 1).lineBetween(...l);
+        const lit = on(a) && on(b), pv = (path.has(a) || on(a)) && (path.has(b) || on(b)) && (path.has(a) || path.has(b));
+        if (lit) { pxLine(g, l, 0x9fc8ff, 0.18, 3); pxLine(g, l, 0xf4f8ff, 1); }
+        else if (pv) { pxLine(g, l, 0xffd36a, 0.2, 3); pxLine(g, l, 0xffe9a8, 0.95); }
+        else pxLine(g, l, (on(a) || on(b)) ? 0x6f78b8 : 0x3a3f74, filt ? 0.35 : 0.7);
       }
       for (const id in TREE.nodes) {
-        const nd = TREE.nodes[id]; const s = Math.round(size(nd)); const X = Math.round(sx(nd.x) - s / 2), Y = Math.round(sy(nd.y) - s / 2);
-        if (!inside(X, Y) || !inside(X + s, Y + s)) continue;
-        const can = treeCanAlloc(id), got = on(id);
-        g.fillStyle(0x120c18, 1).fillRect(X - 1, Y - 1, s + 2, s + 2);
-        g.fillStyle(hex(got ? nd.c : can ? '#4b3e60' : '#231b2e'), 1).fillRect(X, Y, s, s);
-        if (nd.kind === 'k') g.fillStyle(hex(got ? '#ffffff' : nd.c), got ? 0.9 : 0.6).fillRect(X + (s >> 1) - 1, Y + (s >> 1) - 1, 3, 3);
-        if (nd.kind === 'n' && !got) g.fillStyle(hex(nd.c), 0.6).fillRect(X + (s >> 1) - 1, Y + (s >> 1) - 1, 3, 3);
-        if (nd.kind === 'sock') { g.fillStyle(0x120c18, 1).fillRect(X + 1, Y + 1, s - 2, s - 2); g.lineStyle(1, hex(nd.c), got ? 1 : 0.5).strokeRect(X + 0.5, Y + 0.5, s - 1, s - 1); const ch = chipIn(id); if (ch) g.fillStyle(hex(ch.rar === 3 ? '#ff9a3c' : ch.b === 'EmpoweredChip' ? COL.emberHi : '#dfe6ee'), 1).fillRect(X + 2, Y + 2, s - 4, s - 4); }
-        if (can) g.lineStyle(1, hex(COL.emberHi), 0.8).strokeRect(X - 1.5, Y - 1.5, s + 3, s + 3);
+        const nd = TREE.nodes[id], r = rad(nd), X = sx(nd.x), Y = sy(nd.y);
+        if (!inV(X - r - 3, Y - r - 3) || !inV(X + r + 3, Y + r + 3)) continue;
+        const got = on(id), can = treeCanAlloc(id), dim = filt && !hit.has(id) ? 0.35 : 1, pv = path.has(id);
+        if (filt && hit.has(id)) pxRing(g, X, Y, r + 3, 0xff7cf2, 0.9);
+        if (pre && pre.has(id) && !got) pxRing(g, X, Y, r + 2, 0x7fc8ff, 0.7);
+        if (pv && !got) pxRing(g, X, Y, r + 2, 0xffd36a, 0.9);
+        else if (can) pxRing(g, X, Y, r + 1, 0xffd36a, 0.55 * dim);
+        treeNodeGfx(g, nd, X, Y, r, got, dim);
       }
-      for (const [nd, t] of labels) { const x = sx(nd.x), y = sy(nd.y) + size(nd) / 2 + 2; t.setPosition(Math.round(x), Math.round(y)); t.setVisible(V.z >= 1.1 && inside(x - 20, y, 0) && inside(x + 20, y + 9, 0)); }
-      for (const [nd, t] of brL) { const x = sx(nd.x) + 14, y = sy(nd.y) - 4; t.setPosition(Math.round(x), Math.round(y)); t.setVisible(inside(x - 12, y) && inside(x + 12, y + 9)); }
+      for (const [nd, t] of labels) { const x = sx(nd.x), y = sy(nd.y) + rad(nd) + 4; t.setPosition(x, y); t.setVisible(V.z >= 1.1 && inV(x - 20, y) && inV(x + 20, y + 9)); }
+      for (const [nd, t] of brL) { const x = sx(nd.x) + 14, y = sy(nd.y) - 4; t.setPosition(x, y); t.setVisible(inV(x - 12, y) && inV(x + 12, y + 9)); }
+    };
+    // 预览路径：从已点节点出发到悬停节点的最短路
+    const pathTo = id => {
+      if (on(id)) return [];
+      const prev = { }, q = ['start', ...S.tree], seen = new Set(q);
+      while (q.length) { const x = q.shift(); if (x === id) break; for (const n of TREE.nodes[x].nb) if (!seen.has(n)) { seen.add(n); prev[n] = x; q.push(n); } }
+      const out = []; let x = id; while (x && !on(x)) { out.push(x); x = prev[x]; } return out;
     };
     draw();
-    const pick = () => { let best = null, bd = 1e9; const lx = mouse.x - c.x, ly = mouse.y - c.y; for (const id in TREE.nodes) { const nd = TREE.nodes[id]; const d = (sx(nd.x) - lx) ** 2 + (sy(nd.y) - ly) ** 2, r = size(nd) / 2 + 3; if (d < r * r && d < bd) { bd = d; best = id; } } return best; };
+    const pick = () => { let best = null, bd = 1e9; const lx = mouse.x - c.x, ly = mouse.y - c.y; if (!inV(lx, ly)) return null; for (const id in TREE.nodes) { const nd = TREE.nodes[id]; const d = (sx(nd.x) - lx) ** 2 + (sy(nd.y) - ly) ** 2, r = rad(nd) + 3; if (d < r * r && d < bd) { bd = d; best = id; } } return best; };
+    const RAR = { s: ['普通 · 小节点', '#dfe8ff'], n: ['稀有 · 中节点', COL.cyan], k: ['传奇 · 大型节点', COL.emberHi], start: ['起点', COL.emberHi], sock: ['印记槽', COL.cyan] };
     const tipFor = id => {
-      const nd = TREE.nodes[id], got = on(id), can = treeCanAlloc(id);
-      if (nd.kind === 'sock') { const ch = chipIn(id); return ch ? [{ t: itemName(ch), c: RCOL[ch.rar] }, ...ch.affs.map(x => ({ t: affText(x), s: 8 })), ...ruleLines(ch).map(t => ({ t, s: 8, c: '#ff9a3c' })), { t: '点击取下', s: 8, c: COL.dim }] : [{ t: '印记槽', c: nd.c }, { t: got ? '点左边的印记插进来' : can ? '点击点亮' : '还没连上', s: 8, c: COL.dim }]; }
-      const kindN = { s: '小节点', n: '中节点', k: '大型节点', start: '起点' }[nd.kind];
-      return [{ t: nd.n || kindN, c: nd.kind === 'k' ? COL.emberHi : nd.c }, ...treeLines(nd).map(t => ({ t, s: 8 })), { t: got ? (nd.kind === 'start' ? '起点' : treeCanRefund(id) ? '点击退回' : '退回会断开别的节点') : can ? '点击点亮' : pts ? '还没连上' : '没有天赋点', s: 8, c: COL.dim }];
+      const nd = TREE.nodes[id], got = on(id), can = treeCanAlloc(id), [rn, rc] = RAR[nd.kind], need = path.size;
+      const bn = nd.b >= 0 ? TREE_BRANCH[nd.b].n + ' · ' : '';
+      const act = got ? (nd.kind === 'start' ? '起点' : treeCanRefund(id) ? '点击退回' : '退回会断开别的节点') : can ? '点击点亮' : need ? `还没连上 · 走过去要 ${need} 点（金色路径）` : pts ? '还没连上' : '没有天赋点';
+      if (nd.kind === 'sock') { const ch = chipIn(id); return ch ? [{ t: itemName(ch), c: RCOL[ch.rar] }, ...ch.affs.map(x => ({ t: affText(x), s: 8 })), ...ruleLines(ch).map(t => ({ t, s: 8, c: '#ff9a3c' })), { t: '点击取下', s: 8, c: COL.dim }] : [{ t: '印记槽', c: nd.c }, { t: got ? '点左栏的印记插进来' : act, s: 8, c: COL.dim }]; }
+      return [{ t: nd.n || rn.split(' · ')[1], c: nd.kind === 's' ? nd.c : nd.kind === 'n' ? nd.c : COL.emberHi }, { t: bn + rn, s: 8, c: rc }, ...treeLines(nd).map(t => ({ t, s: 8 })), { t: act, s: 8, c: COL.dim }];
     };
     const z = this.add.zone(VX, VY, VW, VH).setOrigin(0).setInteractive(); c.add(z);
-    let drag = null, hov = null;
+    let drag = null;
+    const setHov = id => { if (id === hov) return; hov = id; path = new Set(id ? pathTo(id) : []); draw(); if (id) showTip(tipFor(id)); else hideTip(); };
     z.on('pointerdown', () => { drag = { x: mouse.x, y: mouse.y, vx: V.x, vy: V.y, moved: false }; });
     z.on('pointermove', () => {
-      if (drag && (drag.moved || Math.hypot(mouse.x - drag.x, mouse.y - drag.y) > 3)) { drag.moved = true; V.x = drag.vx - (mouse.x - drag.x) / V.z; V.y = drag.vy - (mouse.y - drag.y) / V.z; hideTip(); hov = null; draw(); return; }
-      const id = pick(); if (id !== hov) { hov = id; if (id) showTip(tipFor(id)); else hideTip(); }
+      if (drag && (drag.moved || Math.hypot(mouse.x - drag.x, mouse.y - drag.y) > 3)) { drag.moved = true; V.x = drag.vx - (mouse.x - drag.x) / V.z; V.y = drag.vy - (mouse.y - drag.y) / V.z; hideTip(); hov = null; path = new Set(); draw(); return; }
+      setHov(pick());
     });
-    z.on('pointerout', () => { drag = null; hov = null; hideTip(); });
+    z.on('pointerout', () => { drag = null; setHov(null); });
     z.on('pointerup', () => {
       const d = drag; drag = null; if (d && d.moved) return;
       const id = pick(); if (!id) return; const nd = TREE.nodes[id];
@@ -624,11 +640,78 @@ class UI extends Phaser.Scene {
       else return;
       refreshStats(); save(); this.refresh();
     });
-    const zoom = f => { V.z = clamp(V.z * f, 0.5, 2); draw(); };
+    const zoom = f => { V.z = clamp(V.z * f, 0.5, 2.5); draw(); };
     z.on('wheel', (p, dx, dy) => zoom(dy > 0 ? 1 / 1.15 : 1.15));
-    mkBtn(this, c, VX + VW - 34, VY + VH - 16, 15, 14, '-', () => zoom(1 / 1.25), { size: 8 });
-    mkBtn(this, c, VX + VW - 18, VY + VH - 16, 15, 14, '+', () => zoom(1.25), { size: 8 });
-    mkBtn(this, c, VX + VW - 62, VY + VH - 16, 26, 14, '回中', () => { V.x = 0; V.y = 0; V.z = 1; draw(); }, { size: 8 });
+    // ---- 底部：图例 + 缩放 ----
+    const ly = h - 17, lx0 = VL + 2;
+    rect(this, lx0, ly - 1, 150, 14, '#070918', 0.7, c);
+    const lg = this.add.graphics(); c.add(lg);
+    let lx = lx0 + 7;
+    [['s', '普通'], ['n', '稀有'], ['k', '传奇'], ['sock', '印记槽']].forEach(([kd, n]) => {
+      treeNodeGfx(lg, { kind: kd, c: '#7fc8ff', b: 2, add: {}, icon: 'none' }, lx, ly + 6, kd === 'k' ? 4 : kd === 'n' ? 3 : kd === 'sock' ? 3 : 1, true, 1);
+      T(this, lx + 6, ly + 1, n, { size: 8, color: COL.dim, parent: c }); lx += 13 + textW(n, 8) + 6;
+    });
+    mkBtn(this, c, VR - 32, h - 18, 14, 14, '-', () => zoom(1 / 1.25), { size: 8, tip: [{ t: '缩小', s: 8 }] });
+    mkBtn(this, c, VR - 17, h - 18, 14, 14, '+', () => zoom(1.25), { size: 8, tip: [{ t: '放大', s: 8 }] });
+    mkBtn(this, c, VR - 59, h - 18, 26, 14, '回中', () => { V.x = 0; V.y = 0; V.z = 1; draw(); }, { size: 8 });
+    // ---- 左栏 ----
+    if (U.left) {
+      const p = rect(this, 3, 3, LW - 1, h - 6, '#080a1c', 0.82, c); p.setInteractive(); rect(this, LW + 2, 3, 1, h - 6, '#3a3f74', 1, c);
+      T(this, 8, 6, `天赋点 ${pts}`, { color: pts ? COL.emberHi : COL.dim, parent: c });
+      const keys = S.tree.filter(id => TREE.nodes[id]?.kind === 'k').length;
+      T(this, 8, 20, `已点 ${S.tree.length} · 大型 ${keys}`, { size: 8, color: COL.faint, parent: c });
+      // 搜索框（浏览器输入框盖在画布上，能打中文）
+      rect(this, 7, 33, 78, 13, '#141836', 1, c); rect(this, 7, 45, 78, 1, '#3a3f74', 1, c);
+      const qT = T(this, 10, 34, U.q || '搜索名称或效果', { size: 8, color: U.q ? COL.text : COL.faint, parent: c });
+      const qz = this.add.zone(7, 33, 78, 13).setOrigin(0).setInteractive(); c.add(qz);
+      qz.on('pointerup', () => treeSearchInput(this, c.x + 7, c.y + 33, 78, 13, U.q, v => { U.q = v.trim(); this.refresh(); }));
+      if (U.q) mkBtn(this, c, 74, 34, 10, 11, 'x', () => { U.q = ''; this.refresh(); }, { size: 8 });
+      T(this, 8, 49, '标签', { size: 8, color: COL.dim, parent: c });
+      TREE_TAGS.forEach((t, i) => mkBtn(this, c, 7 + (i % 3) * 26, 60 + Math.floor(i / 3) * 13, 25, 12, t.n, () => { U.tag = U.tag === t.n ? null : t.n; this.refresh(); }, { size: 8, style: U.tag === t.n ? 's' : 'n' }));
+      const py = 60 + Math.ceil(TREE_TAGS.length / 3) * 13 + 2;
+      T(this, 8, py, '构筑预设', { size: 8, color: COL.dim, parent: c });
+      [['spark', '游雷'], ['whirl', '旋风斩']].forEach(([id, n], i) => mkBtn(this, c, 7 + i * 40, py + 11, 38, 13, n, () => { U.preset = U.preset === id ? null : id; this.refresh(); }, { size: 8, style: U.preset === id ? 's' : 'n', tip: [{ t: `${n}的毕业天赋：在盘上用蓝圈标出来`, s: 8 }] }));
+      let cy = py + 27;
+      if (pre) {
+        const left = [...pre].filter(id => !S.tree.includes(id) && TREE.nodes[id]).length;
+        mkBtn(this, c, 7, cy, 78, 13, left ? `按预设点亮 (${left})` : '预设已点满', () => {
+          let n = 0; for (let more = true; more && treePoints() > 0;) { more = false; for (const id of pre) if (treeCanAlloc(id)) { S.tree.push(id); n++; more = true; if (!treePoints()) break; } }
+          if (n) { sfx('craft'); refreshStats(); save(); } else toast(treePoints() ? '预设里没有能连上的节点' : '没有天赋点'); this.refresh();
+        }, { size: 8, disabled: !left, tip: [{ t: '按顺序点亮预设里能连上的节点，点数用完为止。不会退回已点的天赋。', s: 8 }] });
+        cy += 16;
+      }
+      const chips = S.stash.filter(x => x.kind === 'chip');
+      if (chips.length) {
+        T(this, 8, cy, '印记', { size: 8, color: COL.cyan, parent: c }); cy += 11;
+        chips.slice(0, 10).forEach((it, i) => {
+          const bx = 7 + (i % 5) * 16, by = cy + Math.floor(i / 5) * 16;
+          rect(this, bx, by, 14, 14, it.rar === 3 ? '#5a3a14' : '#1a1e40', 1, c); img(this, bx + 1, by + 1, 'i_' + iconOf(it), c);
+          const zz = this.add.zone(bx, by, 14, 14).setOrigin(0).setInteractive(); c.add(zz);
+          zz.on('pointerover', () => showTip([{ t: itemName(it), c: RCOL[it.rar] }, ...it.affs.map(x => ({ t: affText(x), s: 8 })), ...ruleLines(it).map(t => ({ t, s: 8, c: '#ff9a3c' })), { t: '点击插到空的印记槽', s: 8, c: COL.dim }]));
+          zz.on('pointerout', hideTip);
+          zz.on('pointerup', () => { hideTip(); if (equipChip(it)) { sfx('craft'); save(); } this.refresh(); });
+        });
+      }
+      mkBtn(this, c, 7, h - 22, 78, 15, confirmKey === 'respec' ? '确认重置' : '全部重置', () => { if (!S.tree.length) return; if (confirm2('respec')) { treeKeep([]); refreshStats(); save(); } this.refresh(); }, { size: 8, style: confirmKey === 'respec' ? 'r' : 'n', tip: [{ t: '退回全部天赋点（目前免费），插着的印记回到背包', s: 8 }, { t: '拖动平移，滚轮或右下角按钮缩放；只能点和已点节点相连的节点，点已点的节点可以退回。', s: 8, c: COL.dim }] });
+    }
+    mkBtn(this, c, (U.left ? LW + 3 : 4), 22, 9, 16, U.left ? '<' : '>', () => { U.left = !U.left; this.refresh(); }, { size: 8, tip: [{ t: U.left ? '收起左栏' : '展开左栏', s: 8 }] });
+    // ---- 右栏：汇总 ----
+    if (U.right) {
+      const RX = w - RW - 3;
+      const p = rect(this, RX, 3, RW, h - 6, '#080a1c', 0.82, c); p.setInteractive(); rect(this, RX - 1, 3, 1, h - 6, '#3a3f74', 1, c);
+      T(this, RX + 6, 6, '汇总', { color: COL.emberHi, parent: c });
+      const lines = treeSummary(on);
+      const lc = this.add.container(0, 0); c.add(lc);
+      const top = 22, bot = h - 17, LWd = RW - 10;
+      const rows = []; for (const [t, col, hd] of lines) for (const s of wrapText(t, LWd - (hd ? 0 : 3), 8)) rows.push([s, col, hd]);
+      const vis = Math.floor((bot - top) / 10);
+      U.scroll = clamp(U.scroll || 0, 0, Math.max(0, rows.length - vis));
+      const render = () => { lc.removeAll(true); rows.slice(U.scroll, U.scroll + vis).forEach(([s, col, hd], i) => T(this, RX + (hd ? 6 : 9), top + i * 10, s, { size: 8, color: col, parent: lc })); };
+      render();
+      p.on('wheel', (pp, dx, dy) => { const o = U.scroll; U.scroll = clamp(U.scroll + (dy > 0 ? 3 : -3), 0, Math.max(0, rows.length - vis)); if (o !== U.scroll) render(); });
+      if (rows.length > vis) T(this, RX + RW - 6, h - 16, '滚轮', { size: 8, color: COL.faint, align: 'right', parent: c });
+    }
+    mkBtn(this, c, U.right ? w - RW - 13 : w - 13, 22, 9, 16, U.right ? '>' : '<', () => { U.right = !U.right; this.refresh(); }, { size: 8, tip: [{ t: U.right ? '收起汇总' : '展开汇总', s: 8 }] });
   }
   /* 墓图 · 命盘 · 祝福 */
   win_atlas(c, w, h) {

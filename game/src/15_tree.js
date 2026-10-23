@@ -142,3 +142,132 @@ function treeStats(ids = S.tree, eq = S.equip) {
   }
   return { add, more, flag };
 }
+
+/* ---------- 天赋树 · 星空版的绘制小工具 ---------- */
+const treeUI = { left: true, right: true, q: '', tag: null, preset: null, scroll: 0 };
+// 标签：在节点名字和效果文字里找
+const TREE_TAGS = [
+  { n: '投射物', re: /投射物/ }, { n: '弹射', re: /弹射/ }, { n: '范围', re: /范围/ },
+  { n: '近战', re: /近战|旋风/ }, { n: '持续', re: /持续/ }, { n: '暴击', re: /暴击/ },
+  { n: '穿透', re: /穿透/ }, { n: '防御', re: /护甲|护盾|闪避|抗性/ }, { n: '速度', re: /速度|冲刺/ },
+];
+// 5×5 像素图标
+const TREE_ICONS = {
+  bolt: ['..##.', '.##..', '#####', '..##.', '.##..'], fire: ['..#..', '.##..', '.###.', '#####', '.###.'],
+  bone: ['##...', '###..', '.###.', '..###', '...##'], sun: ['#.#.#', '.###.', '#####', '.###.', '#.#.#'],
+  spore: ['.#.#.', '#.#.#', '.###.', '#.#.#', '.#.#.'], crit: ['..#..', '.#.#.', '##.##', '.#.#.', '..#..'],
+  shield: ['#####', '#####', '#####', '.###.', '..#..'], speed: ['#.#..', '.#.#.', '..#.#', '.#.#.', '#.#..'],
+  sword: ['....#', '...#.', '#.#..', '.#...', '#.#..'], arrow: ['..###', '...##', '..#.#', '.#...', '#....'],
+  aoe: ['.###.', '#...#', '#.#.#', '#...#', '.###.'], trap: ['#.#.#', '#####', '#...#', '#####', '#.#.#'],
+  life: ['.#.#.', '#####', '#####', '.###.', '..#..'], time: ['#####', '.#.#.', '..#..', '.#.#.', '#####'],
+};
+const ELEM_ICON = { ele: 'bolt', exp: 'fire', kin: 'bone', pla: 'sun', nuc: 'spore', agi: 'speed' };
+function treeIcon(nd) {
+  if (nd.icon) return nd.icon;
+  const ks = [...Object.keys(nd.add || {}), ...Object.keys(nd.more || {}), ...Object.keys(nd.flag || {})].join(' ');
+  const R = [[/crit/i, 'crit'], [/deathBoom|fireTrail|still/, 'trap'], [/chain|proj|pierce|arc/, 'arrow'], [/melee|whirl|exec/, 'sword'], [/aoe|area|shockAura|blindAura/, 'aoe'],
+    [/:ele|spark|shock/, 'bolt'], [/:exp|burn/, 'fire'], [/:kin|corrode/, 'bone'], [/:pla|judge|martyr/, 'sun'], [/:nuc|rad|rot|contagion/, 'spore'],
+    [/dot|dur|time/, 'time'], [/armor|deflect|deflRate|res:|dodge|absorb|thorns/, 'shield'], [/aspd|velocity|dash|speed/, 'speed'], [/life|energy|mass/, 'life']];
+  for (const [re, ic] of R) if (re.test(ks)) return nd.icon = ic;
+  return nd.icon = ELEM_ICON[TREE_BRANCH[nd.b]?.id] || 'sun';
+}
+// 像素圆：整格填充，不走矢量抗锯齿
+function pxDisc(g, cx, cy, r, col, a = 1) { g.fillStyle(col, a); for (let dy = -r; dy <= r; dy++) { const hw = Math.floor(Math.sqrt((r + 0.5) ** 2 - dy * dy)); g.fillRect(cx - hw, cy + dy, hw * 2 + 1, 1); } }
+function pxRing(g, cx, cy, r, col, a = 1) { g.fillStyle(col, a); for (let dy = -r; dy <= r; dy++) { const o = Math.floor(Math.sqrt((r + 0.5) ** 2 - dy * dy)), i = Math.abs(dy) >= r ? -1 : Math.floor(Math.sqrt(Math.max(0, (r - 0.5) ** 2 - dy * dy))); if (i < 0 || o - i <= 1) { if (i < 0) g.fillRect(cx - o, cy + dy, o * 2 + 1, 1); else { g.fillRect(cx - o, cy + dy, o - i, 1); g.fillRect(cx + i + 1, cy + dy, o - i, 1); } } else { g.fillRect(cx - o, cy + dy, o - i, 1); g.fillRect(cx + i + 1, cy + dy, o - i, 1); } } }
+function pxLine(g, l, col, a, wd = 1) {
+  let [x0, y0, x1, y1] = l.map(Math.round); const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy, o = wd >> 1;
+  g.fillStyle(col, a);
+  for (let n = 0; n < 2000; n++) { g.fillRect(x0 - o, y0 - o, wd, wd); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+}
+function pxIcon(g, ic, cx, cy, col, a) { const m = TREE_ICONS[ic]; if (!m) return; g.fillStyle(col, a); m.forEach((row, y) => { for (let x = 0; x < 5; x++) if (row[x] === '#') g.fillRect(cx - 2 + x, cy - 2 + y, 1, 1); }); }
+// 一个节点：品级决定形状，点亮发光，没点就暗
+function treeNodeGfx(g, nd, X, Y, r, got, dim) {
+  const A = got ? 1 : 0.55 * dim, bc = hex(nd.c || '#ffffff');
+  if (nd.kind === 's') {
+    if (got) { pxDisc(g, X, Y, r + 2, 0x9fc8ff, 0.18); }
+    g.fillStyle(got ? 0xffffff : 0x5a6496, got ? 1 : 0.75 * dim).fillRect(X - r, Y, r * 2 + 1, 1).fillRect(X, Y - r, 1, r * 2 + 1);
+    g.fillStyle(got ? 0xdff0ff : 0x9aa4d8, got ? 1 : 0.8 * dim).fillRect(X, Y, 1, 1);
+    return;
+  }
+  if (nd.kind === 'sock') {
+    const ch = chipIn(nd.id);
+    if (got) pxDisc(g, X, Y, r + 3, 0x57e0d0, 0.15);
+    g.fillStyle(0x07101a, 1); for (let d = -r - 1; d <= r + 1; d++) { const w = r + 1 - Math.abs(d); g.fillRect(X - w, Y + d, w * 2 + 1, 1); }
+    g.fillStyle(0x57e0d0, got ? 1 : 0.5 * dim); for (let d = -r; d <= r; d++) { const w = r - Math.abs(d); g.fillRect(X - w, Y + d, 1, 1); g.fillRect(X + w, Y + d, 1, 1); }
+    if (ch) { g.fillStyle(hex(ch.rar === 3 ? '#ff9a3c' : ch.b === 'EmpoweredChip' ? COL.emberHi : '#dfe6ee'), 1); for (let d = -r + 2; d <= r - 2; d++) { const w = r - 2 - Math.abs(d); g.fillRect(X - w, Y + d, w * 2 + 1, 1); } }
+    return;
+  }
+  const leg = nd.kind === 'k' || nd.kind === 'start';
+  if (leg) {
+    // 光芒：8 道像素射线
+    const L = r + (got ? 5 : 3), rc = got ? 0xffd36a : 0x8a6a30, ra = got ? 0.9 : 0.5 * dim;
+    g.fillStyle(rc, ra).fillRect(X, Y - L, 1, L - r).fillRect(X, Y + r + 1, 1, L - r).fillRect(X - L, Y, L - r, 1).fillRect(X + r + 1, Y, L - r, 1);
+    const d = Math.round((L - 1) * 0.7), d0 = Math.round(r * 0.75) + 1; for (let t = d0; t <= d; t++) { g.fillRect(X + t, Y + t, 1, 1).fillRect(X - t, Y + t, 1, 1).fillRect(X + t, Y - t, 1, 1).fillRect(X - t, Y - t, 1, 1); }
+    if (got) pxDisc(g, X, Y, r + 3, 0xffb84a, 0.22);
+    pxDisc(g, X, Y, r + 1, 0x0a0a18, 1);
+    pxDisc(g, X, Y, r, got ? 0x7a4a14 : 0x2a2030, 1);
+    pxRing(g, X, Y, r + 1, got ? 0xffe9a8 : 0x9a7a3a, got ? 1 : 0.7 * dim);
+    pxRing(g, X, Y, r - 1, nd.kind === 'start' ? 0xffd36a : bc, got ? 1 : 0.6 * dim);
+    pxDisc(g, X, Y, Math.max(1, r - 2), got ? 0xc8862a : 0x3a2c22, 1);
+    if (nd.kind === 'start') g.fillStyle(0xffffff, 1).fillRect(X - 1, Y - 1, 3, 3);
+    else pxIcon(g, treeIcon(nd), X, Y, got ? 0xfff6d8 : 0xb89a5a, got ? 1 : 0.8 * dim);
+    return;
+  }
+  // 稀有：青色环宝珠
+  if (got) pxDisc(g, X, Y, r + 3, 0x57e0d0, 0.2);
+  pxDisc(g, X, Y, r + 1, 0x0a0a18, 1);
+  pxDisc(g, X, Y, r, got ? 0x1a5a6a : 0x161c34, 1);
+  pxRing(g, X, Y, r, got ? 0x8ff6e8 : 0x3a8a90, got ? 1 : 0.8 * dim);
+  pxIcon(g, treeIcon(nd), X, Y, got ? 0xffffff : bc, got ? 1 : 0.6 * dim);
+}
+// 星空底图：深蓝渐变 + 抖动的星云 + 星星 + 暗角，全部按整像素画
+function treeSkyTex(sc, w, h) {
+  const t = sc.textures.createCanvas('tree_sky', w, h), x = t.getContext(), im = x.createImageData(w, h), d = im.data;
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const blobs = [[0.32, 0.3, 70, [52, 34, 96]], [0.7, 0.62, 80, [24, 52, 104]], [0.52, 0.85, 50, [70, 30, 90]], [0.15, 0.75, 45, [20, 60, 90]], [0.85, 0.2, 40, [60, 40, 110]]];
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const th = B4[(j & 3) * 4 + (i & 3)] / 16, v = j / h;
+    let c = v + (th - 0.5) * 0.25 > 0.5 ? [11, 14, 38] : [8, 10, 30];
+    for (const [bx, by, br, bc] of blobs) { const dd = Math.hypot(i - bx * w, (j - by * h) * 1.4) / br, s = Math.max(0, 1 - dd) ** 1.5 * (0.75 + 0.25 * Math.sin(i * 0.11 + j * 0.07)); if (s * 1.6 > th) { const k = s > 0.45 && s * 2 > th + 0.4 ? 0.85 : 0.5; c = c.map((q, n) => Math.round(q + (bc[n] - q) * k * 0.6)); } }
+    const ed = Math.min(i, w - 1 - i, j, h - 1 - j); if (ed < 14 && ed / 14 < th) c = c.map(q => q * 0.6);
+    const o = (j * w + i) * 4; d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+  }
+  for (let n = 0; n < w * h / 90; n++) { const i = Math.floor(rnd() * w), j = Math.floor(rnd() * h), b = rnd(), o = (j * w + i) * 4, v = b > 0.92 ? 230 : b > 0.6 ? 150 : 90; d[o] = v * 0.85; d[o + 1] = v * 0.9; d[o + 2] = v; }
+  x.putImageData(im, 0, 0); t.refresh();
+}
+function treeTwinkles(w, h) {
+  let seed = 99; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647; const out = [];
+  for (let n = 0; n < 46; n++) out.push({ x: Math.floor(rnd() * (w - 4)) + 2, y: Math.floor(rnd() * (h - 4)) + 2, sp: 1 + rnd() * 2.5, ph: rnd() * 6.3, big: rnd() > 0.75, c: [0xffffff, 0xbfd8ff, 0xffe9b8][Math.floor(rnd() * 3)] });
+  return out;
+}
+// 汇总栏：附加、代价、稀有、大型节点、核心天赋
+function treeSummary(on) {
+  const add = {}, more = {}, flag = {}, rare = [], key = [], core = [];
+  for (const id of S.tree) { const nd = TREE.nodes[id]; if (!nd) continue;
+    for (const k in nd.add || {}) add[k] = (add[k] || 0) + nd.add[k];
+    for (const k in nd.more || {}) more[k] = k === 'dashMax' ? (more[k] || 0) + nd.more[k] : (more[k] ?? 1) * nd.more[k];
+    for (const k in nd.flag || {}) flag[k] = 1;
+    if (nd.kind === 'n') rare.push(nd); else if (nd.kind === 'k') (/c\d_6$/.test(id) ? core : key).push(nd); }
+  const out = [], H = (t, c) => out.push([t, c, true]), L = (t, c = '#d6d9ee') => out.push([t, c, false]);
+  const good = [], bad = [];
+  for (const k in add) { let t; try { t = treeText(k, add[k]); } catch (e) { continue; } (add[k] < 0 ? bad : good).push(t); }
+  for (const k in more) { const t = moreText(k, more[k]); (k !== 'dashMax' && more[k] < 1 ? bad : good).push(t); }
+  H('附加', COL.dim); if (good.length) good.forEach(t => L(t)); else L('还没有', COL.faint);
+  if (bad.length) { H('代价', COL.dim); bad.forEach(t => L(t, '#ff8a7a')); }
+  if (rare.length) { H(`稀有 ${rare.length}`, COL.dim); L(rare.map(n => n.n).join('、'), COL.cyan); }
+  if (key.length) { H('大型节点', COL.dim); key.forEach(n => L(n.n, COL.emberHi)); }
+  if (core.length) { H('核心天赋', COL.dim); core.forEach(n => { L(n.n, COL.emberHi); L(n.d, '#b8b4d4'); }); }
+  return out;
+}
+// 搜索框：在画布上盖一个浏览器输入框，回车或失焦就确定
+function treeSearchInput(sc, x, y, w, h, val, done) {
+  const cv = sc.game.canvas, R = cv.getBoundingClientRect(), k = R.width / W;
+  const el = document.createElement('input'); el.value = val || ''; el.placeholder = '搜索名称或效果';
+  Object.assign(el.style, { position: 'fixed', left: R.left + x * k + 'px', top: R.top + y * k + 'px', width: w * k + 'px', height: h * k + 'px', boxSizing: 'border-box', background: '#141836', color: '#e9e0c9', border: '1px solid #7fc8ff', font: `500 ${8 * k}px ${FONT_FAM}`, padding: `0 ${2 * k}px`, outline: 'none', zIndex: 10 });
+  let fin = false; const end = ok => { if (fin) return; fin = true; const v = el.value; el.remove(); if (ok) done(v); };
+  el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') end(true); if (e.key === 'Escape') end(false); });
+  el.addEventListener('keyup', e => e.stopPropagation());
+  el.addEventListener('blur', () => end(true));
+  document.body.appendChild(el); setTimeout(() => el.focus(), 0);
+}
