@@ -275,6 +275,7 @@ class World extends Phaser.Scene {
     if (p.enemy) { g.fillStyle(0x120c18, 1).fillRect(p.x - 2, p.y - 2, 4, 4); g.fillStyle(hex(ELEM_C[p.el]), 1).fillRect(p.x - 1, p.y - 1, 2, 2); return; }
     const c = hex(ELEM_C[p.el]);
     if (p.lob) { g.fillStyle(0x000000, 0.35).fillRect(p.x - 2, p.y, 4, 1); const y = p.y - p.z; g.fillStyle(0x120c18, 1).fillRect(p.x - 2, y - 2, 5, 5); g.fillStyle(0x8f5d36, 1).fillRect(p.x - 1, y - 1, 3, 3); g.fillStyle(0xffd36a, 1).fillRect(p.x, y - 3, 1, 2); return; }
+    if (p.shard) { g.fillStyle(0xe8fbff, 1).fillRect(p.x - 1, p.y - 1, 2, 2); g.fillStyle(c, 1).fillRect(p.x - p.vx / NV.shardSpeed * 2 - 0.5, p.y - p.vy / NV.shardSpeed * 2 - 0.5, 1, 1); return; } // 碎冰的冰片
     const k = p.W.key;
     if (p.mine) { const on = p.arm <= 0 && (t * 4 | 0) % 2; g.fillStyle(0x120c18, 1).fillRect(p.x - 3, p.y - 1, 6, 3); g.fillStyle(c, 1).fillRect(p.x - 2, p.y, 4, 1); if (on) g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - 1, 1, 1); return; }
     if (k === 'Shuriken' || k === 'TurbineBlades' || k === 'FlameSlinger') { const a = t * 20; g.fillStyle(k === 'FlameSlinger' ? 0xff9a3d : 0xdfe6ee, 1); for (let i = 0; i < 3; i++) { const aa = a + i * 2.1; g.fillRect(p.x + Math.cos(aa) * 2 - .5, p.y + Math.sin(aa) * 2 - .5, 1, 1); } g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - .5, 1, 1); return; }

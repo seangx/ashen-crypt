@@ -170,7 +170,7 @@ function chillOn(m, n, W) {
   if (m.dead || m.frzT > 0) return;
   if (m.frzImm > 0) { m.chill = Math.min(MECH.chillMax - 1, m.chill + n); m.chillT = MECH.chillDur; return; } // 免疫期：照常冰缓，但叠不到冻结
   m.chill = Math.min(MECH.chillMax, m.chill + n); m.chillT = MECH.chillDur;
-  if (m.chill >= MECH.chillMax) { m.frzT = MECH.freezeDur * chillEff() * (m.boss || m.elite ? MECH.freezeBossMul : 1); m.slam = null; m.chill = 0; m.chillT = 0; if (RUN) RUN.freezes = (RUN.freezes || 0) + 1; fx({ t: 'freeze', x: m.x, y: m.y - m.size }); }
+  if (m.chill >= MECH.chillMax) { m.frzT = MECH.freezeDur * chillEff() * (m.boss || m.elite ? MECH.freezeBossMul : 1); m.slam = null; m.chill = 0; m.chillT = 0; if (RUN) { RUN.freezes = (RUN.freezes || 0) + 1; if (RUN.dmg) RUN.dmg.fz = (RUN.dmg.fz || 0) + 1; } fx({ t: 'freeze', x: m.x, y: m.y - m.size }); }
 }
 // 角色被寒霜怪打中：叠冰缓（移速、攻速降低），不会被冻结
 function chillPlayer(n) { player.chill = Math.min(MECH.playerChillMax, (player.chill || 0) + n); player.chillT = MECH.chillDur; }
@@ -197,6 +197,14 @@ function damage(m, amt, el, crit, small) {
   if (G.fx && !small) { m.kbT = 0.12; m.kbA = Math.atan2(m.y - player.y, m.x - player.x); if ((crit && !crowd) || m.boss || m.elite) fx({ t: 'impact', x: m.x, y: m.y - m.size, el, crit, big: m.boss || m.elite }); } // 只影响画面：击退偏移、火花
   if (m.hp <= 0) kill(m);
 }
+// 碎冰（大天赋 shatter）：尸体向四周放 shardN (+ 派生 +N) 片冰片，每片 = 新星武器单次 × shardMul；冰片算派生和投射物，不穿透
+function shatter(m) {
+  const W = STATS.weapons.find(w => w && (w.frostNova || w.tags.includes('Nova'))); if (!W) return;
+  const n = NV.shardN + (STATS.spawnAdd || 0), a0 = rf(0, Math.PI * 2);
+  const old = projs.filter(p => p.shard && !p.dead), over = old.length + n - NV.maxShards; for (let k = 0; k < over && k < old.length; k++) old[k].dead = true;
+  for (let i = 0; i < n; i++) { const a = a0 + i / n * Math.PI * 2, p = shoot(W, m.x, m.y - 5, a, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set([m]), mul: NV.shardMul * (1 + ((STATS.raw['inc:proj'] || 0) + (STATS.tree.add['inc:proj'] || 0)) / 100), life: NV.shardLife, shard: 1 }); p.vx = Math.cos(a) * NV.shardSpeed; p.vy = Math.sin(a) * NV.shardSpeed; p.r = 2; }
+  if (RUN && RUN.dmg) RUN.dmg.shards = (RUN.dmg.shards || 0) + n;
+}
 function kill(m) {
   if (m.dead) return;
   m.dead = true; S.stats.kills++;
@@ -208,6 +216,7 @@ function kill(m) {
   if (!m.boss) RUN.prog += (RUN.mode === 'ladder' ? (m.elite ? LD.run.eliteP : LD.run.normalP) : 1) * hk;
   if (RUN.mode !== 'ladder') player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * (RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
   deathRules(m);
+  if (STATS.flag.shatter && m.frzT > 0) shatter(m); // 碎冰：冻结的敌人死了碎成冰片（冰片打死的冻结敌人也照样碎）
   const mm = manualMul();
   const xp = m.d.xp * (m.elite ? ELITE.xp : 1) * monXp(RUN.L) * (1 + LX.xp / 100) * mm * hk;
   const lad = RUN.mode === 'ladder';
@@ -361,10 +370,12 @@ function fire(W, i) {
       if (hits) { sfx('slash'); st.idle = 0; player.swing[i] = 0.18; if (W.whirl && n > 0) player.soul = Math.min(STATS.soulMax, player.soul + Math.min(hits, WH.soulHitCap) * WH.soulPerHit); }
       return true;
     }
-    case 'nova': { // 圣钟：以自身为中心
+    case 'nova': { // 圣钟 / 霜钟：以自身为中心
       if (!inRange(W, W.rng)) return false;
-      const n = attacks(W);
-      for (let k = 0; k < n; k++) { fx({ t: 'boom', x: px, y: py + 6, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); aoePull(px, py + 6, W.aoeR); }
+      const n = attacks(W), cost = NV.soulPerCast * (1 - STATS.soulLess), frost = W.frostNova && (!RUN || player.soul >= cost); // 霜环：灯火不够时放普通的新星；先叠冰缓再结算伤害，这一下冻住的怪当场吃“冻结受伤提高”，打死就碎
+      const f0 = RUN ? RUN.freezes || 0 : 0, kb = NV.knockPx * Math.log(50); // 击退 knockPx 像素（kx 每秒衰减到 2%，位移 ≈ kx ÷ ln50）
+      for (let k = 0; k < n; k++) { fx({ t: 'boom', x: px, y: py + 6, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.aoeR + m.size) ** 2) { if (frost) chillOn(m, W.chillStacks, W); hitMob(m, W, frost ? { mul: W.novaMul } : {}); if (frost && !m.dead) { if (!m.boss) { const dx = m.x - player.x, dy = m.y - player.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * kb; m.ky += dy / d * kb; } } } aoePull(px, py + 6, W.aoeR); }
+      if (frost && RUN) player.soul = Math.min(STATS.soulMax, Math.max(0, player.soul - cost) + Math.min(NV.refundCap, ((RUN.freezes || 0) - f0) * NV.refund)); // 每冻结一只返还
       sfx('boom'); return true;
     }
     case 'mine': { // 陷阱：放在脚下，敌人靠近就触发

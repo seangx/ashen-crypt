@@ -20,9 +20,9 @@ const TREE_TEXT = {
 const INC_N = { proj: '投射物', melee: '近战', engine: '遁靴' };
 const treeText = (k, v) => k.startsWith('inc:') && k !== 'inc:all' ? `${INC_N[k.slice(4)] || ELEM_N[k.slice(4)]}伤害提高 ${v}%` : k.startsWith('ail:') ? `${AIL[k.slice(4)].n}几率 +${Math.round(v * 100)}%` : k.startsWith('res:') && k !== 'res:all' ? `${ELEM_N[k.slice(4)]}抗性 +${v}%` : TREE_TEXT[k](v);
 // 改规则的效果文字：{参数} 取 data/rules.json 里这条规则的参数，{v} 是天赋或装备给的数值，{别的规则.参数} 引用别的规则
-const RULES = DATA.rules; RULES.whirl = DATA.mechanics.whirl; RULES.spark = DATA.mechanics.spark; // {whirl.参数} 引用 mechanics.json 的 whirl
+const RULES = DATA.rules; RULES.whirl = DATA.mechanics.whirl; RULES.spark = DATA.mechanics.spark; RULES.nova = DATA.mechanics.nova; // {whirl.参数} 引用 mechanics.json 的 whirl
 const ruleText = (k, v) => { const R = RULES[k]; return R && R.text ? R.text.replace(/\{(\w+)(?:\.(\w+))?\}/g, (m, a, b) => b ? RULES[a][b] : a === 'v' ? v : R[a]) : null; };
-const MORE_N = { 'dmg:hit': '命中伤害', 'dmg:nonEle': '闪电以外的伤害', 'dmg:nonKin': '物理以外的伤害', 'dmg:nonPla': '圣光以外的伤害', 'dmg:thermal': '元素伤害', 'dmg:nonAoe': '非范围武器伤害', 'dmg:proj': '投射物伤害',
+const MORE_N = { 'dmg:hit': '命中伤害', 'dmg:nonEle': '闪电以外的伤害', 'dmg:nonCold': '寒霜以外的伤害', 'dmg:nonKin': '物理以外的伤害', 'dmg:nonPla': '圣光以外的伤害', 'dmg:thermal': '元素伤害', 'dmg:nonAoe': '非范围武器伤害', 'dmg:proj': '投射物伤害',
   speed: '移动速度', armor: '护盾', deflect: '护盾', deflRate: '护盾回复速度', life: '生命', aspd: '攻击速度', dot: '持续伤害', rad: '疫病伤害', blind: '致盲效果', crit: '暴击率' };
 for (const e of ELEM) MORE_N['dmg:' + e] = ELEM_N[e] + '伤害';
 const moreText = (k, v) => k === 'dashMax' ? `冲刺槽 ${v}（至少 1）` : `${MORE_N[k] || k}${v >= 1 ? '总增' : '总降'} ${Math.round(Math.abs(v - 1) * 100)}%`;

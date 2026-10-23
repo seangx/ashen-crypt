@@ -155,9 +155,11 @@ function specAt(s, L) {
 const fitOf = conds => it => conds.every(c => c === 'weapon' ? it.kind === 'weapon' : c === 'engine' ? it.kind === 'engine' : itemTags(it).includes(c.slice(4)));
 const WH = DATA.mechanics.whirl; // 旋风斩流派的数值
 const SP = DATA.mechanics.spark; // 游雷（电球）流派的数值
+const NV = DATA.mechanics.nova; // 霜环（冰霜新星）流派的数值
 const GEAR = DATA.mechanics.gear; // 词条改版（spec-bd-gear §2、§3）
 const SOUL = DATA.mechanics.soul; // 魂火（共用资源）
 const MOD_D = {
+  FrostNova: f => `只对霜钟 / 圣钟生效：新星伤害 ×${f.novaMul}，每次命中叠 ${f.chillStacks} 层冰缓，击退 ${NV.knockPx} 像素；圣钟的元素改成寒霜。每次新星消耗 ${NV.soulPerCast} 灯火，每冻结一只返还 ${NV.refund}（每次最多 ${NV.refundCap}）`,
   Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），沿波浪线飞 ${SP.life} 秒（吃持续时间和投射物持续时间，弹速决定飞多远）；碰到屏幕边按弹射次数反弹（每弹一次伤害 ×${SP.chainMul}），弹射用完就飞出屏幕；有穿透时无限穿透，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次，没有穿透时打中就消失；弹射 +${f.chain}；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。投射物 +N 让每次多放 N 颗（相加）。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
   Pierce: f => `投射物无限穿透（同一个敌人每 ${MECH.projRehit} 秒最多打一次），穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
   Chain: f => `投射物弹射 +${f.chain}（碰到屏幕边反弹；闪电链类则在敌人之间多连锁 ${f.chain} 次），每剩一次弹射伤害提高 ${Math.round(f.chainInc * 100)}%`,

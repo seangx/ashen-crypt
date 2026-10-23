@@ -35,7 +35,7 @@ async function run(build, IL) {
   await p.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 20000 });
   const out = await p.evaluate(({ build, IL, seed, DMAX, DUMP, CORE }) => {
     const A = window.__ash; A.G.fx = false; window.__reseed(seed * 7919 + IL);
-    const S = A.S, WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, ARCH = build === 'whirl' || build === 'spark', BP = build === 'spark' ? SPK : WH, rnd = Math.random, pick = a => a[Math.floor(rnd() * a.length)];
+    const S = A.S, WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, MB = A.DATA.mechanics, ARCH = !!(MB[build] && MB[build].treeKey), BP = ARCH ? MB[build] : WH, rnd = Math.random, pick = a => a[Math.floor(rnd() * a.length)];
     if (A.G.ui.closeWin) A.G.ui.closeWin();
     S.level = IL; S.maxDepth = IL + 1; S.ladder.best = IL; S.ladder.unlocked = 1;
     for (const k in S.equip) S.equip[k] = null; S.stash = []; S.mods = []; S.tree = [];
@@ -73,9 +73,9 @@ async function run(build, IL) {
     for (let pass = 0; pass < 2; pass++) for (const s of ['wl', 'wr', 'shield', 'core', 'engine', 'hub']) {
       const [kind, pool] = pools[s];
       let bases = Object.keys(pool).filter(b => (pool[b].req || 1) <= IL);
-      if (ARCH && s === 'wl') bases = [build === 'spark' ? SPK.base : 'TurbineBlades'];
+      if (ARCH && s === 'wl') bases = [BP.base || 'TurbineBlades'];
       let best = null;
-      if (ARCH && s === 'core' && IL >= 20 && CORE !== 'none') { best = { it: A.newUnique(CORE || (build === 'spark' ? SPK.uniqueId : 'StormEye'), IL) }; }
+      const UQ = CORE || (build === 'whirl' ? 'StormEye' : BP.uniqueId); if (ARCH && s === 'core' && IL >= 20 && CORE !== 'none' && UQ) { best = { it: A.newUnique(UQ, IL) }; }
       else if (build === 'random') { const it = fill(make(kind, pick(bases)), s); best = { it }; }
       else for (const b of bases) { let it; try { it = make(kind, b); } catch (e) { continue; } fill(it, s); if (s === 'wl' || s === 'wr') runesFor(it, ARCH && s === 'wl' ? BP.runeOrder : null); const v = ev({ ...S.equip, [s]: it }); if (!best || v > best.v) best = { v, it }; }
       if (best.it.kind === 'weapon' && !(best.it.mods || []).some(Boolean)) runesFor(best.it, ARCH && s === 'wl' ? BP.runeOrder : null);

@@ -17,6 +17,11 @@ def patch(out):
         aff[k] = a
     n = copy.deepcopy(out['nexus']['BaryteNexus']); n.update({'req': 12, 'w': 250, 'el': 'cold'})
     out['nexus']['FrostNexus'] = n
+    # 霜环（spec-bd-gear §4.4）：霜钟 = 圣钟的数值，el cold，ail_cold 0.5，tags 加 Nova，req 6，w 800
+    sec = next(v for v in out.values() if isinstance(v, dict) and 'PlasmaNova' in v)
+    b = copy.deepcopy(sec['PlasmaNova']); b.pop('ail_pla', None)
+    b.update({'req': 6, 'w': 800, 'el': 'cold', 'ail_cold': 0.5, 'tags': b['tags'] + ['Nova']})
+    sec['FrostBell'] = b
     return gear(out)
 
 # 词条改版（spec-bd-gear.md §3.1、§3.4）：六元素抗性 / 抗性上限只出在法阵和盾牌；空词条权重归零（老存档按 mechanics.gear.migrate 映射）
