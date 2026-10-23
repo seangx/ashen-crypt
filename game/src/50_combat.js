@@ -107,10 +107,12 @@ function deathRules(m) {
 
 /* ---------- 命中与伤害 ---------- */
 // 感电：每层全部抗性 -1%，闪电抗性再 -2%
-const shockRes = (m, e) => m.shock * (MECH.shockAll + (e === 'ele' ? MECH.shockEle : 0)) * (STATS.shockMul || 1);
+const shockRes = (m, e) => m.shock * (MECH.shockAll + (e === 'ele' ? MECH.shockEle : 0)) * (STATS.shockMul || 1) * ailEff('ele');
+// 异常效果提高%（AilEffect 词条，spec-bd-gear §3.2）：碎骨 kin、余震 exp、灼烧 burn、感电 ele、致盲 pla、疫病 nuc、冰缓 cold
+const ailEff = e => 1 + ((STATS.raw && STATS.raw['ailEff:' + e]) || 0) / 100;
 // Boss 疲惫：开打 5 秒后每秒一层，每层承受伤害 ×1.04，最多 60 层
 const fatigue = m => m.boss ? Math.pow(MECH.fatigueStep, m.fat) : 1;
-function mitigate(m, e, d) { return d * (1 - ((m.res[e] || 0) - shockRes(m, e) - (m.shredT > 0 ? m.shred[e] || 0 : 0) - (STATS.flag.corrode && m.rad.length ? RL.corrode.res : 0)) / 100) * fatigue(m); }
+function mitigate(m, e, d) { return d * (1 - ((m.res[e] || 0) - shockRes(m, e) - (m.shredT > 0 ? m.shred[e] || 0 : 0) - (STATS.flag.corrode && m.rad.length ? RL.corrode.res : 0) - ((STATS.raw && STATS.raw['pen:' + e]) || 0)) / 100) * fatigue(m); }
 // 暴击率超过 100% 时可以多重暴击，每多一重几率 ×0.8
 function rollCrit(W) {
   let c = W.crit, mult = 1;
@@ -130,6 +132,7 @@ function hitMob(m, W, o = {}) {
   if (W.doubleChance && rnd() < W.doubleChance) mul *= 2;
   if (W.killInc && RUN) mul *= 1 + Math.min(RL.killInc.max, W.killInc * RUN.kills) / 100;
   mul *= ruleMul(m);
+  if (m.frzT > 0 && STATS.frozenTaken) mul *= 1 + STATS.frozenTaken; // 冻结的敌人受到的伤害提高
   if (W.shred) { m.shred = W.shred; m.shredT = MECH.shredTime; }
   const by = {}; let total = 0, top = W.el, topv = 0;
   for (const e of ELEM) {
@@ -149,7 +152,7 @@ function hitMob(m, W, o = {}) {
   const tick = W.cont ? 1 / W.aps : 1;
   for (const e in by) if (W.ail[e] && rnd() < W.ail[e] * tick) ailment(m, e, by[e], W, o);
   if (W.kinShock && by.kin && rnd() < W.kinShock * tick) ailment(m, 'ele', by.kin, W, o);
-  if (by.exp) { m.burn += by.exp * MECH.burnFromFire; if (W.burnSlow) m.burnSlow = W.burnSlow; } // 火焰伤害都会累积灼烧
+  if (by.exp) { m.burn += by.exp * MECH.burnFromFire * ailEff('burn'); if (W.burnSlow) m.burnSlow = W.burnSlow; } // 火焰伤害都会累积灼烧
   if (W.meleeRe && !o.re && !m.dead && rnd() < W.meleeRe) total += hitMob(m, W, { ...o, re: 1 }); // 碎颅冠：近战命中再结算一次
   return total;
 }
@@ -161,7 +164,7 @@ function aoePull(x, y, r) {
   for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = x - m.x, dy = y - m.y, d = Math.hypot(dx, dy); if (d > 4 && d < pr) { const s = Math.min(k, d - 4); m.x += dx / d * s; m.y += dy / d * s; } }
 }
 // 寒霜：冰缓叠层（每层移速、攻速 -chillPer%），叠满冻结；冻结后 freezeImmune 秒免疫、层数清零（spec-bd-gear §1）
-const chillEff = () => 1 + ((STATS.raw && STATS.raw['ailEff:cold']) || 0) / 100; // 冰缓效果提高%（第二步的 AilEffect 词条接这里）
+const chillEff = () => ailEff('cold'); // 冰缓效果提高%
 const chillK = m => m.frzT > 0 ? 0 : 1 - Math.min(0.9, m.chill * MECH.chillPer / 100 * chillEff()); // 速度倍率：冻结时 0
 function chillOn(m, n, W) {
   if (m.dead || m.frzT > 0) return;
@@ -176,14 +179,14 @@ function ailment(m, e, d, W, o) {
   switch (e) {
     case 'kin': { if (o.noDebris) break; // 碎骨：周围一圈，命中伤害的 20%
       const r = W.debrisR || MECH.debrisR * UNIT; if (mobs.length <= 15 || rnd() < 0.15) fx({ t: 'ring', x: m.x, y: m.y - 4, r, el: 'kin' }); // 怪海里碎骨圈只偶尔画
-      for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < r * r) { damage(n, mitigate(n, 'kin', d * MECH.debrisPct * W.debrisMore), 'kin', false, true); if (n.dead && STATS.flag.debrisChain && (o.depth || 0) < RL.debrisChain.depth) ailment(n, 'kin', d, W, { ...o, depth: (o.depth || 0) + 1 }); }
+      for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < r * r) { damage(n, mitigate(n, 'kin', d * MECH.debrisPct * W.debrisMore * ailEff('kin')), 'kin', false, true); if (n.dead && STATS.flag.debrisChain && (o.depth || 0) < RL.debrisChain.depth) ailment(n, 'kin', d, W, { ...o, depth: (o.depth || 0) + 1 }); }
       break; }
-    case 'exp': { const k = W.afterPct || MECH.afterPct; m.after.push({ n: MECH.afterRepeats + (STATS.afterRep || 0) + (W.afterRep || 0), t: MECH.afterTick, d: d * k, k }); break; } // 余震
+    case 'exp': { const k = W.afterPct || MECH.afterPct; m.after.push({ n: MECH.afterRepeats + (STATS.afterRep || 0) + (W.afterRep || 0), t: MECH.afterTick, d: d * k * ailEff('exp'), k }); break; } // 余震
     case 'ele': m.shock = Math.min(MECH.shockMax, m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)); // 织雷之心：游雷一次叠两层
       m.shockT = MECH.shockDur; break;
-    case 'pla': m.blindT = MECH.blindDur; m.blindK = Math.min(MECH.blindMax, MECH.blindLess * W.blindMore); break;
+    case 'pla': m.blindT = MECH.blindDur; m.blindK = Math.min(MECH.blindMax, MECH.blindLess * W.blindMore * ailEff('pla')); break;
     case 'cold': chillOn(m, o.chill || 1, W); break;
-    case 'nuc': m.rad.push({ dps: d * MECH.radPct * W.radMore * W.dotMore / MECH.radDur, t: MECH.radDur }); break;
+    case 'nuc': m.rad.push({ dps: d * MECH.radPct * W.radMore * W.dotMore * ailEff('nuc') / MECH.radDur, t: MECH.radDur }); break;
   }
 }
 function damage(m, amt, el, crit, small) {
@@ -489,7 +492,7 @@ function logic(dt) {
   const spin = spinning(), lad = RUN.mode === 'ladder';
   if (!RUN.ending && !RUN.next) {
     const rv = !lad && RUN.base < RUN.descent.prevMax; // 重温已经打过的层
-    const net = (lad ? P.soulRegen : -(SOUL.burn + RUN.base * SOUL.burnPerFloor) * (rv ? SOUL.revisitBurnMul : 1)) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
+    const net = (lad ? P.soulRegen : -(SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1)) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
     player.soul = clamp(player.soul + net * dt, 0, P.soulMax);
     if (player.soul <= 0) player.soulEmpty += dt;
     if (!lad && player.soul <= 0) { RUN.result = 'lampout'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('灯火燃尽 · 平安返回', COL.emberHi); }

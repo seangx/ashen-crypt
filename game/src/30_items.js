@@ -7,7 +7,7 @@ const baseOf = it => it.kind === 'weapon' ? WEAPONS[it.b] : ARMORS[it.kind][it.b
 const iconOf = it => it.kind === 'map' ? 'a_map' : baseOf(it).ic;
 const slotsFor = it => it.kind === 'weapon' ? ['wl', 'wr'] : it.kind === 'chip' ? [] : [it.kind];
 const itemTags = it => it.kind === 'weapon' ? WEAPONS[it.b].tags : it.kind === 'engine' ? (ARMORS.engine[it.b].tags || ['Engine']) : [KIND_TAG[it.kind]];
-const canRollOn = (a, it) => (a.on.includes(it.kind) || (it.b === 'EmpoweredChip' && a.on.includes('chipE'))) && (!a.tag || it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)); // tag 只限制武器
+const canRollOn = (a, it) => !a.off && (a.on.includes(it.kind) || (it.b === 'EmpoweredChip' && a.on.includes('chipE'))) && (!a.tag || it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)); // tag 只限制武器
 const KIND_TAG = { shield: 'Shield', core: 'Core', engine: 'Engine', hub: 'Nexus', chip: 'Chip' };
 function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : baseOf(it).n; }
 const qv = (v, q) => Array.isArray(v) ? v[q] : v; // 按品质取值
@@ -53,7 +53,8 @@ function affOptions(it) {
   for (const a of AFF) {
     if (!canRollOn(a, it) || it.affs.some(x => AFF_BY[x.k].grp === a.grp)) continue;
     if ((a.type === 'P' ? nP >= lim[0] : nS >= lim[1])) continue;
-    a.tiers.forEach((t, i) => { if (it.ilvl >= t[2] && it.ilvl < t[3] && !exTier(a, i)) out.push({ a, t: i, w: t[1] }); });
+    const wm = it.kind === 'hub' && (a.stat === 'res' || a.stat === 'maxRes') && a.el !== 'thermal' ? GEAR.hubResW : 1; // 抗性收拢后法阵的抗性权重提高（§3.1）
+    a.tiers.forEach((t, i) => { if (it.ilvl >= t[2] && it.ilvl < t[3] && !exTier(a, i)) out.push({ a, t: i, w: t[1] * wm }); });
   }
   return out;
 }
@@ -155,4 +156,24 @@ function salvage(it) {
   for (const x of it.affs || []) { const n = SH.perAffix + (x.t + 1 >= SH.bonusTier ? SH.bonus : 0); S.shards[x.k] = (S.shards[x.k] || 0) + n; got[x.k] = (got[x.k] || 0) + n; }
   removeItem(it);
   return got;
+}
+
+// 老存档词条映射（mechanics.json gear.migrate）：档位按在族里的比例换算，数值按在档位里的位置换算
+function migrateAffs(it) {
+  if (!it.affs) return; let refund = 0;
+  const ok = (a, x) => a && !a.off && a.on.includes(it.kind) && (!a.tag || it.kind !== 'weapon' || (WEAPONS[it.b] && WEAPONS[it.b].tags.includes(a.tag))) && !it.affs.some(y => y !== x && AFF_BY[y.k] && AFF_BY[y.k].grp === a.grp);
+  it.affs = it.affs.filter(x => {
+    const a0 = AFF_BY[x.k]; let to = GEAR.migrate[x.k];
+    if (!to) { if (a0) return true; refund++; return false; }
+    if (it.kind !== 'weapon' && /Minion/.test(x.k)) to = ['AreaDamage2'];
+    const a = to.map(k => AFF_BY[k]).find(a => ok(a, x));
+    if (!a) { refund++; return false; }
+    const n0 = a0 ? a0.tiers.length : 1, t0 = clamp(x.t || 0, 0, n0 - 1), t = Math.round((n0 > 1 ? t0 / (n0 - 1) : 0) * (a.tiers.length - 1));
+    let fr = 0.5;
+    if (a0) { const v0 = a0.tiers[t0][0], v = Array.isArray(x.v) ? x.v[0] : x.v; if (v0.length > 1 && v0[1] > v0[0]) fr = clamp((v - v0[0]) / (v0[1] - v0[0]), 0, 1); }
+    const nv = a.tiers[t][0];
+    x.k = a.k; x.t = t; x.v = nv.length === 1 ? nv[0] : Math.round(nv[0] + fr * (nv[1] - nv[0]));
+    return true;
+  });
+  if (refund && it.fp != null) it.fp += refund;
 }

@@ -139,7 +139,7 @@ if (seedsArg) {
       // 铁砧（贪心）
       if (opt.craft === 'auto') {
         // 灯火秒数（粗算，不算击杀回复）：上限 ÷ (这层的燃烧 + 满层旋转的消耗)，推关做装按 秒伤 × 有效生命 × 灯火秒数
-        const lightOf = n => { const w = n.weapons.find(x => x && x.whirl), SO = A.DATA.mechanics.soul; return n.soulMax / (SO.burn + S.maxDepth * SO.burnPerFloor + (w ? WH.soulPerSec * (1 - n.soulLess) : 0) + n.weapons.reduce((x, v) => x + (v && v.spark ? SPK.soulPerCast * v.aps * (1 - n.soulLess) : 0), 0)); };
+        const lightOf = n => { const w = n.weapons.find(x => x && x.whirl), SO = A.DATA.mechanics.soul; return n.soulMax / ((SO.burn + S.maxDepth * SO.burnPerFloor) * (n.burnMul ?? 1) + (w ? WH.soulPerSec * (1 - n.soulLess) : 0) + n.weapons.reduce((x, v) => x + (v && v.spark ? SPK.soulPerCast * v.aps * (1 - n.soulLess) : 0), 0)); };
         const ev = eq => { const n = A.computeStats(eq); return spinDps(n) * ehpOf(n) * lightOf(n); };
         const mid = (a, t) => { const v = a.tiers[t][0]; return a.pair ? [Math.round((v[0] + v[1]) / 2), Math.round((v[2] + v[3]) / 2)] : v.length === 1 ? v[0] : Math.round((v[0] + v[1]) / 2); };
         const slots = ['wl', 'wr', 'shield', 'core', 'engine', 'hub'];

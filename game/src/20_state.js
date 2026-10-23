@@ -32,6 +32,8 @@ function load(data) {
     }
     S.craftV = 1;
   }
+  // 词条改版（spec-bd-gear §3.4）：空词条按 id 映射成新词条，对不上的删掉并返还锻造潜力；以后每次读档也清掉不认识的词条
+  { const all = [...Object.values(S.equip), ...S.stash, ...Object.values(S.chips || {})].filter(Boolean); for (const it of all) migrateAffs(it); S.affixV = 2; }
   S.auto = { ...freshState().auto, ...(S.auto || {}) };
   S.ladder = { ...freshState().ladder, ...(S.ladder || {}) };
   S.tree ??= []; S.chips ??= {}; S.maps ??= []; S.marble ??= []; S.bossKills ??= {}; S.stats.maps ??= 0;

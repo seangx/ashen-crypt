@@ -291,7 +291,7 @@
    "SoulRegen",
    "IncreasedAttackSpeed",
    "FlatArmor",
-   "FlatMass",
+   "FlatLife",
    "FlatDodge",
    "IncreasedBaseVelocity"
   ],
@@ -685,6 +685,1109 @@
    "IncreasedProjectileSpeed": {"text": "投射物速度提高 #%", "stat": "projSpd", "type": "S", "on": ["weapon", "core", "hub"], "tag": "Projectile", "grp": "IncreasedProjectileSpeed", "tiers": [[[5, 10], 1000, 1, 999], [[11, 18], 700, 15, 999], [[19, 27], 400, 35, 999], [[28, 36], 150, 65, 999]]},
    "IncreasedProjectileDuration": {"text": "投射物持续时间提高 #%", "stat": "projDur", "type": "S", "on": ["weapon", "hub"], "tag": "Projectile", "grp": "IncreasedProjectileDuration", "tiers": [[[6, 12], 1000, 1, 999], [[13, 20], 700, 15, 999], [[21, 30], 400, 35, 999], [[31, 40], 150, 65, 999]]},
    "IncreasedDuration": {"text": "持续时间提高 #%", "stat": "durInc", "type": "S", "on": ["core", "hub", "engine"], "grp": "IncreasedDuration", "tiers": [[[5, 10], 1000, 1, 999], [[11, 18], 700, 15, 999], [[19, 28], 400, 35, 999], [[29, 40], 150, 65, 999]]}
+  }
+ },
+ "gear": {
+  "_说明": "装备词条改版（规格 design/spec-bd-gear.md §2、§3）。affixes 格式同 whirl.affixes。stat：inc:proj / inc:aoe / inc:melee 只对带对应标签的武器进“提高”池；delayInc / delayAdd / spawnAdd / shieldDmg 给第 4 步的新流派（现在没有带 Delayed / Spawn / Shield 标签的武器，所以 DelayDamage、SpawnAdd、ShieldDamage 暂时 off=true 不掉落）；projSlow 投射物速度 ×(1 − projSlow%)，下限 ×projSlowMin；frozenTaken 打冻结敌人时伤害按提高% 结算；chainStep 每次弹射伤害 +%（和织雷之心相加）；block 装着盾牌时护甲 ×(1 + block%)；critChance 暴击率提高%；moveInc 移动速度提高%（和基础移动速度提高相加）；burnLess 推关灯火燃烧降低%（最多 burnLessCap%）；soulKillInc 击杀回灯火提高%；ailEff:元素 异常效果提高%（碎骨伤害、余震伤害、灼烧累积、感电减抗、致盲减伤、疫病伤害、冰缓减速和冻结时长）；pen:元素 穿抗%（计算怪物抗性时减去）。hubResW：法阵上掷出六元素抗性 / 抗性上限时权重 ×hubResW（§3.1，抗性只出在法阵和盾牌）。migrate：老存档按 id 映射（§3.4），档位按在族里的比例换算，换不过去的词条删掉并返还 1 点锻造潜力。",
+  "projSlowMin": 0.2,
+  "burnLessCap": 60,
+  "hubResW": 1.5,
+  "migrate": {
+   "FlatMass": [
+    "FlatLife"
+   ],
+   "FlatTime": [
+    "IncreasedDuration"
+   ],
+   "DashDamage": [
+    "MoveSpeed"
+   ],
+   "DashRecharge": [
+    "LampBurnLess"
+   ],
+   "MinionLevel": [
+    "ProjDamage",
+    "MeleeDamage",
+    "AreaDamage2"
+   ],
+   "IncreasedMinionDamage": [
+    "ProjDamage",
+    "MeleeDamage",
+    "AreaDamage2"
+   ],
+   "IncreasedMinionAttackSpeed": [
+    "ProjDamage",
+    "MeleeDamage",
+    "AreaDamage2"
+   ]
+  },
+  "affixes": {
+   "ProjDamage": {
+    "text": "投射物伤害提高 #%",
+    "stat": "inc:proj",
+    "type": "P",
+    "on": [
+     "weapon",
+     "core"
+    ],
+    "tag": "Projectile",
+    "grp": "ProjDamage",
+    "tiers": [
+     [
+      [
+       8,
+       14
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       15,
+       24
+      ],
+      700,
+      15,
+      999
+     ],
+     [
+      [
+       25,
+       36
+      ],
+      400,
+      35,
+      999
+     ],
+     [
+      [
+       37,
+       50
+      ],
+      150,
+      65,
+      999
+     ]
+    ]
+   },
+   "AreaDamage2": {
+    "text": "范围伤害提高 #%",
+    "stat": "inc:aoe",
+    "type": "P",
+    "on": [
+     "weapon",
+     "core"
+    ],
+    "tag": "AoE",
+    "grp": "AreaDamage2",
+    "tiers": [
+     [
+      [
+       8,
+       14
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       15,
+       24
+      ],
+      700,
+      15,
+      999
+     ],
+     [
+      [
+       25,
+       36
+      ],
+      400,
+      35,
+      999
+     ],
+     [
+      [
+       37,
+       50
+      ],
+      150,
+      65,
+      999
+     ]
+    ]
+   },
+   "MeleeDamage": {
+    "text": "近战伤害提高 #%",
+    "stat": "inc:melee",
+    "type": "P",
+    "on": [
+     "weapon",
+     "core"
+    ],
+    "tag": "Melee",
+    "grp": "MeleeDamage",
+    "tiers": [
+     [
+      [
+       8,
+       14
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       15,
+       24
+      ],
+      700,
+      15,
+      999
+     ],
+     [
+      [
+       25,
+       36
+      ],
+      400,
+      35,
+      999
+     ],
+     [
+      [
+       37,
+       50
+      ],
+      150,
+      65,
+      999
+     ]
+    ]
+   },
+   "DelayDamage": {
+    "text": "延迟伤害提高 #%",
+    "stat": "delayInc",
+    "type": "S",
+    "on": [
+     "weapon",
+     "core"
+    ],
+    "tag": "Delayed",
+    "grp": "DelayDamage",
+    "tiers": [
+     [
+      [
+       10,
+       18
+      ],
+      1000,
+      10,
+      999
+     ],
+     [
+      [
+       19,
+       30
+      ],
+      600,
+      30,
+      999
+     ],
+     [
+      [
+       31,
+       45
+      ],
+      250,
+      60,
+      999
+     ]
+    ],
+    "off": true
+   },
+   "SpawnAdd": {
+    "text": "派生 +#",
+    "stat": "spawnAdd",
+    "type": "S",
+    "on": [
+     "weapon"
+    ],
+    "tag": "Spawn",
+    "grp": "SpawnAdd",
+    "tiers": [
+     [
+      [
+       1
+      ],
+      1000,
+      20,
+      999
+     ],
+     [
+      [
+       2
+      ],
+      300,
+      55,
+      999
+     ]
+    ],
+    "off": true
+   },
+   "ProjSlow": {
+    "text": "投射物速度降低 #%",
+    "stat": "projSlow",
+    "type": "S",
+    "on": [
+     "weapon",
+     "core"
+    ],
+    "tag": "Projectile",
+    "grp": "ProjSlow",
+    "tiers": [
+     [
+      [
+       8,
+       14
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       15,
+       24
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       25,
+       35
+      ],
+      250,
+      50,
+      999
+     ]
+    ]
+   },
+   "FrozenTaken": {
+    "text": "冻结的敌人受到的伤害提高 #%",
+    "stat": "frozenTaken",
+    "type": "S",
+    "on": [
+     "core",
+     "hub"
+    ],
+    "grp": "FrozenTaken",
+    "tiers": [
+     [
+      [
+       10,
+       18
+      ],
+      1000,
+      12,
+      999
+     ],
+     [
+      [
+       19,
+       30
+      ],
+      600,
+      30,
+      999
+     ],
+     [
+      [
+       31,
+       45
+      ],
+      250,
+      60,
+      999
+     ]
+    ]
+   },
+   "ChainStep": {
+    "text": "每次弹射伤害 +#%",
+    "stat": "chainStep",
+    "type": "S",
+    "on": [
+     "core"
+    ],
+    "grp": "ChainStep",
+    "tiers": [
+     [
+      [
+       3,
+       5
+      ],
+      1000,
+      10,
+      999
+     ],
+     [
+      [
+       6,
+       8
+      ],
+      500,
+      35,
+      999
+     ],
+     [
+      [
+       9,
+       12
+      ],
+      200,
+      65,
+      999
+     ]
+    ]
+   },
+   "ShieldDamage": {
+    "text": "盾牌伤害提高 #%",
+    "stat": "shieldDmg",
+    "type": "P",
+    "on": [
+     "shield"
+    ],
+    "grp": "ShieldDamage",
+    "tiers": [
+     [
+      [
+       10,
+       20
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       21,
+       35
+      ],
+      700,
+      20,
+      999
+     ],
+     [
+      [
+       36,
+       55
+      ],
+      350,
+      45,
+      999
+     ],
+     [
+      [
+       56,
+       80
+      ],
+      120,
+      70,
+      999
+     ]
+    ],
+    "off": true
+   },
+   "Block": {
+    "text": "格挡 #%（盾在手上时护甲提高）",
+    "stat": "block",
+    "type": "S",
+    "on": [
+     "shield"
+    ],
+    "grp": "Block",
+    "tiers": [
+     [
+      [
+       5,
+       10
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       11,
+       18
+      ],
+      600,
+      20,
+      999
+     ],
+     [
+      [
+       19,
+       28
+      ],
+      250,
+      50,
+      999
+     ]
+    ]
+   },
+   "CoreCrit": {
+    "text": "暴击率提高 #%",
+    "stat": "critChance",
+    "type": "P",
+    "on": [
+     "core"
+    ],
+    "grp": "CoreCrit",
+    "tiers": [
+     [
+      [
+       10,
+       20
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       21,
+       35
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       36,
+       55
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "MoveSpeed": {
+    "text": "移动速度提高 #%",
+    "stat": "moveInc",
+    "type": "P",
+    "on": [
+     "engine"
+    ],
+    "grp": "MoveSpeed",
+    "tiers": [
+     [
+      [
+       4,
+       7
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       8,
+       12
+      ],
+      600,
+      20,
+      999
+     ],
+     [
+      [
+       13,
+       18
+      ],
+      250,
+      50,
+      999
+     ]
+    ]
+   },
+   "LampBurnLess": {
+    "text": "灯火燃烧降低 #%",
+    "stat": "burnLess",
+    "type": "S",
+    "on": [
+     "engine"
+    ],
+    "grp": "LampBurnLess",
+    "tiers": [
+     [
+      [
+       4,
+       7
+      ],
+      1000,
+      5,
+      999
+     ],
+     [
+      [
+       8,
+       12
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       13,
+       18
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "LampOnKill": {
+    "text": "击杀回灯火 +#%",
+    "stat": "soulKillInc",
+    "type": "S",
+    "on": [
+     "engine"
+    ],
+    "grp": "LampOnKill",
+    "tiers": [
+     [
+      [
+       10,
+       20
+      ],
+      1000,
+      5,
+      999
+     ],
+     [
+      [
+       21,
+       35
+      ],
+      500,
+      30,
+      999
+     ],
+     [
+      [
+       36,
+       50
+      ],
+      200,
+      60,
+      999
+     ]
+    ]
+   },
+   "AilEffectKinetic": {
+    "text": "碎骨效果提高 #%",
+    "stat": "ailEff:kin",
+    "type": "S",
+    "on": [
+     "hub"
+    ],
+    "grp": "AilEffectKinetic",
+    "tiers": [
+     [
+      [
+       10,
+       18
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       19,
+       30
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       31,
+       45
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "AilEffectExplosive": {
+    "text": "余震效果提高 #%",
+    "stat": "ailEff:exp",
+    "type": "S",
+    "on": [
+     "hub"
+    ],
+    "grp": "AilEffectExplosive",
+    "tiers": [
+     [
+      [
+       10,
+       18
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       19,
+       30
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       31,
+       45
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "AilEffectBurn": {
+    "text": "灼烧效果提高 #%",
+    "stat": "ailEff:burn",
+    "type": "S",
+    "on": [
+     "hub"
+    ],
+    "grp": "AilEffectBurn",
+    "tiers": [
+     [
+      [
+       10,
+       18
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       19,
+       30
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       31,
+       45
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "AilEffectElectric": {
+    "text": "感电效果提高 #%",
+    "stat": "ailEff:ele",
+    "type": "S",
+    "on": [
+     "hub"
+    ],
+    "grp": "AilEffectElectric",
+    "tiers": [
+     [
+      [
+       10,
+       18
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       19,
+       30
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       31,
+       45
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "AilEffectPlasma": {
+    "text": "致盲效果提高 #%",
+    "stat": "ailEff:pla",
+    "type": "S",
+    "on": [
+     "hub"
+    ],
+    "grp": "AilEffectPlasma",
+    "tiers": [
+     [
+      [
+       10,
+       18
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       19,
+       30
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       31,
+       45
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "AilEffectNuclear": {
+    "text": "疫病效果提高 #%",
+    "stat": "ailEff:nuc",
+    "type": "S",
+    "on": [
+     "hub"
+    ],
+    "grp": "AilEffectNuclear",
+    "tiers": [
+     [
+      [
+       10,
+       18
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       19,
+       30
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       31,
+       45
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "AilEffectCold": {
+    "text": "冰缓效果提高 #%",
+    "stat": "ailEff:cold",
+    "type": "S",
+    "on": [
+     "hub"
+    ],
+    "grp": "AilEffectCold",
+    "tiers": [
+     [
+      [
+       10,
+       18
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       19,
+       30
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       31,
+       45
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "ElemPenKinetic": {
+    "text": "物理穿抗 #%",
+    "stat": "pen:kin",
+    "type": "P",
+    "on": [
+     "hub"
+    ],
+    "grp": "ElemPenKinetic",
+    "tiers": [
+     [
+      [
+       3,
+       5
+      ],
+      1000,
+      15,
+      999
+     ],
+     [
+      [
+       6,
+       9
+      ],
+      500,
+      40,
+      999
+     ],
+     [
+      [
+       10,
+       14
+      ],
+      200,
+      65,
+      999
+     ]
+    ]
+   },
+   "ElemPenExplosive": {
+    "text": "火焰穿抗 #%",
+    "stat": "pen:exp",
+    "type": "P",
+    "on": [
+     "hub"
+    ],
+    "grp": "ElemPenExplosive",
+    "tiers": [
+     [
+      [
+       3,
+       5
+      ],
+      1000,
+      15,
+      999
+     ],
+     [
+      [
+       6,
+       9
+      ],
+      500,
+      40,
+      999
+     ],
+     [
+      [
+       10,
+       14
+      ],
+      200,
+      65,
+      999
+     ]
+    ]
+   },
+   "ElemPenElectric": {
+    "text": "闪电穿抗 #%",
+    "stat": "pen:ele",
+    "type": "P",
+    "on": [
+     "hub"
+    ],
+    "grp": "ElemPenElectric",
+    "tiers": [
+     [
+      [
+       3,
+       5
+      ],
+      1000,
+      15,
+      999
+     ],
+     [
+      [
+       6,
+       9
+      ],
+      500,
+      40,
+      999
+     ],
+     [
+      [
+       10,
+       14
+      ],
+      200,
+      65,
+      999
+     ]
+    ]
+   },
+   "ElemPenPlasma": {
+    "text": "圣光穿抗 #%",
+    "stat": "pen:pla",
+    "type": "P",
+    "on": [
+     "hub"
+    ],
+    "grp": "ElemPenPlasma",
+    "tiers": [
+     [
+      [
+       3,
+       5
+      ],
+      1000,
+      15,
+      999
+     ],
+     [
+      [
+       6,
+       9
+      ],
+      500,
+      40,
+      999
+     ],
+     [
+      [
+       10,
+       14
+      ],
+      200,
+      65,
+      999
+     ]
+    ]
+   },
+   "ElemPenNuclear": {
+    "text": "瘟疫穿抗 #%",
+    "stat": "pen:nuc",
+    "type": "P",
+    "on": [
+     "hub"
+    ],
+    "grp": "ElemPenNuclear",
+    "tiers": [
+     [
+      [
+       3,
+       5
+      ],
+      1000,
+      15,
+      999
+     ],
+     [
+      [
+       6,
+       9
+      ],
+      500,
+      40,
+      999
+     ],
+     [
+      [
+       10,
+       14
+      ],
+      200,
+      65,
+      999
+     ]
+    ]
+   },
+   "ElemPenCold": {
+    "text": "寒霜穿抗 #%",
+    "stat": "pen:cold",
+    "type": "P",
+    "on": [
+     "hub"
+    ],
+    "grp": "ElemPenCold",
+    "tiers": [
+     [
+      [
+       3,
+       5
+      ],
+      1000,
+      15,
+      999
+     ],
+     [
+      [
+       6,
+       9
+      ],
+      500,
+      40,
+      999
+     ],
+     [
+      [
+       10,
+       14
+      ],
+      200,
+      65,
+      999
+     ]
+    ]
+   }
   }
  }
 }

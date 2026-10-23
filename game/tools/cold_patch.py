@@ -17,6 +17,18 @@ def patch(out):
         aff[k] = a
     n = copy.deepcopy(out['nexus']['BaryteNexus']); n.update({'req': 12, 'w': 250, 'el': 'cold'})
     out['nexus']['FrostNexus'] = n
+    return gear(out)
+
+# 词条改版（spec-bd-gear.md §3.1、§3.4）：六元素抗性 / 抗性上限只出在法阵和盾牌；空词条权重归零（老存档按 mechanics.gear.migrate 映射）
+RES_EL = ['Kinetic', 'Explosive', 'Plasma', 'Electric', 'Nuclear', 'Cold']
+DEAD = ['FlatMass', 'FlatTime', 'DashDamage', 'DashRecharge', 'ChipIncreasedMinionArmor', 'ChipMoreMinionArmor', 'ChipMoreMinionDamage']
+
+def gear(out):
+    aff = out['affixes']
+    for e in RES_EL:
+        for k in (e + 'Resistance', 'Max' + e + 'Resistance'): aff[k]['on'] = ['hub', 'shield']
+    for k in DEAD:
+        for t in aff[k]['tiers']: t[1] = 0
     return out
 
 def dump(o):  # 同 gen_data.py

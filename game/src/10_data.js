@@ -124,7 +124,9 @@ for (const k in AFF_TEXT) {
   AFF.push({ k, f, stat, el, local, grp: src.grp, type: src.type, on: src.on, pair: stat === 'flat', tiers: src.tiers, tk: CHIP_TEXT[k] && CHIP_TEXT[k][1], tm: CHIP_TEXT[k] && CHIP_TEXT[k][2] });
 }
 // 流派自带的词条族（data/mechanics.json 的 whirl.affixes）：text 里的 # 填数值
-for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.mechanics.whirl.affixes, ...DATA.mechanics.spark.affixes, ...DATA.mechanics.defense.affixes, ...DATA.mechanics.tags.affixes })) AFF.push({ k, f: v => a.text.replace('#', v), stat: a.stat, el: null, local: !!a.local, grp: a.grp, type: a.type, on: a.on, tag: a.tag, pair: false, tiers: a.tiers });
+for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.mechanics.whirl.affixes, ...DATA.mechanics.spark.affixes, ...DATA.mechanics.defense.affixes, ...DATA.mechanics.tags.affixes, ...DATA.mechanics.gear.affixes })) AFF.push({ k, f: v => a.text.replace('#', v), stat: a.stat, el: null, local: !!a.local, grp: a.grp, type: a.type, on: a.on, tag: a.tag, pair: false, tiers: a.tiers, off: !!a.off });
+// 不再掉落的词条（权重全 0 的空词条、等新流派的词条）：铁砧 / 重铸也不出
+for (const a of AFF) if (a.tiers.every(t => !t[1])) a.off = true;
 const AFF_BY = Object.fromEntries(AFF.map(a => [a.k, a]));
 // 原作的数值掷骰：value = lo + round((r-1)/254 * (hi-lo))，r 为 1..255 的字节
 const rollRange = (lo, hi) => lo + Math.round((ri(1, 255) - 1) / 254 * (hi - lo));
@@ -153,6 +155,7 @@ function specAt(s, L) {
 const fitOf = conds => it => conds.every(c => c === 'weapon' ? it.kind === 'weapon' : c === 'engine' ? it.kind === 'engine' : itemTags(it).includes(c.slice(4)));
 const WH = DATA.mechanics.whirl; // 旋风斩流派的数值
 const SP = DATA.mechanics.spark; // 游雷（电球）流派的数值
+const GEAR = DATA.mechanics.gear; // 词条改版（spec-bd-gear §2、§3）
 const SOUL = DATA.mechanics.soul; // 魂火（共用资源）
 const MOD_D = {
   Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），沿波浪线飞 ${SP.life} 秒（吃持续时间和投射物持续时间，弹速决定飞多远）；碰到屏幕边按弹射次数反弹（每弹一次伤害 ×${SP.chainMul}），弹射用完就飞出屏幕；有穿透时无限穿透，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次，没有穿透时打中就消失；弹射 +${f.chain}；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。投射物 +N 让每次多放 N 颗（相加）。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,

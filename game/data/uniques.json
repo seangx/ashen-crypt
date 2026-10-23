@@ -28,7 +28,7 @@
   {"id": "Papyrus", "n": "经卷头冠", "kind": "core", "b": "NebulaCore", "req": 8, "w": 40, "sock": 6, "fixed": [], "rules": [["fieldHere",1,1]]},
   {"id": "Bastion", "n": "城垛盔", "kind": "core", "b": "TitaniumCore", "req": 50, "w": 40, "fixed": [["IncreasedArmor",1],["KineticResistance",1]], "rules": [["takenKin",30,50]]},
   {"id": "MoonKing", "n": "月王兜帽", "kind": "core", "b": "PhantomCore", "req": 50, "w": 40, "fixed": [], "rules": [["dodge",10,20],["dodgeCap",5,10],["dodgeSpikes",1,1]]},
-  {"id": "Siebenmeilen", "n": "七里靴", "kind": "engine", "b": "Thruster", "req": 1, "w": 100, "fixed": [["FlatTime",1],["IncreasedAttackSpeed",1],["ThermalResistance",2]], "rules": [["velocity",20,40]]},
+  {"id": "Siebenmeilen", "n": "七里靴", "kind": "engine", "b": "Thruster", "req": 1, "w": 100, "fixed": [["IncreasedDuration",1],["IncreasedAttackSpeed",1],["ThermalResistance",2]], "rules": [["velocity",20,40]]},
   {"id": "StoneOfBalu", "n": "巴鲁之石", "kind": "hub", "b": "IridiumNexus", "req": 28, "w": 40, "fixed": [], "rules": [["massAdd",10,20],["massInc",20,40],["energyInc",-30,-20],["timeInc",-30,-20]]},
   {"id": "CritRipper", "n": "开膛印记", "kind": "chip", "b": "Chip", "req": 50, "w": 40, "fixed": [], "rules": [["critLess",40,80],["multicrit",1,1]]},
   {"id": "EscapeCircuit", "n": "遁逃印记", "kind": "chip", "b": "Chip", "req": 12, "w": 100, "fixed": [], "rules": [["dashMax",1,1]]},

@@ -44,6 +44,7 @@ function computeStats(eq = S.equip) {
   // 防御三条（规格 design/spec-defense-v2.md）：护甲只管减伤；护盾是第一道血条，每秒回复；生命是第二道，归零阵亡，只靠吸血回
   P.armor = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100)));
   // 原来的灵障并进护盾；天赋/独特里“护甲总降”的代价改成护盾总降
+  if (eq.shield && A.block) P.armor = Math.round(P.armor * (1 + A.block / 100)); // 格挡：盾在手上时护甲提高
   P.shield = Math.round((PLAYER.shield + (base.deflect || 0) + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
   P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
   P.life = Math.max(1, Math.round((PLAYER.life + PLAYER.lifePerLevel * ((S.level || 1) - 1) + (A.life || 0) + (TA.life || 0)) * (1 + ((A.lifeInc || 0) + (TA.lifeInc || 0)) / 100) * (TM.life ?? 1))); // 天赋代价可以是生命总降
@@ -58,7 +59,7 @@ function computeStats(eq = S.equip) {
   // 移动：所有遁靴共享按品质的推力表
   const eng = eq.engine; const thrust = ENGINE_THRUST[eng ? eng.q : 0];
   const eb = eng ? baseOf(eng) : null;
-  P.speed = (PLAYER.baseSpeed + thrust * PLAYER.thrustToSpeed) * (TM.speed ?? 1) * (1 + ((A.velocity || 0) + (TA.velocity || 0) + (eb && eb.thrustInc ? qv(eb.thrustInc, eng.q) : 0)) / 100) * (1 + P.time * MECH.timeFlow);
+  P.speed = (PLAYER.baseSpeed + thrust * PLAYER.thrustToSpeed) * (TM.speed ?? 1) * (1 + ((A.velocity || 0) + (A.moveInc || 0) + (TA.velocity || 0) + (eb && eb.thrustInc ? qv(eb.thrustInc, eng.q) : 0)) / 100) * (1 + P.time * MECH.timeFlow);
   P.accel = P.speed * PLAYER.accelMul * Math.max(MECH.massAccelMin, 1 + P.mass * MECH.massAccel);
   P.timeMul = 1 + P.time * MECH.timeFlow;
   // 冲刺槽
@@ -68,7 +69,9 @@ function computeStats(eq = S.equip) {
   // 魂火
   P.soulMax = SOUL.base + P.energy * SOUL.perEnergy;
   P.soulRegen = (SOUL.regen + P.energy * SOUL.regenPerEnergy) * (1 + ((A.soulRegen || 0) + (TA.soulRegen || 0)) / 100);
-  P.soulGainMul = 1 + ((A.soulRegen || 0) + (TA.soulRegen || 0)) / 100; // 推关里提高击杀回的灯火
+  P.soulGainMul = 1 + ((A.soulRegen || 0) + (TA.soulRegen || 0) + (A.soulKillInc || 0)) / 100; // 推关里提高击杀回的灯火（魂火回复 + 击杀回灯火）
+  P.burnMul = 1 - Math.min(GEAR.burnLessCap, A.burnLess || 0) / 100; // 灯火燃烧降低
+  P.delayAdd = A.delayAdd || 0; P.spawnAdd = A.spawnAdd || 0; P.frozenTaken = (A.frozenTaken || 0) / 100; // 新流派用（第 4 步）
   P.soulLess = Math.min(SOUL.costCap, (A.soulLess || 0) + (TA.soulLess || 0)) / 100;
   P.dashRegen = MECH.dashRegen * (1 + ((A.dashRegen || 0) + (TA.dashRegen || 0) + P.energy * MECH.energyDash * 100) / 100) + (F.dashPerSec || 0);
   P.pickup = PLAYER.pickup;
@@ -108,7 +111,7 @@ function weaponStats(it, P, isEngine) {
   if (has('Projectile')) W.extra += P.projAdd; // 投射物 +N
   if (has('ProjectileCanChain') || W.chain) W.chain += (TA.chain || 0) + (P.raw.chain || 0); // 弹射 +N
   W.projDurInc = has('Projectile') ? (TA.projDur || 0) + (P.raw.projDur || 0) : 0; W.projDurMore = 1; // 投射物持续时间提高%（词条、天赋、疾星冠）和符文的总增
-  W.chainStep = ((TA.chainStep || 0) + (P.flag.sparkHeart && has('ProjectileCanChain') ? SP.chainStepInc : 0)) / 100; // 每弹一次这一下伤害 +%
+  W.chainStep = ((TA.chainStep || 0) + (P.raw.chainStep || 0) + (P.flag.sparkHeart && has('ProjectileCanChain') ? SP.chainStepInc : 0)) / 100; // 每弹一次这一下伤害 +%
   W.meleeRe = has('Melee') ? P.flag.meleeCrown || 0 : 0; // 碎颅冠：近战命中再结算一次的几率
   if (has('ProjectileCanPierce') || W.pierce) W.pierce += TA.pierce || 0; W.afterRep = U('afterRep');
   W.kinShock = U('kinShock') / 100; W.pull = !!U('pull'); W.killInc = U('killInc'); W.burnSlow = U('burnSlow') / 100;
@@ -127,6 +130,7 @@ function weaponStats(it, P, isEngine) {
   if (U('flatPerMass')) { const f = flat.kin || [0, 0], v = U('flatPerMass') * P.mass; flat.kin = [f[0] + v, f[1] + v * 2]; }
   // 符文
   let inc = (TA['inc:all'] || 0) + (b.cont || b.aura ? (TA.dotInc || 0) + U('dotInc') : 0) + (has('AoE') ? TA.areaInc || 0 : 0) + (has('Projectile') ? TA['inc:proj'] || 0 : 0) + (has('Melee') ? TA['inc:melee'] || 0 : 0) + (isEngine ? TA['inc:engine'] || 0 : 0), aspdMore = (TM.aspd ?? 1) * (1 - U('aspdLess') / 100), rangeInc = (TA.rangeInc || 0), aoeInc = (TA.aoeInc || 0) + (P.raw.aoeInc || 0), critInc = TA.critInc || 0, critDmg = TA.critDmg || 0, projSpd = (TA.projSpd || 0) + (has('Projectile') ? P.raw.projSpd || 0 : 0), pure = false;
+  const R = P.raw; inc += (has('Projectile') ? R['inc:proj'] || 0 : 0) + (has('AoE') ? R['inc:aoe'] || 0 : 0) + (has('Melee') ? R['inc:melee'] || 0 : 0) + (has('Delayed') ? R.delayInc || 0 : 0) + (has('Shield') ? R.shieldDmg || 0 : 0); critInc += R.critChance || 0; // 标签伤害词条、头冠暴击率（§3.2）
   W.blindMore *= TM.blind ?? 1; W.radMore *= TM.rad ?? 1; W.dotMore *= TM.dot ?? 1;
   if (!b.cont && !b.aura) W.more *= TM['dmg:hit'] ?? 1;
   if (!has('AoE')) W.more *= TM['dmg:nonAoe'] ?? 1;
@@ -191,7 +195,7 @@ function weaponStats(it, P, isEngine) {
   W.sparkLifeMul = Math.max(0.1, 1 + (P.durInc + W.projDurInc) / 100) * W.projDurMore; // 游雷：持续时间提高 + 投射物持续时间提高（相加），再乘符文总增
   W.aoeR = qv(b.aoe || 0, q) * UNIT * (1 + aoeInc / 100);
   W.auraDps = b.aura ? qv(b.aura, q) * (1 + inc / 100) * W.more * W.dotMore : 0;
-  W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100);
+  W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100) * (has('Projectile') ? Math.max(GEAR.projSlowMin, 1 - (P.raw.projSlow || 0) / 100) : 1); // 投射物速度降低（寒魄球的收益）
   W.crit = qv(b.crit || 0, q) / 100 * (1 + critInc / 100) * (TM.crit ?? 1);
   W.critMult = PLAYER.critMult + critDmg / 100;
   // 旋身：层数上限 = maxStacks + 词条
