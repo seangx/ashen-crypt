@@ -5,7 +5,7 @@
    效果写法：add 里是“提高 / 附加”（相加），more 里是“总增 / 总降”（相乘），flag 是规则改写（参数在 data/rules.json）。 */
 const TREE_C = { kin: ELEM_C.kin, exp: ELEM_C.exp, ele: ELEM_C.ele, pla: ELEM_C.pla, nuc: ELEM_C.nuc, agi: '#c08aff' };
 // 节点效果都在 data/tree.json：主路（小 → 中 → 大型节点）、4 个小团（3 小 → 中 → 2 小 → 改规则的核心天赋；顺序：内左、内右、外左、外右）、桥
-const TREE_BRANCH = DATA.tree.branches.map(B => ({ ...B, c: TREE_C[B.id] }));
+const TREE_BRANCH = DATA.tree.branches.map(B => ({ ...B, c: B.c || TREE_C[B.id] || '#ffffff' }));
 const TREE_CLUSTERS = DATA.tree.clusters;
 const TREE_BRIDGE = DATA.tree.bridge;
 const TREE_RING = DATA.tree.ring;
@@ -161,7 +161,7 @@ const TREE_ICONS = {
   aoe: ['.###.', '#...#', '#.#.#', '#...#', '.###.'], trap: ['#.#.#', '#####', '#...#', '#####', '#.#.#'],
   life: ['.#.#.', '#####', '#####', '.###.', '..#..'], time: ['#####', '.#.#.', '..#..', '.#.#.', '#####'],
 };
-const ELEM_ICON = { ele: 'bolt', exp: 'fire', kin: 'bone', pla: 'sun', nuc: 'spore', agi: 'speed' };
+const ELEM_ICON = { ele: 'bolt', exp: 'fire', kin: 'bone', pla: 'sun', nuc: 'spore', agi: 'speed', melee: 'sword', area: 'aoe', proj: 'arrow', dot: 'time', guard: 'shield', lamp: 'life' }; // 后六个是按标签分的区
 function treeIcon(nd) {
   if (nd.icon) return nd.icon;
   const ks = [...Object.keys(nd.add || {}), ...Object.keys(nd.more || {}), ...Object.keys(nd.flag || {})].join(' ');

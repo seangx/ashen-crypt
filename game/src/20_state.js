@@ -36,7 +36,7 @@ function load(data) {
   S.ladder = { ...freshState().ladder, ...(S.ladder || {}) };
   S.tree ??= []; S.chips ??= {}; S.maps ??= []; S.marble ??= []; S.bossKills ??= {}; S.stats.maps ??= 0;
   // 天赋树改版后旧存档的节点对不上：全部退回，印记回到背包
-  if (S.tree.some(id => !TREE.nodes[id])) { for (const k in S.chips) S.stash.unshift(S.chips[k]); S.chips = {}; S.tree = []; }
+  if (S.tree.some(id => !TREE.nodes[id])) { for (const k in S.chips) S.stash.unshift(S.chips[k]); S.chips = {}; S.tree = []; const tell = () => G.ui ? toast('天赋树改版了：天赋点已全部返还，插着的印记放回了背包', COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); }
   if (!S.equip.wl) starterKit();
 }
 // 新角色的装备：data/progression.json 的 starter
