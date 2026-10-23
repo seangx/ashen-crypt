@@ -498,10 +498,10 @@ function logic(dt) {
     if (P.flag.areaEye) { const pr = whirlR(OW, n) * RL.areaEye.pullR; for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy); if (d > 6 && d < pr) { m.x += dx / d * RL.areaEye.pull * dt; m.y += dy / d * RL.areaEye.pull * dt; } } }
     if (P.flag.whirlHeart && (player.devilT -= dt) <= 0) {
       player.devilT = WH.devilEvery * (n >= OW.stackMax ? WH.devilFullMul : 1);
-      // 小旋风算投射物：每次甩出 1 + 投射物 个，上限同比放大；速度吃投射物速度，存在时间吃持续时间，伤害吃投射物伤害总增/总降
+      // 小旋风算投射物：每次甩出 1 + 投射物 个，上限同比放大；速度吃投射物速度，存在时间吃持续时间；伤害不吃投射物伤害总增/总降（那是给射击流派的）
       const ex = Math.max(0, OW.extra + P.projAdd), max = Math.round(WH.devilMax * (1 + ex)), ds = zones.filter(z => z.devil), cnt = 1 + Math.floor(ex);
       for (let k = 0; k < ds.length + cnt - max && k < ds.length; k++) ds[k].t = 0;
-      for (let k = 0; k < cnt; k++) zones.push({ W: OW, mul: WH.devilMul * Math.pow(OW.morePer, n) * (P.tree.more['dmg:proj'] ?? 1), x: player.x, y: player.y, r: WH.devilR, t: WH.devilLife * P.durMul, tickT: WH.devilTick, el: OW.el, devil: 1, spd: WH.devilSpeed * (1 + OW.projSpdInc / 100), ang: rnd() * Math.PI * 2, seed: rnd() * 9 });
+      for (let k = 0; k < cnt; k++) zones.push({ W: OW, mul: WH.devilMul * Math.pow(OW.morePer, n), x: player.x, y: player.y, r: WH.devilR, t: WH.devilLife * P.durMul, tickT: WH.devilTick, el: OW.el, devil: 1, spd: WH.devilSpeed * (1 + OW.projSpdInc / 100), ang: rnd() * Math.PI * 2, seed: rnd() * 9 });
     }
   } else player.devilT = 0;
   player.lx = player.x; player.ly = player.y;
