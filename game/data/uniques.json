@@ -1,8 +1,11 @@
 {
  "_说明": "独特装备。b 底材；req 需求物品等级；w 掉落权重（0 = 只从 Boss 掉）；fixed 保底词条 [词条族, 档位 N]（N=1 最高档，见 loot.json 的 uniqueFixedTier）；rules 专属规则 [规则键, 下限, 上限]，掉落时在范围里掷；sock 固定符文槽数。规则键的含义见 src/16_uniques.js 的 RULE_TEXT，改规则类的（blindAura、dodgeSpikes 等）参数在 rules.json。",
  "list": [
-  {"id": "StormCrown", "n": "雷冠", "kind": "core", "b": "NebulaCore", "req": 20, "w": 40, "ladderOnly": 20, "fixed": [["IncreasedAttackSpeed", 1]], "rules": [["sparkCrown", 1, 1], ["shockMul", 20, 40], ["armorLess", 15, 15]], "_说明": "游雷流派的形态跃迁 3（design/spec-spark.md）"},
-  {"id": "StormEye", "n": "风暴之眼", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "ladderOnly": 20, "fixed": [["IncreasedAttackSpeed", 1]], "rules": [["stormEye", 1, 1], ["rangeInc", 15, 25], ["spinDecay", 50, 50]], "_说明": "ladderOnly：只在天梯宝箱里出，或天梯最高层达到这个数以后的普通掉落里出"},
+  {"id": "StormCrown", "n": "雷冠", "kind": "core", "b": "NebulaCore", "req": 20, "w": 40, "ladderOnly": 20, "fixed": [["IncreasedAttackSpeed", 1]], "rules": [["chainCrown", 1, 1], ["shockMul", 20, 40], ["armorLess", 15, 15]], "_说明": "弹射标签的独特（design/spec-tags.md）"},
+  {"id": "StormEye", "n": "风暴之眼", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "ladderOnly": 20, "fixed": [["IncreasedAttackSpeed", 1]], "rules": [["areaEye", 1, 1], ["rangeInc", 15, 25], ["projLess", 30, 30]], "_说明": "ladderOnly：只在天梯宝箱里出，或天梯最高层达到这个数以后的普通掉落里出"},
+  {"id": "HundredBones", "n": "百骨冠", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "fixed": [], "rules": [["projCrown", 1, 1]], "_说明": "投射物标签的独特（design/spec-tags.md）"},
+  {"id": "EverEmber", "n": "永燃冠", "kind": "core", "b": "NebulaCore", "req": 20, "w": 40, "fixed": [], "rules": [["durCrown", 1, 1]], "_说明": "持续标签的独特（design/spec-tags.md）"},
+  {"id": "SkullSplitter", "n": "碎颅冠", "kind": "core", "b": "TitaniumCore", "req": 20, "w": 40, "fixed": [], "rules": [["meleeCrown", 1, 1]], "_说明": "近战标签的独特（design/spec-tags.md）"},
   {"id": "RustBlaster", "n": "锈骨弩", "kind": "weapon", "b": "Cannon", "req": 1, "w": 100, "fixed": [["IncreasedKineticBaseDamage",1],["IncreasedBaseAttackSpeed",1]], "rules": [["knock",1,1],["knockMore",40,60]]},
   {"id": "RockCat", "n": "山猫火罐", "kind": "weapon", "b": "Rocket", "req": 1, "w": 100, "fixed": [["FlatExplosiveDamage",1],["IncreasedExplosiveBaseDamage",1]], "rules": [["aspdLess",20,30],["afterPct",85,90],["afterRep",2,3]]},
   {"id": "SpectraRail", "n": "三棱穿心弩", "kind": "weapon", "b": "Railgun", "req": 12, "w": 100, "fixed": [["FlatKineticDamage",1],["IncreasedKineticBaseDamage",3],["IncreasedThermalBaseDamage",1]], "rules": [["convKinThermal",80,100],["pierce",2,4]]},

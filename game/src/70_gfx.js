@@ -136,7 +136,7 @@ function whirlFx(ground, blade, glow, x, y, R, f, t, eye, ang) { // ang：角色
   ground.fillStyle(0x0a0508, 0.2 + 0.15 * f).fillCircle(x, y, R);
   ground.lineStyle(1, 0xd06a40, 0.18 + 0.12 * f).strokeCircle(x, y, R);
   // 风暴之眼：吸扯范围外往里流的风线
-  if (eye) { const PR = R * WH.pullR; for (let k = 0; k < 14; k++) { const ph = (t * 0.9 + k * 0.37) % 1, rr = PR - (PR - R) * ph, an = k * 2.4 - t * 1.5 - ph * 1.2; for (let s = 0; s < 6; s++) { const r2 = rr + s * 1.5; ground.fillStyle(0xd08a60, 0.45 * Math.sin(ph * Math.PI) * (1 - s / 6)).fillRect(Math.round(x + Math.cos(an + s * 0.02) * r2), Math.round(y + Math.sin(an + s * 0.02) * r2), 1, 1); } } }
+  if (eye) { const PR = R * RL.areaEye.pullR; for (let k = 0; k < 14; k++) { const ph = (t * 0.9 + k * 0.37) % 1, rr = PR - (PR - R) * ph, an = k * 2.4 - t * 1.5 - ph * 1.2; for (let s = 0; s < 6; s++) { const r2 = rr + s * 1.5; ground.fillStyle(0xd08a60, 0.45 * Math.sin(ph * Math.PI) * (1 - s / 6)).fillRect(Math.round(x + Math.cos(an + s * 0.02) * r2), Math.round(y + Math.sin(an + s * 0.02) * r2), 1, 1); } } }
   // 刀光：经典旋风斩那种粗的红橙色月牙拖影（叠加发光层，外沿 = 判定半径）。一道长的主弧 + 对面一道短的，头粗尾细
   const g = blade, cy = y - 3, W = Math.min(R * 0.55, 12 + f * 12), S = 24;
   const band = (r0, r1, b0, b1) => { const n = 3, pts = []; for (let j = 0; j <= n; j++) { const a = b0 + (b1 - b0) * j / n; pts.push({ x: x + Math.cos(a) * r1, y: cy + Math.sin(a) * r1 }); } for (let j = n; j >= 0; j--) { const a = b0 + (b1 - b0) * j / n; pts.push({ x: x + Math.cos(a) * r0, y: cy + Math.sin(a) * r0 }); } g.fillPoints(pts, true); }; // 一小段环形扇面，相邻段首尾相接不重叠

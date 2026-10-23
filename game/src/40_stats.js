@@ -76,6 +76,10 @@ function computeStats(eq = S.equip) {
   P.aspdInc = (A.aspd || 0) + (TA.aspd || 0);
   P.thermalInc = A.thermalInc || 0;
   P.dashDmg = A.dashDmg || 0;
+  // 通用标签属性（规格 design/spec-tags.md）：投射物 +N、范围提高、持续时间提高来自词条、天赋、独特
+  P.projAdd = (A.extra || 0) + (TA.projAdd || 0);
+  P.durInc = (A.durInc || 0) + (TA.durInc || 0);
+  P.durMul = Math.max(0.1, 1 + P.durInc / 100);
   P.engine = eng && eb.min ? weaponStats(eng, P, true) : null;
   P.engineKind = eb ? eb.dash : null;
   P.weapons = ['wl', 'wr'].map(s => eq[s] ? weaponStats(eq[s], P) : null);
@@ -101,7 +105,10 @@ function weaponStats(it, P, isEngine) {
   W.pierce += U('pierce'); W.chain += U('chain'); W.cull += U('cull'); W.doubleChance += U('double') / 100 + (TA.double || 0) / 100;
   W.afterPct = P.flag.afterFull ? 1 : U('afterPct') ? U('afterPct') / 100 : MECH.afterPct;
   W.bossMore *= 1 + (TA.bossInc || 0) / 100;
-  if (has('ProjectileCanChain') || W.chain) W.chain += TA.chain || 0;
+  if (has('Projectile')) W.extra += P.projAdd; // 投射物 +N
+  if (has('ProjectileCanChain') || W.chain) W.chain += (TA.chain || 0) + (P.raw.chain || 0); // 弹射 +N
+  W.chainStep = ((TA.chainStep || 0) + (P.flag.sparkHeart && has('ProjectileCanChain') ? SP.chainStepInc : 0)) / 100; // 每弹一次这一下伤害 +%
+  W.meleeRe = has('Melee') ? P.flag.meleeCrown || 0 : 0; // 碎颅冠：近战命中再结算一次的几率
   if (has('ProjectileCanPierce') || W.pierce) W.pierce += TA.pierce || 0; W.afterRep = U('afterRep');
   W.kinShock = U('kinShock') / 100; W.pull = !!U('pull'); W.killInc = U('killInc'); W.burnSlow = U('burnSlow') / 100;
   if (U('shred:nuc')) W.shred = { nuc: U('shred:nuc') };
@@ -118,12 +125,13 @@ function weaponStats(it, P, isEngine) {
   if (U('kinBaseInc')) baseInc.kin = (baseInc.kin || 0) + U('kinBaseInc');
   if (U('flatPerMass')) { const f = flat.kin || [0, 0], v = U('flatPerMass') * P.mass; flat.kin = [f[0] + v, f[1] + v * 2]; }
   // 符文
-  let inc = (TA['inc:all'] || 0) + (b.cont || b.aura ? (TA.dotInc || 0) + U('dotInc') : 0) + (has('AoE') ? TA.areaInc || 0 : 0) + (has('Projectile') ? TA['inc:proj'] || 0 : 0) + (has('Melee') ? TA['inc:melee'] || 0 : 0) + (isEngine ? TA['inc:engine'] || 0 : 0), aspdMore = (TM.aspd ?? 1) * (1 - U('aspdLess') / 100), rangeInc = (TA.rangeInc || 0), aoeInc = TA.aoeInc || 0, critInc = TA.critInc || 0, critDmg = TA.critDmg || 0, projSpd = TA.projSpd || 0, pure = false;
+  let inc = (TA['inc:all'] || 0) + (b.cont || b.aura ? (TA.dotInc || 0) + U('dotInc') : 0) + (has('AoE') ? TA.areaInc || 0 : 0) + (has('Projectile') ? TA['inc:proj'] || 0 : 0) + (has('Melee') ? TA['inc:melee'] || 0 : 0) + (isEngine ? TA['inc:engine'] || 0 : 0), aspdMore = (TM.aspd ?? 1) * (1 - U('aspdLess') / 100), rangeInc = (TA.rangeInc || 0), aoeInc = (TA.aoeInc || 0) + (P.raw.aoeInc || 0), critInc = TA.critInc || 0, critDmg = TA.critDmg || 0, projSpd = TA.projSpd || 0, pure = false;
   W.blindMore *= TM.blind ?? 1; W.radMore *= TM.rad ?? 1; W.dotMore *= TM.dot ?? 1;
   if (!b.cont && !b.aura) W.more *= TM['dmg:hit'] ?? 1;
   if (!has('AoE')) W.more *= TM['dmg:nonAoe'] ?? 1;
-  if (P.flag.whirlHeart) { if (b.form === 'orbit') W.more *= WH.heartMore; else if (!isEngine && !has('Melee')) W.more *= WH.offhandMul; } // 旋风之心
-  if (P.flag.sparkHeart) { if (b.wander) W.more *= SP.heartMore; else if (!isEngine) W.more *= SP.offhandMul; } // 织雷之心
+  if (has('Projectile')) W.more *= TM['dmg:proj'] ?? 1;
+  if (P.flag.whirlHeart) { if (has('Melee') && has('AoE')) W.more *= WH.heartMore; else if (!isEngine && !has('Melee')) W.more *= WH.offhandMul; } // 旋风之心：【近战·范围】
+  if (P.flag.sparkHeart) { if (has('ProjectileCanChain')) W.more *= SP.heartMore; else if (!isEngine) W.more *= SP.offhandMul; } // 织雷之心：【投射物·弹射】
   const gain = {}, rflat = {};
   for (const { m, fx } of activeRunes(it, P)) {
     W.runes.push(m.mid);
@@ -142,7 +150,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.areaInc && has('AoE')) inc += fx.areaInc;
     if (fx.meleeInc) inc += fx.meleeInc;
     if (fx.meleeGuard) W.meleeGuard = 1;
-    if (fx.spark && b.wander) { W.spark = 1; W.sparkN = fx.sparkN; W.sparkMul = fx.sparkMul; W.sparkChain = fx.sparkChain || 0; } // 游雷符文：只对会乱窜的投射物（雷灵）生效
+    if (fx.spark && b.wander) { W.spark = 1; W.sparkN = fx.sparkN; W.sparkMul = fx.sparkMul; } // 游雷符文：只对会乱窜的投射物（雷灵）生效
     if (fx.whirl && b.form === 'orbit') { W.whirl = 1; W.morePer = fx.spinMore || WH.morePer; } // 每层倍率随符文等级成长
     rangeInc += fx.rangeInc || 0; aoeInc += fx.aoeInc || 0; critInc += fx.critInc || 0; critDmg += fx.critDmg || 0; projSpd += fx.projSpd || 0;
     if (fx.ail) for (const e in fx.ail) W.ail[e] += fx.ail[e];
@@ -177,6 +185,7 @@ function weaponStats(it, P, isEngine) {
   W.aps = aps0 * (1 + baseAspd / 100) * (1 + (P.aspdInc + (b.aspdInc || 0)) / 100) * aspdMore * P.timeMul;
   if (b.cont) { const k = (b.dpsMul || 1) / CT; for (const e of ELEM) { W.min[e] *= k; W.max[e] *= k; } W.aps = CT; W.contMul = (1 + baseAspd / 100) * (1 + P.aspdInc / 100) * aspdMore; for (const e of ELEM) { W.min[e] *= W.contMul; W.max[e] *= W.contMul; } }
   W.rng = qv(b.range || 0, q) * UNIT * (1 + rangeInc / 100) * (b.rngMul || 1); // rngMul：items.json 里按武器调的范围倍率
+  W.aoeInc = aoeInc; W.projSpdInc = projSpd;
   W.aoeR = qv(b.aoe || 0, q) * UNIT * (1 + aoeInc / 100);
   W.auraDps = b.aura ? qv(b.aura, q) * (1 + inc / 100) * W.more * W.dotMore : 0;
   W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100);
@@ -188,9 +197,10 @@ function weaponStats(it, P, isEngine) {
   const critE = 1 + Math.min(1, W.crit) * (W.critMult - 1);
   const n = 1 + W.extra + W.extraChance;
   W.dps = b.aura ? W.auraDps : W.avg * critE * W.aps * (b.form === 'stab' ? 1 : n) * (b.pellets || 1);
+  W.dps *= 1 + W.meleeRe;
   if (b.form === 'reflect') W.dps = 0;
   W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : 1; // 旋转满层时的伤害倍数（dps 不含）
-  if (W.spark) { W.sparkN += (P.raw.sparkAdd || 0) + (P.flag.sparkCrown ? SP.crownAdd : 0); W.pierce += SP.basePierce; W.sparkChain += (P.raw.sparkChain || 0) + (TA.sparkChain || 0) + (P.flag.sparkCrown ? SP.crownChain : 0); let ch = 1; for (let i = 1; i <= W.sparkChain; i++) ch += SP.chainMul ** i * 0.8; W.spinMax = W.sparkN * W.sparkMul * ch; } // 弹射：每弹一次按 chainMul 衰减，约八成能找到下一个目标 // 游雷：一串的总倍数（每颗打中一次），模拟和毕业配装用它算秒伤
+  if (W.spark) { W.pierce += SP.basePierce; let ch = 1; for (let i = 1; i <= W.chain; i++) ch += SP.chainMul ** i * (1 + W.chainStep * i) * 0.8; W.spinMax = W.sparkN * W.sparkMul * ch; } // 游雷：一串的总倍数（每颗打中一次，颗数 × (1 + 投射物) 已在 dps 里），弹射每弹一次按 chainMul 衰减、chainStep 递增，约八成能找到下一个目标；模拟和毕业配装用它算秒伤
   return W;
 }
 let STATS = null;

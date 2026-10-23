@@ -135,7 +135,15 @@ function hitMob(m, W, o = {}) {
   for (const e in by) if (W.ail[e] && rnd() < W.ail[e] * tick) ailment(m, e, by[e], W, o);
   if (W.kinShock && by.kin && rnd() < W.kinShock * tick) ailment(m, 'ele', by.kin, W, o);
   if (by.exp) { m.burn += by.exp * MECH.burnFromFire; if (W.burnSlow) m.burnSlow = W.burnSlow; } // 火焰伤害都会累积灼烧
+  if (W.meleeRe && !o.re && !m.dead && rnd() < W.meleeRe) total += hitMob(m, W, { ...o, re: 1 }); // 碎颅冠：近战命中再结算一次
   return total;
+}
+// 雷冠：弹射打中的敌人感电（至少 1 层）
+function shockOn(m) { m.shock = Math.max(m.shock, 1); m.shockT = MECH.shockDur; }
+// 风暴之眼：单次的范围命中把命中点 pullR 倍半径内的普通怪往命中点拉一下
+function aoePull(x, y, r) {
+  if (!STATS.flag.areaEye) return; const E = RL.areaEye, pr = r * E.pullR, k = E.pull * 0.3;
+  for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = x - m.x, dy = y - m.y, d = Math.hypot(dx, dy); if (d > 4 && d < pr) { const s = Math.min(k, d - 4); m.x += dx / d * s; m.y += dy / d * s; } }
 }
 function ailment(m, e, d, W, o) {
   switch (e) {
@@ -307,8 +315,8 @@ function chainHit(W, first, from, chains) {
     f = { x: cur.x, y: cur.y - 5 }; cur = nearest(cur.x, cur.y - 4, 60, hit);
   }
 }
-// 旋风的判定半径：武器范围，每层旋势 +rngPer%，风暴之眼再 +eyeRng%
-const whirlR = (W, n) => W.rng * (1 + n * WH.rngPer / 100) * (W.whirl && STATS.flag.stormEye ? 1 + WH.eyeRng / 100 : 1);
+// 旋风的判定半径：武器范围，每层旋势 +rngPer%，再乘范围提高（符文、词条、天赋、独特）
+const whirlR = (W, n) => W.rng * (1 + n * WH.rngPer / 100) * Math.max(0.2, 1 + W.aoeInc / 100);
 const spinning = () => STATS.weapons.some((W, i) => W && W.whirl && player.spin[i].n > 0);
 const inRange = (W, r) => mobs.some(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2);
 function fire(W, i) {
@@ -324,7 +332,7 @@ function fire(W, i) {
     case 'nova': { // 圣钟：以自身为中心
       if (!inRange(W, W.rng)) return false;
       const n = attacks(W);
-      for (let k = 0; k < n; k++) { fx({ t: 'boom', x: px, y: py + 6, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); }
+      for (let k = 0; k < n; k++) { fx({ t: 'boom', x: px, y: py + 6, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); aoePull(px, py + 6, W.aoeR); }
       sfx('boom'); return true;
     }
     case 'mine': { // 陷阱：放在脚下，敌人靠近就触发
@@ -357,8 +365,9 @@ function fire(W, i) {
     if (rnd() < 0.3) sfx('beam'); return true;
   }
   if (W.spark && player.soul >= SP.soulPerCast * (1 - STATS.soulLess)) { // 游雷：扇形放出一串，贴地乱窜（灯火不够时退回普通的一发）
-    const n = W.sparkN * attacks(W), vol = { last: new Map() }, life = SP.life + (STATS.flag.sparkCrown ? SP.crownLife : 0);
-    for (let k = 0; k < n; k++) shoot(W, px, py, a + (n > 1 ? (k / (n - 1) - 0.5) * SP.fan : 0), { pierce: W.pierce, chain: 0, sch: W.sparkChain, split: 0, ret: 0, hit: new Set(), mul: W.sparkMul, life, first: true, spark: 1, vol, ph: k % 2 ? Math.PI : 0 });
+    const n = W.sparkN * attacks(W), vol = { last: new Map() }, life = SP.life * STATS.durMul; // 颗数 = 符文 × (1 + 投射物)，寿命吃持续时间
+    const old = projs.filter(p => p.spark && !p.dead), over = old.length + n - SP.maxAlive; for (let k = 0; k < over && k < old.length; k++) old[k].dead = true; // 同屏上限：最老的先消失
+    for (let k = 0; k < n; k++) shoot(W, px, py, a + (n > 1 ? (k / (n - 1) - 0.5) * SP.fan : 0), { pierce: W.pierce, chain: 0, sch: W.chain, split: 0, ret: 0, hit: new Set(), mul: W.sparkMul, life, first: true, spark: 1, vol, ph: k % 2 ? Math.PI : 0 });
     if (RUN) player.soul = Math.max(0, player.soul - SP.soulPerCast * (1 - STATS.soulLess));
     sfx('shoot'); return true;
   }
@@ -381,24 +390,25 @@ function projHit(p, m) {
   let mul = p.mul * (p.pierced ? p.W.pierceMore : 1) * (1 + p.W.chainInc * p.chain);
   if (p.first && p.split > 0) mul *= 1 + p.W.splitInc * p.split;
   if (p.W.aoeR && p.W.form === 'proj') { // 火油罐：命中后范围爆炸
-    fx({ t: 'boom', x: m.x, y: m.y - 3, r: p.W.aoeR, el: p.el }); sfx('boom');
+    fx({ t: 'boom', x: m.x, y: m.y - 3, r: p.W.aoeR, el: p.el }); sfx('boom'); aoePull(m.x, m.y, p.W.aoeR);
     for (const n of mobs) if (!n.dead && dist2(n, m) < (p.W.aoeR + n.size) ** 2) hitMob(n, p.W, { mul });
     return true;
   }
   if (p.spark) { // 游雷：记下这一串打中这个敌人的时间；雷冠：第一次打中感电的敌人时分叉
-    const shocked = m.shock > 0, d = hitMob(m, p.W, { mul, spark: 1 }); p.vol.last.set(m, RUN ? RUN.t : 0);
+    const shocked = m.shock > 0, d = hitMob(m, p.W, { mul: mul * (1 + p.W.chainStep * (p.bn || 0)), spark: 1 }); if (p.bn && STATS.flag.chainCrown) shockOn(m); p.vol.last.set(m, RUN ? RUN.t : 0);
     if (RUN && RUN.dmg) RUN.dmg[p.forked ? 'fork' : 'spark'] = (RUN.dmg[p.forked ? 'fork' : 'spark'] || 0) + d;
-    if (STATS.flag.sparkCrown && shocked && !p.forked && !p.didFork) { p.didFork = 1; for (let i = 0; i < SP.forkN; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (SP.forkN - 1) / 2) * 1.2, { pierce: 0, chain: 0, sch: 0, split: 0, ret: 0, hit: new Set([m]), mul: p.mul * SP.forkMul, life: 0.8, spark: 1, forked: 1, vol: p.vol, ph: i ? Math.PI : 0 }); }
+    if (STATS.flag.chainCrown && shocked && !p.forked && !p.didFork) { p.didFork = 1; for (let i = 0; i < SP.forkN; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (SP.forkN - 1) / 2) * 1.2, { pierce: 0, chain: 0, sch: 0, split: 0, ret: 0, hit: new Set([m]), mul: p.mul * SP.forkMul, life: 0.8, spark: 1, forked: 1, vol: p.vol, ph: i ? Math.PI : 0 }); }
     if (p.sch > 0) { // 弹射：转向附近最近的、这一颗没打过的敌人，从命中点起重新走波形；电弧就是真实的弹射路线
       let n = null, bd = SP.chainR ** 2; for (const x of mobs) { if (x === m || x.dead || x.rise > 0.2 || p.hit.has(x) || (p.chd && p.chd.has(x))) continue; const d = (x.x - m.x) ** 2 + (x.y - m.y) ** 2; if (d < bd) { bd = d; n = x; } }
       (p.chd || (p.chd = new Set())).add(m);
-      if (n) { p.sch--; p.mul *= SP.chainMul; p.a = Math.atan2(n.y - 5 - (m.y - 5), n.x - m.x); p.wx = m.x; p.wy = m.y - 5; p.wd = 0; p.life = Math.max(p.life, SP.chainLife); fx({ t: 'sarc', x: m.x, y: m.y - 5, ts: [[n.x, n.y - 5]] }); return false; }
+      if (n) { p.sch--; p.bn = (p.bn || 0) + 1; p.mul *= SP.chainMul; p.a = Math.atan2(n.y - 5 - (m.y - 5), n.x - m.x); p.wx = m.x; p.wy = m.y - 5; p.wd = 0; p.life = Math.max(p.life, SP.chainLife); fx({ t: 'sarc', x: m.x, y: m.y - 5, ts: [[n.x, n.y - 5]] }); return false; }
     }
     fx({ t: 'sflash', x: m.x, y: m.y - 5 });
     if (p.pierce > 0) { p.pierce--; p.pierced = true; return false; }
     return true;
   }
-  hitMob(m, p.W, { mul });
+  const bn = Math.max(0, p.W.chain - p.chain); // 已经弹了几次
+  hitMob(m, p.W, { mul: mul * (1 + p.W.chainStep * bn) }); if (bn && STATS.flag.chainCrown) shockOn(m);
   fx({ t: 'hit', x: m.x, y: m.y - 5, el: p.el });
   if (p.first && p.split > 0) { // 分裂：向前方散开
     const s = p.split;
@@ -429,8 +439,8 @@ function logic(dt) {
   // 移动：朝鼠标加速（体魄越高越慢）
   if (player.dashT > 0) {
     player.x += player.dvx * dt; player.y += player.dvy * dt; player.dashT -= dt;
-    if (P.flag.fireTrail && RUN) { const W0 = P.weapons.find(w => w && w.form !== 'reflect'); if (W0) zones.push({ W: W0, mul: RL.fireTrail.pct / 100, x: player.x, y: player.y, r: RL.fireTrail.r, t: RL.fireTrail.dur, el: 'exp', trail: 1 }); }
-    if (player.trail && RUN && P.engine) zones.push({ W: P.engine, x: player.x, y: player.y, r: 10, t: 2, el: P.engine.el, trail: 1 });
+    if (P.flag.fireTrail && RUN) { const W0 = P.weapons.find(w => w && w.form !== 'reflect'); if (W0) zones.push({ W: W0, mul: RL.fireTrail.pct / 100, x: player.x, y: player.y, r: RL.fireTrail.r, t: RL.fireTrail.dur * P.durMul, el: 'exp', trail: 1 }); }
+    if (player.trail && RUN && P.engine) zones.push({ W: P.engine, x: player.x, y: player.y, r: 10, t: 2 * P.durMul, el: P.engine.el, trail: 1 });
     if (player.dashT <= 0 && player.dashEnd) { const k = player.dashEnd; player.dashEnd = null; dashEnd(k); }
   } else {
     let tvx = 0, tvy = 0;
@@ -485,11 +495,13 @@ function logic(dt) {
   // 转旋风的时候：风暴之眼把身边的怪卷过来；旋风之心不断甩出小旋风
   if (spinning()) {
     const wi = P.weapons.findIndex((W, i) => W && W.whirl && player.spin[i].n > 0), OW = P.weapons[wi], n = player.spin[wi].n;
-    if (P.flag.stormEye) { const pr = whirlR(OW, n) * WH.pullR; for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy); if (d > 6 && d < pr) { m.x += dx / d * WH.pull * dt; m.y += dy / d * WH.pull * dt; } } }
+    if (P.flag.areaEye) { const pr = whirlR(OW, n) * RL.areaEye.pullR; for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy); if (d > 6 && d < pr) { m.x += dx / d * RL.areaEye.pull * dt; m.y += dy / d * RL.areaEye.pull * dt; } } }
     if (P.flag.whirlHeart && (player.devilT -= dt) <= 0) {
       player.devilT = WH.devilEvery * (n >= OW.stackMax ? WH.devilFullMul : 1);
-      const eye = P.flag.stormEye, max = WH.devilMax + (eye ? WH.eyeMaxAdd : 0), ds = zones.filter(z => z.devil); if (ds.length >= max) ds[0].t = 0;
-      zones.push({ W: OW, mul: WH.devilMul * Math.pow(OW.morePer, n), x: player.x, y: player.y, r: WH.devilR, t: WH.devilLife + (eye ? WH.eyeLifeAdd : 0), tickT: WH.devilTick, el: OW.el, devil: 1, ang: rnd() * Math.PI * 2, seed: rnd() * 9 });
+      // 小旋风算投射物：每次甩出 1 + 投射物 个，上限同比放大；速度吃投射物速度，存在时间吃持续时间，伤害吃投射物伤害总增/总降
+      const ex = Math.max(0, OW.extra + P.projAdd), max = Math.round(WH.devilMax * (1 + ex)), ds = zones.filter(z => z.devil), cnt = 1 + Math.floor(ex);
+      for (let k = 0; k < ds.length + cnt - max && k < ds.length; k++) ds[k].t = 0;
+      for (let k = 0; k < cnt; k++) zones.push({ W: OW, mul: WH.devilMul * Math.pow(OW.morePer, n) * (P.tree.more['dmg:proj'] ?? 1), x: player.x, y: player.y, r: WH.devilR, t: WH.devilLife * P.durMul, tickT: WH.devilTick, el: OW.el, devil: 1, spd: WH.devilSpeed * (1 + OW.projSpdInc / 100), ang: rnd() * Math.PI * 2, seed: rnd() * 9 });
     }
   } else player.devilT = 0;
   player.lx = player.x; player.ly = player.y;
@@ -631,7 +643,7 @@ function stepZones(dt) {
   for (const z of zones) {
     z.t -= dt; z.tick = (z.tick || 0) - dt;
     if (z.devil) { // 小旋风：带随机偏转的直线，碰到场地边缘就弹回来
-      z.ang += rf(-WH.devilTurn, WH.devilTurn) * dt; z.x += Math.cos(z.ang) * WH.devilSpeed * dt; z.y += Math.sin(z.ang) * WH.devilSpeed * 0.7 * dt;
+      z.ang += rf(-WH.devilTurn, WH.devilTurn) * dt; z.x += Math.cos(z.ang) * z.spd * dt; z.y += Math.sin(z.ang) * z.spd * 0.7 * dt;
       if (z.x < 8 || z.x > W - 8) { z.ang = Math.PI - z.ang; z.x = clamp(z.x, 8, W - 8); }
       if (z.y < FLOOR_Y + 6 || z.y > FIELD_B - 4) { z.ang = -z.ang; z.y = clamp(z.y, FLOOR_Y + 6, FIELD_B - 4); }
     }
@@ -652,11 +664,11 @@ function stepProjs(dt) {
       if (p.arm > 0 || p.dead) continue;
       const W = p.W, tg = nearest(p.x, p.y + 4, W.rng || 14); if (!tg) continue;
       p.dead = true;
-      if (W.b.pool) { zones.push({ W, x: p.x, y: p.y, r: W.aoeR, t: 4, el: W.el, pool: 1 }); fx({ t: 'ring', x: p.x, y: p.y, r: W.aoeR, el: W.el }); }
+      if (W.b.pool) { zones.push({ W, x: p.x, y: p.y, r: W.aoeR, t: 4 * STATS.durMul, el: W.el, pool: 1 }); fx({ t: 'ring', x: p.x, y: p.y, r: W.aoeR, el: W.el }); }
       else if (W.b.shoot) { // 雷暴 / 碎骨陷阱：向敌人射出
         if (W.chain) chainHit(W, tg, { x: p.x, y: p.y + 6 }, W.chain);
         else shoot(W, p.x, p.y - 2, Math.atan2(tg.y - p.y, tg.x - p.x), { pierce: W.pierce, chain: 0, split: W.split, ret: 0, hit: new Set(), mul: 1, life: W.rng / W.spd, first: true });
-      } else { fx({ t: 'boom', x: p.x, y: p.y, r: W.aoeR, el: W.el }); sfx('boom'); for (const m of mobs) if (!m.dead && dist2(m, p) < (W.aoeR + m.size) ** 2) hitMob(m, W); }
+      } else { fx({ t: 'boom', x: p.x, y: p.y, r: W.aoeR, el: W.el }); sfx('boom'); for (const m of mobs) if (!m.dead && dist2(m, p) < (W.aoeR + m.size) ** 2) hitMob(m, W); aoePull(p.x, p.y, W.aoeR); }
     } else {
       if (p.cx != null) { // 疫星仪：螺旋向外
         p.sa += dt * 5; p.sr += dt * 55; p.x = p.cx + Math.cos(p.sa) * p.sr; p.y = p.cy + Math.sin(p.sa) * p.sr * 0.75; p.vx = -Math.sin(p.sa); p.vy = Math.cos(p.sa);

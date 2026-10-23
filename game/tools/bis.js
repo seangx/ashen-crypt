@@ -7,6 +7,7 @@
                写多个用逗号隔开，最后输出前两个的比值
      角色等级 = 物品等级；词条取物品等级允许的、铁砧能做到的最高档；符文等级 = min(20, 物品等级 / 5)。
      天梯从第 1 层开始连打（按剩余时间跳层），第一次失败就停，报告最高通过层。
+     --core 独特id  成型流派在物品等级 ≥20 时头冠换成这件独特（none = 不戴独特，按普通配装挑）
      --dump 文件  把第一个流派、第一个物品等级的配装存成游戏存档（天梯连打之后、单趟之前），给游戏里的“毕业存档”用。
      单趟：之后用同一身装备从推关第 1 层出发往下走，报告这一趟的时长、通过层数和结束原因（--descentMax 秒封顶，默认 1800）。 */
 const path = require('path'), fs = require('fs');
@@ -32,7 +33,7 @@ async function run(build, IL) {
   fs.writeFileSync(tmp, `<!doctype html><html><head><meta charset="utf-8"></head><body>${HTML}</body></html>`);
   await p.goto('file://' + tmp);
   await p.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 20000 });
-  const out = await p.evaluate(({ build, IL, seed, DMAX, DUMP }) => {
+  const out = await p.evaluate(({ build, IL, seed, DMAX, DUMP, CORE }) => {
     const A = window.__ash; A.G.fx = false; window.__reseed(seed * 7919 + IL);
     const S = A.S, WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, ARCH = build === 'whirl' || build === 'spark', BP = build === 'spark' ? SPK : WH, rnd = Math.random, pick = a => a[Math.floor(rnd() * a.length)];
     if (A.G.ui.closeWin) A.G.ui.closeWin();
@@ -74,7 +75,7 @@ async function run(build, IL) {
       let bases = Object.keys(pool).filter(b => (pool[b].req || 1) <= IL);
       if (ARCH && s === 'wl') bases = [build === 'spark' ? SPK.base : 'TurbineBlades'];
       let best = null;
-      if (ARCH && s === 'core' && IL >= 20) { best = { it: A.newUnique(build === 'spark' ? SPK.uniqueId : 'StormEye', IL) }; }
+      if (ARCH && s === 'core' && IL >= 20 && CORE !== 'none') { best = { it: A.newUnique(CORE || (build === 'spark' ? SPK.uniqueId : 'StormEye'), IL) }; }
       else if (build === 'random') { const it = fill(make(kind, pick(bases)), s); best = { it }; }
       else for (const b of bases) { let it; try { it = make(kind, b); } catch (e) { continue; } fill(it, s); if (s === 'wl' || s === 'wr') runesFor(it, ARCH && s === 'wl' ? BP.runeOrder : null); const v = ev({ ...S.equip, [s]: it }); if (!best || v > best.v) best = { v, it }; }
       if (best.it.kind === 'weapon' && !(best.it.mods || []).some(Boolean)) runesFor(best.it, ARCH && s === 'wl' ? BP.runeOrder : null);
@@ -111,7 +112,7 @@ async function run(build, IL) {
     if (A.RUN) { A.RUN.result = 'timeout'; A.RUN.ending = 0.01; A.logic(dt); }
     const dr = A.AUTO.last, descent = { t: Math.round(dt2), floors: dr ? dr.descent.floors : 0, res: dr ? dr.result : '?' };
     return { info, best, last, descent, snap };
-  }, { build, IL, seed: opt.seed, DMAX: opt.descentMax, DUMP: !!opt.dump });
+  }, { build, IL, seed: opt.seed, DMAX: opt.descentMax, DUMP: !!opt.dump, CORE: arg('core', '') });
   fs.unlinkSync(tmp); await b.close();
   const bad = errs.filter(e => !/GPU stall|swiftshader|GroupMarker/.test(e));
   if (bad.length) console.log(bad.join('\n'));

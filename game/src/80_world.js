@@ -155,7 +155,7 @@ class World extends Phaser.Scene {
       if (!W_ || W_.form !== 'orbit') return;
       // 回旋骨刃：有旋势时人在转（刀光圈 + 风）；没有时每次砍中画一道横扫
       const n = W_.whirl ? player.spin[wi].n : 0, R = whirlR(W_, n);
-      if (n > 0) { const f = n / W_.stackMax; whirlFx(this.groundG, this.whirlG, this.glowG, player.x, player.y, R, f, t, STATS.flag.stormEye, Math.PI / 2 - (this.spinPh || 0) * Math.PI / 2 + 0.5); if (f >= 1 && this.post && G.time - (this.wPulse || 0) > 0.55) { this.wPulse = G.time; this.post.waves.push({ x: player.x, y: player.y, r: R + 10, k: 0.45, life: 0.3, t0: G.time }); } } // 满层：每圈一道空气冲击波
+      if (n > 0) { const f = n / W_.stackMax; whirlFx(this.groundG, this.whirlG, this.glowG, player.x, player.y, R, f, t, STATS.flag.areaEye, Math.PI / 2 - (this.spinPh || 0) * Math.PI / 2 + 0.5); if (f >= 1 && this.post && G.time - (this.wPulse || 0) > 0.55) { this.wPulse = G.time; this.post.waves.push({ x: player.x, y: player.y, r: R + 10, k: 0.45, life: 0.3, t0: G.time }); } } // 满层：每圈一道空气冲击波
       else if (player.swing[wi] > 0) { const k = player.swing[wi] / 0.18, a0 = (player.face < 0 ? Math.PI : 0) - 2.4 + (1 - k) * 4.8; for (let s2 = 0; s2 < 16; s2++) { const q = s2 / 16, an = a0 - q * 2.2; pg.fillStyle(0xdfe6ee, 0.8 * k * (1 - q)); pg.fillRect(Math.round(player.x + Math.cos(an) * R), Math.round(player.y - 6 + Math.sin(an) * R * 0.4), 2, 1); } }
     });
     // 红圈重击：地上一片红，外圈实线，内圈从外往里收，收到中心就砸下
