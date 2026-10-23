@@ -1,8 +1,9 @@
 {
-  "sparkHeart": { "text": "【投射物·弹射】可弹射的武器伤害 ×{spark.heartMore}，每在屏幕边反弹一次，之后的命中伤害 +{spark.chainStepInc}%（叠加）；游雷每次命中叠 {spark.shockGain} 层感电。代价：其他武器伤害 ×{spark.offhandMul}" },
-  "chainCrown": { "chain": 1, "stepInc": 15, "text": "【弹射】弹射 +{chain}；每弹一次这一下伤害 +{stepInc}%；游雷第一次打中感电的敌人时分叉成 {spark.forkN} 颗（伤害 ×{spark.forkMul}），反弹过的投射物打中的敌人感电" },
+  "sparkHeart": { "text": "【投射物·弹射】可弹射的武器伤害 ×{spark.heartMore}，每弹射一次（打中敌人后转向另一个敌人），之后的命中伤害 +{spark.chainStepInc}%（叠加）；游雷每次命中叠 {spark.shockGain} 层感电。代价：其他武器伤害 ×{spark.offhandMul}" },
+  "chainCrown": { "chain": 1, "stepInc": 15, "text": "【弹射】弹射 +{chain}；每弹一次这一下伤害 +{stepInc}%；游雷第一次打中感电的敌人时分叉成 {spark.forkN} 颗（伤害 ×{spark.forkMul}），弹射打中的敌人感电" },
   "areaEye": { "aoeInc": 25, "pullR": 2, "pull": 40, "text": "【范围】范围提高 {aoeInc}%；范围伤害命中时，把命中点 {pullR} 倍半径内的普通怪往命中点拉（转旋风时持续以每秒 {pull} 像素卷向自己）", "_说明": "pull：每秒像素；单次的范围命中（圣钟、爆炸、陷阱）按 pull × 0.3 一次性拉近" },
   "projCrown": { "extra": 1, "less": 10, "text": "【投射物】投射物 +{extra}；投射物伤害总降 {less}%" },
+  "velCrown": { "projSpd": 30, "projDur": 40, "less": 10, "text": "【投射物】投射物速度提高 {projSpd}%；投射物持续时间提高 {projDur}%；投射物伤害总降 {less}%" },
   "durCrown": { "durInc": 50, "aoeInc": -15, "text": "【持续】持续时间提高 {durInc}%；范围提高 {aoeInc}%" },
   "meleeCrown": { "chance": 25, "speedLess": 10, "text": "【近战】近战命中 {chance}% 几率再结算一次；移动速度总降 {speedLess}%" },
   "whirlHeart": { "text": "【近战·范围】近战范围武器伤害 ×{whirl.heartMore}；转旋风时每 {whirl.devilEvery} 秒甩出小旋风（算投射物：投射物 +N 每次多甩 N 个；旋势满层时间隔减半），朝外乱跑 {whirl.devilLife} 秒，伤害碰到的敌人（旋风单次伤害 ×{whirl.devilMul}），同时最多 {whirl.devilMax} 个。代价：非近战武器伤害 ×{whirl.offhandMul}，冲刺距离 ×{whirl.dashMul}", "_说明": "数值在 mechanics.json 的 whirl" },

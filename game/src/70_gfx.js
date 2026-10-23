@@ -15,7 +15,7 @@ function buildTextures(sc) {
   buildSprites(); makeSmallIcons();
   for (const k of MOB_SPR) SPR[k].forEach((f, i) => { add(`m_${k}_${i}`, f.n); add(`m_${k}_${i}_e`, f.e2); add(`m_${k}_${i}_fl`, f.fl); });
   SPR.hero.forEach((c, i) => { add('hero_' + i, c); add('hero_fl_' + i, SPR.heroFl[i]); });
-  for (const m of MODS) add('mod_' + m.id, SPR.mods[m.id]);
+  for (const m of MODS) add('mod_' + m.id, SPR.mods[m.id] || SPR.mods[m.icon || 'RapidProjectiles']);
   add('ghost', SPR.ghost); add('chest', SPR.chest); add('chestG', SPR.chestG); add('skull', SPR.skull); add('torch', SPR.torch);
   for (const k in SPR.icons) add('i_' + k, SPR.icons[k]);
   for (const k of ['anvil', 'star', 'book', 'ladder']) add('i_' + k, sprite(ART[k]));

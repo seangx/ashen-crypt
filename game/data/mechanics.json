@@ -421,8 +421,8 @@
   "drCap": 40
  },
  "spark": {
-  "_说明": "游雷（电球）流派（规格 design/spec-spark.md，照流放之路 2 的电球）。游雷符文：插在雷灵（form proj + wander）上，每次出手改成朝目标扇形放出一串游雷，数量 = 符文的 sparkN × (1 + 投射物数量)，投射物数量来自通用的“投射物 +#”（词条、天赋、百骨冠）；每颗游雷的伤害 = 武器单发 × 符文的 sparkMul。游雷的轨迹是固定的正弦波：沿出手方向（扇形散开）直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，相邻两颗相位差半个周期，整串像编织的辫子；不追踪、不随机。速度 = 武器弹速 × speedMul；持续 life 秒（× 持续时间提高）；同屏最多 maxAlive 颗，超出时最老的消失。弹射：轨迹中心线碰到屏幕边（场地无限大，边界跟着相机）时，如果还有弹射次数，就镜面反射（消耗一次），沿反射方向继续走同一条波形，持续时间至少补到 chainLife 秒，每反弹一次伤害 ×chainMul；没有弹射次数就飞出屏幕后消失。打中敌人不再弹射（chainR 已不用）。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、导雷、链电、织雷之心、雷冠）。打中敌人后按穿透（basePierce + 穿透）继续飞，穿透用完就消失。同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋，【投射物·弹射】）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每弹一次这一下伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，【弹射】，数值在 rules.json chainCrown）：游雷第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉出来的不再分叉，也不弹射）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
-  "life": 2.5,
+  "_说明": "游雷（电球）流派（规格 design/spec-spark.md，照流放之路 2 的电球）。游雷符文：插在雷灵（form proj + wander）上，每次出手改成朝目标扇形放出一串游雷，数量 = 符文的 sparkN × (1 + 投射物数量)，投射物数量来自通用的“投射物 +#”（词条、天赋、百骨冠）；每颗游雷的伤害 = 武器单发 × 符文的 sparkMul。游雷的轨迹是固定的正弦波：沿出手方向（扇形散开）直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，相邻两颗相位差半个周期，整串像编织的辫子；不追踪、不随机。速度 = 武器弹速 × speedMul；持续 life 秒（× (1 + 持续时间提高% + 投射物持续时间提高%) × 缓流符文总增），弹速（投射物速度提高、疾流 / 彗尾 / 疾矢符文、疾星冠）决定这段时间飞多远；同屏最多 maxAlive 颗，超出时最老的消失。碰到屏幕边（场地无限大，边界跟着相机）时中心线镜面反射，不消耗弹射，一直弹到寿命结束（照流放之路电球碰墙）。打中敌人时先看穿透（basePierce + 穿透），穿透用完再看弹射：还有弹射次数就转向 chainR 像素内最近的、这一颗没打过的敌人（照流放之路的连锁），从命中点起重新走波形，每弹射一次伤害 ×chainMul，都用完就消失。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、导雷、链电、织雷之心、雷冠）。同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋，【投射物·弹射】）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每弹一次这一下伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，【弹射】，数值在 rules.json chainCrown）：游雷第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉出来的不再分叉，也不弹射）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
+  "life": 3.5,
   "rehit": 0.66,
   "speedMul": 1.1,
   "fan": 1.3,
@@ -438,6 +438,8 @@
    "FlatElectricDamage",
    "SparkAdd",
    "SparkChain",
+   "IncreasedProjectileDuration",
+   "IncreasedProjectileSpeed",
    "IncreasedBaseAttackSpeed",
    "ElectricResistance",
    "ThermalResistance",
@@ -454,6 +456,7 @@
    "Shock",
    "Electric",
    "Pierce",
+   "Persist",
    "RapidProjectiles",
    "AttackSpeed"
   ],
@@ -665,9 +668,11 @@
   "returnHpNow": 12
  },
  "tags": {
-  "_说明": "通用标签词条（规格 design/spec-tags.md）。aoeInc 范围提高%：对有 AoE 标签的武器的爆炸 / 光环半径和旋风判定半径生效；durInc 持续时间提高%：小旋风、游雷、玩家留在地上的效果存在更久。格式同 whirl.affixes",
+  "_说明": "通用标签词条（规格 design/spec-tags.md）。aoeInc 范围提高%：对有 AoE 标签的武器的爆炸 / 光环半径和旋风判定半径生效；durInc 持续时间提高%：小旋风、游雷、玩家留在地上的效果存在更久。projSpd 投射物速度提高%（武器 / 核心 / 枢纽）：投射物飞得更快，游雷寿命不变所以飞得更远、在屏幕里来回更多趟；projDur 投射物持续时间提高%（武器 / 枢纽）：投射物（含游雷，和持续时间提高相加）存在更久，普通投射物射程随之变长。格式同 whirl.affixes",
   "affixes": {
    "IncreasedArea": {"text": "范围提高 #%", "stat": "aoeInc", "type": "S", "on": ["core", "hub", "weapon"], "tag": "AoE", "grp": "IncreasedArea", "tiers": [[[4, 8], 1000, 1, 999], [[9, 14], 700, 15, 999], [[15, 22], 400, 35, 999], [[23, 30], 150, 65, 999]]},
+   "IncreasedProjectileSpeed": {"text": "投射物速度提高 #%", "stat": "projSpd", "type": "S", "on": ["weapon", "core", "hub"], "tag": "Projectile", "grp": "IncreasedProjectileSpeed", "tiers": [[[5, 10], 1000, 1, 999], [[11, 18], 700, 15, 999], [[19, 27], 400, 35, 999], [[28, 36], 150, 65, 999]]},
+   "IncreasedProjectileDuration": {"text": "投射物持续时间提高 #%", "stat": "projDur", "type": "S", "on": ["weapon", "hub"], "tag": "Projectile", "grp": "IncreasedProjectileDuration", "tiers": [[[6, 12], 1000, 1, 999], [[13, 20], 700, 15, 999], [[21, 30], 400, 35, 999], [[31, 40], 150, 65, 999]]},
    "IncreasedDuration": {"text": "持续时间提高 #%", "stat": "durInc", "type": "S", "on": ["core", "hub", "engine"], "grp": "IncreasedDuration", "tiers": [[[5, 10], 1000, 1, 999], [[11, 18], 700, 15, 999], [[19, 28], 400, 35, 999], [[29, 40], 150, 65, 999]]}
   }
  }

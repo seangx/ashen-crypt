@@ -100,6 +100,10 @@ class World extends Phaser.Scene {
         case 'shield': this.rings.push({ x: e.x, y: e.y - 6, r: 11, life: 0.2, max: 0.2, el: 'cyan' }); break;
         case 'cone': { const n = 4; for (let i = 0; i < n; i++) { const a = e.a + rf(-0.5, 0.5), d = rf(8, e.r); this.em.fire.explode(1, e.x + Math.cos(a) * d, e.y + Math.sin(a) * d); } break; }
         case 'sflash': if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 5, life: 0.08, max: 0.08, el: 'flash' }); break;
+        case 'sarc': // 弹射（连锁，照流放之路 2 闪电箭）：沿真实弹射路线的锯齿电弧，每帧重新抖
+          if (this.lines.length < 120) for (const [x2, y2] of e.ts) this.lines.push({ x1: e.x, y1: e.y, x2, y2, life: rf(0.15, 0.24), arc: 1 });
+          if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 6, life: 0.1, max: 0.1, el: 'flash' });
+          this.em.spark2.particleTint = 0xd8f4ff; this.em.spark2.explode(3, e.x, e.y); break;
         case 'bounce': // 弹射：投射物在场边反弹时的小火花
           if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 6, life: 0.1, max: 0.1, el: 'flash' });
           this.em.spark2.particleTint = 0xd8f4ff; this.em.spark2.explode(4, e.x, e.y); break;

@@ -4,6 +4,7 @@
   {"id": "StormCrown", "n": "雷冠", "kind": "core", "b": "NebulaCore", "req": 20, "w": 40, "ladderOnly": 20, "fixed": [["IncreasedAttackSpeed", 1]], "rules": [["chainCrown", 1, 1], ["shockMul", 20, 40], ["armorLess", 15, 15]], "_说明": "弹射标签的独特（design/spec-tags.md）"},
   {"id": "StormEye", "n": "风暴之眼", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "ladderOnly": 20, "fixed": [["IncreasedAttackSpeed", 1]], "rules": [["areaEye", 1, 1], ["rangeInc", 15, 25], ["projLess", 30, 30]], "_说明": "ladderOnly：只在天梯宝箱里出，或天梯最高层达到这个数以后的普通掉落里出"},
   {"id": "HundredBones", "n": "百骨冠", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "fixed": [], "rules": [["projCrown", 1, 1]], "_说明": "投射物标签的独特（design/spec-tags.md）"},
+  {"id": "StarTrail", "n": "疾星冠", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "fixed": [], "rules": [["velCrown", 1, 1]], "_说明": "投射物速度 / 持续时间的独特（design/spec-spark.md 第五版）"},
   {"id": "EverEmber", "n": "永燃冠", "kind": "core", "b": "NebulaCore", "req": 20, "w": 40, "fixed": [], "rules": [["durCrown", 1, 1]], "_说明": "持续标签的独特（design/spec-tags.md）"},
   {"id": "SkullSplitter", "n": "碎颅冠", "kind": "core", "b": "TitaniumCore", "req": 20, "w": 40, "fixed": [], "rules": [["meleeCrown", 1, 1]], "_说明": "近战标签的独特（design/spec-tags.md）"},
   {"id": "RustBlaster", "n": "锈骨弩", "kind": "weapon", "b": "Cannon", "req": 1, "w": 100, "fixed": [["IncreasedKineticBaseDamage",1],["IncreasedBaseAttackSpeed",1]], "rules": [["knock",1,1],["knockMore",40,60]]},
