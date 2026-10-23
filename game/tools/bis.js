@@ -99,7 +99,8 @@ async function run(build, IL) {
     // 存档：最深层开满，碎片和铸符各给一些，营地设施都已清出
     let snap = null;
     if (DUMP) {
-      S.maxDepth = Math.min(A.DATA.progression.run.maxDepth, 66); // 再深这身装备每层要好几分钟 S.depth = S.maxDepth; S.ladder.best = best; S.xp = 0; S.stats.missions = Math.max(S.stats.missions, 200);
+      S.maxDepth = Math.min(A.DATA.progression.run.maxDepth, 66); // 再深这身装备每层要好几分钟
+      S.depth = S.maxDepth; S.ladder.best = best; S.xp = 0; S.stats.missions = Math.max(S.stats.missions, 200);
       for (const k of BP.craftPref) S.shards[k] = 40; for (const k in S.glyphs) S.glyphs[k] = 6;
       S.campSeen = A.DATA.camp.facilities.map(f => f.id); S.auto = { ...S.auto, loop: false, lock: false, fails: 0, back: false, backWins: 0 };
       snap = JSON.stringify(S);

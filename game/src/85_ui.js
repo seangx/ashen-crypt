@@ -761,7 +761,7 @@ class UI extends Phaser.Scene {
       ['灯火', `推关是一趟往下走：从最深层往回退 ${SOUL.startBack} 层出发（锁层时从锁定的层出发），每层打满进度、打掉守关 Boss 后直接进入下一层。灯火（护甲条下的紫色细条）进入时是满的，每秒燃烧，越深烧得越快；推关中不会自然回复，只靠击杀补（Boss 补得最多）。灯火烧完就平安返回，这一趟捡到的全部带走；最深层附近的某一层打得太险（最低血量低于 ${SOUL.returnHp}%），打完那层的 Boss 也会自动撤回；最深层附近护甲一旦跌到 ${SOUL.returnHpNow}% 以下，会立刻紧急撤回，同样全部带走；阵亡的话，捡到的装备、符文、词条碎片每件有 ${SOUL.deathKeep}% 几率保住。旋风斩等流派技能也从同一条里扣。天梯里不燃烧。`],
       ['营地', `营地是主页：一趟结束后回到这里。点地窖入口出发（可以选层、锁层），点储物箱、天赋石像、符文台、墓图台打开对应的窗口；铁砧和分解祭坛在通关第 ${PROG.unlocks.craft.depth} 层后清出来，天梯石碑在通关第 ${PROG.unlocks.ladder.depth} 层后清出来，天梯从石碑出发。自动刷时在营地停留 ${CAMP.idleStay} 秒再出发。分解祭坛：每次回营地，按规则把带回的装备拆成词条碎片（默认分解普通、罕见，保留稀有；物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的全部分解；带收藏词条的留下）。独特、传奇、溢彩装备和印记永远不自动分解。`],
       ['防御', '护甲就是生命。灵障先吸收伤害，2 秒没受伤就开始回复。抗性按百分比减伤，有上限。闪避直接躲开一次攻击。'],
-      ['存档', '毕业存档：旋风斩成型，100 级，最深层开满，天梯打到 70 层左右；两把回旋骨刃插旋身符文，头冠是风暴之眼，旋风之心已点。载入前会把你现在的进度备份一份，之后可以一键恢复（只备份第一次载入前的进度）。正在打的一趟会作废。'],
+      ['存档', '毕业存档：旋风斩成型，100 级，最深层开满，天梯打到 70 层左右；两把回旋骨刃插旋身符文，头冠是风暴之眼，旋风之心已点。游雷毕业存档：100 级，两把雷灵插 20 级游雷符文，每串 18 颗游雷，头冠是雷冠，织雷之心已点，天梯 63 层。载入前会把你现在的进度备份一份，之后可以一键恢复（只备份第一次载入前的进度）。正在打的一趟会作废。'],
     ];
     pages.forEach(([n], i) => mkBtn(this, c, 10, 8 + i * 18, 70, 16, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
     const [n, txt] = pages[helpTopic];
@@ -769,6 +769,7 @@ class UI extends Phaser.Scene {
     TW(this, 92, 28, txt, 360, { size: 12, color: COL.text, parent: c });
     if (n === '存档') {
       mkBtn(this, c, 92, 130, 150, 22, confirmKey === 'demo' ? '确认载入' : '载入旋风斩毕业存档', () => { if (!confirm2('demo')) return this.refresh(); loadDemo('whirl'); toast('已载入旋风斩毕业存档', COL.emberHi); }, { size: 8, style: confirmKey === 'demo' ? 'r' : 'w', icon: 'mod_Whirl', iconX: 5, labelX: 22 });
+      mkBtn(this, c, 92, 156, 150, 22, confirmKey === 'demoSpark' ? '确认载入' : '载入游雷毕业存档', () => { if (!confirm2('demoSpark')) return this.refresh(); loadDemo('spark'); toast('已载入游雷毕业存档', COL.emberHi); }, { size: 8, style: confirmKey === 'demoSpark' ? 'r' : 'w', icon: 'mod_Spark', iconX: 5, labelX: 22 });
       mkBtn(this, c, 250, 130, 150, 22, confirmKey === 'restore' ? '确认恢复' : '恢复之前的进度', () => { if (!confirm2('restore')) return this.refresh(); restoreBackup(); toast('已恢复之前的进度', COL.emberHi); }, { size: 8, style: confirmKey === 'restore' ? 'r' : 'n', disabled: !hasBackup() });
     }
     T(this, 92, 186, '系统与数值参考 Astroloot 复刻；画面、名字和文字为原创。', { size: 8, color: COL.faint, parent: c });

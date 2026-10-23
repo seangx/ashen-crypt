@@ -15,10 +15,20 @@ async function waitFonts() {
   // 字体晚到时：清空测宽缓存，重画界面
   document.fonts.addEventListener?.('loadingdone', () => { MW = {}; G.ui && G.ui.refresh(); });
 }
+// 打开就进示范存档：网址带 ?demo=spark，或页面里预先写了 window.ASH_BOOT_DEMO（tools/standalone.py 打的单文件包）。
+// 同一个来源、同一个存档只载入一次（记在 localStorage），之后再打开就是接着玩；第一次载入前照样把原来的进度备份，营地手册“存档”页可以一键恢复。
+function bootDemo() {
+  let name = null; try { name = new URLSearchParams(location.search).get('demo'); } catch (e) { }
+  name = name || window.ASH_BOOT_DEMO; if (!name || !DEMO_SAVES[name]) return;
+  const flag = SAVE_KEY + '-booted-' + name; let done = false; try { done = !!localStorage.getItem(flag); } catch (e) { }
+  if (done && !new URLSearchParams(location.search).has('fresh')) return;
+  try { if (!localStorage.getItem(BACKUP_KEY) && localStorage.getItem(SAVE_KEY)) localStorage.setItem(BACKUP_KEY, localStorage.getItem(SAVE_KEY)); } catch (e) { }
+  load({ save: DEMO_SAVES[name] }); save(); try { localStorage.setItem(flag, '1'); } catch (e) { }
+}
 async function start(data) {
   await waitFonts();
   Z = clamp(Math.round((window.devicePixelRatio || 1) * Math.min(innerWidth / W, innerHeight / H)), 2, 6);
-  load(data || {}); refreshStats();
+  load(data || {}); bootDemo(); refreshStats();
   if (S.auto.loop) AUTO.nextT = 1; // 上次是自动循环：打开就接着刷
   window.claude?.hot?.snapshot?.(() => ({ save: JSON.stringify(S) }));
   setInterval(() => { if (RUN) save(); }, 10000);
