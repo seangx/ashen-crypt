@@ -9,7 +9,9 @@
 
 相关规格：
 - spec-tags.md：标签体系。
-- spec-pierce-chain.md：穿透、弹射、反弹。也只是文档，实现时一起做。
+- spec-pierce-chain.md：穿透、弹射（已按 10-24 定稿实现）。
+> **2026-10-24 用户定稿（覆盖本文旧写法）**：投射物有寿命（游雷 3.5 秒，吃持续时间 / 投射物持续时间，弹速决定飞多远）；**穿透**是布尔，有就无限穿透（同一敌人有重复命中间隔）；**弹射**是投射物碰当前屏幕边反弹的次数，每次耗 1；没有单独的“反弹”属性，穿透和弹射不互斥、也没有弹射换伤害；闪电链类仍在敌人之间**连锁**；“投射物 +N”直接加颗数（游雷颗数 = 符文 sparkN + 投射物）。详见 spec-pierce-chain.md。
+
 - spec-defense-v2.md：护盾、护甲、生命。
 
 **约定**
@@ -123,8 +125,7 @@
 | 词条 | 调整 |
 |---|---|
 | SparkAdd（投射物 +#） | `on` 不变，仍然是武器和头冠。投射物 +1 依旧是高价值词条 |
-| SparkChain（反弹 +#，见 spec-pierce-chain.md） | 不变 |
-| GearChain（弹射 +#） | `on` weapon、core；档位同 SparkChain |
+| SparkChain（弹射 +#，碰屏幕边反弹次数，见 spec-pierce-chain.md） | 不变；`on` weapon、core。不再另加 GearChain，弹射只有这一族 |
 | IncreasedArea / IncreasedDuration | 不变 |
 
 ### 3.4 空词条清理（老存档按 id 映射）
@@ -229,10 +230,10 @@
 - fit `["shield"]`，req 12，w 700。
 - 装上后，盾每 1/`aps` 秒自动扔一次（aps 1.2，吃攻速）。
 - 单次伤害 = 盾的护甲 × `throwK` `["lp",0.45,0.8,2]` × (1 + 盾牌伤害% + 圣光伤害%)，元素圣光。
-- `chain` `["step",3,6]`：基础弹射 3 次，6 级、12 级各 +1。走通用弹射，所以和穿透互斥。
+- `chain` `["step",3,6]`：基础弹射 3 次，6 级、12 级各 +1。走通用弹射：盾朝最近的敌人飞出，碰当前屏幕边反弹，每次耗 1 次。
+- 盾自带穿透（无限穿透，同一敌人重复命中间隔同通用规则），一路穿过怪群；和弹射不互斥。
 - 每弹一次伤害 +`chainStepInc` 10%。
-- 弹射范围 `chainR` 90 像素，速度 220 像素/秒。
-- 弹完飞回手上，回程不造成伤害。
+- 速度 220 像素/秒；寿命按通用投射物规则（吃持续时间），弹射用完或寿命到了就飞回手上，回程不造成伤害。
 - 盾飞出去的时候，盾的护甲照常算（殉道者之盾除外）。
 - fx 带 `ail.pla` 0.2（致盲）。
 - 盾在手上时 `block` 生效。在手上的时间约 = 飞行时间以外的时间，弹得越多，在手上越少。这就是取舍。
@@ -252,7 +253,7 @@
 
 **魂火**
 - 每次投掷 `soulPerThrow` 0.4。
-- 每次弹射命中返还 `soulPerChain` 0.06。
+- 每次弹射（碰屏幕边反弹）后的命中返还 `soulPerChain` 0.06。
 
 **AI**（auto.json `shield`）
 - `keepDist` 70。
@@ -280,7 +281,7 @@
   - 派生 +N：每次多放 N 片。
   - 冰片算投射物，吃投射物伤害，但不吃“投射物 +N”。
 - **终点**：寿命结束炸开一圈冰环，半径 36 像素，×1.0，算范围。
-- **投射物 +N**：每次施放多放 N 颗冰球，扇形 20° 散开。
+- **投射物 +N**：每次施放多放 N 颗冰球（直接相加），扇形 20° 散开。弹射 +N 让冰球在寿命内碰屏幕边反弹 N 次。
 - **冰片总数** = 冰球数 × (寿命 ÷ emit) × 每次片数。所以数量、持续时间是相乘的；减速不加片数，但让冰片集中在怪群里，命中率更高（用户 15:32 的三条构筑方向）。
 - 同屏冰片上限 `maxShards` 200，超出时最老的消失。
 
@@ -360,8 +361,8 @@
 |---|---|---|---|---|---|---|---|---|
 | DoomCrown | 末日冠 | core / NebulaCore | 30 | 30 | 20 | `delayCrown` | 每多 0.1 秒延迟，延迟伤害总增 [10,14]%；延迟 +1 秒；范围提高 [20,30]% | 预警圈更早出现（怪更容易躲） |
 | ScorchedCircle | 焦土法阵 | hub / AmberNexus | 24 | 40 |  | `groundStack` | 你的地面效果可以叠 3 层（同一位置叠加，各自计时） | 持续时间 −30% |
-| MartyrShield | 殉道者之盾 | shield / SigilShield | 30 | 30 | 20 | `martyrThrow` | 弹射次数 ×2；每次命中回 [1.5,2.5]% 护盾 | 盾在飞时不算盾的护甲 |
-| EchoCrown | 回音冠 | core / PhantomCore | 20 | 40 |  | `echoCrown` | 弹射命中时在命中点小爆（半径 24 像素，×[0.25,0.35]，算范围） | 弹射 −1 |
+| MartyrShield | 殉道者之盾 | shield / SigilShield | 30 | 30 | 20 | `martyrThrow` | 弹射（碰屏幕边反弹）次数 ×2；每次命中回 [1.5,2.5]% 护盾 | 盾在飞时不算盾的护甲 |
+| EchoCrown | 回音冠 | core / PhantomCore | 20 | 40 |  | `echoCrown` | 每次弹射（碰屏幕边反弹）后的命中在命中点小爆（半径 24 像素，×[0.25,0.35]，算范围） | 弹射 −1 |
 | WinterHeart | 冬之心 | weapon / FrostOrb | 30 | 30 | 20 | `winterHeart` | 冰球速度 −70%；持续时间 +[80,100]%；冰片频率 ×1.5 | 每次施放魂火 ×1.5 |
 | ShardCrown | 碎晶冠 | core / NebulaCore | 24 | 40 |  | `shardCrown` | 派生物再派生一层（每层 ×0.5）；冻结的敌人受到的伤害提高 [15,25]% | 投射物速度 −20%（寒魄球用起来是好处） |
 | EverwinterCircle | 永冬法阵 | hub / FrostNexus | 30 | 30 | 20 | `autoNova` | 新星每 0.5 秒自动脉冲一次（×[0.5,0.65]），不再按攻速出手；脚下留 1.5 秒冰地，每秒叠 2 层冰缓 | 移速 −15% |
@@ -394,12 +395,12 @@
 |---|---|
 | 骨弩 Cannon | 穿透（已有 pierce，改成布尔） |
 | 穿心弩 Railgun | 穿透；投射物速度 +30% |
-| 雷灵 Zapper | 反弹 +1 |
-| 飞镰 Shuriken | 弹射 +1 |
+| 雷灵 Zapper | 弹射 +1（碰屏幕边反弹） |
+| 飞镰 Shuriken | 投射物持续时间提高 20% |
 | 回旋骨刃 TurbineBlades | 范围提高 15% |
 | 圣钟 PlasmaNova | 范围提高 10% |
 | 火油罐 Rocket | 范围伤害提高 15% |
-| 喷火颅 FlameThrower | 持续时间提高 20% |
+| 喷火颅 FlameThrower | 持续伤害提高 20% |
 | 疫星仪 Orbitron | 派生 +1（螺旋弹打中时分出一颗） |
 | 散骨铳 Blastgun | 投射物伤害提高 15% |
 | 三种陷阱 | 延迟伤害提高 20%（陷阱改带 Delayed 标签） |
@@ -433,7 +434,7 @@
 
 **各流派的 craftPref**（做装偏好，模拟用）
 - 陨火：DelayDamage > AreaDamage2 > IncreasedArea > FlatExplosive > AilEffect:exp
-- 圣盾掷：ShieldDamage > IncreasedArmor > GearChain > ChainStep > Block
+- 圣盾掷：ShieldDamage > IncreasedArmor > SparkChain（弹射 +#，屏幕边反弹）> ChainStep > Block
 - 寒魄球：SparkAdd（投射物 +N）> IncreasedDuration > ProjSlow > SpawnAdd > FrozenTaken > FlatCold
 - 霜环：IncreasedArea > FrozenTaken > AilEffect:cold > FlatCold > ShieldRegen
 
@@ -443,7 +444,7 @@
 
 1. 寒霜元素和冰缓 / 冻结，以及霜魂怪。
 2. 通用属性（§2）和词条改版（§3），含老存档映射。这一步不依赖新流派，可以先上，用旋风斩 / 游雷 / 乱配跑一轮。
-3. 穿透 / 弹射 / 反弹（spec-pierce-chain.md）。圣盾掷依赖它。
+3. ~~穿透 / 弹射（spec-pierce-chain.md）~~ **已完成**（2026-10-24，按用户定稿：无限穿透 + 屏幕边弹射，无反弹属性）。圣盾掷依赖它。
 4. 四个新流派，一个一个上：霜环（复用圣钟形态，最省）→ 陨火 → 寒魄球 → 圣盾掷。每上一个跑一次模拟，交回设计线程。
 5. 新独特、誓约、隐性倾向。
 6. 天赋盘重排（流派和标签定了以后）。
