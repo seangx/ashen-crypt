@@ -247,13 +247,13 @@
   "engine": 0.1
  },
  "whirl": {
-  "_说明": "旋风斩第三版（经典旋风斩，规格 design/spec-whirlwind-v3.md）。旋身符文：回旋骨刃连续命中时每秒 +gainPerSec 层“旋势”，最多 maxStacks 层，decay 秒没命中清零；每层伤害总增按符文等级（runes.json Whirl 的 spinMore，没写时用 morePer），判定半径 +rngPer%。有层数时角色在转：移速 ×spinMoveMul，每秒消耗 soulPerSec 灯火（×(1-魂火消耗降低)），每次挥砍每砍中一个敌人回 soulPerHit，一次最多按 soulHitCap 个算；小旋风打中不回。减伤：每层 drPerStack%，最多 drCap%。旋风之心（大型天赋）：回旋骨刃伤害 ×heartMore；转的时候每 devilEvery 秒甩出一个小旋风（满层时间隔 ×devilFullMul），朝随机方向跑，速度 devilSpeed 像素/秒，每秒最多偏转 devilTurn 弧度，飘 devilLife 秒，半径 devilR，每 devilTick 秒伤害碰到的敌人（旋风单次伤害 × devilMul，含当前层数倍率），同时最多 devilMax 个；代价：非近战武器伤害 ×offhandMul，冲刺距离 ×dashMul。风暴之眼（独特头冠）：人物旋风的判定半径 +eyeRng%，转的时候把 判定半径 × pullR 内的普通怪以 pull 像素/秒吸向自己（Boss 不吸）；小旋风持续 +eyeLifeAdd 秒、上限 +eyeMaxAdd，小旋风本身不吸怪。护甲代价写在 uniques.json 的 armorLess。craftPref / runeOrder 是 tools/sim.js --build whirl 的做装词条族优先级和插符文顺序；treeKey 是旋风之心所在的小团。affixes 是本流派加的词条族（格式同 astro.json 的 affixes，外加 text、stat、tag）。",
+  "_说明": "旋风斩第三版（经典旋风斩，规格 design/spec-whirlwind-v3.md）。旋身符文：回旋骨刃连续命中时每秒 +gainPerSec 层“旋势”，最多 maxStacks 层，decay 秒没命中清零；每层伤害总增按符文等级（runes.json Whirl 的 spinMore，没写时用 morePer），判定半径 +rngPer%（再乘 1 + 范围提高%）。有层数时角色在转：移速 ×spinMoveMul，每秒消耗 soulPerSec 灯火（×(1-魂火消耗降低)），每次挥砍每砍中一个敌人回 soulPerHit，一次最多按 soulHitCap 个算；小旋风打中不回。减伤：每层 drPerStack%，最多 drCap%。旋风之心（大型天赋，【近战·范围】，对同时有 Melee 和 AoE 标签的武器生效）：伤害 ×heartMore；转的时候每 devilEvery 秒甩出一个小旋风（满层时间隔 ×devilFullMul），朝随机方向跑，速度 devilSpeed 像素/秒，每秒最多偏转 devilTurn 弧度，飘 devilLife 秒，半径 devilR，每 devilTick 秒伤害碰到的敌人（旋风单次伤害 × devilMul，含当前层数倍率），小旋风算投射物：每次甩出 1 + 投射物数量 个，同时最多 devilMax × (1 + 投射物数量) 个，速度吃投射物速度，存在时间吃持续时间提高，不吃投射物伤害的总增 / 总降；代价：非近战武器伤害 ×offhandMul，冲刺距离 ×dashMul。风暴之眼（独特头冠，【范围】，数值在 rules.json areaEye）：范围提高，范围伤害把普通怪往命中点拉，转旋风时持续卷向自己。craftPref / runeOrder 是 tools/sim.js --build whirl 的做装词条族优先级和插符文顺序；treeKey 是旋风之心所在的小团。affixes 是本流派加的词条族（格式同 astro.json 的 affixes，外加 text、stat、tag）。",
   "gainPerSec": 1,
   "maxStacks": 10,
   "decay": 2,
   "morePer": 1.08,
   "rngPer": 4,
-  "heartMore": 2,
+  "heartMore": 2.3,
   "offhandMul": 0.5,
   "dashMul": 1,
   "spinMoveMul": 0.8,
@@ -421,14 +421,14 @@
   "drCap": 40
  },
  "spark": {
-  "_说明": "游雷（电球）流派（规格 design/spec-spark.md，照流放之路 2 的电球）。游雷符文：插在雷灵（form proj + wander）上，每次出手改成朝目标扇形放出一串游雷，数量 = 符文的 sparkN + 游雷数量词条 + 天赋/独特装备加成；每颗游雷的伤害 = 武器单发 × 符文的 sparkMul。游雷的轨迹是固定的正弦波：沿出手方向（扇形散开）直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，相邻两颗相位差半个周期，整串像编织的辫子；不追踪、不随机。速度 = 武器弹速 × speedMul；轨迹中心线碰到场边时按镜面反射。持续 life 秒。弹射：打中敌人后，如果还有弹射次数，就转向 chainR 像素内最近的、这一颗没打过的敌人，从命中点起按新方向继续走波形，持续时间至少补到 chainLife 秒；每弹射一次伤害 ×chainMul。弹射次数 = 符文的 sparkChain + 游雷弹射词条 + 天赋（导雷小天赋、织雷之心）+ 雷冠 crownChain。弹射次数用完后才按穿透（basePierce + 穿透）继续直飞，都用完就消失。同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）。每次出手消耗 soulPerCast 灯火。织雷之心：雷灵伤害 ×heartMore，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠：游雷 +crownAdd 颗、多飘 crownLife 秒、弹射 +crownChain；游雷第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉出来的不再分叉，也不弹射）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
+  "_说明": "游雷（电球）流派（规格 design/spec-spark.md，照流放之路 2 的电球）。游雷符文：插在雷灵（form proj + wander）上，每次出手改成朝目标扇形放出一串游雷，数量 = 符文的 sparkN × (1 + 投射物数量)，投射物数量来自通用的“投射物 +#”（词条、天赋、百骨冠）；每颗游雷的伤害 = 武器单发 × 符文的 sparkMul。游雷的轨迹是固定的正弦波：沿出手方向（扇形散开）直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，相邻两颗相位差半个周期，整串像编织的辫子；不追踪、不随机。速度 = 武器弹速 × speedMul；轨迹中心线碰到场边时按镜面反射。持续 life 秒（× 持续时间提高）；同屏最多 maxAlive 颗，超出时最老的消失。弹射：打中敌人后，如果还有弹射次数，就转向 chainR 像素内最近的、这一颗没打过的敌人，从命中点起按新方向继续走波形，持续时间至少补到 chainLife 秒；每弹射一次伤害 ×chainMul。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、导雷、链电、织雷之心、雷冠）。弹射次数用完后才按穿透（basePierce + 穿透）继续直飞，都用完就消失。同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋，【投射物·弹射】）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每弹一次这一下伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，【弹射】，数值在 rules.json chainCrown）：游雷第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉出来的不再分叉，也不弹射）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
   "life": 2.5,
   "rehit": 0.66,
   "speedMul": 1.1,
   "fan": 1.3,
   "basePierce": 0,
   "soulPerCast": 0.15,
-  "heartMore": 2.2,
+  "heartMore": 1.8,
   "offhandMul": 0.5,
   "shockGain": 2,
   "forkN": 2,
