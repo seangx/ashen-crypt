@@ -1,0 +1,3 @@
+whirl  物品等级  30：秒伤     37931（面板    23411，满 13 层）  有效生命   5651  平均抗性  33%  天梯  45 层（止于 46 层死亡（70 秒））  单趟 阵亡 14:04 过 23 层 旋风之心 | TurbineBlades Railgun NebulaShield HundredBones Thruster QuartzNexus | 符文 Whirl,Crush,AttackSpeed,ArmorOnHit
+whirl  物品等级  70：秒伤    167002（面板    64287，满 20 层）  有效生命   9848  平均抗性  46%  天梯  40 层（止于 43 层死亡（59 秒））  单趟 阵亡 28:19 过 46 层 旋风之心 | TurbineBlades TurbineBlades NebulaShield HundredBones Thruster QuartzNexus | 符文 Whirl,Crush,AttackSpeed,ArmorOnHit
+whirl  物品等级 100：秒伤    317662（面板    48627，满 20 层）  有效生命  13970  平均抗性  49%  天梯  57 层（止于 59 层死亡（103 秒））  单趟 超时 30:00 过 50 层 旋风之心 | TurbineBlades TurbineBlades NebulaShield HundredBones Thruster IridiumNexus | 符文 Whirl,Crush,AttackSpeed,ArmorOnHit

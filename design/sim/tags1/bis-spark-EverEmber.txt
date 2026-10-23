@@ -1,0 +1,3 @@
+spark  物品等级  30：秒伤    508774（面板    79822，每串 5 颗游雷）  有效生命   4261  平均抗性  27%  天梯  40 层（止于 43 层死亡（55 秒））  单趟 灯灭 18:37 过 33 层 织雷之心 | Zapper Railgun NebulaShield EverEmber Thruster ZirconNexus | 符文 Spark,Shock,Electric,Pierce
+spark  物品等级  70：秒伤   6484382（面板   158364，每串 8 颗游雷）  有效生命   8337  平均抗性  40%  天梯  54 层（止于 56 层死亡（27 秒））  单趟 超时 30:00 过 48 层 织雷之心 | Zapper PlasmaBlaster NebulaShield EverEmber Thruster ZirconNexus | 符文 Spark,Shock,Electric,Pierce
+spark  物品等级 100：秒伤  23436364（面板   182958，每串 9 颗游雷）  有效生命  13473  平均抗性  45%  天梯  54 层（止于 56 层死亡（73 秒））  单趟 超时 30:00 过 47 层 织雷之心 | Zapper Zapper NebulaShield EverEmber Thruster ZirconNexus | 符文 Spark,Shock,Electric,Pierce
