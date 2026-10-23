@@ -90,8 +90,9 @@ class World extends Phaser.Scene {
         case 'ring': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.18, max: 0.18, el: e.el }); break;
         case 'shield': this.rings.push({ x: e.x, y: e.y - 6, r: 11, life: 0.2, max: 0.2, el: 'cyan' }); break;
         case 'cone': { const n = 4; for (let i = 0; i < n; i++) { const a = e.a + rf(-0.5, 0.5), d = rf(8, e.r); this.em.fire.explode(1, e.x + Math.cos(a) * d, e.y + Math.sin(a) * d); } break; }
-        case 'sarc': { // 游雷命中（照流放之路 2 闪电箭）：白青闪光 + 跳向附近敌人的锯齿电弧，每帧重新抖，0.12–0.22 秒消失
-          if (this.lines.length < 90) for (const [x2, y2] of e.ts) this.lines.push({ x1: e.x, y1: e.y, x2, y2, life: rf(0.12, 0.22), arc: 1 });
+        case 'sflash': if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 5, life: 0.08, max: 0.08, el: 'flash' }); break;
+        case 'sarc': { // 游雷弹射（照流放之路 2 闪电箭）：白青闪光 + 沿真实弹射路线的锯齿电弧，每帧重新抖，0.12–0.22 秒消失
+          if (this.lines.length < 120) for (const [x2, y2] of e.ts) this.lines.push({ x1: e.x, y1: e.y, x2, y2, life: rf(0.15, 0.24), arc: 1 });
           if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 6, life: 0.1, max: 0.1, el: 'flash' });
           this.em.spark2.particleTint = 0xd8f4ff; this.em.spark2.explode(3, e.x, e.y); break; }
         case 'hit': this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(2, e.x, e.y); break;
@@ -226,14 +227,13 @@ class World extends Phaser.Scene {
     if (k === 'Shuriken' || k === 'TurbineBlades' || k === 'FlameSlinger') { const a = t * 20; g.fillStyle(k === 'FlameSlinger' ? 0xff9a3d : 0xdfe6ee, 1); for (let i = 0; i < 3; i++) { const aa = a + i * 2.1; g.fillRect(p.x + Math.cos(aa) * 2 - .5, p.y + Math.sin(aa) * 2 - .5, 1, 1); } g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - .5, 1, 1); return; }
     if (p.spark) { // 游雷（照流放之路 2 闪电箭）：顺着速度拉长的亮白箭头 + 一条抖动的锯齿电尾
       const sp = Math.hypot(p.vx, p.vy) || 1, ux = p.vx / sp, uy = p.vy / sp, nx = -uy, ny = ux, x = p.x, y = p.y;
-      const st = p._st || (p._st = []); st.unshift(x, y); if (st.length > 12) st.length = 12; // 最近 6 帧的位置
+      const st = p._st || (p._st = []); st.unshift(x, y); if (st.length > 20) st.length = 20; // 最近 10 帧的位置：电尾就是真实的波形轨迹
       const fl = (t * 30 + x) | 0;
-      g.fillStyle(0x7fc8ff, 0.85); let px_ = x, py = y; // 电尾：沿历史位置，每段横向乱抖，越往后越暗
-      for (let i = 2; i < st.length; i += 2) { const j = rf(-2, 2), qx = st[i] + nx * j, qy = st[i + 1] + ny * j; if (i > 6) g.fillStyle(0x4f8fd8, 0.6); pline(g, px_, py, qx, qy); px_ = qx; py = qy; }
+      let px_ = x, py = y; for (let i = 2; i < st.length; i += 2) { g.fillStyle(i < 8 ? 0x9fdcff : 0x4f8fd8, 0.75 - i * 0.03); pline(g, px_, py, st[i], st[i + 1]); px_ = st[i]; py = st[i + 1]; }
+      if (fl % 4 === 0) { const j = rf(-2, 2); g.fillStyle(0xd8f4ff, 0.9).fillRect(Math.round(x - ux * 5 + nx * j), Math.round(y - uy * 5 + ny * j), 1, 1); } // 偶尔一颗电火星
       if (this.glowG) { this.glowG.fillStyle(0x9fdcff, 0.25); pline(this.glowG, x - ux * 6, y - uy * 6, x + ux * 3, y + uy * 3); this.glowG.fillCircle(x + ux * 2, y + uy * 2, 2); }
       g.fillStyle(0xbfe6ff, 1); pline(g, x - ux * 4, y - uy * 4, x + ux * 2, y + uy * 2); // 箭身
       g.fillStyle(0xffffff, 1); pline(g, x - ux * 1, y - uy * 1, x + ux * 3, y + uy * 3); // 亮白箭头
-      if (!p.forked && fl % 3 === 0) { const s2 = fl % 2 ? 1 : -1; g.fillStyle(0xd8f4ff, 1); pline(g, x - ux * 2, y - uy * 2, x - ux * 4 + nx * 3 * s2, y - uy * 4 + ny * 3 * s2); } // 偶尔劈出一根小叉
       return;
     }
     if (k === 'SporeBlaster' || k === 'Orbitron' || k === 'Zapper') { g.fillStyle(0x120c18, 1).fillRect(p.x - 2, p.y - 2, 4, 4); g.fillStyle(c, 1).fillRect(p.x - 1, p.y - 1, 2, 2); if (k === 'Zapper' && (t * 10 | 0) % 2) g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - .5, 1, 1); return; }

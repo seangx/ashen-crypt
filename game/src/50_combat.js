@@ -358,7 +358,7 @@ function fire(W, i) {
   }
   if (W.spark && player.soul >= SP.soulPerCast * (1 - STATS.soulLess)) { // 游雷：扇形放出一串，贴地乱窜（灯火不够时退回普通的一发）
     const n = W.sparkN * attacks(W), vol = { last: new Map() }, life = SP.life + (STATS.flag.sparkCrown ? SP.crownLife : 0);
-    for (let k = 0; k < n; k++) shoot(W, px, py, a + (n > 1 ? (k / (n - 1) - 0.5) * SP.fan : 0) + rf(-0.08, 0.08), { pierce: W.pierce, chain: W.chain, split: 0, ret: 0, hit: new Set(), mul: W.sparkMul, life, first: true, spark: 1, vol, jt: 0, da: 0 });
+    for (let k = 0; k < n; k++) shoot(W, px, py, a + (n > 1 ? (k / (n - 1) - 0.5) * SP.fan : 0), { pierce: W.pierce, chain: 0, sch: W.sparkChain, split: 0, ret: 0, hit: new Set(), mul: W.sparkMul, life, first: true, spark: 1, vol, ph: k % 2 ? Math.PI : 0 });
     if (RUN) player.soul = Math.max(0, player.soul - SP.soulPerCast * (1 - STATS.soulLess));
     sfx('shoot'); return true;
   }
@@ -388,8 +388,13 @@ function projHit(p, m) {
   if (p.spark) { // 游雷：记下这一串打中这个敌人的时间；雷冠：第一次打中感电的敌人时分叉
     const shocked = m.shock > 0, d = hitMob(m, p.W, { mul, spark: 1 }); p.vol.last.set(m, RUN ? RUN.t : 0);
     if (RUN && RUN.dmg) RUN.dmg[p.forked ? 'fork' : 'spark'] = (RUN.dmg[p.forked ? 'fork' : 'spark'] || 0) + d;
-    fx({ t: 'sarc', x: m.x, y: m.y - 5, ts: near2(m, 50, p.forked ? 1 : 3) }); // 闪电箭式命中：几道锯齿电弧跳向附近的敌人（只是画面，不造成伤害）
-    if (STATS.flag.sparkCrown && shocked && !p.forked && !p.didFork) { p.didFork = 1; for (let i = 0; i < SP.forkN; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (SP.forkN - 1) / 2) * 1.2, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set([m]), mul: p.mul * SP.forkMul, life: 0.8, spark: 1, forked: 1, vol: p.vol, jt: 0, da: 0 }); }
+    if (STATS.flag.sparkCrown && shocked && !p.forked && !p.didFork) { p.didFork = 1; for (let i = 0; i < SP.forkN; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (SP.forkN - 1) / 2) * 1.2, { pierce: 0, chain: 0, sch: 0, split: 0, ret: 0, hit: new Set([m]), mul: p.mul * SP.forkMul, life: 0.8, spark: 1, forked: 1, vol: p.vol, ph: i ? Math.PI : 0 }); }
+    if (p.sch > 0) { // 弹射：转向附近最近的、这一颗没打过的敌人，从命中点起重新走波形；电弧就是真实的弹射路线
+      let n = null, bd = SP.chainR ** 2; for (const x of mobs) { if (x === m || x.dead || x.rise > 0.2 || p.hit.has(x) || (p.chd && p.chd.has(x))) continue; const d = (x.x - m.x) ** 2 + (x.y - m.y) ** 2; if (d < bd) { bd = d; n = x; } }
+      (p.chd || (p.chd = new Set())).add(m);
+      if (n) { p.sch--; p.mul *= SP.chainMul; p.a = Math.atan2(n.y - 5 - (m.y - 5), n.x - m.x); p.wx = m.x; p.wy = m.y - 5; p.wd = 0; p.life = Math.max(p.life, SP.chainLife); fx({ t: 'sarc', x: m.x, y: m.y - 5, ts: [[n.x, n.y - 5]] }); return false; }
+    }
+    fx({ t: 'sflash', x: m.x, y: m.y - 5 });
     if (p.pierce > 0) { p.pierce--; p.pierced = true; return false; }
     return true;
   }
@@ -656,13 +661,16 @@ function stepProjs(dt) {
       if (p.cx != null) { // 疫星仪：螺旋向外
         p.sa += dt * 5; p.sr += dt * 55; p.x = p.cx + Math.cos(p.sa) * p.sr; p.y = p.cy + Math.sin(p.sa) * p.sr * 0.75; p.vx = -Math.sin(p.sa); p.vy = Math.cos(p.sa);
       } else {
-        if (p.spark) { // 游雷：每隔一小段时间换一个随机偏转，附近有敌人就拐过去，碰到场边弹回
-          if ((p.jt -= dt) <= 0) { p.jt = rf(0.08, 0.22); p.da = rf(-SP.jitter, SP.jitter); }
-          const n = nearest(p.x, p.y, SP.seekR, p.hit); let da = p.da * dt; if (n) { let d = Math.atan2(n.y - 5 - p.y, n.x - p.x) - p.a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; da += clamp(d, -SP.turn * dt, SP.turn * dt); }
-          p.a += da; if (p.x < F.x0 || p.x > F.x1) { p.a = Math.PI - p.a; p.x = clamp(p.x, F.x0, F.x1); } if (p.y < F.y0 - 6 || p.y > F.y1) { p.a = -p.a; p.y = clamp(p.y, F.y0 - 6, F.y1); }
-          const s = p.W.spd * SP.speedMul; p.vx = Math.cos(p.a) * s; p.vy = Math.sin(p.a) * s;
+        if (p.spark) { // 游雷：沿中心线直线前进，横向按固定正弦波摆动（不追踪、不随机）；中心线碰到场边镜面反射
+          if (p.wd == null) { p.wd = 0; p.wx = p.x; p.wy = p.y; }
+          const s = p.W.spd * SP.speedMul, ux = Math.cos(p.a), uy = Math.sin(p.a);
+          p.wx += ux * s * dt; p.wy += uy * s * dt; p.wd += s * dt;
+          if (p.wx < F.x0 || p.wx > F.x1) { p.a = Math.PI - p.a; p.wx = clamp(p.wx, F.x0, F.x1); } if (p.wy < F.y0 - 6 || p.wy > F.y1) { p.a = -p.a; p.wy = clamp(p.wy, F.y0 - 6, F.y1); }
+          const k = Math.PI * 2 / SP.waveL, ph = k * p.wd + p.ph, amp = SP.waveA * Math.min(1, p.wd / 12), nx = -Math.sin(p.a), ny = Math.cos(p.a), off = amp * Math.sin(ph), slope = amp * k * Math.cos(ph);
+          p.x = p.wx + nx * off; p.y = p.wy + ny * off;
+          p.vx = (Math.cos(p.a) + nx * slope) * s; p.vy = (Math.sin(p.a) + ny * slope) * s; // 只给画面定朝向
         } else if (p.W.b.wander && !p.back) { const n = nearest(p.x, p.y, 70, p.hit); const ta = n ? Math.atan2(n.y - 5 - p.y, n.x - p.x) : p.a + rf(-1, 1); let da = ta - p.a; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2; p.a += clamp(da, -6 * dt, 6 * dt); const s = p.W.spd * 0.6; p.vx = Math.cos(p.a) * s; p.vy = Math.sin(p.a) * s; }
-        p.x += p.vx * dt; p.y += p.vy * dt;
+        if (!p.spark) { p.x += p.vx * dt; p.y += p.vy * dt; }
       }
       p.life -= dt;
       if (p.spark) { const now = RUN ? RUN.t : 0; for (const m of p.hit) if (now - (p.vol.last.get(m) ?? -9) >= SP.rehit) p.hit.delete(m); } // 游雷：同一串对同一个敌人每 rehit 秒最多打一次
@@ -705,5 +713,3 @@ function finishRun() {
   if (G.ui) G.ui.backToCamp(r);
 }
 
-// 游雷命中画面用：离 m 最近的 n 个活着的敌人（r 像素内），只返回坐标
-function near2(m, r, n) { const out = []; for (const x of mobs) { if (x === m || x.dead || x.rise > 0.2) continue; const d = (x.x - m.x) ** 2 + (x.y - m.y) ** 2; if (d < r * r) { out.push([d, x.x, x.y - 5]); } } out.sort((a, b) => a[0] - b[0]); return out.slice(0, n).map(o => [o[1], o[2]]); }

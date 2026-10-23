@@ -142,7 +142,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.areaInc && has('AoE')) inc += fx.areaInc;
     if (fx.meleeInc) inc += fx.meleeInc;
     if (fx.meleeGuard) W.meleeGuard = 1;
-    if (fx.spark && b.wander) { W.spark = 1; W.sparkN = fx.sparkN; W.sparkMul = fx.sparkMul; } // 游雷符文：只对会乱窜的投射物（雷灵）生效
+    if (fx.spark && b.wander) { W.spark = 1; W.sparkN = fx.sparkN; W.sparkMul = fx.sparkMul; W.sparkChain = fx.sparkChain || 0; } // 游雷符文：只对会乱窜的投射物（雷灵）生效
     if (fx.whirl && b.form === 'orbit') { W.whirl = 1; W.morePer = fx.spinMore || WH.morePer; } // 每层倍率随符文等级成长
     rangeInc += fx.rangeInc || 0; aoeInc += fx.aoeInc || 0; critInc += fx.critInc || 0; critDmg += fx.critDmg || 0; projSpd += fx.projSpd || 0;
     if (fx.ail) for (const e in fx.ail) W.ail[e] += fx.ail[e];
@@ -190,7 +190,7 @@ function weaponStats(it, P, isEngine) {
   W.dps = b.aura ? W.auraDps : W.avg * critE * W.aps * (b.form === 'stab' ? 1 : n) * (b.pellets || 1);
   if (b.form === 'reflect') W.dps = 0;
   W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : 1; // 旋转满层时的伤害倍数（dps 不含）
-  if (W.spark) { W.sparkN += (P.raw.sparkAdd || 0) + (P.flag.sparkCrown ? SP.crownAdd : 0); W.pierce += SP.basePierce; W.spinMax = W.sparkN * W.sparkMul; } // 游雷：一串的总倍数（每颗打中一次），模拟和毕业配装用它算秒伤
+  if (W.spark) { W.sparkN += (P.raw.sparkAdd || 0) + (P.flag.sparkCrown ? SP.crownAdd : 0); W.pierce += SP.basePierce; W.sparkChain += (P.raw.sparkChain || 0) + (TA.sparkChain || 0) + (P.flag.sparkCrown ? SP.crownChain : 0); let ch = 1; for (let i = 1; i <= W.sparkChain; i++) ch += SP.chainMul ** i * 0.8; W.spinMax = W.sparkN * W.sparkMul * ch; } // 弹射：每弹一次按 chainMul 衰减，约八成能找到下一个目标 // 游雷：一串的总倍数（每颗打中一次），模拟和毕业配装用它算秒伤
   return W;
 }
 let STATS = null;
