@@ -293,7 +293,7 @@
    "ArmorOnHit",
    "Melee"
   ],
-  "treeKey": "agic0_6",
+  "treeKey": "meleec3_6",
   "affixes": {
    "SpinCap": {
     "text": "【持续施放】叠层上限 +#",
@@ -457,7 +457,7 @@
    "RapidProjectiles",
    "AttackSpeed"
   ],
-  "treeKey": "elec1_6",
+  "treeKey": "proj8",
   "uniqueId": "StormCrown",
   "base": "Zapper",
   "affixes": {

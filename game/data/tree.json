@@ -1,168 +1,65 @@
 {
- "_说明": "天赋树（自行设计）。6 条分支，每条：主路 9 个节点（small 是小节点轮流用的效果，notable 是两个中节点，key 是主路尽头的大型节点），外加 4 个小团（clusters：small 小节点效果 ×5，nn/nadd 中节点名字和效果，key 是改规则的核心天赋）。bridge / ring 是相邻分支之间内圈 / 外圈桥上的节点效果（第 i 个连接分支 i 和 i+1），桥中间是印记槽。效果写法：add 提高或附加（相加），more 总增或总降（相乘，1.4 = 总增 40%，0.8 = 总降 20%；dashMax 例外，是直接加减），flag 改规则（见 rules.json，数值是 {v}）。ail:元素 是异常几率，按小数写（0.03 = 3%）；inc:元素 / inc:all 是伤害提高 %；res:元素 是抗性 %。核心天赋的说明文字会按效果自动生成。",
+ "_说明": "天赋树（自行设计）。6 个按标签分的区（2026-10-23 用户选“按标签重排”）：近战、范围、投射物、持续、守备、灯火，顺时针从正上方开始；c 是区的颜色。每区：主路 9 个节点（small 是小节点轮流用的效果，notable 是两个中节点，key 是主路尽头的大型节点），外加 4 个小团（clusters：small 小节点效果 ×5，nn/nadd 中节点名字和效果，key 是改规则的核心天赋；顺序内左、内右、外左、外右，外左靠前一个区、外右靠后一个区，放和那个区沾边的大天赋，比如近战的外右是旋风之心，挨着范围）。bridge 是内圈桥 = 元素环（骸骨、余烬、雷殛、瘟疫、圣辉、魂力），ring 是外圈桥 = 两区交界（两种标签各一半）。第 i 个连接区 i 和 i+1，桥中间是印记槽。效果写法：add 提高或附加（相加），more 总增或总降（相乘，1.4 = 总增 40%，0.8 = 总降 20%；dashMax 例外，是直接加减），flag 改规则（见 rules.json，数值是 {v}）。ail:元素 是异常几率，按小数写（0.03 = 3%）；inc:元素 / inc:all 是伤害提高 %；res:元素 是抗性 %。核心天赋的说明文字会按效果自动生成。",
  "branches": [
-  {
-   "id": "kin",
-   "n": "骸骨",
-   "small": [
-    { "inc:kin": 10 },
-    { "armorInc": 8 },
-    { "mass": 2 }
-   ],
-   "notable": [
-    { "n": "碎颅", "add": { "inc:kin": 20, "armor": 15 } },
-    { "n": "铁脊", "add": { "armorInc": 20, "mass": 4 } }
-   ],
-   "key": { "n": "巨像", "more": { "dmg:kin": 1.4, "speed": 0.8 } }
-  },
-  {
-   "id": "exp",
-   "n": "余烬",
-   "small": [
-    { "inc:exp": 10 },
-    { "aoeInc": 6 },
-    { "ail:exp": 0.03 }
-   ],
-   "notable": [
-    { "n": "引燃", "add": { "inc:exp": 20, "ail:exp": 0.05 } },
-    { "n": "烈焰之环", "add": { "aoeInc": 15, "inc:exp": 10 } }
-   ],
-   "key": { "n": "焚城", "add": { "ail:exp": 0.2 }, "flag": { "afterRep": 3 }, "more": { "dashMax": -1 } }
-  },
-  {
-   "id": "ele",
-   "n": "雷殛",
-   "small": [
-    { "inc:ele": 10 },
-    { "aspd": 4 },
-    { "ail:ele": 0.03 }
-   ],
-   "notable": [
-    { "n": "导电", "add": { "inc:ele": 20, "ail:ele": 0.05 } },
-    { "n": "疾雷", "add": { "aspd": 10, "inc:ele": 10 } }
-   ],
-   "key": { "n": "雷暴", "flag": { "shockMul": 2 }, "more": { "dmg:nonEle": 0.8 } }
-  },
-  {
-   "id": "pla",
-   "n": "圣辉",
-   "small": [
-    { "inc:pla": 10 },
-    { "deflectInc": 10 },
-    { "energy": 2 }
-   ],
-   "notable": [
-    { "n": "圣歌", "add": { "inc:pla": 20, "deflect": 15 } },
-    { "n": "守望", "add": { "deflectInc": 25, "energy": 4 } }
-   ],
-   "key": { "n": "神圣屏障", "add": { "deflectInc": 100 }, "more": { "deflRate": 2, "life": 0.7 } }
-  },
-  {
-   "id": "nuc",
-   "n": "瘟疫",
-   "small": [
-    { "inc:nuc": 10 },
-    { "dotInc": 10 },
-    { "ail:nuc": 0.03 }
-   ],
-   "notable": [
-    { "n": "腐血", "add": { "inc:nuc": 20, "ail:nuc": 0.05 } },
-    { "n": "蔓延", "add": { "dotInc": 25 } }
-   ],
-   "key": { "n": "大瘟疫", "more": { "dot": 1.6, "dmg:hit": 0.8 } }
-  },
-  {
-   "id": "agi",
-   "n": "迅影",
-   "small": [
-    { "dodge": 3 },
-    { "dashRegen": 8 },
-    { "time": 2 },
-    { "velocity": 4 }
-   ],
-   "notable": [
-    { "n": "残步", "add": { "dodge": 6, "velocity": 6 } },
-    { "n": "回息", "add": { "dashRegen": 20, "time": 4 } }
-   ],
-   "key": { "n": "幻影", "add": { "dodge": 15 }, "flag": { "dodgeCap": 10 }, "more": { "armor": 0.6 } }
-  }
+  {"id": "melee", "n": "近战", "c": "#e8dcc0", "small": [{"inc:melee": 10}, {"aspd": 4}, {"mass": 2}], "notable": [{"n": "碎颅", "add": {"inc:melee": 20, "bossInc": 10}}, {"n": "铁脊", "add": {"aspd": 8, "mass": 4}}], "key": {"n": "处刑者", "flag": {"exec": 1}}},
+  {"id": "area", "n": "范围", "c": "#ff8a3d", "small": [{"aoeInc": 6}, {"areaInc": 8}, {"ail:exp": 0.03}], "notable": [{"n": "烈焰之环", "add": {"aoeInc": 15, "areaInc": 10}}, {"n": "引燃", "add": {"inc:exp": 20, "ail:exp": 0.05}}], "key": {"n": "焚城", "add": {"ail:exp": 0.2}, "flag": {"afterRep": 3}, "more": {"dashMax": -1}}},
+  {"id": "proj", "n": "投射物", "c": "#6cb8ff", "small": [{"inc:proj": 10}, {"projSpd": 6}, {"critInc": 8}], "notable": [{"n": "散射", "add": {"inc:proj": 20, "projSpd": 15}}, {"n": "弹跳", "add": {"chain": 1, "inc:proj": 10}}], "key": {"n": "织雷之心", "flag": {"sparkHeart": 1, "shockSpread": 1}, "add": {"chain": 1}, "more": {"dmg:nonEle": 0.85}}},
+  {"id": "dot", "n": "持续", "c": "#7cd65a", "small": [{"dotInc": 10}, {"durInc": 6}, {"ail:nuc": 0.03}], "notable": [{"n": "蔓延", "add": {"dotInc": 25}}, {"n": "久燃", "add": {"durInc": 15, "dotInc": 10}}], "key": {"n": "大瘟疫", "more": {"dot": 1.6, "dmg:hit": 0.8}}},
+  {"id": "guard", "n": "守备", "c": "#c9a46a", "small": [{"armorInc": 8}, {"deflectInc": 10}, {"res:all": 3}], "notable": [{"n": "铁壁", "add": {"armorInc": 20, "armor": 15}}, {"n": "守望", "add": {"deflectInc": 25, "energy": 4}}], "key": {"n": "神圣屏障", "add": {"deflectInc": 100}, "more": {"deflRate": 2, "life": 0.7}}},
+  {"id": "lamp", "n": "灯火", "c": "#b98cff", "small": [{"dodge": 3}, {"dashRegen": 8}, {"time": 2}, {"velocity": 4}], "notable": [{"n": "残步", "add": {"dodge": 6, "velocity": 6}}, {"n": "回息", "add": {"dashRegen": 20, "time": 4}}], "key": {"n": "幻影", "add": {"dodge": 15}, "flag": {"dodgeCap": 10}, "more": {"armor": 0.6}}}
  ],
  "clusters": {
-  "kin": [
-   { "small": { "armor": 12 }, "nn": "骨鳞", "nadd": { "armorInc": 20, "res:kin": 8 }, "key": { "n": "骨刺甲", "flag": { "thorns": 1 }, "more": { "deflect": 0.5 } }
-   },
-   { "small": { "inc:kin": 8 }, "nn": "碎骨", "nadd": { "ail:kin": 0.08, "inc:kin": 15 }, "key": { "n": "骨崩", "flag": { "debrisChain": 1 }, "more": { "dmg:nonKin": 0.75 } }
-   },
-   { "small": { "mass": 3 }, "nn": "千钧", "nadd": { "mass": 8, "massInc": 10 }, "key": { "n": "不动如山", "flag": { "still": 1 }, "more": { "speed": 0.75 } }
-   },
-   { "small": { "inc:melee": 12 }, "nn": "断骨", "nadd": { "inc:melee": 25, "bossInc": 15 }, "key": { "n": "处刑者", "flag": { "exec": 1 } }
-   }
+  "melee": [
+   {"small": {"mass": 3}, "nn": "千钧", "nadd": {"mass": 8, "massInc": 10}, "key": {"n": "不动如山", "flag": {"still": 1}, "more": {"speed": 0.75}}},
+   {"small": {"inc:kin": 8}, "nn": "重锤", "nadd": {"inc:kin": 15, "inc:melee": 10}, "key": {"n": "巨像", "more": {"dmg:kin": 1.4, "speed": 0.8}}},
+   {"small": {"inc:kin": 8}, "nn": "碎骨", "nadd": {"ail:kin": 0.08, "inc:kin": 15}, "key": {"n": "骨崩", "flag": {"debrisChain": 1}, "more": {"dmg:nonKin": 0.75}}},
+   {"small": {"velocity": 4}, "nn": "疾风步", "nadd": {"velocity": 10, "dashRegen": 10}, "key": {"n": "旋风之心", "flag": {"whirlHeart": 1}}}
   ],
-  "exp": [
-   { "small": { "inc:exp": 8 }, "nn": "野火", "nadd": { "ail:exp": 0.08, "inc:exp": 15 }, "key": { "n": "灼魂", "flag": { "burnKeep": 1 }, "more": { "dmg:exp": 0.6 } }
-   },
-   { "small": { "aoeInc": 6 }, "nn": "冲击波", "nadd": { "aoeInc": 15, "areaInc": 15 }, "key": { "n": "殉爆", "flag": { "deathBoom": 1 }, "more": { "armor": 0.8 } }
-   },
-   { "small": { "inc:proj": 10 }, "nn": "散射", "nadd": { "inc:proj": 20, "projSpd": 15 }, "key": { "n": "余震专精", "flag": { "afterFull": 1 }, "more": { "dmg:hit": 0.7 } }
-   },
-   { "small": { "inc:engine": 15 }, "nn": "火靴", "nadd": { "inc:engine": 30, "dashRegen": 10 }, "key": { "n": "火痕", "flag": { "fireTrail": 1 }, "more": { "dashMax": -1 } }
-   }
+  "area": [
+   {"small": {"inc:pla": 8}, "nn": "光辉", "nadd": {"inc:pla": 15, "ail:pla": 0.06}, "key": {"n": "光环", "flag": {"blindAura": 1}, "more": {"dmg:hit": 0.9}}},
+   {"small": {"aspd": 4}, "nn": "急速", "nadd": {"aspd": 10, "critInc": 10}, "key": {"n": "静电场", "flag": {"shockAura": 1}, "more": {"armor": 0.85}}},
+   {"small": {"aoeInc": 6}, "nn": "冲击波", "nadd": {"aoeInc": 15, "areaInc": 15}, "key": {"n": "殉爆", "flag": {"deathBoom": 1}, "more": {"armor": 0.8}}},
+   {"small": {"inc:proj": 10}, "nn": "散射", "nadd": {"inc:proj": 20, "projSpd": 15}, "key": {"n": "余震专精", "flag": {"afterFull": 1}, "more": {"dmg:hit": 0.7}}}
   ],
-  "ele": [
-   { "small": { "inc:ele": 8 }, "nn": "链电", "nadd": { "chain": 1, "inc:ele": 10 }, "key": { "n": "雷链", "flag": { "arc": 1 }, "more": { "aspd": 0.85 } }
-   },
-   { "small": { "ail:ele": 0.03 }, "nn": "导雷", "nadd": { "ail:ele": 0.06, "chain": 1 }, "key": { "n": "织雷之心", "flag": { "sparkHeart": 1, "shockSpread": 1 }, "add": { "chain": 1 }, "more": { "dmg:nonEle": 0.85 } }
-   },
-   { "small": { "critInc": 12 }, "nn": "精准", "nadd": { "critInc": 25, "critDmg": 15 }, "key": { "n": "幸运一击", "flag": { "luckyCrit": 1 }, "add": { "critDmg": -30 } }
-   },
-   { "small": { "aspd": 4 }, "nn": "急速", "nadd": { "aspd": 10, "critInc": 10 }, "key": { "n": "静电场", "flag": { "shockAura": 1 }, "more": { "armor": 0.85 } }
-   }
+  "proj": [
+   {"small": {"critInc": 12}, "nn": "精准", "nadd": {"critInc": 25, "critDmg": 15}, "key": {"n": "幸运一击", "flag": {"luckyCrit": 1}, "add": {"critDmg": -30}}},
+   {"small": {"bossInc": 10}, "nn": "审判", "nadd": {"bossInc": 25, "inc:pla": 10}, "key": {"n": "天罚", "flag": {"judge": 1}, "more": {"dmg:nonPla": 0.85}}},
+   {"small": {"inc:ele": 8}, "nn": "链电", "nadd": {"chain": 1, "inc:ele": 10}, "key": {"n": "雷链", "flag": {"arc": 1}, "more": {"aspd": 0.85}}},
+   {"small": {"ail:ele": 0.03}, "nn": "导电", "nadd": {"inc:ele": 20, "ail:ele": 0.05}, "key": {"n": "雷暴", "flag": {"shockMul": 2}, "more": {"dmg:nonEle": 0.8}}}
   ],
-  "pla": [
-   { "small": { "deflectInc": 8 }, "nn": "庇护", "nadd": { "deflectInc": 20, "res:all": 4 }, "key": { "n": "圣盾", "flag": { "absorb": 1 }, "more": { "life": 0.75 } }
-   },
-   { "small": { "inc:pla": 8 }, "nn": "光辉", "nadd": { "inc:pla": 15, "ail:pla": 0.06 }, "key": { "n": "光环", "flag": { "blindAura": 1 }, "more": { "dmg:hit": 0.9 } }
-   },
-   { "small": { "energy": 3 }, "nn": "灵泉", "nadd": { "energy": 8, "energyInc": 10 }, "key": { "n": "殉道", "flag": { "martyr": 1 }, "more": { "deflRate": 0.6 } }
-   },
-   { "small": { "bossInc": 10 }, "nn": "审判", "nadd": { "bossInc": 25, "inc:pla": 10 }, "key": { "n": "天罚", "flag": { "judge": 1 }, "more": { "dmg:nonPla": 0.85 } }
-   }
+  "dot": [
+   {"small": {"inc:nuc": 8}, "nn": "疫病", "nadd": {"ail:nuc": 0.08, "inc:nuc": 10}, "key": {"n": "传染", "flag": {"contagion": 1}, "more": {"dmg:hit": 0.85}}},
+   {"small": {"dotInc": 8}, "nn": "溃烂", "nadd": {"dotInc": 20}, "key": {"n": "瘟疫之触", "add": {"ail:nuc": 1}, "more": {"rad": 0.5}}},
+   {"small": {"inc:exp": 8}, "nn": "野火", "nadd": {"ail:exp": 0.08, "inc:exp": 15}, "key": {"n": "灼魂", "flag": {"burnKeep": 1}, "more": {"dmg:exp": 0.6}}},
+   {"small": {"double": 2}, "nn": "剧毒", "nadd": {"double": 5, "inc:nuc": 10}, "key": {"n": "蚀骨", "flag": {"corrode": 1}, "more": {"aspd": 0.9}}}
   ],
-  "nuc": [
-   { "small": { "inc:nuc": 8 }, "nn": "疫病", "nadd": { "ail:nuc": 0.08, "inc:nuc": 10 }, "key": { "n": "传染", "flag": { "contagion": 1 }, "more": { "dmg:hit": 0.85 } }
-   },
-   { "small": { "dotInc": 8 }, "nn": "溃烂", "nadd": { "dotInc": 20 }, "key": { "n": "瘟疫之触", "add": { "ail:nuc": 1 }, "more": { "rad": 0.5 } }
-   },
-   { "small": { "res:nuc": 6 }, "nn": "抗毒", "nadd": { "res:nuc": 15, "res:all": 4 }, "key": { "n": "腐肉之躯", "flag": { "rotFlesh": 1 }, "more": { "speed": 0.85 } }
-   },
-   { "small": { "double": 2 }, "nn": "剧毒", "nadd": { "double": 5, "inc:nuc": 10 }, "key": { "n": "蚀骨", "flag": { "corrode": 1 }, "more": { "aspd": 0.9 } }
-   }
+  "guard": [
+   {"small": {"deflectInc": 8}, "nn": "庇护", "nadd": {"deflectInc": 20, "res:all": 4}, "key": {"n": "圣盾", "flag": {"absorb": 1}, "more": {"life": 0.75}}},
+   {"small": {"armor": 12}, "nn": "骨鳞", "nadd": {"armorInc": 20, "res:kin": 8}, "key": {"n": "骨刺甲", "flag": {"thorns": 1}, "more": {"deflect": 0.5}}},
+   {"small": {"res:nuc": 6}, "nn": "抗毒", "nadd": {"res:nuc": 15, "res:all": 4}, "key": {"n": "腐肉之躯", "flag": {"rotFlesh": 1}, "more": {"speed": 0.85}}},
+   {"small": {"energy": 3}, "nn": "灵泉", "nadd": {"energy": 8, "energyInc": 10}, "key": {"n": "殉道", "flag": {"martyr": 1}, "more": {"deflRate": 0.6}}}
   ],
-  "agi": [
-   { "small": { "velocity": 4 }, "nn": "疾风步", "nadd": { "velocity": 10, "dashRegen": 10 }, "key": { "n": "旋风之心", "flag": { "whirlHeart": 1 } }
-   },
-   { "small": { "dashRegen": 8 }, "nn": "流影", "nadd": { "dashRegen": 20, "time": 4 }, "key": { "n": "残影", "flag": { "afterDash": 1 }, "add": { "dashRegen": -30 } }
-   },
-   { "small": { "time": 3 }, "nn": "时之沙", "nadd": { "time": 8, "timeInc": 10 }, "key": { "n": "时停", "flag": { "timeStop": 1 }, "more": { "deflect": 0.7 } }
-   },
-   { "small": { "dodge": 3 }, "nn": "鬼步", "nadd": { "dodge": 8, "velocity": 5 }, "key": { "n": "闪避反击", "flag": { "dodgeSpikes": 1 }, "more": { "armor": 0.8 } }
-   }
+  "lamp": [
+   {"small": {"time": 3}, "nn": "时之沙", "nadd": {"time": 8, "timeInc": 10}, "key": {"n": "时停", "flag": {"timeStop": 1}, "more": {"deflect": 0.7}}},
+   {"small": {"inc:engine": 15}, "nn": "火靴", "nadd": {"inc:engine": 30, "dashRegen": 10}, "key": {"n": "火痕", "flag": {"fireTrail": 1}, "more": {"dashMax": -1}}},
+   {"small": {"dodge": 3}, "nn": "鬼步", "nadd": {"dodge": 8, "velocity": 5}, "key": {"n": "闪避反击", "flag": {"dodgeSpikes": 1}, "more": {"armor": 0.8}}},
+   {"small": {"dashRegen": 8}, "nn": "流影", "nadd": {"dashRegen": 20, "time": 4}, "key": {"n": "残影", "flag": {"afterDash": 1}, "add": {"dashRegen": -30}}}
   ]
  },
  "bridge": [
-  { "res:all": 4 },
-  { "inc:all": 6 },
-  { "critInc": 15 },
-  { "res:all": 4 },
-  { "critDmg": 10 },
-  { "inc:all": 6 }
+  {"inc:kin": 10, "ail:kin": 0.02},
+  {"inc:exp": 10, "ail:exp": 0.02},
+  {"inc:ele": 10, "ail:ele": 0.02},
+  {"inc:nuc": 10, "ail:nuc": 0.02},
+  {"inc:pla": 10, "ail:pla": 0.02},
+  {"inc:all": 5, "energy": 2}
  ],
  "ring": [
-  { "inc:all": 8 },
-  { "armorInc": 10 },
-  { "res:all": 5 },
-  { "aspd": 5 },
-  { "deflectInc": 12 },
-  { "critDmg": 15 }
+  {"inc:melee": 8, "aoeInc": 5},
+  {"areaInc": 8, "inc:proj": 8},
+  {"inc:proj": 8, "dotInc": 8},
+  {"dotInc": 8, "res:all": 4},
+  {"deflectInc": 8, "dodge": 2},
+  {"velocity": 4, "inc:melee": 8}
  ]
 }
