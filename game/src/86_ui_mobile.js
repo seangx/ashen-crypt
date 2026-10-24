@@ -259,10 +259,10 @@ class MobileUI extends UI {
     const isHub = modWeapon === 'hub'; let y = 40;
     if (!host) { T(this, 10, y + 4, '这个位置没有装备。', { size: 8, color: COL.faint, parent: c }); y += 20; }
     else {
-      mkCell(this, c, 10, y, host, { size: 24 });
-      T(this, 40, y, itemName(host), { color: icol(host), parent: c });
-      TW(this, 40, y + 14, '标签：' + itemTags(host).filter(t => TAG_N[t] && t !== 'Weapon').map(t => TAG_N[t]).join(' '), w - 50, { size: 8, color: COL.dim, parent: c });
-      y += 34; T(this, 10, y, isHub ? '升级槽：符文在这里随击杀成长' : `符文槽 ${host.sock}`, { size: 8, color: COL.faint, parent: c }); y += 12;
+      mkCell(this, c, 10, y, host, { size: TOUCH });
+      T(this, 46, y, itemName(host), { color: icol(host), parent: c });
+      TW(this, 46, y + 14, '标签：' + itemTags(host).filter(t => TAG_N[t] && t !== 'Weapon').map(t => TAG_N[t]).join(' '), w - 56, { size: 8, color: COL.dim, parent: c });
+      y += 38; T(this, 10, y, isHub ? '升级槽：符文在这里随击杀成长' : `符文槽 ${host.sock}`, { size: 8, color: COL.faint, parent: c }); y += 12;
       if (!host.sock) { T(this, 10, y, '这件装备没有符文槽。', { size: 8, color: COL.faint, parent: c }); y += 14; }
       for (let i = 0; i < host.sock; i++) {
         const m = host.mods[i], x = 10 + i * 34;

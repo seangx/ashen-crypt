@@ -61,11 +61,14 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
     if (o.selAff === i) { const sh = rect(sc, -2, cy - 1, w + 4, 12, COL.ember, 0.18, c); c.sendToBack(sh); }
     const t = TW(sc, 16, cy, affText(x), w - 16, { color: it.rar === 1 ? '#a9c4ff' : '#efe2b6', parent: c });
     if (o.pick) {
-      const z = sc.add.zone(-2, cy - 1, w + 4, t.h + 1).setOrigin(0).setInteractive(); c.add(z);
-      const hl = rect(sc, -2, cy - 1, w + 4, t.h + 1, COL.cyan, 0.12, c); c.sendToBack(hl);
+      const rh = MOBILE ? Math.max(t.h + 1, TOUCH) : t.h + 1;
+      if (MOBILE && rh > t.h + 1) { const d = (rh - t.h - 1) / 2; t.y += d; c.list.slice(-3).forEach(g => { if (g !== t && g.y >= cy - 2) g.y += d; }); }
+      const z = sc.add.zone(-2, cy - 1, w + 4, rh).setOrigin(0).setInteractive(); c.add(z);
+      const hl = rect(sc, -2, cy - 1, w + 4, rh, COL.cyan, 0.12, c); c.sendToBack(hl);
       z.on('pointerover', () => hl.setFillStyle(hex(COL.cyan), 0.3)); z.on('pointerout', () => hl.setFillStyle(hex(COL.cyan), 0.12));
       z.on('pointerup', () => { if (MOBILE && sc.lpFired) { sc.lpFired = false; return; } o.pick(i); });
       if (MOBILE) longPress(sc, z, () => affDetail(x));
+      if (MOBILE) cy += rh - 1 - t.h;
     }
     cy += t.h;
   });
