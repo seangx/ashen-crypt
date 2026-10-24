@@ -118,10 +118,10 @@ class World extends Phaser.Scene {
         case 'pick': this.em.spark.particleTint = 0xfff2c8; this.em.spark.explode(4, e.x, e.y - 4); break;
         case 'orbitHit': break;
         case 'meteorHit': { this.scorch.push({ x: e.x, y: e.y, r: e.r, life: 6, max: 6, sd: Math.random() * 100 | 0 }); if (this.scorch.length > 40) this.scorch.shift(); // 陨石落地：白闪 + 火球爆开 + 碎石、火星飞溅 + 一道冲击波；星坠雨多颗时震屏限频
-          this.rings.push({ x: e.x, y: e.y, r: e.r * 0.55, life: 0.12, max: 0.12, el: 'flash', fill: true }); this.rings.push({ x: e.x, y: e.y, r: e.r * 1.15, life: 0.32, max: 0.32, el: 'exp' });
+          if (G.time - (this.mFlash || 0) > 0.2) { this.mFlash = G.time; this.rings.push({ x: e.x, y: e.y, r: e.r * 0.25, life: 0.08, max: 0.08, el: 'exp', fill: true }); } /* 只在落点中心一小团橙闪、限频（以前白色大实心圆，十几颗同时落地整屏一闪一闪） */ this.rings.push({ x: e.x, y: e.y, r: e.r * 1.15, life: 0.32, max: 0.32, el: 'exp' });
           this.em.fire.explode(16, e.x, e.y - 2); this.em.chip.particleTint = 0x5a3020; this.em.chip.explode(10, e.x, e.y - 2); this.em.spark2.particleTint = 0xffb040; this.em.spark2.explode(14, e.x, e.y - 3);
           if (this.post) this.post.waves.push({ x: e.x, y: e.y, r: e.r * 1.3, k: 0.5, life: 0.28, t0: G.time });
-          if (G.time - (this.mShake || 0) > 0.12) { this.mShake = G.time; this.shake(110, 0.005); } break; }
+          if (G.time - (this.mShake || 0) > 0.4) { this.mShake = G.time; this.shake(80, 0.003); } /* 震屏限频、减弱 */ break; }
         case 'slam': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.25, max: 0.25, el: 'exp', fill: true }); this.shake(90, 0.004); this.em.chip.explode(6, e.x, e.y); break;
         case 'wcut': { const a = e.a + Math.PI / 2 + rf(-0.4, 0.4), c = Math.cos(a) * 4, sn = Math.sin(a) * 4; this.lines.push({ x1: e.x - c, y1: e.y - sn, x2: e.x + c, y2: e.y + sn, el: 'kin', life: 0.07 }); break; } // 旋风砍中：一道斜切 + 碎屑，代替整只怪发白
         case 'spike': this.lines.push({ x1: e.x, y1: e.y + 1, x2: e.x, y2: e.y - 9, el: e.el, life: 0.12 }); this.em.bone.explode(2, e.x, e.y - 2); break;
