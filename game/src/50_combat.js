@@ -780,7 +780,7 @@ function stepOrb(p, dt) { // 冰球：直线慢飞，碰屏幕边反弹（弹射
   if ((hx || hy) && p.sch > 0) { if (hx) p.vx = -p.vx; if (hy) p.vy = -p.vy; p.x = clamp(p.x, F.x0, F.x1); p.y = clamp(p.y, F.y0 - 6, F.y1); p.sch--; p.bn = (p.bn || 0) + 1; fx({ t: 'bounce', x: p.x, y: p.y }); }
   for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (p.r + m.size) ** 2) { const t = p.touch.get(m); if (t == null || p.age - t >= OB.contactTick) { p.touch.set(m, p.age); hitMob(m, p.W, { mul: OB.contactMul }); if (STATS.flag.echoCrown && p.bn) echoBurst(m, p.W); } }
   if (p.rune) { p.emitT -= dt; while (p.emitT <= 0) { p.emitT += p.W.orbEmit || OB.emit; p.rot += OB.rot * Math.PI / 180; orbShards(p.W, p.x, p.y, OB.shardDirs + (STATS.spawnAdd || 0), p.rot, p.W.shardMul, p.cast, 0, null); } }
-  if (p.life <= 0) { p.dead = true; fx({ t: 'boom', x: p.x, y: p.y, r: OB.endR, el: p.el }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (OB.endR + m.size) ** 2) hitMob(m, p.W, { mul: OB.endMul }); }
+  if (p.life <= 0) { p.dead = true; fx({ t: 'frostburst', x: p.x, y: p.y, r: OB.endR }); if (p.rune) orbShards(p.W, p.x, p.y, (OB.endShards || 12) + (STATS.spawnAdd || 0), p.rot, p.W.shardMul, p.cast, 0, null); /* 暗黑 2：寿命到了再爆一圈冰片新星 */ for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (OB.endR + m.size) ** 2) hitMob(m, p.W, { mul: OB.endMul }); }
 }
 function stepShieldThrow(W, dt) { // 圣盾掷：盾在手上才扔；飞出去时没有格挡
   const out = projs.some(p => p.sthrow && !p.dead); STATS.armor = out ? STATS.armorOut : STATS.armorHeld;
