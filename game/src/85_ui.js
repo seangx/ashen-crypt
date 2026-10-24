@@ -211,7 +211,8 @@ class UI extends Phaser.Scene {
     this.lockBtn = mkBtn(this, bot, bx, 19, 34, 12, '推层', () => { S.auto.lock = !S.auto.lock; save(); }, { size: 8, tip: () => [{ t: S.auto.lock ? '锁定层数：开' : '锁定层数：关（自动推层）', c: COL.emberHi }, { t: S.auto.lock ? `一直打难度 ${S.depth}。` : '打赢去最深层；连输两次退一层，退下来赢三次再回去冲。', s: 8 }] });
     this.sndBtn = mkBtn(this, bot, bx + 36, 7, 15, 24, '音', () => { S.settings.sound = !S.settings.sound; ac(); save(); }, { size: 8, tip: () => [{ t: S.settings.sound ? '音效：开' : '音效：关' }] });
     // 开始 / 暂停自动循环；暂停后打完这一局就停
-    this.mainBtn = mkBtn(this, bot, bx + 53, 7, 52, 24, '开始', () => { ac(); this.toggleLoop(); }, { style: 'w', icon: 'torch', iconX: 5, labelX: 16, tip: () => [
+    this.retBtn = mkBtn(this, bot, bx + 53, 7, 20, 24, '返回', () => { ac(); if (!RUN || RUN.ending) return; if (!confirm2('abandon')) { toast('再点一次「返回」确认提前返回'); return this.refresh(); } abandonRun(); this.refresh(); }, { size: 8, tip: () => [{ t: confirmKey === 'abandon' ? '再点一次确认' : '提前返回', c: COL.emberHi }, { t: '结束这一趟回营地：捡到的东西全部带走，不算阵亡；没打完的这一层不算通过。会停掉自动循环。', s: 8 }] });
+    this.mainBtn = mkBtn(this, bot, bx + 75, 7, 30, 24, '开始', () => { ac(); this.toggleLoop(); }, { style: 'w', tip: () => [
       { t: S.auto.loop ? '暂停  [回车]' : '开始自动刷  [回车]', c: COL.emberHi },
       { t: S.auto.loop ? '打完这一局就停下。' : '一趟接一趟自动打，每趟回营地后停留几秒再出发。', s: 8 },
       { t: `下一趟：从第 ${descentStart()} 层出发${S.depth >= PROG.run.maxDepth ? `（已到最深层）` : ''}`, s: 8, c: COL.dim },
@@ -278,6 +279,7 @@ class UI extends Phaser.Scene {
       bt.hl.setVisible(on && (this.winId === id || bt.hov)); bt.ic.setAlpha(on ? 1 : 0.3);
     });
     this.mainBtn.setLabel(S.auto.loop ? '暂停' : RUN ? '继续' : '开始');
+    this.retBtn.setVisible(!!RUN && !RUN.ending); this.retBtn.setLabel(confirmKey === 'abandon' ? '确认' : '返回'); if (this.retBtn.lab) this.retBtn.lab.setTint(hex(confirmKey === 'abandon' ? COL.bad : COL.emberHi));
     this.aiBtn.setLabel(S.auto.ai ? '自动' : '手动'); this.aiBtn.lab.setTint(hex(S.auto.ai ? COL.good : COL.dim));
     this.lockBtn.setLabel(S.auto.lock ? '锁层' : '推层'); this.lockBtn.lab.setTint(hex(S.auto.lock ? COL.emberHi : COL.text));
     this.updateAuto();
@@ -345,7 +347,7 @@ class UI extends Phaser.Scene {
     if (!show) return;
     const win = r.result === 'win', g = r.gain, A = S.auto;
     const lad = r.mode === 'ladder';
-    const RN = { win: '抵达最深处', lampout: '灯火燃尽 · 平安返回', retreat: '险胜 · 撤回', emergency: '紧急撤回', dead: '阵亡', timeout: '时间到' };
+    const RN = { win: '抵达最深处', lampout: '灯火燃尽 · 平安返回', retreat: '险胜 · 撤回', emergency: '紧急撤回', abandon: '提前返回', dead: '阵亡', timeout: '时间到' };
     const l1 = lad ? `天梯 ${r.L} 层${win ? `通过 · 用时 ${mmss(r.t)} · 跳 ${r.lad.jump} 层` : r.result === 'timeout' ? ' · 时间到' : ' · 阵亡'}` : `${RN[r.result] || r.result} · 第 ${r.descent.from === r.base ? r.base : r.descent.from + '–' + r.base} 层`;
     const l2 = `击杀 ${r.kills} · 装备 ${g.items.length} 件${r.salv && r.salv.n ? `，分解 ${r.salv.n} 件得碎片 ${r.salv.shards}` : ''} · 经验 +${fmt(g.xp)}${g.lv ? ` · 升 ${g.lv} 级` : ''}`;
     const why = A.lock ? '（锁定层数）' : A.back ? `（退一层练级，再赢 ${AU.push.winsToRetry - A.backWins} 次回去冲）` : !win && A.fails ? `（再输 ${AU.push.lossesToRetreat - A.fails} 次退一层）` : '';
@@ -872,13 +874,14 @@ class UI extends Phaser.Scene {
   // 一趟结算：绶带标题，一排带图标的数，凹槽里的装备，拿到的符文和铸符只放图标
   win_summary(c, w, h) {
     const r = this.winArg; if (!r) return;
-    const lad = r.mode === 'ladder', lamp = r.result === 'lampout', back = r.result === 'retreat', emg = r.result === 'emergency';
-    const win = r.result === 'win' || (!lad && (lamp || back || emg)); // 推关：灯火燃尽、撤回、紧急撤回都是平安返回
-    const title = lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '时间到' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
+    const lad = r.mode === 'ladder', lamp = r.result === 'lampout', back = r.result === 'retreat', emg = r.result === 'emergency', abd = r.result === 'abandon';
+    const win = r.result === 'win' || (!lad && (lamp || back || emg || abd)); // 推关：灯火燃尽、撤回、紧急撤回都是平安返回
+    const title = abd ? '提前返回' : lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '时间到' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
     const g = r.gain;
     const note = lad && win && r.lad.tierUp.length ? [`晋升${LADDER_TIERS[r.lad.tierUp[r.lad.tierUp.length - 1]].n}：送每种铸符各 ${LD.tiers.firstGlyphs} 张`, COL.emberHi]
       : g.boon ? [`${BOSS_BY[g.boon.b].n}的祝福：${BOONS[g.boon.b][g.boon.i].n}（${treeText(...Object.entries(BOONS[g.boon.b][g.boon.i].add)[0])}）`, COL.emberHi]
+      : abd ? [lad ? '提前离开天梯：这一层不算通过，没有损失' : '提前返回：东西全部带走，没打完的这一层不算通过', COL.emberHi]
       : emg ? [`护甲跌到 ${SOUL.returnHpNow}% 以下，带着全部东西撤回`, COL.emberHi]
       : back ? [`最后一层最低血量 ${Math.round(r.descent.minHp * 100)}%，打完守关 Boss 撤回，东西全部带走`, COL.emberHi]
       : lad ? [win ? `跳 ${r.lad.jump} 层，已解锁到第 ${S.ladder.unlocked} 层` : '天梯失败没有损失', COL.dim]

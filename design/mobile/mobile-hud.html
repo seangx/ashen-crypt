@@ -337,6 +337,8 @@ button { cursor: pointer; }
 }
 .ctl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .ctl .text-btn { min-height: 44px; display: grid; place-items: center; text-decoration: none; }
+.ctl .ret { color: #e8a25a; border-color: #8a4a2a; }
+.ctl .ret.confirm { background: #6a1e1a; color: #ffd9c0; }
 .ctl .main { grid-column: span 2; background: #c8913a; color: #1a1208; font-weight: 700; }
 </style>
 </head>
@@ -416,6 +418,7 @@ button { cursor: pointer; }
         <button type="button" class="text-btn" id="aiBtn" aria-pressed="true">自动</button>
         <button type="button" class="text-btn" id="lockBtn" aria-pressed="false">推层</button>
         <button type="button" class="text-btn main" id="mainBtn">继续</button>
+        <button type="button" class="text-btn ret" id="retBtn" aria-label="提前返回营地（需再点一次确认）">返回</button>
         <a class="text-btn" href="mobile-gear.html">菜单</a>
       </div>
       <div class="mana-wrap">
@@ -528,6 +531,9 @@ button { cursor: pointer; }
   lock.addEventListener('click', function () { var on = lock.getAttribute('aria-pressed') !== 'true'; lock.setAttribute('aria-pressed', String(on)); lock.textContent = on ? '锁层' : '推层'; });
   mainB.addEventListener('click', function () { mainB.textContent = mainB.textContent === '暂停' ? '继续' : '暂停'; });
 })();
+</script>
+<script>
+(function(){var b=document.getElementById('retBtn'),t;if(!b)return;b.addEventListener('click',function(){if(b.classList.contains('confirm')){b.classList.remove('confirm');b.textContent='返回';alert('提前返回：结束这一趟回营地');return;}b.classList.add('confirm');b.textContent='确认返回?';clearTimeout(t);t=setTimeout(function(){b.classList.remove('confirm');b.textContent='返回';},3000);});})();
 </script>
 </body>
 </html>

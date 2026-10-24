@@ -600,7 +600,7 @@ function logic(dt) {
   }
   if (RUN.ending) {
     RUN.ending -= dt;
-    const keepAll = ['win', 'lampout', 'retreat', 'emergency'].includes(RUN.result);
+    const keepAll = ['win', 'lampout', 'retreat', 'emergency', 'abandon'].includes(RUN.result);
     for (const dp of drops) if (keepAll) collect(dp);
     if (keepAll) drops = [];
     if (RUN.ending <= 0) finishRun();
@@ -902,6 +902,12 @@ function swapSave(raw) {
 }
 function loadDemo(name) { try { if (!hasBackup()) localStorage.setItem(BACKUP_KEY, JSON.stringify(S)); } catch (e) { } swapSave(DEMO_SAVES[name]); }
 function restoreBackup() { let raw = null; try { raw = localStorage.getItem(BACKUP_KEY); } catch (e) { } if (!raw) return; swapSave(raw); try { localStorage.removeItem(BACKUP_KEY); } catch (e) { } }
+/* 提前返回：玩家手动结束这一趟。语义同紧急撤回（平安返回、捡到的和地上的都带走、不算阵亡、当前层不算通过），并停掉自动循环 */
+function abandonRun() {
+  if (!RUN || RUN.ending) return false;
+  RUN.result = 'abandon'; RUN.ending = 0.8; RUN.next = 0; S.auto.loop = false; sfx('out');
+  if (G.ui) G.ui.banner('提前返回', COL.emberHi); return true;
+}
 function finishRun() {
   const r = RUN; RUN = null; mobs = []; projs = []; drops = []; zones = [];
   S.stats.missions++;
