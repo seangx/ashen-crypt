@@ -38,7 +38,11 @@ function load(data) {
   S.ladder = { ...freshState().ladder, ...(S.ladder || {}) };
   S.tree ??= []; S.chips ??= {}; S.maps ??= []; S.marble ??= []; S.bossKills ??= {}; S.stats.maps ??= 0;
   // 天赋树改版后旧存档的节点对不上：全部退回，印记回到背包
-  if (S.tree.some(id => !TREE.nodes[id])) { for (const k in S.chips) S.stash.unshift(S.chips[k]); S.chips = {}; S.tree = []; const tell = () => G.ui ? toast('天赋树改版了：天赋点已全部返还，插着的印记放回了背包', COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); }
+  // 天赋树改版：只退掉没了的节点和因此断开的节点（点数自动返还），被退掉的印记槽里的印记放回背包
+  { const old = S.tree.length, keep = new Set(S.tree.filter(id => TREE.nodes[id])), seen = new Set(), q = ['start'];
+    while (q.length) { const c = q.pop(); for (const n of TREE.nodes[c].nb) if (keep.has(n) && !seen.has(n)) { seen.add(n); q.push(n); } }
+    if (seen.size < old) { S.tree = S.tree.filter(id => seen.has(id)); for (const k in S.chips) if (!seen.has(k)) { S.stash.unshift(S.chips[k]); delete S.chips[k]; }
+      const n = old - seen.size, tell = () => G.ui ? toast(`天赋树改版了：返还 ${n} 个天赋点`, COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); } }
   if (!S.equip.wl) starterKit();
 }
 // 新角色的装备：data/progression.json 的 starter
