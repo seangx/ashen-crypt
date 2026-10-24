@@ -5,6 +5,7 @@ uploads/
 # 构建产物：python3 game/tools/build.py 可重新生成
 game/build/
 game/ashen-crypt.html
+game/ashen-crypt-mobile.html
 # 缓存
 __pycache__/
 *.pyc

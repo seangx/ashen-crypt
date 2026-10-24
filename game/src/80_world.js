@@ -10,7 +10,7 @@ class World extends Phaser.Scene {
   constructor() { super('world'); }
   create() {
     G.world = this; this.cameras.main.setZoom(Z).centerOn(W / 2, H / 2);
-    this.roomTex = this.textures.exists('room') ? this.textures.get('room') : this.textures.createCanvas('room', W, H);
+    this.roomTex = this.textures.exists('room') ? this.textures.get('room') : this.textures.createCanvas('room', VW, VH);
     this.roomImg = this.add.image(0, 0, 'room').setOrigin(0).setDepth(0); this.roomL = null;
     this.cameras.main.setRoundPixels(true);
     // 无限场地：平铺地砖（跟着相机挪，纹理偏移 = 相机位置，所以地面不动）+ 按区块生成的装饰 + 固定在屏幕上的暗角
@@ -59,7 +59,7 @@ class World extends Phaser.Scene {
     // 直接监听画布的原生事件：鼠标在 UI 按钮上时 Phaser 不会把移动事件传到下层场景
     const nat = e => { const r = cv.getBoundingClientRect(); const x = clamp((e.clientX - r.left) / r.width * W, 0, W), y = clamp((e.clientY - r.top) / r.height * H, 0, H); const d = Math.hypot(x - mouse.x, y - mouse.y); mouse.x = x; mouse.y = y; if (e.pointerType === 'touch') mouse.touch = true; else mouse.on = true; return d; };
     // 在场地上动鼠标或触摸：接管角色（几秒不动后回到自动）
-    const onField = () => RUN && !(G.ui && G.ui.winId) && mouse.y > TOP_H && mouse.y < BOT_Y;
+    const onField = () => !MOBILE && RUN && !(G.ui && G.ui.winId) && mouse.y > TOP_H && mouse.y < BOT_Y;
     cv.addEventListener('pointermove', e => { const d = nat(e); if (onField()) autoTouch(e.pointerType === 'touch' ? -1 : d); });
     cv.addEventListener('pointerdown', e => { ac(); nat(e); if (onField() && (e.pointerType === 'touch' || e.button === 2)) autoTouch(-1); if (e.button === 2) tryDash(); });
     cv.addEventListener('pointerleave', () => { mouse.on = false; }); cv.addEventListener('pointerenter', () => { mouse.on = true; });
@@ -83,7 +83,7 @@ class World extends Phaser.Scene {
     const dt = Math.min(0.05, delta / 1000); G.time += dt; this.dt = dt;
     if (G.time >= (this.stopUntil || 0)) logic(dt); // 顿帧：世界停几十毫秒，画面照常
     if (!RUN) camSnap();
-    this.cx = Math.round(CAM.x); this.cy = Math.round(CAM.y); this.cameras.main.centerOn(this.cx + W / 2, this.cy + H / 2); // 相机跟着角色，按整像素对齐
+    this.cx = Math.round(CAM.x + VW / 2 - W / 2); this.cy = Math.round(CAM.y + VIEW_CY - SCR_CY); this.cameras.main.centerOn(this.cx + W / 2, this.cy + H / 2); // 相机跟着角色，按整像素对齐
 
     this.consume();
     this.render(dt);
@@ -245,7 +245,7 @@ class World extends Phaser.Scene {
   }
   // 屏幕边缘的指向箭头（世界坐标画，位置贴着视野边）
   edgeArrow(g, x, y, c, t) {
-    const cx = this.cx + W / 2, cy = this.cy + VIEW_CY, dx = x - cx, dy = y - cy, a = Math.atan2(dy, dx), hw = W / 2 - 8, hh = (BOT_Y - TOP_H) / 2 - 8;
+    const cx = this.cx + W / 2, cy = this.cy + SCR_CY, dx = x - cx, dy = y - cy, a = Math.atan2(dy, dx), hw = W / 2 - 8, hh = (MOBILE ? MBOT - MTOP : BOT_Y - TOP_H) / 2 - 8;
     const k = Math.min(hw / Math.max(1e-6, Math.abs(dx)), hh / Math.max(1e-6, Math.abs(dy))), px = Math.round(cx + dx * k), py = Math.round(cy + dy * k), ux = Math.cos(a), uy = Math.sin(a), b = 1 + 0.5 * Math.sin(t * 8);
     g.fillStyle(0x0d0a12, 0.8).fillTriangle(px + ux * 6, py + uy * 6, px - uy * 5 - ux * 3, py + ux * 5 - uy * 3, px + uy * 5 - ux * 3, py - ux * 5 - uy * 3);
     g.fillStyle(c, 0.7 + 0.3 * Math.sin(t * 8)).fillTriangle(px + ux * 5 * b, py + uy * 5 * b, px - uy * 3 - ux * 2, py + ux * 3 - uy * 2, px + uy * 3 - ux * 2, py - ux * 3 - uy * 2);

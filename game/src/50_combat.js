@@ -9,17 +9,17 @@ const FIX = { x0: 10, x1: 470, y0: 62, y1: 226 }; // 营地（固定房间）的
 const CAM = { x: 0, y: 0 };
 const F = { x0: 10, x1: 470, y0: 62, y1: 226 };
 const VIEW_CY = (TOP_H + BOT_Y) / 2; // 视野里战斗区的竖直中心（屏幕坐标）
-function updView() { F.x0 = CAM.x + 10; F.x1 = CAM.x + W - 10; F.y0 = CAM.y + TOP_H + 8; F.y1 = CAM.y + BOT_Y - 8; }
-function camSnap() { if (RUN) { CAM.x = player.x - W / 2; CAM.y = player.y - VIEW_CY; } else { CAM.x = 0; CAM.y = 0; } updView(); }
-function camStep(dt) { if (!RUN) return camSnap(); const k = 1 - Math.exp(-dt * 8); CAM.x += (player.x - W / 2 - CAM.x) * k; CAM.y += (player.y - VIEW_CY - CAM.y) * k; updView(); }
+function updView() { F.x0 = CAM.x + 10; F.x1 = CAM.x + VW - 10; F.y0 = CAM.y + TOP_H + 8; F.y1 = CAM.y + BOT_Y - 8; }
+function camSnap() { if (RUN) { CAM.x = player.x - VW / 2; CAM.y = player.y - VIEW_CY; } else { CAM.x = 0; CAM.y = 0; } updView(); }
+function camStep(dt) { if (!RUN) return camSnap(); const k = 1 - Math.exp(-dt * 8); CAM.x += (player.x - VW / 2 - CAM.x) * k; CAM.y += (player.y - VIEW_CY - CAM.y) * k; updView(); }
 // 视野外一圈上的随机点（刷怪用）：视野往外扩 m 像素的矩形边上；给了方向 a 就取那个方向上的点
 function ringPoint(m = 18, a) {
-  const cx = CAM.x + W / 2, cy = CAM.y + VIEW_CY, hw = W / 2 + m, hh = (BOT_Y - TOP_H) / 2 + m;
+  const cx = CAM.x + VW / 2, cy = CAM.y + VIEW_CY, hw = VW / 2 + m, hh = (BOT_Y - TOP_H) / 2 + m;
   if (a == null) a = rnd() * Math.PI * 2;
   const c = Math.cos(a), s = Math.sin(a), k = Math.min(hw / Math.max(1e-6, Math.abs(c)), hh / Math.max(1e-6, Math.abs(s)));
   return { x: cx + c * k, y: cy + s * k };
 }
-const offView = (o, m) => o.x < CAM.x - m || o.x > CAM.x + W + m || o.y < CAM.y + TOP_H - m || o.y > CAM.y + BOT_Y + m;
+const offView = (o, m) => o.x < CAM.x - m || o.x > CAM.x + VW + m || o.y < CAM.y + TOP_H - m || o.y > CAM.y + BOT_Y + m;
 const player = { x: 240, y: 150, vx: 0, vy: 0, life: 1, shield: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: [0, 0], orbitA: 0, guardT: 0, spin: [{ n: 0, g: 0, idle: 9 }, { n: 0, g: 0, idle: 9 }], swing: [0, 0], devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
 const fx = o => { if (G.fx) fxq.push(o); };
 const MINE_MAX = MECH.mineMax;
@@ -62,7 +62,7 @@ function arenaReset() {
   resetPlayer();
   sfx('start');
 }
-const fieldActive = () => RUN && (mouse.on || mouse.touch) && !(G.ui && G.ui.winId) && mouse.y > TOP_H && mouse.y < BOT_Y;
+const fieldActive = () => !MOBILE && RUN && (mouse.on || mouse.touch) && !(G.ui && G.ui.winId) && mouse.y > TOP_H && mouse.y < BOT_Y;
 
 /* ---------- 敌人 ---------- */
 function pickMob(L) { const pool = Object.entries(MOBS).filter(([, m]) => L >= (m.minL || 1)); return wpick(pool, ([, m]) => m.w)[0]; }
@@ -560,7 +560,7 @@ function logic(dt) {
     if (player.dashT <= 0 && player.dashEnd) { const k = player.dashEnd; player.dashEnd = null; dashEnd(k); }
   } else {
     let tvx = 0, tvy = 0;
-    const tg = at || (fieldActive() ? { x: mouse.x + CAM.x, y: mouse.y + 4 + CAM.y } : null); // 鼠标是屏幕坐标，换成世界坐标
+    const tg = at || (STICK.on && (STICK.x || STICK.y) ? { x: player.x + STICK.x * 24, y: player.y + STICK.y * 24 } : fieldActive() ? { x: mouse.x + CAM.x, y: mouse.y + 4 + CAM.y } : null); // 鼠标是屏幕坐标，换成世界坐标
     if (tg) { const dx = tg.x - player.x, dy = tg.y - player.y, d = Math.hypot(dx, dy); if (d > 2) { const s = P.speed * vortexMove() * Math.min(1, d / 24) * (spinning() ? WH.spinMoveMul : 1) * pChillK(); tvx = dx / d * s; tvy = dy / d * s; } }
     const ax = tvx - player.vx, ay = tvy - player.vy, al = Math.hypot(ax, ay), step = P.accel * dt;
     if (al <= step) { player.vx = tvx; player.vy = tvy; } else { player.vx += ax / al * step; player.vy += ay / al * step; }
@@ -888,7 +888,7 @@ function stepProjs(dt) {
       }
       if (p.back && !p.dead) { const dx = player.x - p.x, dy = player.y - 6 - p.y, d = Math.hypot(dx, dy); if (d < 6) p.dead = true; else { p.vx = dx / d * p.W.spd; p.vy = dy / d * p.W.spd; } }
     }
-    if (p.x < CAM.x - 20 || p.x > CAM.x + W + 20 || p.y < CAM.y - 10 || p.y > CAM.y + H + 10) p.dead = true; // 飞出屏幕就消失
+    if (p.x < CAM.x - 20 || p.x > CAM.x + VW + 20 || p.y < CAM.y - 10 || p.y > CAM.y + VH + 10) p.dead = true; // 飞出屏幕就消失
   }
   projs = projs.filter(p => !p.dead);
 }
