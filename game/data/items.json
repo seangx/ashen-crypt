@@ -11,6 +11,7 @@
   "PlasmaNova": {"n": "圣钟", "ic": "w_bell", "form": "nova"},
   "FrostBell": {"n": "霜钟", "ic": "w_frostbell", "form": "nova"},
   "StarfallRod": {"n": "坠星杖", "ic": "w_starrod", "form": "meteor"},
+  "FrostOrb": {"n": "寒魄宝珠", "ic": "w_frostorb", "form": "orb"},
   "Railgun": {"n": "穿心弩", "ic": "w_piercer", "form": "proj", "fast": 1},
   "BlastMine": {"n": "火药陷阱", "ic": "w_trap_exp", "form": "mine"},
   "PlasmaMine": {"n": "圣光陷阱", "ic": "w_trap_pla", "form": "mine"},

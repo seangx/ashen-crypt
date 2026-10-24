@@ -1,4 +1,5 @@
 {
+  "shardChain": { "text": "【派生】冰片命中敌人时再派生 {orb.scN} 片（×{orb.scMul}，只派生一层）。有派生标签的武器伤害 ×{orb.heartMore}。代价：其他武器伤害 ×{orb.offhandMul}" },
   "starfall": { "text": "【延迟·范围】每次施放落 {meteor.sfN} 颗陨石（散开，每颗伤害 ×{meteor.sfMul}、范围 ×{meteor.sfAoe}、延迟 ×{meteor.sfDelay}）。有延迟标签的武器伤害 ×{meteor.heartMore}。代价：其他武器伤害 ×{meteor.offhandMul}" },
   "shatter": { "text": "【新星·寒霜】杀死冻结的敌人时，尸体向四周放 {nova.shardN} 片冰片（每片 = 新星单次伤害 ×{nova.shardMul}，算派生和投射物；冰片打死的冻结敌人也会碎）。有新星标签的武器伤害 ×{nova.heartMore}。代价：其他武器伤害 ×{nova.offhandMul}" },
   "sparkHeart": { "text": "【投射物·弹射】可弹射的武器伤害 ×{spark.heartMore}，每弹射一次（投射物碰屏幕边反弹 / 闪电链连锁一次），之后的命中伤害 +{spark.chainStepInc}%（叠加）；游雷每次命中叠 {spark.shockGain} 层感电。代价：其他武器伤害 ×{spark.offhandMul}" },

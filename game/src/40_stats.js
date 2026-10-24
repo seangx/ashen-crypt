@@ -156,6 +156,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.meleeInc) inc += fx.meleeInc;
     if (fx.meleeGuard) W.meleeGuard = 1;
     if (fx.spark && b.wander) { W.spark = 1; W.sparkN = fx.sparkN; W.sparkMul = fx.sparkMul; } // 游雷符文：只对会乱窜的投射物（雷灵）生效
+    if (fx.frostOrb && b.form === 'orb') { W.frostOrb = 1; W.shardMul = fx.shardMul; } // 寒魄符文：寒魄宝珠
     if (fx.meteor && b.form === 'meteor') { W.meteor = 1; W.meteorMul = fx.meteorMul; W.delay = fx.delay; W.ground = fx.ground; } // 陨火符文：坠星杖
     if (fx.frostNova && b.form === 'nova') { W.frostNova = 1; W.novaMul = fx.novaMul; W.chillStacks = fx.chillStacks; } // 霜环符文：霜钟 / 圣钟
     if (fx.whirl && b.form === 'orbit') { W.whirl = 1; W.morePer = fx.spinMore || WH.morePer; } // 每层倍率随符文等级成长
@@ -176,6 +177,7 @@ function weaponStats(it, P, isEngine) {
   // 独特装备的伤害转换
   const conv = (from, to, pct) => { if (!pct) return; const mn = W.min[from] * pct, mx = W.max[from] * pct; W.min[from] -= mn; W.max[from] -= mx; for (const e of to) { W.min[e] += mn / to.length; W.max[e] += mx / to.length; } };
   if (W.frostNova && b.el !== 'cold') { conv(b.el, ['cold'], 1); W.ail.cold += W.ail[b.el]; W.ail[b.el] = 0; W.el = 'cold'; } // 圣钟插霜环符文：元素改成寒霜
+  if (P.flag.shardChain) { if (has('Spawn')) W.more *= OB.heartMore; else if (!isEngine) W.more *= OB.offhandMul; } // 碎冰连锁：【派生】
   if (P.flag.starfall) { if (has('Delayed')) W.more *= MT.heartMore; else if (!isEngine) W.more *= MT.offhandMul; } // 星坠雨：【延迟】
   if (P.flag.shatter) { if (has('Nova') || W.frostNova) W.more *= NV.heartMore; else if (!isEngine) W.more *= NV.offhandMul; } // 碎冰：【新星】
   conv('kin', THERMAL_E, U('convKinThermal') / 100); conv('exp', ['nuc'], U('convExpNuc') / 100); conv('pla', ['nuc'], U('convPlaNuc') / 100);
@@ -201,6 +203,8 @@ function weaponStats(it, P, isEngine) {
   W.aoeR = qv(b.aoe || 0, q) * UNIT * (1 + aoeInc / 100);
   W.auraDps = b.aura ? qv(b.aura, q) * (1 + inc / 100) * W.more * W.dotMore : 0;
   W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100) * (has('Projectile') ? Math.max(GEAR.projSlowMin, 1 - (P.raw.projSlow || 0) / 100) : 1); // 投射物速度降低（寒魄球的收益）
+  if (b.form === 'orb') { const sk = W.spd / (b.fast ? MECH.projSpeedFast : MECH.projSpeed); W.orbSpd = OB.orbSpeed * Math.max(GEAR.projSlowMin, sk); W.orbLife = OB.orbLife * W.sparkLifeMul; // 寒魄球：速度跟投射物速度（含 projSlow），寿命同游雷
+    const sh = W.frostOrb ? W.orbLife / OB.emit * (OB.shardDirs + P.spawnAdd) * W.shardMul * OB.estHit * (P.flag.shardChain ? 1 + OB.scN * OB.scMul * OB.estHit : 1) : 0; W.orbEst = OB.contactMul * (1 + W.orbLife / OB.contactTick * 0.3) + OB.endMul + sh; }
   W.crit = qv(b.crit || 0, q) / 100 * (1 + critInc / 100) * (TM.crit ?? 1);
   W.critMult = PLAYER.critMult + critDmg / 100;
   // 旋身：层数上限 = maxStacks + 词条
@@ -211,7 +215,7 @@ function weaponStats(it, P, isEngine) {
   W.dps = b.aura ? W.auraDps : W.avg * critE * W.aps * (b.form === 'stab' ? 1 : n) * (b.pellets || 1);
   W.dps *= 1 + W.meleeRe;
   if (b.form === 'reflect') W.dps = 0;
-  W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : b.form === 'meteor' ? (W.meteor ? W.meteorMul * (1 + MT.estGround) : 1) * (P.flag.starfall ? MT.sfN * MT.sfMul : 1) : W.frostNova ? W.novaMul * (P.flag.shatter ? 1 + NV.estShatter : 1) : 1; // 霜环：符文倍数 × 碎冰估算 // 旋转满层时的伤害倍数（dps 不含）
+  W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : b.form === 'orb' ? W.orbEst : b.form === 'meteor' ? (W.meteor ? W.meteorMul * (1 + MT.estGround) : 1) * (P.flag.starfall ? MT.sfN * MT.sfMul : 1) : W.frostNova ? W.novaMul * (P.flag.shatter ? 1 + NV.estShatter : 1) : 1; // 霜环：符文倍数 × 碎冰估算 // 旋转满层时的伤害倍数（dps 不含）
   if (W.spark) { // 游雷：每颗的倍数（颗数 sparkN + 投射物 已在 dps 里）。穿透是无限的（有就穿过所有敌人），弹射 = 碰屏幕边反弹的次数
     W.pierce += SP.basePierce; const L = SP.life * W.sparkLifeMul, v = W.spd * SP.speedMul, pr = W.pierce > 0;
     const legs = Math.min(W.chain, Math.floor(L * v / SP.estLeg)); // 寿命内飞得到几次屏幕边（约 estLeg 像素一趟），再受弹射次数限制

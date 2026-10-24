@@ -378,6 +378,14 @@ function fire(W, i) {
       if (frost && RUN) player.soul = Math.min(STATS.soulMax, Math.max(0, player.soul - cost) + Math.min(NV.refundCap, ((RUN.freezes || 0) - f0) * NV.refund)); // 每冻结一只返还
       sfx('boom'); return true;
     }
+    case 'orb': { // 寒魄宝珠：朝怪最密的方向放慢速冰球（无限穿透），插符文的沿途放冰片
+      const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
+      const cost = OB.soulPerCast * (1 - STATS.soulLess), rune = W.frostOrb && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost;
+      const dR = AU.orb.denseR ** 2; let best = live[0], bn = -1; for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < dR) c++; if (c > bn) { bn = c; best = a; } }
+      const a0 = Math.atan2(best.y - 5 - py, best.x - px), n = attacks(W), fan = OB.fan * Math.PI / 180, cast = { ref: 0, rune };
+      for (let k = 0; k < n; k++) { const a = a0 + (k - (n - 1) / 2) * fan; projs.push({ W, orb: 1, x: px, y: py, a, vx: Math.cos(a) * W.orbSpd, vy: Math.sin(a) * W.orbSpd, life: W.orbLife, age: 0, el: W.el, r: 5, sch: W.chain, rune, cast, emitT: OB.emit, rot: rf(0, Math.PI * 2), touch: new Map(), hit: new Set(), mul: 1 }); }
+      sfx('shoot'); return true;
+    }
     case 'meteor': { // 坠星杖：选射程内敌人最多的点（按速度 × 延迟预判），预警后落地
       const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
       const cost = MT.soulPerCast * (1 - STATS.soulLess), rune = W.meteor && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost; // 灯火不够时放不带符文的陨石
@@ -444,6 +452,7 @@ function shoot(W, x, y, a, o) {
   projs.push(p); return p;
 }
 function projHit(p, m) {
+  if (p.oshard) orbShardHit(p, m);
   p.hit.add(m);
   let mul = p.mul * (p.pierced ? p.W.pierceMore : 1) * (1 + p.W.chainInc * (p.spark ? p.sch || 0 : p.chain));
   if (p.first && p.split > 0) mul *= 1 + p.W.splitInc * p.split;
@@ -697,6 +706,23 @@ function bossAct(m, aim, bl) {
       break;
   }
 }
+function orbShards(W, x, y, n, a0, mul, cast, gen, skip) { // 寒魄球的冰片：不穿透，算投射物（寒魄宝珠本身有投射物标签），同屏最多 maxShards
+  const old = projs.filter(p => p.shard && !p.dead), over = old.length + n - OB.maxShards; for (let k = 0; k < over && k < old.length; k++) old[k].dead = true;
+  for (let i = 0; i < n; i++) { const a = a0 + i / n * Math.PI * 2, p = shoot(W, x, y, a, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set(skip ? [skip] : []), mul, life: OB.shardLife, shard: 1, oshard: 1, cast, gen }); p.vx = Math.cos(a) * OB.shardSpeed; p.vy = Math.sin(a) * OB.shardSpeed; p.r = 2; }
+  if (RUN && RUN.dmg) RUN.dmg.oshards = (RUN.dmg.oshards || 0) + n;
+}
+function orbShardHit(p, m) { // 冰片命中：打中冻结的敌人返还灯火；碎冰连锁再派生一层
+  const c = p.cast; if (RUN && c && c.rune && m.frzT > 0 && c.ref < OB.refundCap) { const r = Math.min(OB.refund, OB.refundCap - c.ref); c.ref += r; player.soul = Math.min(STATS.soulMax, player.soul + r); }
+  if (STATS.flag.shardChain && !p.gen) orbShards(p.W, m.x, m.y - 5, OB.scN, rf(0, Math.PI * 2), p.mul * OB.scMul, c, 1, m);
+}
+function stepOrb(p, dt) { // 冰球：直线慢飞，碰屏幕边反弹（弹射次数），碰到的敌人每 contactTick 秒命中一次，寿命到了炸冰环
+  p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; p.age += dt;
+  const hx = p.x < F.x0 || p.x > F.x1, hy = p.y < F.y0 - 6 || p.y > F.y1;
+  if ((hx || hy) && p.sch > 0) { if (hx) p.vx = -p.vx; if (hy) p.vy = -p.vy; p.x = clamp(p.x, F.x0, F.x1); p.y = clamp(p.y, F.y0 - 6, F.y1); p.sch--; fx({ t: 'bounce', x: p.x, y: p.y }); }
+  for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (p.r + m.size) ** 2) { const t = p.touch.get(m); if (t == null || p.age - t >= OB.contactTick) { p.touch.set(m, p.age); hitMob(m, p.W, { mul: OB.contactMul }); } }
+  if (p.rune) { p.emitT -= dt; while (p.emitT <= 0) { p.emitT += OB.emit; p.rot += OB.rot * Math.PI / 180; orbShards(p.W, p.x, p.y, OB.shardDirs + (STATS.spawnAdd || 0), p.rot, p.W.shardMul, p.cast, 0, null); } }
+  if (p.life <= 0) { p.dead = true; fx({ t: 'boom', x: p.x, y: p.y, r: OB.endR, el: p.el }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (OB.endR + m.size) ** 2) hitMob(m, p.W, { mul: OB.endMul }); }
+}
 function stepMeteors(dt) { // 陨石落地：圈内一次命中，击退 + 眩晕；插符文的留火地
   for (const M of meteors) {
     M.t -= dt; if (M.t > 0) continue;
@@ -733,6 +759,7 @@ function stepProjs(dt) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
       if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el) && p.chill) chillPlayer(p.chill); p.dead = true; }
       if (p.pool && (p.dead || p.life <= 0)) { zones.push({ enemy: true, x: p.x, y: p.y + 6, r: p.pool.r, t: p.pool.dur, tickT: p.pool.tick, dmg: p.pool.dmg, el: p.el }); p.pool = null; p.dead = true; }
+    } else if (p.orb) { stepOrb(p, dt);
     } else if (p.mine) {
       p.arm -= dt; p.life -= dt; if (p.life <= 0) p.dead = true;
       if (p.arm > 0 || p.dead) continue;

@@ -24,10 +24,16 @@ def patch(out):
     sec['FrostBell'] = b
     # 陨火（§4.1）：坠星杖 = 圣钟 min / max ×1.5，aps 0.5，crit 6，range 600，aoe 260，ail_exp 0.25，el exp
     b = copy.deepcopy(sec['PlasmaNova']); b.pop('ail_pla', None)
-    b.update({'req': 6, 'w': 800, 'el': 'exp', 'aps': 0.5, 'crit': 6, 'range': 600, 'aoe': 260, 'ail_exp': 0.25,
+    b.update({'req': 6, 'w': 800, 'el': 'exp', 'aps': 0.5, 'crit': 6, 'range': 1100, 'aoe': 260, 'ail_exp': 0.25,
               'tags': ['Weapon', 'Hit', 'Attack', 'AttackSpeed', 'AoE', 'Delayed', 'Range'],
               'min': [round(x * 1.5) for x in b['min']], 'max': [round(x * 1.5) for x in b['max']]})
     sec['StarfallRod'] = b
+    # 寒魄球（§4.3）：寒魄宝珠 = 雷灵 min / max ×1.2，aps 0.8，crit 6，ail_cold 0.3，el cold
+    b = copy.deepcopy(sec['Zapper']); b.pop('ail_ele', None)
+    b.update({'req': 6, 'w': 800, 'el': 'cold', 'aps': 0.8, 'crit': 6, 'ail_cold': 0.3,
+              'tags': ['Weapon', 'Hit', 'Attack', 'AttackSpeed', 'Projectile', 'ProjectileCanChain', 'Spawn', 'AoE', 'Range'],
+              'min': [round(x * 1.2) for x in b['min']], 'max': [round(x * 1.2) for x in b['max']]})
+    sec['FrostOrb'] = b
     return gear(out)
 
 # 词条改版（spec-bd-gear.md §3.1、§3.4）：六元素抗性 / 抗性上限只出在法阵和盾牌；空词条权重归零（老存档按 mechanics.gear.migrate 映射）
