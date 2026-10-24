@@ -403,9 +403,11 @@ function fire(W, i) {
       let cx = 0, cy = 0, vx = 0, vy = 0, k0 = 0; for (const b2 of live) if (dist2(best, b2) < R2) { cx += b2.x; cy += b2.y; vx += b2.vx || 0; vy += b2.vy || 0; k0++; }
       cx = cx / k0 + vx / k0 * delay; cy = cy / k0 + vy / k0 * delay; // 预判：那群怪的平均速度 × 延迟
       const sf = STATS.flag.starfall, n = attacks(W) * (sf ? MT.sfN : 1);
+      let off = 0; // 多颗陨石错落落下：每多一颗随机晚 0.1–0.35 秒，位置再抖几像素
       for (let k = 0; k < n; k++) {
-        const a = rf(0, Math.PI * 2), rr = sf || k ? Math.sqrt(Math.random()) * W.aoeR * (sf ? MT.sfSpread : 0.5) : 0, T = delay * (sf ? MT.sfDelay : 1) * (k && !sf ? 1 + 0.15 * k : 1);
-        meteors.push({ W, x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr, r: W.aoeR * (sf ? MT.sfAoe : 1), t: T, T, mul: (rune ? W.meteorMul : 1) * (sf ? MT.sfMul : 1), ground: rune ? W.ground : null });
+        if (k) off += rf(0.1, 0.35);
+        const a = rf(0, Math.PI * 2), rr = sf || k ? Math.sqrt(Math.random()) * W.aoeR * (sf ? MT.sfSpread : 0.5) : 0, T = delay * (sf ? MT.sfDelay : 1) + off, jx = k ? rf(-4, 4) : 0, jy = k ? rf(-3, 3) : 0;
+        meteors.push({ W, x: cx + Math.cos(a) * rr + jx, y: cy + Math.sin(a) * rr + jy, r: W.aoeR * (sf ? MT.sfAoe : 1), t: T, T, mul: (rune ? W.meteorMul : 1) * (sf ? MT.sfMul : 1), ground: rune ? W.ground : null });
       }
       return true;
     }
@@ -767,7 +769,7 @@ function stepThrow(p, dt) { // 飞盾：直线飞，无限穿透（同一敌人�
 function stepMeteors(dt) { // 陨石落地：圈内一次命中，击退 + 眩晕；插符文的留火地
   for (const M of meteors) {
     M.t -= dt; if (M.t > 0) { if (STATS.flag.earlyWarn) for (const m of mobs) if (!m.dead && !m.boss && m.frzT <= 0 && !(m.stunT > 0) && dist2(m, M) < (M.r + m.size) ** 2) { const dx = m.x - M.x, dy = m.y - M.y, l = Math.hypot(dx, dy) || 1; m.x += dx / l * UQX.doomDodge * dt; m.y += dy / l * UQX.doomDodge * dt; } continue; } // 末日冠代价：圈里的怪往外躲
-    fx({ t: 'boom', x: M.x, y: M.y, r: M.r, el: M.W.el }); fx({ t: 'slam', x: M.x, y: M.y, r: M.r }); sfx('boom');
+    fx({ t: 'meteorHit', x: M.x, y: M.y, r: M.r }); sfx('boom');
     const kb = MT.knockPx * Math.log(50); let kills = 0, hd = 0, hn = 0;
     for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, M) < (M.r + m.size) ** 2) {
       const d = hitMob(m, M.W, { mul: M.mul }); hd += d; hn++;

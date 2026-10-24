@@ -44,6 +44,7 @@ class World extends Phaser.Scene {
     this.hubG = this.add.graphics().setDepth(9.2);
     this.spr = new Map(); this.frame = 0; this.lines = []; this.rings = []; this.dmgCount = 0; this.trail = [];
     const P = (cfg, depth = 30) => this.add.particles(0, 0, 'px', { emitting: false, ...cfg }).setDepth(depth);
+    this.scorch = [];
     this.em = {
       bone: P({ lifespan: { min: 350, max: 800 }, speed: { min: 30, max: 90 }, angle: { min: 200, max: 340 }, gravityY: 260, tint: [0xece3cb, 0xb9ad94, 0x7d7262] }),
       bossdie: P({ lifespan: { min: 500, max: 1200 }, speed: { min: 40, max: 140 }, angle: { min: 190, max: 350 }, gravityY: 200, tint: [0xece3cb, 0x7a55a0, 0xffd75e] }),
@@ -116,6 +117,11 @@ class World extends Phaser.Scene {
         case 'die': if (e.boss) { this.em.bossdie.explode(60, e.x, e.y - 12); this.shake(300, 0.01); this.hitStop(0.09); } else { this.em.bone.explode(e.elite ? 6 : 2, e.x, e.y - 6); this.em.chip.explode(e.elite ? 12 : 2, e.x, e.y - 6); if (e.elite) { this.hitStop(0.06); this.shake(90, 0.002); } } break;
         case 'pick': this.em.spark.particleTint = 0xfff2c8; this.em.spark.explode(4, e.x, e.y - 4); break;
         case 'orbitHit': break;
+        case 'meteorHit': { this.scorch.push({ x: e.x, y: e.y, r: e.r, life: 6, max: 6, sd: Math.random() * 100 | 0 }); if (this.scorch.length > 40) this.scorch.shift(); // 陨石落地：白闪 + 火球爆开 + 碎石、火星飞溅 + 一道冲击波；星坠雨多颗时震屏限频
+          this.rings.push({ x: e.x, y: e.y, r: e.r * 0.55, life: 0.12, max: 0.12, el: 'flash', fill: true }); this.rings.push({ x: e.x, y: e.y, r: e.r * 1.15, life: 0.32, max: 0.32, el: 'exp' });
+          this.em.fire.explode(16, e.x, e.y - 2); this.em.chip.particleTint = 0x5a3020; this.em.chip.explode(10, e.x, e.y - 2); this.em.spark2.particleTint = 0xffb040; this.em.spark2.explode(14, e.x, e.y - 3);
+          if (this.post) this.post.waves.push({ x: e.x, y: e.y, r: e.r * 1.3, k: 0.5, life: 0.28, t0: G.time });
+          if (G.time - (this.mShake || 0) > 0.12) { this.mShake = G.time; this.shake(110, 0.005); } break; }
         case 'slam': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.25, max: 0.25, el: 'exp', fill: true }); this.shake(90, 0.004); this.em.chip.explode(6, e.x, e.y); break;
         case 'wcut': { const a = e.a + Math.PI / 2 + rf(-0.4, 0.4), c = Math.cos(a) * 4, sn = Math.sin(a) * 4; this.lines.push({ x1: e.x - c, y1: e.y - sn, x2: e.x + c, y2: e.y + sn, el: 'kin', life: 0.07 }); break; } // 旋风砍中：一道斜切 + 碎屑，代替整只怪发白
         case 'spike': this.lines.push({ x1: e.x, y1: e.y + 1, x2: e.x, y2: e.y - 9, el: e.el, life: 0.12 }); this.em.bone.explode(2, e.x, e.y - 2); break;
@@ -187,10 +193,12 @@ class World extends Phaser.Scene {
       else if (player.swing[wi] > 0) { const k = player.swing[wi] / 0.18, a0 = (player.face < 0 ? Math.PI : 0) - 2.4 + (1 - k) * 4.8; for (let s2 = 0; s2 < 16; s2++) { const q = s2 / 16, an = a0 - q * 2.2; pg.fillStyle(0xdfe6ee, 0.8 * k * (1 - q)); pg.fillRect(Math.round(player.x + Math.cos(an) * R), Math.round(player.y - 6 + Math.sin(an) * R * 0.4), 2, 1); } }
     });
     // 红圈重击：地上一片红，外圈实线，内圈从外往里收，收到中心就砸下
-    for (const m of mobs) if (m.slam) { const s = m.slam, k = 1 - Math.max(0, s.t) / s.T, gg = this.groundG; gg.fillStyle(0xc02020, 0.18 + 0.2 * k).fillCircle(s.x, s.y, s.r); gg.lineStyle(1, 0xff3a2a, 0.9).strokeCircle(s.x, s.y, s.r); pg.lineStyle(2, 0xff6a4a, 0.85).strokeCircle(s.x, s.y, Math.max(1, s.r * (1 - k))); }
-    for (const M of meteors) { const k = 1 - Math.max(0, M.t) / M.T, gg = this.groundG; gg.fillStyle(0xff8a1a, 0.1 + 0.18 * k).fillCircle(M.x, M.y, M.r); gg.lineStyle(1, 0xffc040, 0.9).strokeCircle(M.x, M.y, M.r); pg.lineStyle(2, 0xffe070, 0.9).strokeCircle(M.x, M.y, Math.max(1, M.r * (1 - k))); const h = 90 * (1 - k); pg.fillStyle(0xfff0a0, 0.95).fillCircle(M.x + h * 0.4, M.y - h, 2.5); pg.lineStyle(2, 0xff8a1a, 0.6).lineBetween(M.x + h * 0.4, M.y - h, M.x + h * 0.4 + 6, M.y - h - 14); } // 陨石预警：橙黄圈（怪的重击是暗红），边缘随倒计时往里收，天上落下的火球
+    for (const m of mobs) if (m.slam) enemySlamFx(this.groundG, pg, m.slam, t); // 敌方重击：暗红紫的警告样式（玩家的陨石是暖橙金）
+    for (const sc of this.scorch) scorchFx(this.groundG, sc, t, dt); this.scorch = this.scorch.filter(s => s.life > 0); // 陨石砸过的焦痕
+    for (const M of meteors) meteorFx(this, this.groundG, pg, this.glowG, M, t); // 陨石：预警圈 + 斜着落下的火石（参考暗黑 2 / 3）
     for (const z of zones) if (z.devil) { const a = Math.min(1, z.t * 2); if (this.glowG) devilFx(this.groundG, this.glowG, z.x, z.y + 2, z.r, t, z.seed, a); else tornado(pg, z.x, z.y + 2, z.r * 1.6, z.r * 1.2, t, z.seed, a * 0.85); } // 旋风之心甩出的小旋风
-    for (const z of zones) { if (z.devil) continue; const c = hex(ELEM_C[z.el]); if (z.enemy) { pg.fillStyle(z.el === 'nuc' ? 0x2f5a22 : hex(ELEM_C[z.el]), (z.el === 'nuc' ? 0.35 : 0.22) * Math.min(1, z.t)).fillEllipse(z.x, z.y, z.r * 2, z.r * 1.2); } /* 敌方地面区域：毒池绿、骨法师火圈按元素色 */ const n = Math.max(10, z.r * 1.5 | 0); pg.fillStyle(c, z.vortex ? 0.8 : 0.45); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (z.vortex ? t * 6 : 0), rr = z.r * (z.vortex ? 0.4 + 0.6 * ((i * 7) % 5) / 5 : (0.5 + 0.5 * Math.abs(Math.sin(i * 1.7 + t * 3)))); pg.fillRect(z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr * 0.6, 1, 1); } }
+    for (const z of zones) if (z.fire) fireGroundFx(this, this.groundG, pg, this.glowG, z, t); // 火地：焦土 + 跳动的火舌
+    for (const z of zones) { if (z.devil || z.fire) continue; const c = z.enemy && z.el !== 'nuc' ? 0xff3a7a : hex(ELEM_C[z.el]); if (z.enemy) { const ea = Math.min(1, z.t); pg.fillStyle(z.el === 'nuc' ? 0x2f5a22 : 0x4a0a30, (z.el === 'nuc' ? 0.35 : 0.4) * ea).fillEllipse(z.x, z.y, z.r * 2, z.r * 1.2); pg.lineStyle(1, z.el === 'nuc' ? 0x6ad040 : 0xd02060, 0.7 * ea).strokeEllipse(z.x, z.y, z.r * 2, z.r * 1.2); } /* 敌方地面区域：毒池绿、骨法师火圈按元素色 */ const n = Math.max(10, z.r * 1.5 | 0); pg.fillStyle(c, z.vortex ? 0.8 : 0.45); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (z.vortex ? t * 6 : 0), rr = z.r * (z.vortex ? 0.4 + 0.6 * ((i * 7) % 5) / 5 : (0.5 + 0.5 * Math.abs(Math.sin(i * 1.7 + t * 3)))); pg.fillRect(z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr * 0.6, 1, 1); } }
     for (const W_ of STATS.weapons) if (W_ && W_.form === 'aura') { const c = hex(ELEM_C[W_.el]); const n = 28; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.8; pg.fillStyle(c, 0.25 + 0.25 * Math.sin(i + t * 4)); pg.fillRect(player.x + Math.cos(a) * W_.rng, player.y - 2 + Math.sin(a) * W_.rng * 0.6, 1, 1); } }
     // 特效线与环
     const fg = this.fxG; fg.clear();
