@@ -227,7 +227,8 @@ function mkBtn(sc, parent, x, y, w, h, label, onClick, o = {}) {
   let lx = o.labelX ?? w / 2;
   if (o.icon) { const ic = img(sc, o.iconX ?? 4, Math.round((h - sc.textures.get(o.icon).getSourceImage().height) / 2), o.icon, c); if (o.iconScale) ic.setScale(o.iconScale); lx = o.labelX ?? (w / 2 + 6); }
   const lab = T(sc, lx, Math.round(h / 2), label, { size: o.size || 12, color: o.color || (style === 'w' ? '#2a1306' : COL.text), shadow: style !== 'w', align: o.labelX !== undefined ? 'left' : 'center', valign: 'middle', parent: c });
-  const zone = sc.add.zone(0, 0, w, h).setOrigin(0).setInteractive(); c.add(zone);
+  const pw = MOBILE ? Math.max(0, (TOUCH - w) / 2) : 0, ph = MOBILE ? Math.max(0, (TOUCH - h) / 2) : 0; // 手机：点击区至少 TOUCH 见方
+  const zone = sc.add.zone(-pw, -ph, w + pw * 2, h + ph * 2).setOrigin(0).setInteractive(); c.add(zone);
   c.disabled = !!o.disabled;
   const labCol = hex(o.color || (style === 'w' ? '#2a1306' : COL.text));
   c.setDisabled = d => { if (c.disabled === d && c.inited) return; c.inited = true; c.disabled = d; bg.setVisible(!d); bgd.setVisible(d); bgh.setVisible(false); lab.setTint(d ? hex(COL.faint) : labCol); };
@@ -273,8 +274,21 @@ function mkCell(sc, parent, x, y, it, o = {}) {
   const zone = sc.add.zone(0, 0, s, s).setOrigin(0).setInteractive(); c.add(zone);
   zone.on('pointerover', () => { hl.setFillStyle(0xffffff, 0.12); if (o.onHover) o.onHover(it); else if (it) showTip({ item: it }); else if (o.tip) showTip(o.tip); });
   zone.on('pointerout', () => { hl.setFillStyle(0xffffff, 0); if (o.onOut) o.onOut(it); else hideTip(); });
-  zone.on('pointerup', () => { if (o.onClick) { sfx('click'); o.onClick(it); } });
+  if (o.onDown) zone.on('pointerdown', p => o.onDown(it, p));
+  if (MOBILE && it) longPress(sc, zone, () => o.onLong ? o.onLong(it) : sc.showDetail && sc.showDetail(it, o.host));
+  zone.on('pointerup', () => { if (MOBILE && sc.lpFired) { sc.lpFired = false; return; } if (o.onClick) { sfx('click'); o.onClick(it); } });
   return c;
+}
+// 手机长按：按住 450ms 不动触发；触发后吞掉这次松手的点击
+function longPress(sc, zone, fn) {
+  zone.on('pointerdown', p => { sc.lpFired = false; clearTimeout(sc.lpT); const x = p.x, y = p.y;
+    sc.lpT = setTimeout(() => { sc.lpT = null; if (p.isDown && Math.hypot(p.x - x, p.y - y) < 10 && zone.scene && !(sc.drag && sc.drag.moved)) { sc.lpFired = true; hideTip(); fn(); } }, 450); });
+  zone.on('pointerout', () => { clearTimeout(sc.lpT); sc.lpT = null; });
+}
+function affDetail(x) {
+  const a = AFF_BY[x.k], v = (a.tiers[x.t] || [])[0] || [], n = a.tiers.length, rg = a.pair ? `${v[0]}–${v[1]} 到 ${v[2]}–${v[3]}` : v.join(' – ');
+  G.ui && G.ui.showLines && G.ui.showLines([{ t: affName(a), c: COL.emberHi }, { t: `${tierLabel(x)} · 第 ${x.t + 1} 档（共 ${n} 档）· ${a.type === 'P' ? '前缀' : '后缀'}`, s: 8, c: COL.dim }, { t: affText(x), c: '#efe2b6' },
+    ...(v.length ? [{ t: `本档数值范围：${rg}`, s: 8 }] : []), { t: `碎片 ${shardN(x.k)} 个`, s: 8, c: COL.faint }]);
 }
 function isUpgrade(it) {
   const slot = slotsFor(it)[0]; if (!slot) return false; const eq = S.equip[slot]; if (eq === it || Object.values(S.equip).includes(it)) return false;
@@ -397,7 +411,7 @@ function drawVignette(x) {
 }
 
 /* ---------- 光照（低分辨率 + 抖动） ---------- */
-const LW = Math.ceil(W / 2), LHt = Math.ceil(H / 2); // 半分辨率光照图，盖住整个屏幕
+const LW = Math.ceil((MOBILE ? Math.max(W, VW) : W) / 2), LHt = Math.ceil(H / 2); // 半分辨率光照图，盖住整个屏幕
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + .5) / 16);
 let lightImg = null;
 function renderLight(lctx, lights, ambient, fog) {

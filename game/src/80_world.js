@@ -83,10 +83,20 @@ class World extends Phaser.Scene {
     const dt = Math.min(0.05, delta / 1000); G.time += dt; this.dt = dt;
     if (G.time >= (this.stopUntil || 0)) logic(dt); // 顿帧：世界停几十毫秒，画面照常
     if (!RUN) camSnap();
+    if (MOBILE && this.mobileView()) {} else {
     this.cx = Math.round(CAM.x + VW / 2 - W / 2); this.cy = Math.round(CAM.y + VIEW_CY - SCR_CY); this.cameras.main.centerOn(this.cx + W / 2, this.cy + H / 2); // 相机跟着角色，按整像素对齐
+    }
 
     this.consume();
     this.render(dt);
+  }
+  // 手机「全景」：把整条 480 宽的战斗视野缩放进竖屏（上下留黑边）；「跟随」= 270 宽的跟随视野。只改相机，不碰玩法
+  mobileView() {
+    const pano = S.settings.view === 'pano', k = pano ? W / VW : 1;
+    if (this.vk !== k) { this.vk = k; this.cameras.main.setZoom(Z * k); }
+    if (!pano) return false;
+    this.cx = Math.round(CAM.x); this.cy = Math.round(CAM.y + VIEW_CY - SCR_CY / k); this.cameras.main.centerOn(this.cx + VW / 2, this.cy + H / k / 2);
+    return true;
   }
   // 处理战斗逻辑产生的表现事件
   consume() {
@@ -142,8 +152,8 @@ class World extends Phaser.Scene {
       } else { drawCamp(this.roomTex.getContext(), open); this.roomTex.refresh(); this.clearChunks(); }
       this.roomL = key;
     }
-    this.roomImg.setVisible(!RUN); this.floorTS.forEach(im => im.setVisible(!!RUN)); this.vig.setVisible(!!RUN).setPosition(this.cx, this.cy); // 跟相机走（缩放相机下 scrollFactor 0 会错位） this.glows.forEach(gl => gl.setVisible(!RUN));
-    const cx = this.cx, cy = this.cy, decoL = RUN ? this.syncChunks(L, cx, cy) : []; // 视野附近的蜡烛、火盆（世界坐标）
+    this.roomImg.setVisible(!RUN); this.floorTS.forEach(im => im.setVisible(!!RUN)); this.vig.setVisible(!!RUN).setPosition(this.cx, this.cy); if (MOBILE) this.vig.setScale(1 / (this.vk || 1)); // 跟相机走（缩放相机下 scrollFactor 0 会错位） this.glows.forEach(gl => gl.setVisible(!RUN));
+    const pano = MOBILE && this.vk !== 1, cx = pano ? Math.round(CAM.x) : this.cx, cy = pano ? Math.round(CAM.y) : this.cy, decoL = RUN ? this.syncChunks(L, cx, cy, pano ? VW : W, pano ? VH : H) : []; // 视野附近的蜡烛、火盆（世界坐标）
     if (RUN) { const fx0 = Math.floor(cx / FLOOR_TW) * FLOOR_TW, fy0 = Math.floor(cy / FLOOR_TH) * FLOOR_TH; this.floorTS.forEach((im, k) => im.setPosition(fx0 + (k % 3) * FLOOR_TW, fy0 + (k / 3 | 0) * FLOOR_TH)); }
     const SC = RUN ? [] : SCONCES;
     const t = G.time; this.frame++;
@@ -213,7 +223,7 @@ class World extends Phaser.Scene {
     this.rings = this.rings.filter(r => r.life > 0);
     if (RUN) { // 屏幕外的 Boss、稀有掉落：屏幕边上画个小箭头指过去
       const tg = mobs.filter(m => m.boss && !m.dead).map(m => [m, 0xff5a4a]).concat(drops.filter(d => (d.kind === 'item' && d.item.rar >= 2) || d.kind === 'map' || d.kind === 'glyph').map(d => [d, hex(d.item ? icol(d.item) : '#ffd36a')]));
-      for (const [o, c] of tg) { if (!offView(o, -4)) continue; this.edgeArrow(fg, o.x, o.y - 6, c, t); }
+      for (const [o, c] of tg) { if (!offView(o, -4) || (MOBILE && this.vk !== 1)) continue; this.edgeArrow(fg, o.x, o.y - 6, c, t); }
     }
     // 光照：每个光源有颜色；WebGL 下画进彩色光照图，否则沿用旧的暗部遮罩
     const fl = 1 + Math.sin(t * 9) * .04 + Math.sin(t * 23) * .03;
@@ -251,13 +261,13 @@ class World extends Phaser.Scene {
     g.fillStyle(c, 0.7 + 0.3 * Math.sin(t * 8)).fillTriangle(px + ux * 5 * b, py + uy * 5 * b, px - uy * 3 - ux * 2, py + ux * 3 - uy * 2, px + uy * 3 - ux * 2, py - ux * 3 - uy * 2);
   }
   // 无限地面的装饰区块：视野周围的区块按（层, 区块坐标）定随机种子生成，离开视野就回收
-  syncChunks(L, cx, cy) {
-    const i0 = Math.floor((cx - 8) / CHUNK), i1 = Math.floor((cx + W + 8) / CHUNK), j0 = Math.floor((cy - 8) / CHUNK), j1 = Math.floor((cy + H + 8) / CHUNK), want = new Set(), out = [];
+  syncChunks(L, cx, cy, w = W, h = H) {
+    const i0 = Math.floor((cx - 8) / CHUNK), i1 = Math.floor((cx + w + 8) / CHUNK), j0 = Math.floor((cy - 8) / CHUNK), j1 = Math.floor((cy + h + 8) / CHUNK), want = new Set(), out = [];
     for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
       const key = L + ':' + i + ':' + j; want.add(key); let c = this.chunks.get(key);
       if (!c) { const tk = 'chunk_' + (this.chunkN++), cv = newCanvas(CHUNK, CHUNK); const ls = drawChunkDecor(cv.getContext('2d'), this.theme || themeFor(L), (Math.imul(i, 73856093) ^ Math.imul(j, 19349663) ^ Math.imul(L, 83492791)) >>> 0); this.textures.addCanvas(tk, cv);
         c = { tk, img: this.add.image(i * CHUNK, j * CHUNK, tk).setOrigin(0).setDepth(0.5), lights: ls.map(l => ({ ...l, x: l.x + i * CHUNK, y: l.y + j * CHUNK })) }; this.chunks.set(key, c); }
-      for (const l of c.lights) if (l.x > cx - 40 && l.x < cx + W + 40 && l.y > cy - 40 && l.y < cy + H + 40) out.push(l);
+      for (const l of c.lights) if (l.x > cx - 40 && l.x < cx + w + 40 && l.y > cy - 40 && l.y < cy + h + 40) out.push(l);
     }
     for (const [key, c] of this.chunks) if (!want.has(key)) { c.img.destroy(); this.textures.remove(c.tk); this.chunks.delete(key); }
     return out;

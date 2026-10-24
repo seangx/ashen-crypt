@@ -18,3 +18,5 @@ const COL = { ink: '#0d0a12', text: '#e9e0c9', dim: '#9b90a8', faint: '#6a5f7a',
 const G = { fx: true, time: 0, world: null, ui: null };
 const FONT_DATA = /*FONT_DATA*/null;
 
+
+const TOUCH = 30; // 手机最小点击区（逻辑像素；390 宽屏上约 43 像素）
