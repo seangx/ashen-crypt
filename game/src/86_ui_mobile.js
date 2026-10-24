@@ -168,7 +168,7 @@ class MobileUI extends UI {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) return;
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
-    const id = this.winId, native = ['settings', 'more'].includes(id);
+    const id = this.winId, native = ['settings', 'more', 'ladder'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
     const y = native ? MTOP + 8 : Math.round(clamp((H - NAV_H - h) / 2, MTOP + 12, H)), c = this.add.container(this.panMax ? 4 - this.pan : Math.round((W - w) / 2), y).setDepth(100); this.winC = c; c.w = w;
@@ -204,6 +204,38 @@ class MobileUI extends UI {
     mkBtn(this, c, w - 70, y + 7, 26, 22, '<', () => { if (S.depth > 1 && !RUN) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { disabled: RUN || S.depth <= 1 });
     mkBtn(this, c, w - 42, y + 7, 26, 22, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { disabled: RUN || S.depth >= S.maxDepth }); y += 50;
     TW(this, 12, y, '只有一个操作：移动。武器自动攻击最近的敌人，没有冲刺和主动技能。', w - 24, { size: 8, color: COL.faint, parent: c });
+  }
+  /* 天梯：竖屏原生（段位 → 选层和挑战 → 各元素最好 → 最近记录） */
+  win_ladder(c, w, h) {
+    const L = S.ladder, ti = ladderTier(L.best), tier = LADDER_TIERS[ti], nx = LADDER_TIERS[ti + 1];
+    ladPick = clamp(ladPick, 1, L.unlocked);
+    T(this, 12, 16, tier ? tier.n : '未定段位', { color: tier ? tier.c : COL.dim, scale: 2, parent: c });
+    T(this, w - 12, 18, nx ? `下一段位 ${nx.n}：${nx.at} 层` : '已是最高段位', { size: 8, color: COL.dim, align: 'right', parent: c });
+    T(this, w - 12, 30, L.best ? `最高 ${L.best} 层 · ${mmss(L.bestTime)}` : '还没有通过任何一层', { size: 8, align: 'right', parent: c });
+    T(this, 12, 46, `已解锁到第 ${L.unlocked} 层`, { size: 8, color: COL.good, parent: c });
+    let y = 60;
+    mkBtn(this, c, 12, y, 30, 24, '<', () => { ladPick = Math.max(1, ladPick - 1); this.refresh(); }, { disabled: ladPick <= 1 });
+    T(this, 82, y + 12, `第 ${ladPick} 层`, { align: 'center', valign: 'middle', color: COL.emberHi, parent: c });
+    mkBtn(this, c, 122, y, 30, 24, '>', () => { ladPick = Math.min(L.unlocked, ladPick + 1); this.refresh(); }, { disabled: ladPick >= L.unlocked });
+    mkBtn(this, c, 158, y, 50, 24, '最高', () => { ladPick = L.unlocked; this.refresh(); }, { size: 8, disabled: ladPick >= L.unlocked });
+    mkBtn(this, c, 212, y, w - 224, 24, L.chain ? '连打开' : '连打关', () => { L.chain = !L.chain; save(); this.refresh(); }, { size: 8, style: L.chain ? 's' : 'n' });
+    y += 30; const busy = ladderBusy(), queued = LAD.pending;
+    mkBtn(this, c, 12, y, w - 24, 28, busy ? '进行中' : queued ? '已排队（这局打完后开始）' : RUN ? '挑战（这局打完后开始）' : '挑战', () => { ladderChallenge(ladPick); this.refresh(); }, { style: 'w', disabled: !!(busy || queued) });
+    y += 36; const R = LD.run, J = LD.jumps.list;
+    const d = TW(this, 12, y, `怪物等级 = 层数。攒满 ${ladderNeed(ladPick)} 点出守关 Boss，限时 ${mmss(R.timeLimit)}；剩 ${J[0][0]} 秒以上跳 ${J[0][1]} 层，${J[1][0]} 秒以上跳 ${J[1][1]} 层。墓图和命盘不生效。`, w - 24, { size: 8, color: COL.dim, parent: c });
+    y += d.h + 8; rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 6;
+    T(this, 12, y, '各元素最好', { size: 8, color: COL.emberHi, parent: c }); y += 12;
+    const be = ladderBestByElem(), cw = Math.floor((w - 24) / 2);
+    ELEM.forEach((e, i) => { const r = be[e], x = 12 + (i % 2) * cw, yy = y + (i / 2 | 0) * 12; T(this, x, yy, ELEM_N[e], { size: 8, color: ELEM_C[e], parent: c }); T(this, x + 30, yy, r ? `${r.lvl} 层 ${mmss(r.time)}` : '—', { size: 8, color: r ? COL.text : COL.faint, parent: c }); });
+    y += Math.ceil(ELEM.length / 2) * 12 + 6; rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 6;
+    T(this, 12, y, `最近记录（共 ${L.records.length} 条）`, { size: 8, color: COL.emberHi, parent: c }); y += 12;
+    if (!L.records.length) T(this, 12, y, '通过一层后会记下用时和当时的配装', { size: 8, color: COL.faint, parent: c });
+    const nm = q => q.u ? UNIQUE_BY[q.u].n : baseOf({ kind: q.slot === 'wl' || q.slot === 'wr' ? 'weapon' : q.slot, b: q.b }).n;
+    L.records.slice(0, Math.max(0, Math.floor((h - y - 6) / 11))).forEach((r, i) => {
+      const wp = r.build.equip.find(q => q.slot === 'wl') || r.build.equip[0], tc = LADDER_TIERS[ladderTier(r.lvl)];
+      T(this, 12, y + i * 11, `${r.lvl} 层 · ${mmss(r.time)} · +${r.jump}`, { size: 8, color: tc ? tc.c : COL.text, parent: c });
+      T(this, w - 12, y + i * 11, `${r.date.slice(5, 10)} ${ELEM_N[r.build.elem]} ${wp ? nm(wp) : ''}`, { size: 8, color: COL.faint, align: 'right', parent: c });
+    });
   }
   /* 菜单：底部导航放不下的页面 */
   win_more(c, w, h) {
