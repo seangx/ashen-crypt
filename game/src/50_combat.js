@@ -285,6 +285,12 @@ function vortexState() {
   return full ? 1 : any ? 0.5 : 0;
 }
 const vortexMove = () => { const v = vortexState(); return v === 1 ? 1 + UQX.vortex.moveFull / 100 : v === 0 ? 1 - UQX.vortex.moveNone / 100 : 1; };
+// 受击反馈：最多每 0.4 秒一次，强度按这一下占最大生命的比例（以前每一下都把生命球刷白、角色闪白，怪多时一直闪）
+function hurtFeedback(d) {
+  if (G.time - (player.fbT0 || -9) < 0.4) return;
+  player.fbT0 = G.time; player.fb = Math.min(1, 0.3 + d / STATS.life * 5); player.fbT = 0.2; sfx('hurt');
+  if (G.world && d > STATS.life * 0.08) G.world.shake(60, 0.002 + 0.002 * player.fb);
+}
 function hurtPlayer(d, el) {
   if (!RUN || RUN.ending || player.dashT > 0 || player.hurtT > 0) return;
   if (rnd() * 100 < STATS.dodge) {
@@ -303,7 +309,7 @@ function hurtPlayer(d, el) {
   d *= 1 - Math.max(0, ...STATS.weapons.map((W, i) => W && W.whirl ? Math.min(WH.drCap, WH.drPerStack * player.spin[i].n) : 0)) / 100; // 旋身：每层当前旋转减伤，有上限
   if (player.shield > 0) { const a = Math.min(player.shield, d); player.shield -= a; d -= a; fx({ t: 'shield', x: player.x, y: player.y }); }
   if (d > 0 && FL.absorb) player.shield = Math.min(STATS.shield, player.shield + d * RL.absorb.pct / 100); // 圣盾：扣到生命的一部分转成护盾
-  if (d > 0) { player.life -= d; player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); sfx('hurt'); if (G.world && d > STATS.life * 0.08) G.world.shake(70, 0.003); }
+  if (d > 0) { player.life -= d; player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); hurtFeedback(d); }
   // 荆棘甲：受击时伤害周围
   for (const W of STATS.weapons) if (W && W.form === 'reflect') { fx({ t: 'ring', x: player.x, y: player.y - 4, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); }
   if (player.life <= 0) { player.life = 0; RUN.result = 'dead'; RUN.ending = 1.6; S.stats.deaths++; sfx('out'); if (G.ui) G.ui.banner('灯火熄灭'); }
@@ -535,6 +541,7 @@ function logic(dt) {
   player.dash = Math.min(P.dashMax, player.dash + P.dashRegen * dt);
   if (player.adT > 0) player.adT -= dt;
   if (player.hurtT > 0) player.hurtT -= dt;
+  if (player.fbT > 0) player.fbT -= dt;
   if (player.guardT > 0) player.guardT -= dt;
   player.shield = Math.min(P.shield, player.shield + P.shieldRegen * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
   player.swing = player.swing.map(v => Math.max(0, v - dt));

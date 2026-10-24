@@ -162,7 +162,7 @@ class World extends Phaser.Scene {
     }
     // 旋风斩转身：正 → 侧 → 背 → 另一侧，一圈 4 帧；身后拖两个旧帧的淡残影
     const SPIN = [['doll_0', false], ['doll_v1', false], ['doll_v2', false], ['doll_v1', true]], ph = this.spinRate ? (this.spinPh = (this.spinPh || 0) + dt * this.spinRate * 4) : 0;
-    const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.hurtT > 0.15 ? 'doll_fl_' : 'doll_') + fr;
+    const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.fbT > 0.12 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
     if (player.chill > 0) this.hero.setTint(0xb8e6ff); else if (this.hero.isTinted) this.hero.clearTint(); // 角色被冰缓
     this.hero.setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(ySort(player.y)).setAlpha(player.dashT > 0 ? 0.5 : 1);

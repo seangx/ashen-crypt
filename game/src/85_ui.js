@@ -233,7 +233,10 @@ class UI extends Phaser.Scene {
   updateHud() {
     const P = STATS;
     const hf = clamp(player.life / P.life, 0, 1), df = P.shield > 0 ? clamp(player.shield / P.shield, 0, 1) : 0;
-    this.drawOrb(this.hpOrb, hf, player.hurtT > 0 ? 0xffffff : 0xb52a2a, 0xff7a6a, 0x6a1418, df, 0xbfe0ff); // 红色生命，球边白蓝色护盾
+    const fk = player.fbT > 0 ? player.fb * player.fbT / 0.2 : 0, mix = (a, b) => { const c = s => Math.round(((a >> s) & 255) + (((b >> s) & 255) - ((a >> s) & 255)) * fk * 0.6) << s; return c(16) | c(8) | c(0); };
+    this.drawOrb(this.hpOrb, hf, fk ? mix(0xb52a2a, 0xff9a8a) : 0xb52a2a, 0xff7a6a, 0x6a1418, df, 0xbfe0ff); // 红色生命，球边白蓝色护盾；受击时稍微变亮（不再整球刷白）
+    if (!this.vigG) this.vigG = this.add.graphics().setDepth(9); const vg = this.vigG; vg.clear(); // 受击：屏幕四边一圈淡红暗角，按伤害强度、0.2 秒淡出
+    if (fk > 0) for (let i = 0; i < 6; i++) { vg.fillStyle(0xa01010, fk * 0.22 * (1 - i / 6)); vg.fillRect(0, TOP_H + i * 2, W, 2); vg.fillRect(0, BOT_Y - 2 - i * 2, W, 2); vg.fillRect(i * 2, TOP_H, 2, BOT_Y - TOP_H); vg.fillRect(W - 2 - i * 2, TOP_H, 2, BOT_Y - TOP_H); }
     const sf = clamp(player.soul / P.soulMax, 0, 1), lad = RUN && RUN.mode === 'ladder', blink = RUN && !lad && sf < SOUL.lowWarn && (G.time * 4 | 0) % 2; // 推关里灯火低于 lowWarn 时闪
     this.drawOrb(this.soulOrb, sf, player.soul <= 0 ? 0x5a4a7a : blink ? 0xd8a040 : 0x7a55d0, blink ? 0xffe08a : 0xc9b0ff, 0x3a2470, 0, 0);
     const ht = String(Math.ceil(player.life)); if (this.hpT.text !== ht) this.hpT.setText(ht);
