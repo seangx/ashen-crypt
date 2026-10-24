@@ -85,7 +85,7 @@ async function run(build, IL) {
     const st = A.STATS;
     const info = { dps: Math.round(spinDps(st)), ehp: Math.round(ehpOf(st)), panel: Math.round(st.dps), stack: (st.weapons.find(x => x && x.whirl) || {}).stackMax || 0, sparkN: (st.weapons.find(x => x && x.spark) || {}).sparkN || 0, res: Math.round(Object.values(st.res).reduce((a, b) => a + b, 0) / 5),
       eq: ['wl', 'wr', 'shield', 'core', 'engine', 'hub'].map(k => S.equip[k] ? (S.equip[k].u || S.equip[k].b) : '-').join(' '),
-      runes: (S.equip.wl.mods || []).filter(Boolean).map(m => m.mid).join(','), heart: S.tree.includes(BP.treeKey) };
+      runes: (S.equip.wl.mods || []).filter(Boolean).map(m => m.mid).join(','), heart: S.tree.includes(BP.treeKey) ? (A.TREE.nodes[BP.treeKey] || {}).n || BP.treeKey : '' };
     // 天梯连打
     S.auto.ai = true; S.auto.loop = false; A.mouse.on = false;
     const dt = 1 / 30; let N = 1, best = 0, tries = 0, last = '';
@@ -125,7 +125,7 @@ const mm = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
   for (const build of opt.builds) for (const IL of opt.levels) {
     const r = await run(build, IL); (res[build] = res[build] || {})[IL] = r;
     if (opt.dump && r.snap) { fs.writeFileSync(path.resolve(opt.dump), r.snap); console.log('存档写到 ' + opt.dump); opt.dump = null; }
-    console.log(`${build.padEnd(6)} 物品等级 ${String(IL).padStart(3)}：秒伤 ${String(r.info.dps).padStart(9)}（面板 ${String(r.info.panel).padStart(8)}${r.info.stack ? '，满 ' + r.info.stack + ' 层' : ''}${r.info.sparkN ? '，每串 ' + r.info.sparkN + ' 颗游雷' : ''}）  有效生命 ${String(r.info.ehp).padStart(6)}  平均抗性 ${String(r.info.res).padStart(3)}%  天梯 ${String(r.best).padStart(3)} 层（止于 ${r.last}）  单趟 ${{ lampout: '灯灭', retreat: '撤回', dead: '阵亡', win: '到底', timeout: '超时' }[r.descent.res] || r.descent.res} ${mm(r.descent.t)} 过 ${r.descent.floors} 层${r.info.heart ? (build === 'spark' ? ' 织雷之心' : ' 旋风之心') : ''} | ${r.info.eq} | 符文 ${r.info.runes}`);
+    console.log(`${build.padEnd(6)} 物品等级 ${String(IL).padStart(3)}：秒伤 ${String(r.info.dps).padStart(9)}（面板 ${String(r.info.panel).padStart(8)}${r.info.stack ? '，满 ' + r.info.stack + ' 层' : ''}${r.info.sparkN ? '，每串 ' + r.info.sparkN + ' 颗游雷' : ''}）  有效生命 ${String(r.info.ehp).padStart(6)}  平均抗性 ${String(r.info.res).padStart(3)}%  天梯 ${String(r.best).padStart(3)} 层（止于 ${r.last}）  单趟 ${{ lampout: '灯灭', retreat: '撤回', dead: '阵亡', win: '到底', timeout: '超时' }[r.descent.res] || r.descent.res} ${mm(r.descent.t)} 过 ${r.descent.floors} 层${r.info.heart ? ' ' + r.info.heart : ''} | ${r.info.eq} | 符文 ${r.info.runes}`);
   }
   if (opt.builds.length >= 2) {
     const [a, b] = opt.builds; console.log(`\n${a} / ${b}：`);

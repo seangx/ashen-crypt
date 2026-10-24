@@ -28,6 +28,7 @@
   "back": 0.7,
   "lightRetreat": 0.15
  },
+ "meteor": {"_说明": "陨火（坠星杖）：保持距离。最近的怪群离得比 keepDist 远就往怪最密的地方靠到 keepDist；closeR 像素内贴身的怪达到 retreatAt 只就按风筝模式后撤再砸（spec-bd-gear §4.1）", "keepDist": 110, "retreatAt": 3, "closeR": 16, "denseR": 40},
  "nova": {"_说明": "霜环（插了霜环符文的霜钟 / 圣钟）：近战打法，和旋风斩一样用上面 melee 的参数，冲进最密的怪堆放环（spec-bd-gear §4.4）", "melee": 1},
  "takeover": {
   "_说明": "在场地上移动鼠标（累计超过 moveThreshold 像素）或触摸就切到手动，idleResume 秒没有操作后回到自动。manualLootXpMul：手动操作期间击杀的经验和掉落几率倍数（1 = 不变）",

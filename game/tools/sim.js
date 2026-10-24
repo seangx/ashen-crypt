@@ -18,7 +18,7 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const ROOT = path.resolve(__dirname, '..');
 const opt = { runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', 'auto'), tree: arg('tree', 'none'), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), json: arg('json', null), maxT: +arg('maxT', 3600), minutes: +arg('minutes', 0), ladderArg: arg('ladder', ''), craft: arg('craft', 'none'), build: arg('build', 'none'), lock: process.argv.includes('--lock') };
 // 天梯：every:K = 每 K 趟推关排一次；every:10m = 每 10 分钟游戏时间排一次（每次最多连打 ladderCap 局）。--build whirl/random 默认 every:10m
-{ const la = opt.ladderArg || (['whirl', 'random', 'spark', 'nova'].includes(opt.build) ? 'every:10m' : ''), v = (la.split(':')[1] || '');
+{ const la = opt.ladderArg || (['whirl', 'random', 'spark', 'nova', 'meteor'].includes(opt.build) ? 'every:10m' : ''), v = (la.split(':')[1] || '');
   opt.ladder = /m$/.test(v) ? 0 : +v || 0; opt.ladderMin = /m$/.test(v) ? parseFloat(v) : 0; opt.ladderCap = +arg('ladderCap', 3); }
 
 // --seeds 1,2,3：每个种子跑一遍（并行的子进程），打印各自的汇总和中位数

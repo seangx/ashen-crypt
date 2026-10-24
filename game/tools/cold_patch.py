@@ -22,6 +22,12 @@ def patch(out):
     b = copy.deepcopy(sec['PlasmaNova']); b.pop('ail_pla', None)
     b.update({'req': 6, 'w': 800, 'el': 'cold', 'ail_cold': 0.5, 'tags': b['tags'] + ['Nova']})
     sec['FrostBell'] = b
+    # 陨火（§4.1）：坠星杖 = 圣钟 min / max ×1.5，aps 0.5，crit 6，range 600，aoe 260，ail_exp 0.25，el exp
+    b = copy.deepcopy(sec['PlasmaNova']); b.pop('ail_pla', None)
+    b.update({'req': 6, 'w': 800, 'el': 'exp', 'aps': 0.5, 'crit': 6, 'range': 600, 'aoe': 260, 'ail_exp': 0.25,
+              'tags': ['Weapon', 'Hit', 'Attack', 'AttackSpeed', 'AoE', 'Delayed', 'Range'],
+              'min': [round(x * 1.5) for x in b['min']], 'max': [round(x * 1.5) for x in b['max']]})
+    sec['StarfallRod'] = b
     return gear(out)
 
 # 词条改版（spec-bd-gear.md §3.1、§3.4）：六元素抗性 / 抗性上限只出在法阵和盾牌；空词条权重归零（老存档按 mechanics.gear.migrate 映射）

@@ -23,6 +23,16 @@ function autoAnchorStep(dt) {
   if (l > 1e-6) { const k = Math.min(l, d * dt) / l; AUTO.anchor.x += dx * k; AUTO.anchor.y += dy * k; }
 }
 // 走位：怪、敌方弹、毒池、墙都往外推，再加一点绕圈；附近没有怪就去捡东西
+function meteorTarget() { // 陨火（auto.json meteor）：贴身的怪 ≥ retreatAt 只就交给风筝；否则离怪群比 keepDist 远就靠过去，停在 keepDist
+  const MW = STATS.weapons.find(w => w && w.form === 'meteor'); if (!MW) return null;
+  const K = AU.meteor, keep = Math.min(K.keepDist, MW.rng * 0.85), P = player, live = mobs.filter(m => !m.dead && m.rise <= 0.2); if (!live.length) return null;
+  let close = 0, near = 1e9; for (const m of live) { const d = Math.sqrt(dist2(m, P)) - m.size; near = Math.min(near, d); if (d < K.closeR) close++; }
+  if (close >= K.retreatAt || near < keep * 0.6) return null;
+  let best = live[0], bn = -1; for (const a of live) { let c = 0; for (const b of live) if (dist2(a, b) < K.denseR * K.denseR) c++; if (c > bn) { bn = c; best = a; } }
+  const dx = P.x - best.x, dy = P.y - best.y, d = Math.hypot(dx, dy) || 1;
+  if (d <= keep) return null;
+  const B = autoBox(); return { x: clamp(best.x + dx / d * keep, B.x0, B.x1), y: clamp(best.y + dy / d * keep, B.y0, B.y1), near };
+}
 function autoTarget() {
   const P = player, K = AU.steer;
   let fx = 0, fy = 0, near = 1e9;
@@ -94,6 +104,7 @@ function autoStep(dt) {
   }
   const mt = MW ? meleeTarget(MW) : null;
   if (mt) return mt; // 近战贴身时不靠冲刺躲
+  const mtg = MW ? null : meteorTarget(); if (mtg) return mtg; // 陨火：保持距离，往怪最密的地方靠
   const t = autoTarget();
   const K = AU.steer;
   // 近战流派不因为怪靠近就冲刺躲开，只在护甲低、后撤时冲

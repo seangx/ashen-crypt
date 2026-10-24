@@ -2,7 +2,7 @@
    战斗逻辑（与渲染分离；G.fx = false 时可无头模拟）
    ========================================================= */
 let RUN = null;
-let mobs = [], projs = [], drops = [], fxq = [], zones = [];
+let mobs = [], projs = [], drops = [], fxq = [], zones = [], meteors = []; // meteors：还没落地的陨石
 const mouse = { x: 240, y: 150, on: false, touch: false };
 const FIX = { x0: 10, x1: 470, y0: 62, y1: 226 }; // 营地（固定房间）的边界
 // 无限场地：相机跟着角色走。CAM = 视野左上角的世界坐标；F = 当前视野里的“场边”（左右各留 10，上面让开顶栏，下面让开底栏），弹射就在这里反弹
@@ -44,7 +44,7 @@ function startRun(L) {
 function nextFloor() {
   RUN.base++; RUN.L++; RUN.bossD = bossFor(RUN.L); RUN.descent.minHp = 1; RUN.prog = 0; RUN.boss = null; RUN.next = 0;
   RUN.need = Math.round(killNeed(RUN.base) * (1 + (RUN.mob.need || 0) / 100)); RUN.spawnT = PROG.run.spawnFirst;
-  mobs = []; projs = []; zones = []; drops = [];
+  mobs = []; projs = []; zones = []; drops = []; meteors = [];
   if (G.ui) G.ui.banner(`第 ${RUN.base} 层`, COL.emberHi);
 }
 // 阵亡：这一趟拾取的装备、符文、碎片每件按 soul.deathKeep 的几率保留
@@ -56,7 +56,7 @@ function deathLoss(r) {
   r.lost = lost;
 }
 function arenaReset() {
-  mobs = []; projs = []; drops = []; zones = [];
+  mobs = []; projs = []; drops = []; zones = []; meteors = [];
   player.x = 240; player.y = 150; player.vx = player.vy = 0; player.chill = 0; player.chillT = 0; player.wcd = [0, 0]; camSnap(); if (typeof AUTO !== 'undefined') AUTO.anchor = null;
   player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.swing = [0, 0]; player.devilT = 0; player.soul = STATS.soulMax; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
   resetPlayer();
@@ -378,6 +378,20 @@ function fire(W, i) {
       if (frost && RUN) player.soul = Math.min(STATS.soulMax, Math.max(0, player.soul - cost) + Math.min(NV.refundCap, ((RUN.freezes || 0) - f0) * NV.refund)); // 每冻结一只返还
       sfx('boom'); return true;
     }
+    case 'meteor': { // 坠星杖：选射程内敌人最多的点（按速度 × 延迟预判），预警后落地
+      const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
+      const cost = MT.soulPerCast * (1 - STATS.soulLess), rune = W.meteor && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost; // 灯火不够时放不带符文的陨石
+      const delay = (W.delay || MT.delay), R2 = W.aoeR * W.aoeR; let best = live[0], bn = -1;
+      for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < R2) c++; if (c > bn) { bn = c; best = a; } }
+      let cx = 0, cy = 0, vx = 0, vy = 0, k0 = 0; for (const b2 of live) if (dist2(best, b2) < R2) { cx += b2.x; cy += b2.y; vx += b2.vx || 0; vy += b2.vy || 0; k0++; }
+      cx = cx / k0 + vx / k0 * delay; cy = cy / k0 + vy / k0 * delay; // 预判：那群怪的平均速度 × 延迟
+      const sf = STATS.flag.starfall, n = attacks(W) * (sf ? MT.sfN : 1);
+      for (let k = 0; k < n; k++) {
+        const a = rf(0, Math.PI * 2), rr = sf || k ? Math.sqrt(Math.random()) * W.aoeR * (sf ? MT.sfSpread : 0.5) : 0, T = delay * (sf ? MT.sfDelay : 1) * (k && !sf ? 1 + 0.15 * k : 1);
+        meteors.push({ W, x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr, r: W.aoeR * (sf ? MT.sfAoe : 1), t: T, T, mul: (rune ? W.meteorMul : 1) * (sf ? MT.sfMul : 1), ground: rune ? W.ground : null });
+      }
+      return true;
+    }
     case 'mine': { // 陷阱：放在脚下，敌人靠近就触发
       if (!mobs.length) return false;
       const mines = projs.filter(p => p.mine && p.W === W);
@@ -584,7 +598,7 @@ function logic(dt) {
     if (player.wcd[i] <= 0) { if (fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
   });
   stepProjs(dt);
-  stepZones(dt);
+  stepZones(dt); stepMeteors(dt);
   if (player.chillT > 0) { player.chillT -= dt; if (player.chillT <= 0) player.chill = 0; }
   // 敌人
   for (const m of mobs) {
@@ -604,9 +618,10 @@ function logic(dt) {
     for (const a of m.after) { a.t -= dt; if (a.t <= 0 && a.n > 0) { a.n--; a.t = MECH.afterTick; damage(m, mitigate(m, 'exp', a.d), 'exp', false, true); a.d *= a.k || MECH.afterPct; fx({ t: 'ring', x: m.x, y: m.y - 4, r: 10, el: 'exp' }); } }
     m.after = m.after.filter(a => a.n > 0);
     if (m.dead) continue;
+    if (m.stunT > 0) { m.stunT -= dt; m.vx = m.vy = 0; m.x += m.kx * dt; m.y += m.ky * dt; const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd; continue; } // 陨石眩晕：同冻结，不能移动、攻击
     if (m.frzT > 0) { m.frzT -= dt; if (m.frzT <= 0) { m.frzT = 0; m.frzImm = MECH.freezeImmune; m.chill = 0; } m.vx = m.vy = 0; m.x += m.kx * dt; m.y += m.ky * dt; const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd; continue; } // 冻结：不能移动、攻击、重击
     // 行动
-    const bl = m.blindT > 0 ? 1 - m.blindK : 1;
+    const bl = (m.blindT > 0 ? 1 - m.blindK : 1) * (m.groundT > RUN.t ? 1 - MT.groundWeaken : 1); // 站在陨火火地里伤害总降
     const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy) || 1;
     m.face = dx >= 0 ? 1 : -1;
     let want = m.d.ai === 'ranged' ? (d > m.d.rng * 0.8 ? 1 : d < m.d.rng * 0.5 ? -1 : 0) : 1;
@@ -682,6 +697,22 @@ function bossAct(m, aim, bl) {
       break;
   }
 }
+function stepMeteors(dt) { // 陨石落地：圈内一次命中，击退 + 眩晕；插符文的留火地
+  for (const M of meteors) {
+    M.t -= dt; if (M.t > 0) continue;
+    fx({ t: 'boom', x: M.x, y: M.y, r: M.r, el: M.W.el }); fx({ t: 'slam', x: M.x, y: M.y, r: M.r }); sfx('boom');
+    const kb = MT.knockPx * Math.log(50); let kills = 0, hd = 0, hn = 0;
+    for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, M) < (M.r + m.size) ** 2) {
+      const d = hitMob(m, M.W, { mul: M.mul }); hd += d; hn++;
+      if (m.dead) { kills++; continue; }
+      const big = m.boss || m.elite; m.stunT = Math.max(m.stunT || 0, MT.stun * (big ? MT.stunBossMul : 1));
+      if (!m.boss) { const dx = m.x - M.x, dy = m.y - M.y, l = Math.hypot(dx, dy) || 1; m.kx += dx / l * kb; m.ky += dy / l * kb; }
+    }
+    if (RUN && kills >= MT.refundKills && M.ground) player.soul = Math.min(STATS.soulMax, player.soul + MT.soulRefund); // 一下杀 ≥3 只返还灯火
+    if (M.ground) zones.push({ W: M.W, x: M.x, y: M.y, r: M.r, t: M.ground.dur * (STATS.durMul || 1), tickT: M.ground.tick, tick: M.ground.tick, mul: M.mul * M.ground.pct, el: M.W.el, fire: 1 }); // 火地：每 tick = 这次命中的 pct
+  }
+  meteors = meteors.filter(M => M.t > 0);
+}
 function stepZones(dt) {
   for (const z of zones) {
     z.t -= dt; z.tick = (z.tick || 0) - dt;
@@ -692,7 +723,7 @@ function stepZones(dt) {
     }
     if (z.enemy) { if (z.tick <= 0) { z.tick = z.tickT || 0.5; if (dist2(player, z) < (z.r + 3) ** 2) hurtPlayer(z.dmg, z.el); } continue; }
     if (z.pull) for (const m of mobs) if (!m.dead && !m.boss && dist2(m, z) < (z.pullR || z.r * 1.6) ** 2) { const dx = z.x - m.x, dy = z.y - m.y, d = Math.hypot(dx, dy) || 1; m.x += dx / d * z.pull * dt; m.y += dy / d * z.pull * dt; }
-    if (z.tick <= 0) { z.tick = z.tickT || 0.2; let zh = false; for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, z) < (z.r + m.size) ** 2 && !(z.trail && m.trailT > RUN.t)) { const d = hitMob(m, z.W, { mul: z.mul || 1 }); if (z.devil && RUN.dmg) RUN.dmg.devil += d; zh = true; if (z.trail) m.trailT = RUN.t + 0.19; } } // 小旋风打中不回灯火
+    if (z.tick <= 0) { z.tick = z.tickT || 0.2; let zh = false; for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, z) < (z.r + m.size) ** 2 && !(z.trail && m.trailT > RUN.t)) { if (z.fire) m.groundT = RUN.t + z.tickT + 0.1; const d = hitMob(m, z.W, { mul: z.mul || 1 }); if (z.devil && RUN.dmg) RUN.dmg.devil += d; zh = true; if (z.trail) m.trailT = RUN.t + 0.19; } } // 小旋风打中不回灯火
   }
   zones = zones.filter(z => z.t > 0);
 }

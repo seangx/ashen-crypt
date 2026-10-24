@@ -156,6 +156,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.meleeInc) inc += fx.meleeInc;
     if (fx.meleeGuard) W.meleeGuard = 1;
     if (fx.spark && b.wander) { W.spark = 1; W.sparkN = fx.sparkN; W.sparkMul = fx.sparkMul; } // 游雷符文：只对会乱窜的投射物（雷灵）生效
+    if (fx.meteor && b.form === 'meteor') { W.meteor = 1; W.meteorMul = fx.meteorMul; W.delay = fx.delay; W.ground = fx.ground; } // 陨火符文：坠星杖
     if (fx.frostNova && b.form === 'nova') { W.frostNova = 1; W.novaMul = fx.novaMul; W.chillStacks = fx.chillStacks; } // 霜环符文：霜钟 / 圣钟
     if (fx.whirl && b.form === 'orbit') { W.whirl = 1; W.morePer = fx.spinMore || WH.morePer; } // 每层倍率随符文等级成长
     rangeInc += fx.rangeInc || 0; aoeInc += fx.aoeInc || 0; critInc += fx.critInc || 0; critDmg += fx.critDmg || 0; projSpd += fx.projSpd || 0; W.projDurInc += fx.projDur || 0; if (fx.projDurMore) W.projDurMore *= 1 + fx.projDurMore / 100; if (fx.projMore && has('Projectile')) W.more *= fx.projMore;
@@ -175,6 +176,7 @@ function weaponStats(it, P, isEngine) {
   // 独特装备的伤害转换
   const conv = (from, to, pct) => { if (!pct) return; const mn = W.min[from] * pct, mx = W.max[from] * pct; W.min[from] -= mn; W.max[from] -= mx; for (const e of to) { W.min[e] += mn / to.length; W.max[e] += mx / to.length; } };
   if (W.frostNova && b.el !== 'cold') { conv(b.el, ['cold'], 1); W.ail.cold += W.ail[b.el]; W.ail[b.el] = 0; W.el = 'cold'; } // 圣钟插霜环符文：元素改成寒霜
+  if (P.flag.starfall) { if (has('Delayed')) W.more *= MT.heartMore; else if (!isEngine) W.more *= MT.offhandMul; } // 星坠雨：【延迟】
   if (P.flag.shatter) { if (has('Nova') || W.frostNova) W.more *= NV.heartMore; else if (!isEngine) W.more *= NV.offhandMul; } // 碎冰：【新星】
   conv('kin', THERMAL_E, U('convKinThermal') / 100); conv('exp', ['nuc'], U('convExpNuc') / 100); conv('pla', ['nuc'], U('convPlaNuc') / 100);
   // 额外获得：按加成前总伤害的比例
@@ -209,7 +211,7 @@ function weaponStats(it, P, isEngine) {
   W.dps = b.aura ? W.auraDps : W.avg * critE * W.aps * (b.form === 'stab' ? 1 : n) * (b.pellets || 1);
   W.dps *= 1 + W.meleeRe;
   if (b.form === 'reflect') W.dps = 0;
-  W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : W.frostNova ? W.novaMul * (P.flag.shatter ? 1 + NV.estShatter : 1) : 1; // 霜环：符文倍数 × 碎冰估算 // 旋转满层时的伤害倍数（dps 不含）
+  W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : b.form === 'meteor' ? (W.meteor ? W.meteorMul * (1 + MT.estGround) : 1) * (P.flag.starfall ? MT.sfN * MT.sfMul : 1) : W.frostNova ? W.novaMul * (P.flag.shatter ? 1 + NV.estShatter : 1) : 1; // 霜环：符文倍数 × 碎冰估算 // 旋转满层时的伤害倍数（dps 不含）
   if (W.spark) { // 游雷：每颗的倍数（颗数 sparkN + 投射物 已在 dps 里）。穿透是无限的（有就穿过所有敌人），弹射 = 碰屏幕边反弹的次数
     W.pierce += SP.basePierce; const L = SP.life * W.sparkLifeMul, v = W.spd * SP.speedMul, pr = W.pierce > 0;
     const legs = Math.min(W.chain, Math.floor(L * v / SP.estLeg)); // 寿命内飞得到几次屏幕边（约 estLeg 像素一趟），再受弹射次数限制
