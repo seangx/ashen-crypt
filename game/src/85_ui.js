@@ -77,14 +77,14 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   return { c, h: cy };
 }
 const DASH_N = { step: '冲刺：纯位移', warp: '冲刺：瞬移到落点并炸开', trail: '冲刺：沿途留下火痕', burst: '冲刺结束：向四周炸开', storm: '冲刺结束：向附近敌人放连锁雷', vortex: '冲刺结束：留下吸住敌人的漩涡', nova: '冲刺：在起点爆炸' };
-const FORM_N = { proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人', reflect: '受到攻击时伤害周围敌人' };
+const FORM_N = { orb: '缓慢飞行的法球，沿途向四周放出碎片', meteor: '从天而降砸向敌人', proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人', reflect: '受到攻击时伤害周围敌人' };
 const r1 = v => Math.round(v * 10) / 10;
 // 底材行：按品质的固有数值
 function baseLines(it) {
   const b = baseOf(it), q = it.q, out = [], dim = '#b8afc4';
   if (it.kind === 'weapon' || it.kind === 'engine') {
     if (it.kind === 'engine') { out.push([DASH_N[b.dash], COL.cyan]); out.push([`移动推力 ${ENGINE_THRUST[q]}` + (b.thrustInc ? `，移动速度提高 ${qv(b.thrustInc, q)}%` : ''), dim]); }
-    else out.push([FORM_N[b.form], COL.dim]);
+    else if (FORM_N[b.form]) out.push([FORM_N[b.form], COL.dim]);
     if (b.min) { const [mn, mx] = weaponBase(b, q); out.push([`${ELEM_N[b.el]}伤害 ${fmt(mn)}–${fmt(mx)}${b.cont ? ' / 秒' : ''}`, ELEM_C[b.el]]); }
     if (b.aura) out.push([`每秒 ${qv(b.aura, q)} ${ELEM_N[b.el]}伤害`, ELEM_C[b.el]]);
     const p = [];
