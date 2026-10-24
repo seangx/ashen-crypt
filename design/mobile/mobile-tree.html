@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>灰烬地穴 · 天赋</title>
+<style>
+/* OD-LAYOUT-PRIMITIVES v1 — structure only */
+@layer od-layout {
+  [hidden]:not([hidden="until-found" i]) { display: none !important; }
+  dialog:not([open]) { display: none !important; }
+  :where(.od-stack,.od-row,.od-row-top,.od-cluster,.od-grid,.od-field,.od-stat,.od-cell,.od-tile) > :where(*) { min-width: 0; }
+  .od-stack { display: flex; flex-direction: column; gap: var(--od-gap, 8px); }
+  .od-row { display: flex; align-items: center; gap: var(--od-gap, 8px); }
+  .od-row-top { display: flex; align-items: flex-start; gap: var(--od-gap, 8px); }
+  .od-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--od-gap, 8px); }
+  .od-fill { flex: 1 1 0; min-width: 0; }
+  .od-fixed { flex: none; }
+  .od-grid { display: grid; gap: var(--od-gap, 12px); grid-template-columns: repeat(var(--od-cols, 3), minmax(0, 1fr)); }
+  .od-stat, .od-field, .od-cell { display: grid; gap: var(--od-gap, 2px); }
+  :where(.od-stat,.od-field,.od-cell) > :where(*) { display: block; }
+  .od-tile { display: grid; grid-template-rows: auto 1fr; }
+  :where(.od-tile) > :where(*) { display: block; }
+  .od-media { display: block; width: 100%; height: auto; aspect-ratio: var(--od-ratio, auto); }
+  .od-media-cover { object-fit: cover; }
+  .od-icon { display: inline-block; inline-size: var(--od-icon-size, 1em); block-size: var(--od-icon-size, 1em); flex: none; }
+  .od-truncate { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .od-clamp-2, .od-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .od-clamp-2 { -webkit-line-clamp: 2; }
+  .od-clamp-3 { -webkit-line-clamp: 3; }
+  .od-lines-2 { min-height: calc(2 * 1.4em); }
+  .od-nowrap { white-space: nowrap; }
+  .od-keep { word-break: keep-all; overflow-wrap: anywhere; }
+  .od-screen { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
+  .od-scroll { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+  .od-rail { display: flex; gap: var(--od-gap, 8px); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; padding-inline: var(--od-rail-pad, 0px); scroll-padding-inline: var(--od-rail-pad, 0px); }
+  .od-rail::-webkit-scrollbar { display: none; }
+  :where(.od-rail) > :where(*) { flex: none; scroll-snap-align: start; }
+  :where(.od-rail) > :where(:last-child) { margin-inline-end: var(--od-rail-pad, 0px); }
+  .od-spacer { flex: none; visibility: hidden; pointer-events: none; }
+  .od-touch { min-width: 44px; min-height: 44px; }
+}
+:root [hidden]:where(:not([hidden="until-found" i])) { display: none; }
+/* /OD-LAYOUT-PRIMITIVES v1 */
+:root {
+  --bg: #2a2433; --gold: #c8913a; --ember: #ff9a3c; --ink: #f4ead8; --muted: #d2c3b0;
+  --font: "PingFang SC", "Noto Sans SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+* { box-sizing: border-box; }
+html { background: #120e16; }
+body { width: 390px; height: 844px; margin: 0 auto; overflow: hidden; font-family: var(--font); font-size: 16px; line-height: 1.5; color: var(--ink); background: var(--bg); }
+button, input, a { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.od-icon { image-rendering: pixelated; shape-rendering: crispEdges; }
+.app { height: 844px; display: grid; grid-template-rows: 54px auto auto minmax(0, 1fr) auto auto 34px; }
+.head { display: flex; align-items: flex-end; gap: 8px; padding: 0 12px 8px; }
+.points { min-width: 72px; border: 2px solid var(--gold); background: #3a2a18; color: #f6e2a8; padding: 4px 8px; text-align: center; }
+.points b, .points span { display: block; line-height: 1.2; }
+.points b { font-size: 20px; }
+.search { flex: 1 1 auto; display: grid; gap: 2px; }
+.search span { color: var(--muted); }
+.search input { min-height: 44px; border: 2px solid var(--gold); background: #1a1522; color: var(--ink); padding: 0 10px; width: 100%; }
+.tags { padding: 0 12px 8px; }
+.tags button { min-height: 44px; padding: 0 12px; border: 2px solid #6a5433; background: #241c2e; color: var(--ink); }
+.tags button[aria-pressed="true"] { border-color: var(--ember); color: #1a1208; background: var(--ember); }
+.stage { position: relative; min-height: 0; margin: 0 12px; border: 2px solid var(--gold); overflow: hidden; background-color: #14111c; background-image: radial-gradient(#cbbda8 1px, transparent 1px); background-size: 22px 26px; }
+.map { width: 100%; height: 100%; touch-action: none; position: relative; }
+.world { position: absolute; left: 0; top: 0; width: 640px; height: 680px; transform-origin: 0 0; }
+.world svg { position: absolute; inset: 0; width: 640px; height: 680px; }
+.node {
+  position: absolute; width: 72px; min-height: 44px; padding: 4px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #6a5433; background: #241c2e; color: var(--ink);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.node span { display: block; line-height: 1.2; }
+.node.is-lit { border-color: var(--ember); background: #4a3218; color: #fff6ea; }
+.node.is-open { border-color: var(--gold); }
+.node.is-locked { color: var(--muted); }
+.hintbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; }
+.hintbar p { margin: 0; flex: 1 1 auto; color: var(--muted); }
+.hintbar button { min-width: 44px; min-height: 44px; border: 2px solid var(--gold); background: #241c2e; color: var(--ink); }
+.nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: #1a1522; border-top: 2px solid var(--gold); }
+.nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 64px; text-decoration: none; color: var(--muted); }
+.nav a span { display: block; line-height: 1.2; }
+.nav a[aria-current="page"] { color: var(--ember); box-shadow: inset 0 -3px 0 var(--ember); }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 16px; text-align: center; background: rgba(20, 17, 28, 0.82); }
+dialog.sheet { width: min(390px, 100vw); max-height: 50vh; overflow: auto; margin: auto auto 0; border: 2px solid var(--gold); background: #322838; color: var(--ink); padding: 16px 16px 28px; }
+dialog.sheet::backdrop { background: rgba(10, 8, 14, 0.72); }
+dialog.sheet[open] { animation: sheet-in 200ms var(--ease); }
+@keyframes sheet-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+dialog.sheet h2 { margin: 0; font-size: 20px; }
+dialog.sheet p { margin: 0; }
+dialog.sheet button { min-height: 48px; border: 2px solid var(--gold); background: var(--gold); color: #1a1208; padding: 8px 12px; }
+dialog.sheet button:disabled { background: #3a3344; color: #d9cbb8; border-color: #6a5a48; }
+:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+@media (hover: hover) {
+  .node:hover, .hintbar button:hover, .tags button:hover { border-color: var(--ember); }
+  .nav a:hover { color: var(--ink); }
+}
+@media (prefers-reduced-motion: reduce) { dialog.sheet[open] { animation: none; } }
+</style>
+</head>
+<body>
+<h1 class="vh">天赋星图</h1>
+<div class="app">
+  <div></div>
+  <header class="head">
+    <div class="points"><b id="pts" class="od-nowrap">11</b><span>天赋点</span></div>
+    <label class="search od-fill">
+      <span>搜索</span>
+      <input id="q" type="search" placeholder="名称或效果">
+    </label>
+  </header>
+  <div class="tags">
+    <div class="od-rail" id="tags" role="toolbar" aria-label="标签">
+      <button type="button" data-tag="" aria-pressed="true">全部</button>
+      <button type="button" data-tag="投射物" aria-pressed="false">投射物</button>
+      <button type="button" data-tag="近战" aria-pressed="false">近战</button>
+      <button type="button" data-tag="范围" aria-pressed="false">范围</button>
+      <button type="button" data-tag="持续" aria-pressed="false">持续</button>
+      <button type="button" data-tag="暴击" aria-pressed="false">暴击</button>
+      <button type="button" data-tag="防御" aria-pressed="false">防御</button>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="map" id="map" tabindex="0" aria-label="天赋星图，单指拖动，双指或加减号缩放">
+      <div class="world" id="world">
+        <svg id="lines" viewBox="0 0 640 680" width="640" height="680" aria-hidden="true"></svg>
+        <div id="nodes"></div>
+      </div>
+    </div>
+    <p class="empty" id="empty" hidden>没有匹配的天赋。清空搜索或改选标签。</p>
+  </div>
+  <div class="hintbar">
+    <p>单指拖动，双指缩放</p>
+    <button type="button" id="zoomOut" aria-label="缩小">−</button>
+    <button type="button" id="zoomIn" aria-label="放大">+</button>
+    <button type="button" id="recenter">回中</button>
+  </div>
+  <nav class="nav" aria-label="主菜单">
+    <a href="mobile-gear.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="7" y="1" width="2" height="9" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/></svg><span>装备</span></a>
+    <a href="mobile-tree.html" aria-current="page"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="7" y="7" width="2" height="2" fill="currentColor"/><rect x="7" y="1" width="2" height="4" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/><rect x="1" y="7" width="4" height="2" fill="currentColor"/><rect x="11" y="7" width="4" height="2" fill="currentColor"/></svg><span>天赋</span></a>
+    <a href="mobile-forge.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="2" y="10" width="12" height="4" fill="currentColor"/><rect x="4" y="6" width="8" height="4" fill="currentColor"/><rect x="7" y="2" width="2" height="4" fill="currentColor"/></svg><span>铁砧</span></a>
+    <a href="mobile-runes.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="6" y="1" width="4" height="4" fill="currentColor"/><rect x="3" y="6" width="4" height="4" fill="currentColor"/><rect x="9" y="6" width="4" height="4" fill="currentColor"/><rect x="6" y="11" width="4" height="4" fill="currentColor"/></svg><span>符文</span></a>
+    <a href="mobile-ladder.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="3" y="2" width="2" height="12" fill="currentColor"/><rect x="11" y="2" width="2" height="12" fill="currentColor"/><rect x="5" y="4" width="6" height="2" fill="currentColor"/><rect x="5" y="8" width="6" height="2" fill="currentColor"/><rect x="5" y="12" width="6" height="2" fill="currentColor"/></svg><span>阶梯</span></a>
+  </nav>
+  <div></div>
+</div>
+<dialog class="sheet" id="sheet">
+  <div class="od-stack">
+    <h2 id="dName">圣盾</h2>
+    <p id="dTags"></p>
+    <p id="dEffect"></p>
+    <div class="od-row">
+      <button type="button" id="dClose" class="od-fixed" style="background:#241c2e;color:#f4ead8">关闭</button>
+      <button type="button" id="dLight" class="od-fill">点亮</button>
+    </div>
+  </div>
+</dialog>
+<p class="vh" id="live" aria-live="polite"></p>
+<script>
+(function () {
+  var nodes = [
+    { id: 'core', name: '圣盾', x: 320, y: 340, tags: ['防御'], lit: true, req: [], effect: '护甲提高 69%，格挡时减伤。' },
+    { id: 'lamp', name: '灯火', x: 170, y: 180, tags: ['持续'], lit: true, req: ['core'], effect: '灯火燃烧降低 4%，持续伤害提高 79%。' },
+    { id: 'guard', name: '守备', x: 160, y: 500, tags: ['防御'], lit: true, req: ['core'], effect: '护甲提高 34%，贴身减伤上限 +3%。' },
+    { id: 'area', name: '范围', x: 490, y: 170, tags: ['范围'], lit: false, req: ['core'], effect: '范围提高 62%，范围武器伤害提高 18%。' },
+    { id: 'proj', name: '投射物', x: 500, y: 470, tags: ['投射物'], lit: false, req: ['core'], effect: '投射物伤害提高 40%，投射物速度提高 21%。' },
+    { id: 'crit', name: '寒魄', x: 390, y: 200, tags: ['暴击'], lit: false, req: ['core'], effect: '暴击时附加冰缓，暴击伤害提高。' },
+    { id: 'melee', name: '陨火', x: 220, y: 70, tags: ['近战'], lit: false, req: ['lamp'], effect: '近战伤害提高 65%，攻击速度提高 38%。' },
+    { id: 'ring', name: '霜环', x: 70, y: 320, tags: ['范围', '持续'], lit: false, req: ['lamp'], effect: '周围持续伤害提高，并附带冰缓。' },
+    { id: 'bounce', name: '弹射', x: 580, y: 330, tags: ['投射物'], lit: false, req: ['proj'], effect: '投射物命中后弹向附近敌人。' },
+    { id: 'ward', name: '圣域', x: 320, y: 560, tags: ['防御'], lit: false, req: ['guard'], effect: '受击获得短暂护盾。' }
+  ];
+  var points = 11;
+  var tag = '';
+  var query = '';
+  var tx = -80;
+  var ty = -80;
+  var scale = 1;
+  var pointers = new Map();
+  var drag = null;
+  var moved = false;
+  var opener = null;
+  var current = null;
+
+  var world = document.getElementById('world');
+  var lines = document.getElementById('lines');
+  var host = document.getElementById('nodes');
+  var map = document.getElementById('map');
+  var sheet = document.getElementById('sheet');
+  var empty = document.getElementById('empty');
+  var live = document.getElementById('live');
+
+  function byId(id) { return nodes.filter(function (n) { return n.id === id; })[0]; }
+  function ready(n) {
+    if (n.lit) return 'lit';
+    var ok = n.req.every(function (id) { return byId(id).lit; });
+    return ok ? 'open' : 'locked';
+  }
+  function match(n) {
+    var blob = n.name + n.effect;
+    if (query && blob.indexOf(query) === -1) return false;
+    if (tag && n.tags.indexOf(tag) === -1) return false;
+    return true;
+  }
+  function apply() {
+    world.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+  }
+
+  function draw() {
+    host.textContent = '';
+    lines.textContent = '';
+    var visible = 0;
+    nodes.forEach(function (n) {
+      var show = match(n);
+      if (show) visible += 1;
+      var state = ready(n);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'node is-' + state;
+      btn.style.left = n.x + 'px';
+      btn.style.top = n.y + 'px';
+      btn.dataset.id = n.id;
+      btn.hidden = !show;
+      var name = document.createElement('span');
+      name.textContent = n.name;
+      var st = document.createElement('span');
+      st.textContent = state === 'lit' ? '已点亮' : state === 'open' ? '可点' : '未连';
+      btn.appendChild(name);
+      btn.appendChild(st);
+      btn.setAttribute('aria-label', n.name + '，' + st.textContent);
+      host.appendChild(btn);
+      n.req.forEach(function (rid) {
+        var from = byId(rid);
+        var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', from.x);
+        line.setAttribute('y1', from.y);
+        line.setAttribute('x2', n.x);
+        line.setAttribute('y2', n.y);
+        line.setAttribute('stroke', state === 'lit' && from.lit ? '#ff9a3c' : '#c8913a');
+        line.setAttribute('stroke-width', '2');
+        if (!show || !match(from)) line.setAttribute('hidden', '');
+        lines.appendChild(line);
+      });
+    });
+    empty.hidden = visible !== 0;
+    document.getElementById('pts').textContent = String(points);
+    apply();
+  }
+
+  function openNode(id, trigger) {
+    current = id;
+    opener = trigger;
+    var n = byId(id);
+    var state = ready(n);
+    document.getElementById('dName').textContent = n.name;
+    document.getElementById('dTags').textContent = n.tags.join(' · ') + ' · ' + (state === 'lit' ? '已点亮' : state === 'open' ? '可以点亮' : '尚未连接');
+    document.getElementById('dEffect').textContent = n.effect;
+    var light = document.getElementById('dLight');
+    light.disabled = false;
+    if (state === 'lit') { light.textContent = '已点亮'; light.disabled = true; }
+    else if (state === 'locked') { light.textContent = '未连接'; light.disabled = true; }
+    else if (points <= 0) { light.textContent = '点数不足'; light.disabled = true; }
+    else { light.textContent = '点亮'; }
+    sheet.showModal();
+    (light.disabled ? document.getElementById('dClose') : light).focus();
+  }
+
+  host.addEventListener('click', function (e) {
+    if (moved) { moved = false; return; }
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    openNode(btn.dataset.id, btn);
+  });
+
+  document.getElementById('dClose').addEventListener('click', function () { sheet.close(); });
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) sheet.close(); });
+  sheet.addEventListener('close', function () {
+    if (opener && opener.isConnected) opener.focus();
+    else {
+      var fallback = document.querySelector('#nodes button:not([hidden])');
+      if (fallback) fallback.focus();
+    }
+  });
+  document.getElementById('dLight').addEventListener('click', function () {
+    var n = byId(current);
+    if (!n || n.lit || ready(n) !== 'open' || points <= 0) return;
+    n.lit = true;
+    points -= 1;
+    live.textContent = '已点亮 ' + n.name + '，剩余 ' + points + ' 点';
+    sheet.close();
+    draw();
+    var again = document.querySelector('#nodes button[data-id="' + n.id + '"]');
+    if (again) again.focus();
+  });
+
+  document.getElementById('q').addEventListener('input', function (e) {
+    query = e.target.value.trim();
+    draw();
+  });
+  document.getElementById('tags').addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    tag = btn.dataset.tag;
+    document.querySelectorAll('#tags button').forEach(function (b) {
+      b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+    });
+    draw();
+    btn.focus();
+  });
+
+  map.addEventListener('pointerdown', function (e) {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) {
+      drag = { x: e.clientX, y: e.clientY, tx: tx, ty: ty };
+      moved = false;
+    } else {
+      drag = null;
+    }
+  });
+  map.addEventListener('pointermove', function (e) {
+    if (!pointers.has(e.pointerId)) return;
+    var prev = pointers.get(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size >= 2) {
+      var pts = Array.from(pointers.values());
+      var dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      var prevDist = e.pointerId === Array.from(pointers.keys())[0]
+        ? Math.hypot((prev.x) - pts[1].x, (prev.y) - pts[1].y)
+        : Math.hypot(pts[0].x - prev.x, pts[0].y - prev.y);
+      if (prevDist > 0) scale = Math.min(2.2, Math.max(0.6, scale * (dist / prevDist)));
+      apply();
+      moved = true;
+      return;
+    }
+    if (!drag) return;
+    var dx = e.clientX - drag.x;
+    var dy = e.clientY - drag.y;
+    if (Math.hypot(dx, dy) > 8) moved = true;
+    tx = drag.tx + dx;
+    ty = drag.ty + dy;
+    apply();
+  });
+  function endPtr(e) { pointers.delete(e.pointerId); if (pointers.size < 1) drag = null; }
+  map.addEventListener('pointerup', endPtr);
+  map.addEventListener('pointercancel', endPtr);
+  map.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    scale = Math.min(2.2, Math.max(0.6, scale * (e.deltaY > 0 ? 0.92 : 1.08)));
+    apply();
+  }, { passive: false });
+  map.addEventListener('keydown', function (e) {
+    var step = 24;
+    if (e.key === 'ArrowLeft') tx += step;
+    else if (e.key === 'ArrowRight') tx -= step;
+    else if (e.key === 'ArrowUp') ty += step;
+    else if (e.key === 'ArrowDown') ty -= step;
+    else if (e.key === '+' || e.key === '=') scale = Math.min(2.2, scale * 1.08);
+    else if (e.key === '-' || e.key === '_') scale = Math.max(0.6, scale / 1.08);
+    else return;
+    e.preventDefault();
+    apply();
+  });
+  document.getElementById('zoomIn').addEventListener('click', function () { scale = Math.min(2.2, scale * 1.12); apply(); });
+  document.getElementById('zoomOut').addEventListener('click', function () { scale = Math.max(0.6, scale / 1.12); apply(); });
+  document.getElementById('recenter').addEventListener('click', function () { tx = -80; ty = -80; scale = 1; apply(); live.textContent = '星图已回中'; });
+
+  draw();
+})();
+</script>
+</body>
+</html>

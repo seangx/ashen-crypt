@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>灰烬地穴 · 设置</title>
+<style>
+/* OD-LAYOUT-PRIMITIVES v1 — structure only */
+@layer od-layout {
+  [hidden]:not([hidden="until-found" i]) { display: none !important; }
+  dialog:not([open]) { display: none !important; }
+  :where(.od-stack,.od-row,.od-row-top,.od-cluster,.od-grid,.od-field,.od-stat,.od-cell,.od-tile) > :where(*) { min-width: 0; }
+  .od-stack { display: flex; flex-direction: column; gap: var(--od-gap, 8px); }
+  .od-row { display: flex; align-items: center; gap: var(--od-gap, 8px); }
+  .od-row-top { display: flex; align-items: flex-start; gap: var(--od-gap, 8px); }
+  .od-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--od-gap, 8px); }
+  .od-fill { flex: 1 1 0; min-width: 0; }
+  .od-fixed { flex: none; }
+  .od-grid { display: grid; gap: var(--od-gap, 12px); grid-template-columns: repeat(var(--od-cols, 3), minmax(0, 1fr)); }
+  .od-stat, .od-field, .od-cell { display: grid; gap: var(--od-gap, 2px); }
+  :where(.od-stat,.od-field,.od-cell) > :where(*) { display: block; }
+  .od-tile { display: grid; grid-template-rows: auto 1fr; }
+  :where(.od-tile) > :where(*) { display: block; }
+  .od-media { display: block; width: 100%; height: auto; aspect-ratio: var(--od-ratio, auto); }
+  .od-media-cover { object-fit: cover; }
+  .od-icon { display: inline-block; inline-size: var(--od-icon-size, 1em); block-size: var(--od-icon-size, 1em); flex: none; }
+  .od-truncate { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .od-clamp-2, .od-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .od-clamp-2 { -webkit-line-clamp: 2; }
+  .od-clamp-3 { -webkit-line-clamp: 3; }
+  .od-lines-2 { min-height: calc(2 * 1.4em); }
+  .od-nowrap { white-space: nowrap; }
+  .od-keep { word-break: keep-all; overflow-wrap: anywhere; }
+  .od-screen { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
+  .od-scroll { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+  .od-rail { display: flex; gap: var(--od-gap, 8px); overflow-x: auto; scrollbar-width: none; }
+  .od-rail::-webkit-scrollbar { display: none; }
+  :where(.od-rail) > :where(*) { flex: none; }
+  .od-spacer { flex: none; visibility: hidden; pointer-events: none; }
+  .od-touch { min-width: 44px; min-height: 44px; }
+}
+:root [hidden]:where(:not([hidden="until-found" i])) { display: none; }
+/* /OD-LAYOUT-PRIMITIVES v1 */
+:root {
+  --bg: #2a2433; --gold: #c8913a; --ember: #ff9a3c; --ink: #f4ead8; --muted: #d2c3b0;
+  --font: "PingFang SC", "Noto Sans SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+* { box-sizing: border-box; }
+html { background: #120e16; }
+body { width: 390px; height: 844px; margin: 0 auto; overflow: hidden; font-family: var(--font); font-size: 16px; line-height: 1.5; color: var(--ink); background: var(--bg); }
+button, a, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.od-icon { image-rendering: pixelated; shape-rendering: crispEdges; }
+.app { height: 844px; display: grid; grid-template-rows: 54px auto minmax(0, 1fr) auto 34px; }
+.head { display: flex; align-items: flex-end; justify-content: space-between; padding: 0 12px 8px; gap: 8px; }
+.plaque { text-align: center; padding: 4px 18px; background: #3a2a18; border: 2px solid var(--gold); color: #f6e2a8; }
+.plaque b { display: block; font-size: 18px; line-height: 1.3; }
+.back { min-height: 44px; min-width: 96px; display: grid; place-items: center; text-decoration: none; border: 2px solid var(--gold); background: #241c2e; color: var(--ink); }
+.od-scroll { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.row { border: 2px solid #6a5433; background: #241c2e; padding: 8px 10px; min-height: 64px; }
+.row .od-field span:last-child { color: var(--muted); }
+.vol { min-width: 140px; height: 44px; accent-color: var(--ember); }
+.seg { display: flex; gap: 8px; }
+.seg button, .hand button { min-height: 44px; min-width: 52px; padding: 0 10px; border: 2px solid #6a5433; background: #1a1522; color: var(--ink); }
+.seg button[aria-pressed="true"], .hand button[aria-pressed="true"] { background: var(--ember); color: #1a1208; border-color: var(--ember); }
+.switch { width: 64px; height: 44px; border: 2px solid var(--gold); background: #1a1522; color: var(--ink); }
+.switch[aria-checked="true"] { background: var(--ember); color: #1a1208; border-color: var(--ember); }
+select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); background: #1a1522; color: var(--ink); padding: 0 8px; }
+.mini { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; border: 2px solid var(--gold); background: #14111c; }
+.mini.flip { direction: rtl; }
+.mini.flip > * { direction: ltr; }
+.joy, .keys { min-height: 72px; border: 2px dashed rgba(255, 154, 60, 0.7); display: grid; place-items: center; }
+.keys { grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; }
+.keys span, .joy span { display: block; }
+.nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: #1a1522; border-top: 2px solid var(--gold); }
+.nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 64px; text-decoration: none; color: var(--muted); }
+.nav a span { display: block; line-height: 1.2; }
+:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+@media (hover: hover) {
+  .back:hover, .seg button:hover, .hand button:hover, .switch:hover, .nav a:hover { border-color: var(--ember); color: var(--ink); }
+}
+</style>
+</head>
+<body>
+<h1 class="vh">设置</h1>
+<div class="app">
+  <div></div>
+  <header class="head">
+    <a class="back" href="mobile-hud.html">返回战斗</a>
+    <div class="plaque"><b>设置</b></div>
+    <span class="od-spacer" style="width:96px;height:44px" aria-hidden="true"></span>
+  </header>
+  <main class="od-scroll">
+    <div class="row od-row">
+      <label class="od-field od-fill" for="vol">
+        <span>主音量</span>
+        <span id="volOut" class="od-nowrap">80</span>
+      </label>
+      <input class="vol od-fixed" id="vol" type="range" min="0" max="100" value="80" aria-valuetext="80">
+    </div>
+    <div class="row od-row">
+      <div class="od-field od-fill">
+        <span>画质</span>
+        <span id="qualOut">中</span>
+      </div>
+      <div class="seg od-fixed" role="group" aria-label="画质">
+        <button type="button" data-q="低" aria-pressed="false">低</button>
+        <button type="button" data-q="中" aria-pressed="true">中</button>
+        <button type="button" data-q="高" aria-pressed="false">高</button>
+      </div>
+    </div>
+    <div class="row od-row">
+      <div class="od-field od-fill"><span>震屏</span><span>受击时晃动画面</span></div>
+      <button type="button" class="switch od-fixed" id="shake" role="switch" aria-checked="true">开</button>
+    </div>
+    <div class="row od-row">
+      <div class="od-field od-fill"><span>伤害数字</span><span>飘字显示伤害</span></div>
+      <button type="button" class="switch od-fixed" id="nums" role="switch" aria-checked="true">开</button>
+    </div>
+    <div class="row od-row">
+      <div class="od-field od-fill"><span>自动拾取</span><span>走过掉落即拾取</span></div>
+      <button type="button" class="switch od-fixed" id="loot" role="switch" aria-checked="false">关</button>
+    </div>
+    <div class="row od-stack">
+      <div class="od-row">
+        <div class="od-field od-fill">
+          <span>左右手</span>
+          <span id="handOut">右手持机：摇杆在左，四键在右</span>
+        </div>
+        <div class="hand od-fixed" role="group" aria-label="左右手">
+          <button type="button" data-hand="right" aria-pressed="true">右手</button>
+          <button type="button" data-hand="left" aria-pressed="false">左手</button>
+        </div>
+      </div>
+      <div class="mini" id="mini">
+        <div class="joy"><span>摇杆</span></div>
+        <div class="keys"><span>战技</span><span>药水</span><span>灯火</span><span>冲刺</span></div>
+      </div>
+    </div>
+    <div class="row od-row">
+      <label class="od-field od-fill" for="lang">
+        <span>语言</span>
+        <span>界面文字</span>
+      </label>
+      <select class="od-fixed" id="lang">
+        <option value="zh" selected>简体中文</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+    <p id="live" aria-live="polite" style="margin:0;color:#f6e2a8">画质中 · 音量 80</p>
+  </main>
+  <nav class="nav" aria-label="主菜单">
+    <a href="mobile-gear.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="7" y="1" width="2" height="9" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/></svg><span>装备</span></a>
+    <a href="mobile-tree.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="7" y="7" width="2" height="2" fill="currentColor"/><rect x="7" y="1" width="2" height="4" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/><rect x="1" y="7" width="4" height="2" fill="currentColor"/><rect x="11" y="7" width="4" height="2" fill="currentColor"/></svg><span>天赋</span></a>
+    <a href="mobile-forge.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="2" y="10" width="12" height="4" fill="currentColor"/><rect x="4" y="6" width="8" height="4" fill="currentColor"/><rect x="7" y="2" width="2" height="4" fill="currentColor"/></svg><span>铁砧</span></a>
+    <a href="mobile-runes.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="6" y="1" width="4" height="4" fill="currentColor"/><rect x="3" y="6" width="4" height="4" fill="currentColor"/><rect x="9" y="6" width="4" height="4" fill="currentColor"/><rect x="6" y="11" width="4" height="4" fill="currentColor"/></svg><span>符文</span></a>
+    <a href="mobile-ladder.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="3" y="2" width="2" height="12" fill="currentColor"/><rect x="11" y="2" width="2" height="12" fill="currentColor"/><rect x="5" y="4" width="6" height="2" fill="currentColor"/><rect x="5" y="8" width="6" height="2" fill="currentColor"/><rect x="5" y="12" width="6" height="2" fill="currentColor"/></svg><span>阶梯</span></a>
+  </nav>
+  <div></div>
+</div>
+<script>
+(function () {
+  var live = document.getElementById('live');
+  var vol = document.getElementById('vol');
+  var volOut = document.getElementById('volOut');
+  var qual = '中';
+  var hand = 'right';
+  try { hand = localStorage.getItem('ashen-crypt-hand') || 'right'; } catch (err) { hand = 'right'; }
+
+  function summary() {
+    live.textContent = '画质' + qual + ' · 音量 ' + vol.value + ' · ' + (hand === 'left' ? '左手持机' : '右手持机');
+  }
+  function applyHand(next) {
+    hand = next;
+    document.querySelectorAll('.hand button').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', btn.dataset.hand === hand ? 'true' : 'false');
+    });
+    document.getElementById('mini').classList.toggle('flip', hand === 'left');
+    document.getElementById('handOut').textContent = hand === 'left'
+      ? '左手持机：四键在左，摇杆在右'
+      : '右手持机：摇杆在左，四键在右';
+    try { localStorage.setItem('ashen-crypt-hand', hand); } catch (err) { /* 预览若禁止存储，示意仍会切换 */ }
+    summary();
+  }
+
+  vol.addEventListener('input', function () {
+    volOut.textContent = vol.value;
+    vol.setAttribute('aria-valuetext', vol.value);
+    summary();
+  });
+  document.querySelector('.seg').addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    qual = btn.dataset.q;
+    document.querySelectorAll('.seg button').forEach(function (b) {
+      b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+    });
+    document.getElementById('qualOut').textContent = qual;
+    summary();
+    btn.focus();
+  });
+  document.querySelectorAll('.switch').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var on = btn.getAttribute('aria-checked') !== 'true';
+      btn.setAttribute('aria-checked', on ? 'true' : 'false');
+      btn.textContent = on ? '开' : '关';
+    });
+  });
+  document.querySelector('.hand').addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    applyHand(btn.dataset.hand);
+    btn.focus();
+  });
+  document.getElementById('lang').addEventListener('change', function (e) {
+    live.textContent = e.target.value === 'en' ? 'Language set to English. This mock stays in Chinese.' : '语言为简体中文';
+  });
+  applyHand(hand);
+})();
+</script>
+</body>
+</html>
