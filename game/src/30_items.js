@@ -3,10 +3,10 @@ const RARE_A = ['怨毒', '幽寂', '灰烬', '骸鸣', '血月', '寒鸦', '腐
 const RARE_B = { weapon: ['之牙', '之刃', '裁决', '断罪', '悲鸣'], shield: ['壁垒', '之墙', '庇护', '骨盾'], core: ['之冠', '遗容', '之眼', '面甲'], engine: ['之步', '疾影', '残迹', '飞踪'], hub: ['之环', '法阵', '誓约', '回响'], chip: ['之印', '刻痕', '烙印', '铭文'] };
 const AFF_LIMIT = [LOOT.affixCount.limit.normal, LOOT.affixCount.limit.magic, LOOT.affixCount.limit.rare]; // [前缀, 后缀] 上限：普通 / 罕见 / 稀有
 
-const baseOf = it => it.kind === 'weapon' ? WEAPONS[it.b] : ARMORS[it.kind][it.b];
+const baseOf = it => it.fb ? it.fb : it.kind === 'weapon' ? WEAPONS[it.b] : ARMORS[it.kind][it.b];
 const iconOf = it => it.kind === 'map' ? 'a_map' : baseOf(it).ic;
 const slotsFor = it => it.kind === 'weapon' ? ['wl', 'wr'] : it.kind === 'chip' ? [] : [it.kind];
-const itemTags = it => it.kind === 'weapon' ? WEAPONS[it.b].tags : it.kind === 'engine' ? (ARMORS.engine[it.b].tags || ['Engine']) : [KIND_TAG[it.kind]];
+const itemTags = it => it.fb ? it.fb.tags : it.kind === 'weapon' ? WEAPONS[it.b].tags : it.kind === 'engine' ? (ARMORS.engine[it.b].tags || ['Engine']) : (ARMORS[it.kind] && ARMORS[it.kind][it.b] && ARMORS[it.kind][it.b].tags) || [KIND_TAG[it.kind]]; // 圣徽盾带自己的标签
 const canRollOn = (a, it) => !a.off && (a.on.includes(it.kind) || (it.b === 'EmpoweredChip' && a.on.includes('chipE'))) && (!a.tag || it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)); // tag 只限制武器
 const KIND_TAG = { shield: 'Shield', core: 'Core', engine: 'Engine', hub: 'Nexus', chip: 'Chip' };
 function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : baseOf(it).n; }
@@ -21,13 +21,14 @@ function rollQuality(ilvl) {
 // 武器底材伤害 = 原作按品质的数值 × 伤害效率 I
 function weaponBase(b, q) { return [Math.round(qv(b.min, q) * b.I), Math.round(qv(b.max, q) * b.I)]; }
 const engineBase = weaponBase;
-function rollSockets(kind) {
+function rollSockets(kind, b) {
+  const sw = ARMORS[kind] && ARMORS[kind][b] && ARMORS[kind][b].sockW; if (sw) return wpick(sw.map((w, i) => i + 1), n => sw[n - 1]); // 圣徽盾：1–2 槽
   if (kind === 'hub') return wpick(USOCKET_W.map((w, i) => i + 1), n => USOCKET_W[n - 1]);
   if (SOCKET_KINDS[kind]) return wpick(SOCKET_W.map((w, i) => i + 1), n => SOCKET_W[n - 1]);
   return 0;
 }
 function newItem(kind, b, ilvl, q, rar) {
-  const it = { id: S.nextId++, kind, b, ilvl, q, rar: 0, affs: [], sock: rollSockets(kind), mods: [] };
+  const it = { id: S.nextId++, kind, b, ilvl, q, rar: 0, affs: [], sock: rollSockets(kind, b), mods: [] };
   it.mods = Array(it.sock).fill(null);
   setRarity(it, rar);
   it.fp = rollFp(it.rar);

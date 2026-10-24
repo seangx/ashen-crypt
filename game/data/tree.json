@@ -35,7 +35,7 @@
   ],
   "guard": [
    {"small": {"deflectInc": 8}, "nn": "庇护", "nadd": {"deflectInc": 20, "res:all": 4}, "key": {"n": "圣盾", "flag": {"absorb": 1}, "more": {"life": 0.75}}},
-   {"small": {"armor": 12}, "nn": "骨鳞", "nadd": {"armorInc": 20, "res:kin": 8}, "key": {"n": "骨刺甲", "flag": {"thorns": 1}, "more": {"deflect": 0.5}}},
+   {"small": {"armor": 12}, "nn": "骨鳞", "nadd": {"armorInc": 20, "res:kin": 8}, "key": {"n": "回响圣盾", "flag": {"echoShield": 1}, "more": {"life": 0.9}}},
    {"small": {"res:nuc": 6}, "nn": "抗毒", "nadd": {"res:nuc": 15, "res:all": 4}, "key": {"n": "腐肉之躯", "flag": {"rotFlesh": 1}, "more": {"speed": 0.85}}},
    {"small": {"energy": 3}, "nn": "灵泉", "nadd": {"energy": 8, "energyInc": 10}, "key": {"n": "殉道", "flag": {"martyr": 1}, "more": {"deflRate": 0.6}}}
   ],

@@ -41,6 +41,7 @@
 },
  "shield": {
   "TitaniumShield": ["铁骨盾", "a_boneward"],
+  "SigilShield": ["圣徽盾", "a_boneward"],
   "PhantomShield": ["幻影盾", "a_phantomward"],
   "NebulaShield": ["灵纱盾", "a_veilward"],
   "CrystalShield": ["晶骨盾", "a_crystalward"],

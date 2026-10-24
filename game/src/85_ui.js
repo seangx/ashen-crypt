@@ -670,7 +670,7 @@ class UI extends Phaser.Scene {
       TREE_TAGS.forEach((t, i) => mkBtn(this, c, 7 + (i % 3) * 26, 60 + Math.floor(i / 3) * 13, 25, 12, t.n, () => { U.tag = U.tag === t.n ? null : t.n; this.refresh(); }, { size: 8, style: U.tag === t.n ? 's' : 'n' }));
       const py = 60 + Math.ceil(TREE_TAGS.length / 3) * 13 + 2;
       T(this, 8, py, '构筑预设', { size: 8, color: COL.dim, parent: c });
-      [['spark', '游雷'], ['whirl', '旋风斩'], ['nova', '霜环'], ['meteor', '陨火'], ['orb', '寒魄']].forEach(([id, n], i) => mkBtn(this, c, 7 + i * 40, py + 11, 38, 13, n, () => { U.preset = U.preset === id ? null : id; this.refresh(); }, { size: 8, style: U.preset === id ? 's' : 'n', tip: [{ t: `${n}的毕业天赋：在盘上用蓝圈标出来`, s: 8 }] }));
+      [['spark', '游雷'], ['whirl', '旋风斩'], ['nova', '霜环'], ['meteor', '陨火'], ['orb', '寒魄'], ['shield', '圣盾']].forEach(([id, n], i) => mkBtn(this, c, 7 + i * 40, py + 11, 38, 13, n, () => { U.preset = U.preset === id ? null : id; this.refresh(); }, { size: 8, style: U.preset === id ? 's' : 'n', tip: [{ t: `${n}的毕业天赋：在盘上用蓝圈标出来`, s: 8 }] }));
       let cy = py + 27;
       if (pre) {
         const left = [...pre].filter(id => !S.tree.includes(id) && TREE.nodes[id]).length;
@@ -854,6 +854,7 @@ class UI extends Phaser.Scene {
       mkBtn(this, c, 92, 130, 150, 22, confirmKey === 'demo' ? '确认载入' : '载入旋风斩毕业存档', () => { if (!confirm2('demo')) return this.refresh(); loadDemo('whirl'); toast('已载入旋风斩毕业存档', COL.emberHi); }, { size: 8, style: confirmKey === 'demo' ? 'r' : 'w', icon: 'mod_Whirl', iconX: 5, labelX: 22 });
       mkBtn(this, c, 92, 156, 150, 22, confirmKey === 'demoSpark' ? '确认载入' : '载入游雷毕业存档', () => { if (!confirm2('demoSpark')) return this.refresh(); loadDemo('spark'); toast('已载入游雷毕业存档', COL.emberHi); }, { size: 8, style: confirmKey === 'demoSpark' ? 'r' : 'w', icon: 'mod_Spark', iconX: 5, labelX: 22 });
       mkBtn(this, c, 92, 182, 150, 22, confirmKey === 'demoNova' ? '确认载入' : '载入霜环毕业存档', () => { if (!confirm2('demoNova')) return this.refresh(); loadDemo('nova'); toast('已载入霜环毕业存档', COL.emberHi); }, { size: 8, style: confirmKey === 'demoNova' ? 'r' : 'w', icon: 'mod_FrostNova', iconX: 5, labelX: 22 });
+      mkBtn(this, c, 250, 208, 150, 22, confirmKey === 'demoShield' ? '确认载入' : '载入圣盾掷毕业存档', () => { if (!confirm2('demoShield')) return this.refresh(); loadDemo('shield'); toast('已载入圣盾掷毕业存档', COL.emberHi); }, { icon: 'mod_ShieldThrow' });
       mkBtn(this, c, 250, 182, 150, 22, confirmKey === 'demoOrb' ? '确认载入' : '载入寒魄球毕业存档', () => { if (!confirm2('demoOrb')) return this.refresh(); loadDemo('orb'); toast('已载入寒魄球毕业存档', COL.emberHi); }, { icon: 'mod_FrostOrbRune' });
       mkBtn(this, c, 250, 156, 150, 22, confirmKey === 'demoMeteor' ? '确认载入' : '载入陨火毕业存档', () => { if (!confirm2('demoMeteor')) return this.refresh(); loadDemo('meteor'); toast('已载入陨火毕业存档', COL.emberHi); }, { icon: 'mod_Meteor' });
       mkBtn(this, c, 250, 130, 150, 22, confirmKey === 'restore' ? '确认恢复' : '恢复之前的进度', () => { if (!confirm2('restore')) return this.refresh(); restoreBackup(); toast('已恢复之前的进度', COL.emberHi); }, { size: 8, style: confirmKey === 'restore' ? 'r' : 'n', disabled: !hasBackup() });

@@ -34,9 +34,10 @@ function computeStats(eq = S.equip) {
   const base = {};
   for (const k of ARMOR_KINDS) {
     const it = eq[k]; if (!it) continue; const b = baseOf(it);
-    for (const s of ['armor', 'deflect', 'dodge', 'mass', 'energy', 'time']) if (b[s]) base[s] = (base[s] || 0) + qv(b[s], it.q);
+    for (const s of ['shieldDmg', 'armor', 'deflect', 'dodge', 'mass', 'energy', 'time']) if (b[s]) base[s] = (base[s] || 0) + qv(b[s], it.q);
     if (b.res) base['res:' + b.el] = (base['res:' + b.el] || 0) + qv(b.res, it.q);
   }
+  A.shieldDmg = (A.shieldDmg || 0) + (base.shieldDmg || 0); // 圣徽盾的隐性盾牌伤害
   // 主属性
   P.mass = Math.round(((base.mass || 0) + (A.mass || 0) + (TA.mass || 0)) * Math.max(0, 1 + ((F.massInc || 0) + (TA.massInc || 0)) / 100));
   P.energy = Math.round(((base.energy || 0) + (A.energy || 0) + (TA.energy || 0)) * Math.max(0, 1 + ((F.energyInc || 0) + (TA.energyInc || 0)) / 100));
@@ -44,6 +45,7 @@ function computeStats(eq = S.equip) {
   // 防御三条（规格 design/spec-defense-v2.md）：护甲只管减伤；护盾是第一道血条，每秒回复；生命是第二道，归零阵亡，只靠吸血回
   P.armor = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100)));
   // 原来的灵障并进护盾；天赋/独特里“护甲总降”的代价改成护盾总降
+  P.armorOut = P.armor; // 盾扔出去时没有格挡
   if (eq.shield && A.block) P.armor = Math.round(P.armor * (1 + A.block / 100)); // 格挡：盾在手上时护甲提高
   P.shield = Math.round((PLAYER.shield + (base.deflect || 0) + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
   P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
@@ -88,10 +90,18 @@ function computeStats(eq = S.equip) {
   P.weapons = ['wl', 'wr'].map(s => eq[s] ? weaponStats(eq[s], P) : null);
   P.twin = ['wl', 'wr'].filter(s => eq[s] && eq[s].u === 'TheTwin').length;
   if (P.twin === 2) P.weapons = ['wl', 'wr'].map(s => weaponStats(eq[s], P));
-  P.dps = P.weapons.reduce((s, w) => s + (w ? w.dps : 0), 0);
+  P.armorHeld = P.armor; P.shieldW = shieldWeapon(eq.shield, P); // 圣盾掷：盾变成一把虚拟武器
+  P.dps = P.weapons.reduce((s, w) => s + (w ? w.dps : 0), 0) + (P.shieldW ? P.shieldW.dps : 0);
   return P;
 }
 
+const THROW_B = { key: 'ShieldThrow', form: 'shieldThrow', el: 'pla', aps: SHT.aps, crit: SHT.crit, range: SHT.range, tags: ['Shield', 'Projectile', 'ProjectileCanChain', 'ProjectileCanPierce', 'Attack', 'AttackSpeed', 'Hit'] };
+function shieldWeapon(sh, P) { // 圣徽盾插圣盾掷符文：单次伤害 = 盾的护甲（底子 × (1 + 护甲提高%)）× throwK
+  if (!sh || !sh.sock) return null;
+  const r = activeRunes(sh, P).find(x => x.fx.shieldThrow); if (!r) return null;
+  const ab = qv(baseOf(sh).armor || 0, sh.q) * (1 + ((P.raw.armorInc || 0) + (P.tree.add.armorInc || 0)) / 100);
+  return weaponStats({ ...sh, kind: 'weapon', fb: THROW_B, src: sh, u: null, affs: [], throwDmg: ab * r.fx.throwK }, P);
+}
 /* 武器（或带伤害的遁靴）的最终数值 */
 function weaponStats(it, P, isEngine) {
   const b = baseOf(it), q = it.q;
@@ -138,7 +148,7 @@ function weaponStats(it, P, isEngine) {
   if (P.flag.whirlHeart) { if (has('Melee') && has('AoE')) W.more *= WH.heartMore; else if (!isEngine && !has('Melee')) W.more *= WH.offhandMul; } // 旋风之心：【近战·范围】
   if (P.flag.sparkHeart) { if (has('ProjectileCanChain')) W.more *= SP.heartMore; else if (!isEngine) W.more *= SP.offhandMul; } // 织雷之心：【投射物·弹射】
   const gain = {}, rflat = {};
-  for (const { m, fx } of activeRunes(it, P)) {
+  for (const { m, fx } of activeRunes(it.src || it, P)) {
     W.runes.push(m.mid);
     if (fx.pure) pure = true;
     if (fx.more) W.more *= fx.more;
@@ -156,6 +166,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.meleeInc) inc += fx.meleeInc;
     if (fx.meleeGuard) W.meleeGuard = 1;
     if (fx.spark && b.wander) { W.spark = 1; W.sparkN = fx.sparkN; W.sparkMul = fx.sparkMul; } // 游雷符文：只对会乱窜的投射物（雷灵）生效
+    if (fx.shieldThrow && b.form === 'shieldThrow') { W.shieldThrow = 1; W.chainStep += (fx.chainStepInc || 0) / 100; } // 圣盾掷符文
     if (fx.frostOrb && b.form === 'orb') { W.frostOrb = 1; W.shardMul = fx.shardMul; } // 寒魄符文：寒魄宝珠
     if (fx.meteor && b.form === 'meteor') { W.meteor = 1; W.meteorMul = fx.meteorMul; W.delay = fx.delay; W.ground = fx.ground; } // 陨火符文：坠星杖
     if (fx.frostNova && b.form === 'nova') { W.frostNova = 1; W.novaMul = fx.novaMul; W.chillStacks = fx.chillStacks; } // 霜环符文：霜钟 / 圣钟
@@ -166,7 +177,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.flat) for (const e in fx.flat) { const f = rflat[e] || [0, 0]; rflat[e] = [f[0] + fx.flat[e][0], f[1] + fx.flat[e][1]]; }
   }
   // 底材 + 附加 → 基础提高
-  const [bmin, bmax] = b.min ? weaponBase(b, q) : [0, 0];
+  const [bmin, bmax] = it.throwDmg ? [it.throwDmg, it.throwDmg] : b.min ? weaponBase(b, q) : [0, 0];
   const ok = e => !pure || e === b.el;
   for (const e of ELEM) {
     let mn = e === b.el ? bmin : 0, mx = e === b.el ? bmax : 0;
@@ -177,6 +188,7 @@ function weaponStats(it, P, isEngine) {
   // 独特装备的伤害转换
   const conv = (from, to, pct) => { if (!pct) return; const mn = W.min[from] * pct, mx = W.max[from] * pct; W.min[from] -= mn; W.max[from] -= mx; for (const e of to) { W.min[e] += mn / to.length; W.max[e] += mx / to.length; } };
   if (W.frostNova && b.el !== 'cold') { conv(b.el, ['cold'], 1); W.ail.cold += W.ail[b.el]; W.ail[b.el] = 0; W.el = 'cold'; } // 圣钟插霜环符文：元素改成寒霜
+  if (P.flag.echoShield) { if (has('Shield')) W.more *= SHT.heartMore; else if (!isEngine) W.more *= SHT.offhandMul; } // 回响圣盾：【盾】
   if (P.flag.shardChain) { if (has('Spawn')) W.more *= OB.heartMore; else if (!isEngine) W.more *= OB.offhandMul; } // 碎冰连锁：【派生】
   if (P.flag.starfall) { if (has('Delayed')) W.more *= MT.heartMore; else if (!isEngine) W.more *= MT.offhandMul; } // 星坠雨：【延迟】
   if (P.flag.shatter) { if (has('Nova') || W.frostNova) W.more *= NV.heartMore; else if (!isEngine) W.more *= NV.offhandMul; } // 碎冰：【新星】
@@ -203,6 +215,7 @@ function weaponStats(it, P, isEngine) {
   W.aoeR = qv(b.aoe || 0, q) * UNIT * (1 + aoeInc / 100);
   W.auraDps = b.aura ? qv(b.aura, q) * (1 + inc / 100) * W.more * W.dotMore : 0;
   W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100) * (has('Projectile') ? Math.max(GEAR.projSlowMin, 1 - (P.raw.projSlow || 0) / 100) : 1); // 投射物速度降低（寒魄球的收益）
+  if (b.form === 'shieldThrow') { W.pierce = 1; W.thSpd = SHT.speed * W.spd / (b.fast ? MECH.projSpeedFast : MECH.projSpeed); W.thLife = SHT.life * W.sparkLifeMul; } // 圣盾掷：无限穿透
   if (b.form === 'orb') { const sk = W.spd / (b.fast ? MECH.projSpeedFast : MECH.projSpeed); W.orbSpd = OB.orbSpeed * Math.max(GEAR.projSlowMin, sk); W.orbLife = OB.orbLife * W.sparkLifeMul; // 寒魄球：速度跟投射物速度（含 projSlow），寿命同游雷
     const sh = W.frostOrb ? W.orbLife / OB.emit * (OB.shardDirs + P.spawnAdd) * W.shardMul * OB.estHit * (P.flag.shardChain ? 1 + OB.scN * OB.scMul * OB.estHit : 1) : 0; W.orbEst = OB.contactMul * (1 + W.orbLife / OB.contactTick * 0.3) + OB.endMul + sh; }
   W.crit = qv(b.crit || 0, q) / 100 * (1 + critInc / 100) * (TM.crit ?? 1);
@@ -215,7 +228,7 @@ function weaponStats(it, P, isEngine) {
   W.dps = b.aura ? W.auraDps : W.avg * critE * W.aps * (b.form === 'stab' ? 1 : n) * (b.pellets || 1);
   W.dps *= 1 + W.meleeRe;
   if (b.form === 'reflect') W.dps = 0;
-  W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : b.form === 'orb' ? W.orbEst : b.form === 'meteor' ? (W.meteor ? W.meteorMul * (1 + MT.estGround) : 1) * (P.flag.starfall ? MT.sfN * MT.sfMul : 1) : W.frostNova ? W.novaMul * (P.flag.shatter ? 1 + NV.estShatter : 1) : 1; // 霜环：符文倍数 × 碎冰估算 // 旋转满层时的伤害倍数（dps 不含）
+  W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : b.form === 'shieldThrow' ? SHT.estHits * (1 + W.chain * 0.5) * (1 + W.chainStep * W.chain / 2) * (P.flag.echoShield ? 1 + SHT.echoMul * 2 : 1) : b.form === 'orb' ? W.orbEst : b.form === 'meteor' ? (W.meteor ? W.meteorMul * (1 + MT.estGround) : 1) * (P.flag.starfall ? MT.sfN * MT.sfMul : 1) : W.frostNova ? W.novaMul * (P.flag.shatter ? 1 + NV.estShatter : 1) : 1; // 霜环：符文倍数 × 碎冰估算 // 旋转满层时的伤害倍数（dps 不含）
   if (W.spark) { // 游雷：每颗的倍数（颗数 sparkN + 投射物 已在 dps 里）。穿透是无限的（有就穿过所有敌人），弹射 = 碰屏幕边反弹的次数
     W.pierce += SP.basePierce; const L = SP.life * W.sparkLifeMul, v = W.spd * SP.speedMul, pr = W.pierce > 0;
     const legs = Math.min(W.chain, Math.floor(L * v / SP.estLeg)); // 寿命内飞得到几次屏幕边（约 estLeg 像素一趟），再受弹射次数限制

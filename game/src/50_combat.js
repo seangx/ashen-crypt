@@ -607,6 +607,7 @@ function logic(dt) {
     if (player.wcd[i] <= 0) { if (fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
   });
   stepProjs(dt);
+  if (STATS.shieldW) stepShieldThrow(STATS.shieldW, dt); else if (STATS.armorHeld != null) STATS.armor = STATS.armorHeld;
   stepZones(dt); stepMeteors(dt);
   if (player.chillT > 0) { player.chillT -= dt; if (player.chillT <= 0) player.chill = 0; }
   // 敌人
@@ -723,6 +724,29 @@ function stepOrb(p, dt) { // 冰球：直线慢飞，碰屏幕边反弹（弹射
   if (p.rune) { p.emitT -= dt; while (p.emitT <= 0) { p.emitT += OB.emit; p.rot += OB.rot * Math.PI / 180; orbShards(p.W, p.x, p.y, OB.shardDirs + (STATS.spawnAdd || 0), p.rot, p.W.shardMul, p.cast, 0, null); } }
   if (p.life <= 0) { p.dead = true; fx({ t: 'boom', x: p.x, y: p.y, r: OB.endR, el: p.el }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (OB.endR + m.size) ** 2) hitMob(m, p.W, { mul: OB.endMul }); }
 }
+function stepShieldThrow(W, dt) { // 圣盾掷：盾在手上才扔；飞出去时没有格挡
+  const out = projs.some(p => p.sthrow && !p.dead); STATS.armor = out ? STATS.armorOut : STATS.armorHeld;
+  player.thCd = (player.thCd || 0) - dt; if (out || player.thCd > 0) return;
+  const t = nearest(player.x, player.y - 5, W.rng); if (!t) return;
+  const cost = SHT.soulPerThrow * (1 - STATS.soulLess); if (RUN) { if (player.soul < cost) return; player.soul -= cost; }
+  player.thCd = 1 / W.aps; const a = Math.atan2(t.y - 5 - (player.y - 6), t.x - player.x);
+  projs.push({ W, sthrow: 1, x: player.x, y: player.y - 6, a, vx: Math.cos(a) * W.thSpd, vy: Math.sin(a) * W.thSpd, life: W.thLife, age: 0, el: 'pla', r: 6, sch: W.chain, bn: 0, touch: new Map(), hit: new Set(), mul: 1 }); sfx('shoot');
+}
+function stepThrow(p, dt) { // 飞盾：直线飞，无限穿透（同一敌人每 rehit 秒一次），碰屏幕边反弹；弹完或寿命到了飞回手上（回程不打）
+  const W = p.W; p.age += dt;
+  if (p.back) { const dx = player.x - p.x, dy = player.y - 6 - p.y, d = Math.hypot(dx, dy) || 1; if (d < 8) { p.dead = true; return; } p.vx = dx / d * SHT.returnSpeed; p.vy = dy / d * SHT.returnSpeed; p.x += p.vx * dt; p.y += p.vy * dt; return; }
+  p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+  const hx = p.x < F.x0 || p.x > F.x1, hy = p.y < F.y0 - 6 || p.y > F.y1;
+  if (hx || hy) { if (p.sch > 0) { if (hx) p.vx = -p.vx; if (hy) p.vy = -p.vy; p.x = clamp(p.x, F.x0, F.x1); p.y = clamp(p.y, F.y0 - 6, F.y1); p.sch--; p.bn++; fx({ t: 'bounce', x: p.x, y: p.y }); } else p.back = 1; }
+  if (p.life <= 0) p.back = 1;
+  for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (p.r + m.size) ** 2) {
+    const t = p.touch.get(m); if (t != null && p.age - t < SHT.rehit) continue; p.touch.set(m, p.age);
+    const mul = 1 + W.chainStep * p.bn; hitMob(m, W, { mul });
+    if (STATS.flag.echoShield) { fx({ t: 'boom', x: m.x, y: m.y - 3, r: SHT.echoR, el: 'pla' }); for (const n of mobs) if (!n.dead && n.rise <= 0.2 && dist2(n, m) < (SHT.echoR + n.size) ** 2) hitMob(n, W, { mul: mul * SHT.echoMul }); }
+    player.shield = Math.min(STATS.shield, player.shield + STATS.shield * SHT.shieldOnHit / 100);
+    if (RUN && p.bn > 0) player.soul = Math.min(STATS.soulMax, player.soul + SHT.soulPerChain);
+  }
+}
 function stepMeteors(dt) { // 陨石落地：圈内一次命中，击退 + 眩晕；插符文的留火地
   for (const M of meteors) {
     M.t -= dt; if (M.t > 0) continue;
@@ -760,6 +784,7 @@ function stepProjs(dt) {
       if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el) && p.chill) chillPlayer(p.chill); p.dead = true; }
       if (p.pool && (p.dead || p.life <= 0)) { zones.push({ enemy: true, x: p.x, y: p.y + 6, r: p.pool.r, t: p.pool.dur, tickT: p.pool.tick, dmg: p.pool.dmg, el: p.el }); p.pool = null; p.dead = true; }
     } else if (p.orb) { stepOrb(p, dt);
+    } else if (p.sthrow) { stepThrow(p, dt);
     } else if (p.mine) {
       p.arm -= dt; p.life -= dt; if (p.life <= 0) p.dead = true;
       if (p.arm > 0 || p.dead) continue;

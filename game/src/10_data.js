@@ -155,12 +155,14 @@ function specAt(s, L) {
 const fitOf = conds => it => conds.every(c => c === 'weapon' ? it.kind === 'weapon' : c === 'engine' ? it.kind === 'engine' : itemTags(it).includes(c.slice(4)));
 const WH = DATA.mechanics.whirl; // 旋风斩流派的数值
 const SP = DATA.mechanics.spark; // 游雷（电球）流派的数值
+const SHT = DATA.mechanics.shield; // 圣盾掷（飞盾圣骑）流派的数值
 const OB = DATA.mechanics.orb; // 寒魄球（冰封球）流派的数值
 const MT = DATA.mechanics.meteor; // 陨火（陨石术）流派的数值
 const NV = DATA.mechanics.nova; // 霜环（冰霜新星）流派的数值
 const GEAR = DATA.mechanics.gear; // 词条改版（spec-bd-gear §2、§3）
 const SOUL = DATA.mechanics.soul; // 魂火（共用资源）
 const MOD_D = {
+  ShieldThrow: f => `只对圣徽盾生效：盾每 1/攻速 秒自动扔向最近的敌人，伤害 = 盾的护甲 × ${f.throwK}（吃盾牌伤害、圣光伤害），无限穿透；弹射 ${f.chain} 次（碰屏幕边反弹），每弹一次之后伤害 +${f.chainStepInc}%；弹完或寿命到了飞回手上。盾在飞时没有格挡。每次投掷消耗 ${SHT.soulPerThrow} 灯火，反弹过之后每次命中返还 ${SHT.soulPerChain}`,
   FrostOrbRune: f => `只对寒魄宝珠生效：冰球飞行中每 ${OB.emit} 秒向四周放 ${OB.shardDirs} 片冰片（+ 派生 +N），每片 ×${f.shardMul}，不穿透，算投射物。每次施放消耗 ${OB.soulPerCast} 灯火，冰片打中冻结的敌人每片返还 ${OB.refund}（每次最多 ${OB.refundCap}）`,
   Meteor: f => `只对坠星杖生效：陨石伤害 ×${f.meteorMul}，落地留 ${f.ground.dur} 秒火地（每 ${f.ground.tick} 秒造成这次命中的 ${Math.round(f.ground.pct * 100)}%，吃持续时间），火地里的敌人伤害降低 ${Math.round(MT.groundWeaken * 100)}%。每次施放消耗 ${MT.soulPerCast} 灯火，一次杀 ${MT.refundKills} 只以上返还 ${MT.soulRefund}`,
   FrostNova: f => `只对霜钟 / 圣钟生效：新星伤害 ×${f.novaMul}，每次命中叠 ${f.chillStacks} 层冰缓，击退 ${NV.knockPx} 像素；圣钟的元素改成寒霜。每次新星消耗 ${NV.soulPerCast} 灯火，每冻结一只返还 ${NV.refund}（每次最多 ${NV.refundCap}）`,

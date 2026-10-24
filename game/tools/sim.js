@@ -18,7 +18,7 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const ROOT = path.resolve(__dirname, '..');
 const opt = { runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', 'auto'), tree: arg('tree', 'none'), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), json: arg('json', null), maxT: +arg('maxT', 3600), minutes: +arg('minutes', 0), ladderArg: arg('ladder', ''), craft: arg('craft', 'none'), build: arg('build', 'none'), lock: process.argv.includes('--lock') };
 // 天梯：every:K = 每 K 趟推关排一次；every:10m = 每 10 分钟游戏时间排一次（每次最多连打 ladderCap 局）。--build whirl/random 默认 every:10m
-{ const la = opt.ladderArg || (['whirl', 'random', 'spark', 'nova', 'meteor', 'orb'].includes(opt.build) ? 'every:10m' : ''), v = (la.split(':')[1] || '');
+{ const la = opt.ladderArg || (['whirl', 'random', 'spark', 'nova', 'meteor', 'orb', 'shield'].includes(opt.build) ? 'every:10m' : ''), v = (la.split(':')[1] || '');
   opt.ladder = /m$/.test(v) ? 0 : +v || 0; opt.ladderMin = /m$/.test(v) ? parseFloat(v) : 0; opt.ladderCap = +arg('ladderCap', 3); }
 
 // --seeds 1,2,3：每个种子跑一遍（并行的子进程），打印各自的汇总和中位数
@@ -66,8 +66,8 @@ if (seedsArg) {
     if (A.G.ui.closeWin) A.G.ui.closeWin();
     const WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, B = opt.build;
     // 成型流派（whirl / spark）共用一套“锁左手底材、按优先级插符文和做装、先走到大型天赋”的逻辑，BP 是它们各自的配置段
-    const MB = A.DATA.mechanics, ARCH = !!(MB[B] && MB[B].treeKey), BP = ARCH ? MB[B] : WH, BASE = BP.base || 'TurbineBlades'; // 成型流派：mechanics.json 里有 treeKey 的段（whirl / spark / nova …）
-    const spinDps = n => n.weapons.reduce((s, w) => s + (w ? w.dps * (w.spinMax || 1) : 0), 0); // 旋转满层的秒伤
+    const MB = A.DATA.mechanics, ARCH = !!(MB[B] && MB[B].treeKey), BP = ARCH ? MB[B] : WH, BASE = BP.base || 'TurbineBlades', BS = BP.slot || 'wl'; // BS：流派底子放在哪个部位（圣盾掷是盾） // 成型流派：mechanics.json 里有 treeKey 的段（whirl / spark / nova …）
+    const spinDps = n => n.weapons.reduce((s, w) => s + (w ? w.dps * (w.spinMax || 1) : 0), 0) + (n.shieldW ? n.shieldW.dps * (n.shieldW.spinMax || 1) : 0); // 旋转满层的秒伤
     const ehpOf = n => { const w = n.weapons.find(x => x && x.whirl); const dr = 1 - (1 - (w ? Math.min(WH.drCap, WH.drPerStack * w.stackMax) / 100 : 0)) * (1 - (n.weapons.some(x => x && x.meleeGuard) ? A.DATA.mechanics.defense.meleeGuardLess : 0)); return A.defEhp(n, A.S.depth, Math.min(0.6, dr)); } // 有效生命：(生命 + 护盾 + 护盾回复×5) ÷ (1 − 护甲减伤 − 流派减伤) // 减伤合计在分数里最多算 60%; // 旋转满层减伤算进有效生命
     const score = () => spinDps(A.STATS) + ehpOf(A.STATS);
     const evS = eq => { const n = A.computeStats(eq); return spinDps(n) + ehpOf(n); };
@@ -76,8 +76,8 @@ if (seedsArg) {
     const swapIn = (it, slot) => { const cur = S.equip[slot]; A.equipItem(it, slot); if (cur && cur.mods) { for (const m of cur.mods) if (m) S.mods.push(m); cur.mods = cur.mods.map(() => null); } A.refreshStats(); };
     const placeRunes = () => {
       // 旋风斩：左手的符文按 runeOrder 重排（同名取等级高的）
-      if (ARCH && S.equip.wl && S.equip.wl.sock) {
-        const w = S.equip.wl, pool = [...w.mods.filter(Boolean), ...S.mods], rank = m => { const i = BP.runeOrder.indexOf(m.mid); return (i < 0 ? 99 : i) * 100 - m.lvl; };
+      if (ARCH && S.equip[BS] && S.equip[BS].sock) {
+        const w = S.equip[BS], pool = [...w.mods.filter(Boolean), ...S.mods], rank = m => { const i = BP.runeOrder.indexOf(m.mid); return (i < 0 ? 99 : i) * 100 - m.lvl; };
         const pickd = []; for (const m of pool.sort((a, b) => rank(a) - rank(b))) { if (pickd.length >= w.sock) break; if (A.modActive(m, w) && !pickd.some(x => x.mid === m.mid)) pickd.push(m); }
         w.mods = Array(w.sock).fill(null).map((_, i) => pickd[i] || null); S.mods = pool.filter(m => !pickd.includes(m)); A.refreshStats();
       }
@@ -88,7 +88,7 @@ if (seedsArg) {
         if (placed) S.mods = S.mods.filter(x => x !== m);
       }
     };
-    const fits = (it, s) => !ARCH || it.kind !== 'weapon' || (s === 'wl') === (it.b === BASE);
+    const fits = (it, s) => !ARCH || (BS === 'shield' ? it.kind !== 'shield' || it.b === BASE || !(S.equip.shield && S.equip.shield.b === BASE) : it.kind !== 'weapon' || (s === 'wl') === (it.b === BASE));
     // 选做装动作：默认按“秒伤 × 有效生命”贪心；whirl 按词条族优先级；random 随机
     const pickAct = (it, s, ev, mid) => {
       const acts = [];
@@ -120,7 +120,8 @@ if (seedsArg) {
       if (opt.gear === 'auto') for (const it of [...S.stash]) {
         if (it.kind === 'chip') continue;
         let slot = it.kind === 'weapon' ? (S.equip.wr ? (A.itemValue(it) > A.itemValue(S.equip.wl) ? 'wl' : 'wr') : 'wr') : it.kind;
-        if (ARCH && it.kind === 'weapon') { slot = it.b === BASE ? 'wl' : 'wr'; if (slot === 'wl' && !(S.equip.wl && S.equip.wl.b === BASE)) { swapIn(it, 'wl'); continue; } }
+        if (ARCH && BS === 'shield' && it.kind === 'shield' && it.b === BASE && !(S.equip.shield && S.equip.shield.b === BASE)) { swapIn(it, 'shield'); continue; }
+        if (ARCH && BS === 'wl' && it.kind === 'weapon') { slot = it.b === BASE ? 'wl' : 'wr'; if (slot === 'wl' && !(S.equip.wl && S.equip.wl.b === BASE)) { swapIn(it, 'wl'); continue; } }
         const cur = S.equip[slot]; if (!cur) { A.equipItem(it, slot); continue; }
         if (it.kind === 'weapon') { if (evS({ ...S.equip, [slot]: withMods(it, cur) }) > evS(S.equip)) swapIn(it, slot); continue; }
         const before = score(); A.equipItem(it, slot); if (score() < before) A.equipItem(cur, slot);

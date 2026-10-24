@@ -276,6 +276,7 @@ class World extends Phaser.Scene {
     if (p.enemy) { g.fillStyle(0x120c18, 1).fillRect(p.x - 2, p.y - 2, 4, 4); g.fillStyle(hex(ELEM_C[p.el]), 1).fillRect(p.x - 1, p.y - 1, 2, 2); return; }
     const c = hex(ELEM_C[p.el]);
     if (p.lob) { g.fillStyle(0x000000, 0.35).fillRect(p.x - 2, p.y, 4, 1); const y = p.y - p.z; g.fillStyle(0x120c18, 1).fillRect(p.x - 2, y - 2, 5, 5); g.fillStyle(0x8f5d36, 1).fillRect(p.x - 1, y - 1, 3, 3); g.fillStyle(0xffd36a, 1).fillRect(p.x, y - 3, 1, 2); return; }
+    if (p.sthrow) { const k = p.age * 14; g.fillStyle(0x6a4a10, 1).fillEllipse(p.x, p.y, 13, 9 + 3 * Math.sin(k)); g.fillStyle(0xffd860, 1).fillEllipse(p.x, p.y, 10, 6 + 3 * Math.sin(k)); g.fillStyle(0xfff6c0, 1).fillCircle(p.x, p.y, 1.8); return; } // 飞盾
     if (p.orb) { g.fillStyle(0x9fe8ff, 0.3).fillCircle(p.x, p.y, 7); g.fillStyle(0xbff2ff, 0.9).fillCircle(p.x, p.y, 4.5); g.fillStyle(0xffffff, 1).fillCircle(p.x - 1.5, p.y - 1.5, 1.5); return; } // 寒魄球
     if (p.shard) { g.fillStyle(0xe8fbff, 1).fillRect(p.x - 1, p.y - 1, 2, 2); g.fillStyle(c, 1).fillRect(p.x - p.vx / NV.shardSpeed * 2 - 0.5, p.y - p.vy / NV.shardSpeed * 2 - 0.5, 1, 1); return; } // 碎冰的冰片
     const k = p.W.key;

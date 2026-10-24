@@ -239,7 +239,7 @@ const HELD = {
   PlasmaCutter: [['yyyy..', 'f...Y.', '...Y..', '..Y...', '.Y....', 'n.....'], 0, 5],
 };
 const SHIELD_DOLL = ['.xxx.', 'xXXXx', 'xXyXx', 'xXXXx', '.xXx.', '..x..'];
-const SHIELD_COL = { TitaniumShield: ['b', 'w'], PhantomShield: ['p', 'v'], NebulaShield: ['C', 'c'], CrystalShield: ['B', 'l'], EtherealShield: ['P', 'p'], PolymerShield: ['q', 'e'] };
+const SHIELD_COL = { SigilShield: ['y', 'Y'], TitaniumShield: ['b', 'w'], PhantomShield: ['p', 'v'], NebulaShield: ['C', 'c'], CrystalShield: ['B', 'l'], EtherealShield: ['P', 'p'], PolymerShield: ['q', 'e'] };
 const BOOT_COL = { Thruster: 'P', Warp: 'Y', Afterburner: 'e', FusionDrive: 'm', EMP: 'B', BlackHoleWarp: 'k', Annihilator: 'o' };
 // 头冠图标（复用旧的兜帽 / 头盔 / 王冠图）
 Object.assign(ART, {

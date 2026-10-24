@@ -24,8 +24,8 @@ function autoAnchorStep(dt) {
 }
 // 走位：怪、敌方弹、毒池、墙都往外推，再加一点绕圈；附近没有怪就去捡东西
 function meteorTarget() { // 陨火 / 寒魄球（auto.json meteor / orb）：贴身的怪 ≥ retreatAt 只就交给风筝；否则离怪群比 keepDist 远就靠过去，停在 keepDist
-  const MW = STATS.weapons.find(w => w && (w.form === 'meteor' || w.form === 'orb')); if (!MW) return null;
-  const K = AU[MW.form], keep = K.keepDist, P = player, live = mobs.filter(m => !m.dead && m.rise <= 0.2); if (!live.length) return null;
+  const MW = STATS.weapons.find(w => w && (w.form === 'meteor' || w.form === 'orb')) || STATS.shieldW; if (!MW) return null;
+  const K = AU[MW.form === 'shieldThrow' ? 'shield' : MW.form], keep = K.keepDist, P = player, live = mobs.filter(m => !m.dead && m.rise <= 0.2); if (!live.length) return null;
   let close = 0, near = 1e9; for (const m of live) { const d = Math.sqrt(dist2(m, P)) - m.size; near = Math.min(near, d); if (d < K.closeR) close++; }
   if (close >= K.retreatAt || near < keep * 0.6) return null;
   let best = live[0], bn = -1; for (const a of live) { let c = 0; for (const b of live) if (dist2(a, b) < K.denseR * K.denseR) c++; if (c > bn) { bn = c; best = a; } }
