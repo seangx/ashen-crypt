@@ -691,6 +691,185 @@
    "IncreasedDuration": {"text": "持续时间提高 #%", "stat": "durInc", "type": "S", "on": ["core", "hub", "engine"], "grp": "IncreasedDuration", "tiers": [[[5, 10], 1000, 1, 999], [[11, 18], 700, 15, 999], [[19, 28], 400, 35, 999], [[29, 40], 150, 65, 999]]}
   }
  },
+ "uniq": {"_说明": "第 5 步的新独特（spec-bd-gear §5）用到的固定数值；随机数值在 uniques.json", "delayStep": 0.1, "echoR": 24, "autoNovaEvery": 0.5, "iceGround": {"dur": 1.5, "chillPerSec": 2, "rMul": 0.7}, "vortex": {"moveFull": 30, "takenFull": 10, "moveNone": 20}, "coffinShield": 1, "winterSpeed": 0.3, "winterEmit": 1.5, "crownMul": 0.5, "crownN": 2, "martyrChainMul": 2, "doomDodge": 14},
+ "implicit": {
+   "_说明": "武器底子的隐性倾向（spec-bd-gear §6）：不占词条位，显示在底子属性下面。fx 键见 40_stats.js applyImplicit",
+   "Cannon": {
+     "fx": {
+       "pierce": 1
+     },
+     "t": "穿透"
+   },
+   "Railgun": {
+     "fx": {
+       "pierce": 1,
+       "projSpd": 30
+     },
+     "t": "穿透；投射物速度提高 30%"
+   },
+   "Zapper": {
+     "fx": {
+       "chain": 1
+     },
+     "t": "弹射 +1（碰屏幕边反弹）"
+   },
+   "Shuriken": {
+     "fx": {
+       "projDur": 20
+     },
+     "t": "投射物持续时间提高 20%"
+   },
+   "TurbineBlades": {
+     "fx": {
+       "aoeInc": 15
+     },
+     "t": "范围提高 15%"
+   },
+   "PlasmaNova": {
+     "fx": {
+       "aoeInc": 10
+     },
+     "t": "范围提高 10%"
+   },
+   "Rocket": {
+     "fx": {
+       "inc": 15
+     },
+     "t": "范围伤害提高 15%"
+   },
+   "FlameThrower": {
+     "fx": {
+       "dotInc": 20
+     },
+     "t": "持续伤害提高 20%"
+   },
+   "Orbitron": {
+     "fx": {
+       "spawn": 1
+     },
+     "t": "派生 +1（螺旋弹第一次打中时分出一颗，×0.5）"
+   },
+   "Blastgun": {
+     "fx": {
+       "inc": 15
+     },
+     "t": "投射物伤害提高 15%"
+   },
+   "BlastMine": {
+     "fx": {
+       "inc": 20
+     },
+     "t": "延迟伤害提高 20%"
+   },
+   "PlasmaMine": {
+     "fx": {
+       "inc": 20
+     },
+     "t": "延迟伤害提高 20%"
+   },
+   "StormMine": {
+     "fx": {
+       "inc": 20
+     },
+     "t": "延迟伤害提高 20%"
+   },
+   "ShrapnelMine": {
+     "fx": {
+       "inc": 20
+     },
+     "t": "延迟伤害提高 20%"
+   },
+   "WasteMine": {
+     "fx": {
+       "inc": 20
+     },
+     "t": "延迟伤害提高 20%"
+   },
+   "Spikes": {
+     "fx": {
+       "inc": 20
+     },
+     "t": "近战伤害提高 20%"
+   },
+   "Hullbreaker": {
+     "fx": {
+       "inc": 20
+     },
+     "t": "近战伤害提高 20%"
+   },
+   "Laser": {
+     "fx": {
+       "rangeInc": 15
+     },
+     "t": "射程提高 15%"
+   },
+   "Taser": {
+     "fx": {
+       "ail": {
+         "ele": 0.1
+       }
+     },
+     "t": "感电几率 +10%"
+   },
+   "PlutoniumBar": {
+     "fx": {
+       "ail": {
+         "nuc": 0.1
+       }
+     },
+     "t": "瘟疫异常几率 +10%"
+   },
+   "SporeBlaster": {
+     "fx": {
+       "critInc": 20
+     },
+     "t": "暴击率提高 20%"
+   },
+   "FlameSlinger": {
+     "fx": {
+       "aspd": 10
+     },
+     "t": "攻击速度提高 10%"
+   },
+   "Thorns": {
+     "fx": {
+       "knock": 1
+     },
+     "t": "命中击退"
+   },
+   "PlasmaBlaster": {
+     "fx": {
+       "critDmg": 20
+     },
+     "t": "暴击伤害 +20%"
+   },
+   "PlasmaCutter": {
+     "fx": {
+       "pierceMore": 1.15
+     },
+     "t": "穿透后的命中伤害总增 15%"
+   },
+   "FrostBell": {
+     "fx": {
+       "ail": {
+         "cold": 0.1
+       }
+     },
+     "t": "冰缓几率 +10%"
+   },
+   "StarfallRod": {
+     "fx": {
+       "bossInc": 15
+     },
+     "t": "对 Boss 伤害提高 15%"
+   },
+   "FrostOrb": {
+     "fx": {
+       "projSlow": 10
+     },
+     "t": "投射物速度降低 10%（寒魄球更慢、更久）"
+   }
+ },
  "gear": {
   "_说明": "装备词条改版（规格 design/spec-bd-gear.md §2、§3）。affixes 格式同 whirl.affixes。stat：inc:proj / inc:aoe / inc:melee 只对带对应标签的武器进“提高”池；delayInc / delayAdd / spawnAdd / shieldDmg 给第 4 步的新流派（现在没有带 Delayed / Spawn / Shield 标签的武器，所以 DelayDamage、SpawnAdd、ShieldDamage 暂时 off=true 不掉落）；projSlow 投射物速度 ×(1 − projSlow%)，下限 ×projSlowMin；frozenTaken 打冻结敌人时伤害按提高% 结算；chainStep 每次弹射伤害 +%（和织雷之心相加）；block 装着盾牌时护甲 ×(1 + block%)；critChance 暴击率提高%；moveInc 移动速度提高%（和基础移动速度提高相加）；burnLess 推关灯火燃烧降低%（最多 burnLessCap%）；soulKillInc 击杀回灯火提高%；ailEff:元素 异常效果提高%（碎骨伤害、余震伤害、灼烧累积、感电减抗、致盲减伤、疫病伤害、冰缓减速和冻结时长）；pen:元素 穿抗%（计算怪物抗性时减去）。hubResW：法阵上掷出六元素抗性 / 抗性上限时权重 ×hubResW（§3.1，抗性只出在法阵和盾牌）。migrate：老存档按 id 映射（§3.4），档位按在族里的比例换算，换不过去的词条删掉并返还 1 点锻造潜力。",
   "projSlowMin": 0.2,

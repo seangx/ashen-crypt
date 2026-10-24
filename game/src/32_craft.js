@@ -86,6 +86,12 @@ function craftUp(it, i, hope, chaos) {
   x.v = rollVal(AFF_BY[x.k], x.t);
   return `升到 ${tierLabel(x)}：${affText(x)}${swap}，${msg}`;
 }
+/* 誓约：随机打一条这个部位能出的（已有就替换） */
+const oathOpts = it => OATH.list.filter(o => oathFits(o, it) && o.id !== it.oath);
+function addOath(it) { const ok = oathOpts(it); if (ok.length) it.oath = pick(ok).id; return it; }
+const oathText = id => { const o = OATH_BY[id]; return o ? `誓约：${o.pos}；${o.neg}` : ''; };
+function oathWhy(it) { if (!craftable(it)) return '独特装备、地图、符文不能立誓'; if (glyphN('oath') <= 0) return `没有立誓符（天梯 ${OATH.glyphLadder} 层起的宝箱 ${OATH.glyphDrop}% 掉）`; if (!oathOpts(it).length) return '这个部位没有能出的誓约'; return anvilWhy(it); }
+function craftOath(it) { S.glyphs.oath--; const old = it.oath; addOath(it); return `${old ? '换成' : '立下'}${oathText(it.oath)}，${spendFp(it, [OATH.fpCost, OATH.fpCost])}`; }
 function craftRefine(it, i) {
   const x = it.affs[i]; S.glyphs.refine--; x.v = rollVal(AFF_BY[x.k], x.t);
   return `洗成 ${affText(x)}，${spendFp(it, AV.refine)}`;

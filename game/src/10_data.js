@@ -226,6 +226,10 @@ const modLevelOf = xp => { let L = 1; for (const t of MOD_XP) if (xp >= t) L++; 
 const CRAFT = DATA.craft;
 const GLYPHS = CRAFT.glyphs.list;
 const GLYPH_BY = Object.fromEntries(GLYPHS.map(g => [g.id, g]));
+const GLYPHS_DROP = GLYPHS.filter(g => !g.special); // 立誓符只从天梯宝箱单独掉
+const OATH = CRAFT.oath, OATH_BY = Object.fromEntries(OATH.list.map(o => [o.id, o])); // 誓约（spec-bd-gear §3.5）
+const oathFits = (o, it) => o.on.includes(it.kind) || (it.kind === 'weapon' && o.on.includes('wl'));
+const UQX = DATA.mechanics.uniq, IMPL = DATA.mechanics.implicit; // 第 5 步独特的固定数值、武器底子隐性倾向
 
 /* 机制常数（data/mechanics.json）和成长、怪物、掉落（data/progression.json、data/loot.json） */
 const MECH = { ...DATA.mechanics.attributes, ...DATA.mechanics.defense, ...DATA.mechanics.offense, ...DATA.mechanics.ailments,

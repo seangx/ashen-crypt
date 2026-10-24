@@ -129,11 +129,26 @@ function treeStats(ids = S.tree, eq = S.equip) {
     else if (k === 'velCrown') { A('projSpd', RULES.velCrown.projSpd); A('projDur', RULES.velCrown.projDur); M('dmg:proj', 1 - RULES.velCrown.less / 100); }
     else if (k === 'durCrown') { A('durInc', RULES.durCrown.durInc); A('aoeInc', RULES.durCrown.aoeInc); }
     else if (k === 'meleeCrown') { flag.meleeCrown = (flag.meleeCrown || 0) + RULES.meleeCrown.chance / 100; M('speed', 1 - RULES.meleeCrown.speedLess / 100); }
-    else if (k === 'takenKin') flag.takenKin = Math.max(flag.takenKin || 0, v / 100); }); };
+    else if (k === 'takenKin') flag.takenKin = Math.max(flag.takenKin || 0, v / 100);
+    // 第 5 步的新独特（spec-bd-gear §5）
+    else if (['delayCrown', 'groundStack', 'shardCrown', 'iceGround', 'coffin', 'vortexTreads', 'earlyWarn', 'martyrArmor'].includes(k)) flag[k] = Math.max(flag[k] || 0, v);
+    else if (k === 'delayAdd') A('delayAdd', v); else if (k === 'aoeInc') A('aoeInc', v); else if (k === 'durLess') A('durInc', -v);
+    else if (k === 'martyrThrow') flag.martyrThrow = (flag.martyrThrow || 0) + v / 10;
+    else if (k === 'echoCrown') flag.echoCrown = Math.max(flag.echoCrown || 0, v / 100); else if (k === 'chainLess') A('chain', -v);
+    else if (k === 'frozenTaken') A('frozenTaken', v); else if (k === 'projSlowU') A('projSlow', v);
+    else if (k === 'autoNova') flag.autoNova = Math.max(flag.autoNova || 0, v / 100); else if (k === 'moveLess') M('speed', 1 - v / 100);
+    else if (k === 'freezeDur') A('freezeDur', v); else if (k === 'fireResLess') A('res:exp', -v); }); };
+  // 誓约：一正一负，“总增 / 总降”是独立乘区
+  const oathRules = it => { const o = OATH_BY[it.oath]; if (!o) return; for (const [k, v] of Object.entries(o.fx)) {
+    if (['chainStep', 'projAdd', 'delayAdd', 'aoeInc', 'soulKillInc'].includes(k)) A(k, v);
+    else if (k === 'shieldRegenMore') M('deflRate', 1 + v / 100); else if (k === 'speedMore') M('speed', 1 + v / 100); else if (k === 'projMore') M('dmg:proj', 1 + v / 100); else if (k === 'lifeMore') M('life', 1 + v / 100);
+    else if (k === 'chillLess') flag.chillMul = (flag.chillMul || 1) * (1 - v / 100);
+    else flag[k] = (1 + (flag[k] || 0) / 100) * (1 + v / 100) * 100 - 100; } }; // fullShieldMore / frozenMore / delayMore / dmgMore / burnMore：按 % 存，叠加时相乘
   for (const id of ids) { const it = chipIn(id); if (!it) continue;
     for (const x of it.affs) { const a = AFF_BY[x.k]; if (!a || !a.tk) continue; const v = Array.isArray(x.v) ? x.v[0] : x.v; if (a.tm === 'm') M(a.tk, 1 + v / 100); else A(a.tk, v); }
     uniqueRules(it); }
   for (const k in eq) if (eq[k] && eq[k].u) uniqueRules(eq[k]);
+  for (const k in eq) if (eq[k] && eq[k].oath) oathRules(eq[k]);
   for (const b of boonAdds()) for (const k in b) A(k, b[k]);
   for (const id of ids) {
     const nd = TREE.nodes[id]; if (!nd) continue;

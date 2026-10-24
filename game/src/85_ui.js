@@ -43,6 +43,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   rect(sc, 0, cy + 1, w, 1, '#3a3049', 1, c); cy += 4;
   const ln = (t, col = '#b8afc4') => { const r = TW(sc, 0, cy, t, w, { size: 8, color: col, parent: c }); cy += r.h; };
   for (const [t, col] of baseLines(it)) ln(t, col);
+  if (it.kind === 'weapon' && IMPL[it.b]) ln(`隐性：${IMPL[it.b].t}`, '#c9b98a'); // 底子的隐性倾向
   if (it.sock) {
     const hub = it.kind === 'hub';
     for (let i = 0; i < it.sock; i++) {
@@ -67,6 +68,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
     }
     cy += t.h;
   });
+  if (it.oath) ln(oathText(it.oath), '#c0392b'); // 誓约：暗红，在词条最下面
   if (it.u) { rect(sc, 0, cy + 1, w, 1, '#5a3a14', 1, c); cy += 4; for (const r of ruleLines(it)) ln(r, '#ff9a3c'); }
   if (it.kind === 'chip') ln(chipSock(it) ? '已插在天赋树的印记槽里' : '插在天赋树的印记槽里生效（先点亮旁边的天赋）', COL.faint);
   if (it.rar < 3 && it.kind !== 'map') { T(sc, 0, cy + 1, `词条 ${it.affs.length}/${AFF_MAX} · 锻造潜力 ${it.fp || 0}`, { size: 8, color: it.fp > 0 ? COL.faint : COL.bad, parent: c }); cy += 11; }
@@ -496,7 +498,7 @@ class UI extends Phaser.Scene {
     const X = 316, adv = unlocked('craftAdv');
     const done = msg => { craftLog.unshift(msg); sfx('craft'); refreshStats(); save(); this.refresh(); };
     // 铸符数量和附带开关
-    GLYPHS.forEach((g, i) => T(this, X + i * 37, 6, `${g.n.slice(0, 2)} ${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: c }));
+    GLYPHS.forEach((g, i) => T(this, X + i * 30, 6, `${g.n.slice(0, 1)} ${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: c }));
     if (useHope && !glyphN('hope')) useHope = false; if (useChaos && !glyphN('chaos')) useChaos = false;
     mkBtn(this, c, X, 18, 72, 14, useHope ? '附带希望符' : '不带希望符', () => { useHope = !useHope; this.refresh(); }, { size: 8, style: useHope ? 's' : 'n', disabled: !glyphN('hope'), tip: [{ t: '希望符', c: GLYPH_BY.hope.c }, { t: `加词条或升档时附带一张：${Math.round(CRAFT.glyphs.hopeChance * 100)}% 几率这次不扣潜力。`, s: 8 }] });
     mkBtn(this, c, X + 76, 18, 72, 14, useChaos ? '附带混沌符' : '不带混沌符', () => { useChaos = !useChaos; this.refresh(); }, { size: 8, style: useChaos ? 's' : 'n', disabled: !glyphN('chaos'), tip: [{ t: '混沌符', c: GLYPH_BY.chaos.c }, { t: '升档时附带一张：升档后这条词条换成同类型（前缀或后缀）里随机的另一条，档位不变。', s: 8 }] });
@@ -506,7 +508,8 @@ class UI extends Phaser.Scene {
     const rw = adv ? refineWhy(it, craftAff) : unlockText('craftAdv'), sw = adv ? stripWhy(it) : unlockText('craftAdv');
     mkBtn(this, c, X, 55, 72, 16, '洗数值', () => done(craftRefine(it, craftAff)), { size: 8, disabled: !!rw, tip: [{ t: '洗数值', c: GLYPH_BY.refine.c }, { t: `花 1 张洗练符，选中的词条在同档内重新随数值，潜力扣 ${AV.refine[0]}–${AV.refine[1]}。`, s: 8 }, ...(rw ? [{ t: rw, s: 8, c: COL.bad }] : [])] });
     mkBtn(this, c, X + 76, 55, 72, 16, '移除', () => done(craftStrip(it)), { size: 8, disabled: !!sw, tip: [{ t: '移除', c: GLYPH_BY.strip.c }, { t: `花 1 张剥离符，随机去掉一条词条，潜力扣 ${AV.strip[0]}–${AV.strip[1]}。`, s: 8 }, ...(sw ? [{ t: sw, s: 8, c: COL.bad }] : [])] });
-    mkBtn(this, c, X, 74, 148, 16, confirmKey === 'shat' + it.id ? '再点一次确认拆解' : '拆解', () => {
+    const ow = oathWhy(it); mkBtn(this, c, X + 76, 74, 72, 16, `立誓 ×${glyphN('oath')}`, () => done(craftOath(it)), { size: 8, disabled: !!ow, tip: [{ t: '立誓', c: GLYPH_BY.oath.c }, { t: `花 1 张立誓符，随机打一条这个部位能出的誓约（一正一负，已有就替换），潜力扣 ${OATH.fpCost}。`, s: 8 }, ...(ow ? [{ t: ow, s: 8, c: COL.bad }] : [])] });
+    mkBtn(this, c, X, 74, 72, 16, confirmKey === 'shat' + it.id ? '确认拆解' : '拆解', () => {
       if (!confirm2('shat' + it.id)) return this.refresh();
       const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片`);
     }, { size: 8, style: confirmKey === 'shat' + it.id ? 'r' : 'n', tip: [{ t: '拆解', c: COL.emberHi }, { t: `毁掉装备，每条词条给 ${CRAFT.shatter.perAffix} 个对应碎片，T${CRAFT.shatter.bonusTier} 及以上多给 ${CRAFT.shatter.bonus} 个。`, s: 8 }] });

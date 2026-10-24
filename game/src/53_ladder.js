@@ -49,17 +49,19 @@ function ladderWin(m) {
     let it;
     if (rnd() * 100 < exP) it = makeExalted(rollItem(N + R.ilvlBonus, 0, false, 2));
     else { it = rollItem(N + R.ilvlBonus, 0, true, null, true); if (it.u) it.lp = ri(...LOOT.legendary.ladder); }
+    if (!it.u && rnd() * 100 < OATH.chestChance) addOath(it); // 天梯宝箱的装备 15% 带誓约
     dropThing(m, { kind: 'item', item: it });
   }
   const ns = R.shardsBase + Math.floor(N / R.shardsPerN);
   for (let i = 0; i < ns; i++) dropThing(m, { kind: 'shard', k: rollShard(N) });
-  for (const g of GLYPHS) if (rnd() * 100 < R.glyphBase + N * R.glyphPerN) dropThing(m, { kind: 'glyph', id: g.id });
+  for (const g of GLYPHS_DROP) if (rnd() * 100 < R.glyphBase + N * R.glyphPerN) dropThing(m, { kind: 'glyph', id: g.id });
+  if (N >= OATH.glyphLadder && rnd() * 100 < OATH.glyphDrop) dropThing(m, { kind: 'glyph', id: 'oath' }); // 立誓符
   L.unlocked = Math.max(L.unlocked, N + jump);
   if (N > L.best || (N === L.best && RUN.t < L.bestTime)) { L.best = N; L.bestTime = Math.round(RUN.t * 10) / 10; }
   const tierUp = [];
   for (let i = 0; i <= ladderTier(L.best); i++) if (!L.tiersHit.includes(i)) {
     L.tiersHit.push(i); tierUp.push(i);
-    for (const g of GLYPHS) for (let j = 0; j < LD.tiers.firstGlyphs; j++) dropThing(m, { kind: 'glyph', id: g.id });
+    for (const g of GLYPHS_DROP) for (let j = 0; j < LD.tiers.firstGlyphs; j++) dropThing(m, { kind: 'glyph', id: g.id });
   }
   RUN.lad = { jump, left, tierUp, rec: ladderRecord(N, jump) };
   if (G.ui) G.ui.banner(tierUp.length ? `晋升${LADDER_TIERS[tierUp[tierUp.length - 1]].n}` : `通过 · 跳 ${jump} 层`, COL.emberHi);

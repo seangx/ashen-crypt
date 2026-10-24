@@ -33,7 +33,7 @@ async function run(build, IL) {
   fs.writeFileSync(tmp, `<!doctype html><html><head><meta charset="utf-8"></head><body>${HTML}</body></html>`);
   await p.goto('file://' + tmp);
   await p.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 20000 });
-  const out = await p.evaluate(({ build, IL, seed, DMAX, DUMP, CORE }) => {
+  const out = await p.evaluate(({ build, IL, seed, DMAX, DUMP, CORE, UQ5 }) => {
     const A = window.__ash; A.G.fx = false; window.__reseed(seed * 7919 + IL);
     const S = A.S, WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, MB = A.DATA.mechanics, ARCH = !!(MB[build] && MB[build].treeKey), BP = ARCH ? MB[build] : WH, rnd = Math.random, pick = a => a[Math.floor(rnd() * a.length)];
     if (A.G.ui.closeWin) A.G.ui.closeWin();
@@ -81,6 +81,9 @@ async function run(build, IL) {
       if ((best.it.kind === 'weapon' || (ARCH && s === BS)) && !(best.it.mods || []).some(Boolean)) runesFor(best.it, ARCH && s === BS ? BP.runeOrder : null);
       S.equip[s] = best.it;
     }
+    // --uniq 1：换上第 5 步给这个流派的新独特（spec-bd-gear §5）
+    const U5 = { shield: ['MartyrShield', 'EchoCrown'], orb: ['WinterHeart', 'ShardCrown', 'CoffinShield'], meteor: ['DoomCrown', 'ScorchedCircle'], nova: ['EverwinterCircle', 'CoffinShield', 'ShardCrown'], whirl: ['VortexTreads'], spark: ['EchoCrown'] };
+    if (UQ5 && IL >= 20) for (const id of U5[build] || []) { const it = A.newUnique(id, IL); const s = it.kind === 'weapon' ? (BP.slot || 'wl') : it.kind; if (s === (BP.slot || 'wl')) runesFor(it, BP.runeOrder); S.equip[s] = it; }
     A.refreshStats();
     const st = A.STATS;
     const info = { dps: Math.round(spinDps(st)), ehp: Math.round(ehpOf(st)), panel: Math.round(st.dps), stack: (st.weapons.find(x => x && x.whirl) || {}).stackMax || 0, sparkN: (st.weapons.find(x => x && x.spark) || {}).sparkN || 0, res: Math.round(Object.values(st.res).reduce((a, b) => a + b, 0) / 5),
@@ -112,7 +115,7 @@ async function run(build, IL) {
     if (A.RUN) { A.RUN.result = 'timeout'; A.RUN.ending = 0.01; A.logic(dt); }
     const dr = A.AUTO.last, descent = { t: Math.round(dt2), floors: dr ? dr.descent.floors : 0, res: dr ? dr.result : '?' };
     return { info, best, last, descent, snap };
-  }, { build, IL, seed: opt.seed, DMAX: opt.descentMax, DUMP: !!opt.dump, CORE: arg('core', '') });
+  }, { build, IL, seed: opt.seed, DMAX: opt.descentMax, DUMP: !!opt.dump, CORE: arg('core', ''), UQ5: arg('uniq', '0') === '1' });
   fs.unlinkSync(tmp); await b.close();
   const bad = errs.filter(e => !/GPU stall|swiftshader|GroupMarker/.test(e));
   if (bad.length) console.log(bad.join('\n'));

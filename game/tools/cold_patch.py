@@ -39,6 +39,9 @@ def patch(out):
     t.update({'req': 12, 'w': 600, 'armor': [round(x * 1.15, 2) for x in t['armor']], 'shieldDmg': [round(20 + 20 * i / (n - 1)) for i in range(n)], 'sockW': [1000, 600],
               'tags': ['Shield', 'Projectile', 'ProjectileCanChain', 'ProjectileCanPierce', 'Attack', 'AttackSpeed', 'Hit']})
     out['shield']['SigilShield'] = t
+    # 隐性倾向（§6）：陷阱带 Delayed 标签
+    for k, w in out['weapons'].items():
+        if 'Mine' in w.get('tags', []) and 'Delayed' not in w['tags']: w['tags'].append('Delayed')
     return gear(out)
 
 # 词条改版（spec-bd-gear.md §3.1、§3.4）：六元素抗性 / 抗性上限只出在法阵和盾牌；空词条权重归零（老存档按 mechanics.gear.migrate 映射）

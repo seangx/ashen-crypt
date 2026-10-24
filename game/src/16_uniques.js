@@ -19,6 +19,15 @@ const RULE_TEXT = {
   fieldHere: () => '力场符文插在这里也生效', takenKin: v => `受到的伤害有 ${v}% 按物理抗性结算`, dodge: v => `闪避 +${v}`, dodgeCap: v => ruleText('dodgeCap', v),
   dodgeSpikes: () => ruleText('dodgeSpikes'), velocity: v => `移动速度提高 ${v}%`, critLess: v => `暴击率总降 ${v}%`,
   areaEye: () => ruleText('areaEye'), projLess: v => `代价：投射物伤害总降 ${v}%`, armorLess: v => `代价：护盾总降 ${v}%`,
+  delayCrown: v => `每多 0.1 秒延迟，延迟伤害总增 ${v}%`, delayAdd: v => `延迟 +${v} 秒`, aoeInc: v => `范围提高 ${v}%`, earlyWarn: () => '代价：预警圈更早出现（圈里的怪会往外躲）',
+  groundStack: v => `你的地面效果在同一位置可以叠 ${v} 层（各自计时）`, durLess: v => `代价：持续时间降低 ${v}%`,
+  martyrThrow: v => `圣盾掷的弹射（碰屏幕边反弹）次数 ×2；每次命中回 ${v / 10}% 护盾`, martyrArmor: () => '代价：盾在飞时不算盾的护甲',
+  echoCrown: v => `弹射（碰屏幕边反弹）过的投射物，命中时在命中点小爆（半径 ${UQX.echoR} 像素，×${v}%，算范围）`, chainLess: v => `代价：弹射 −${v}`,
+  winterHeart: v => `冰球速度 −70%；持续时间 +${v}%；冰片频率 ×1.5`, winterCost: v => `代价：每次施放的灯火消耗 +${v}%`,
+  shardCrown: () => '派生物再派生一层（每层 ×0.5）', frozenTaken: v => `冻结的敌人受到的伤害提高 ${v}%`, projSlowU: v => `代价：投射物速度降低 ${v}%（寒魄球用起来是好处）`,
+  autoNova: v => `新星每 ${UQX.autoNovaEvery} 秒自动脉冲一次（×${v}%），不再按攻速出手`, iceGround: () => `脚下留 ${UQX.iceGround.dur} 秒冰地，每秒叠 ${UQX.iceGround.chillPerSec} 层冰缓`, moveLess: v => `代价：移速 −${v}%`,
+  coffin: () => `每冻结一个敌人回 ${UQX.coffinShield}% 护盾`, freezeDur: v => `冻结时间 +${v}%`, fireResLess: v => `代价：火焰抗性 −${v}%`,
+  vortexTreads: () => `旋转叠满层时移速 +${UQX.vortex.moveFull}%、受到的伤害 −${UQX.vortex.takenFull}%（永冬自动脉冲期间算满层）；代价：没有层数时移速 −${UQX.vortex.moveNone}%`,
   chainCrown: () => ruleText('chainCrown'), projCrown: () => ruleText('projCrown'), durCrown: () => ruleText('durCrown'), velCrown: () => ruleText('velCrown'), meleeCrown: () => ruleText('meleeCrown'), multicrit: () => ruleText('multicrit'), dashMax: v => `冲刺槽 +${v}`, finale: () => ruleText('finale'), splitEnd: () => ruleText('splitEnd'),
 };
 for (const k of ELEM) RULE_TEXT['ail:' + k] = v => `${AIL[k].n}几率 +${v}%`;
