@@ -168,7 +168,7 @@ class MobileUI extends UI {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) return;
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
-    const id = this.winId, native = ['settings', 'more', 'ladder'].includes(id);
+    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
     const y = native ? MTOP + 8 : Math.round(clamp((H - NAV_H - h) / 2, MTOP + 12, H)), c = this.add.container(this.panMax ? 4 - this.pan : Math.round((W - w) / 2), y).setDepth(100); this.winC = c; c.w = w;
@@ -204,6 +204,146 @@ class MobileUI extends UI {
     mkBtn(this, c, w - 70, y + 7, 26, 22, '<', () => { if (S.depth > 1 && !RUN) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { disabled: RUN || S.depth <= 1 });
     mkBtn(this, c, w - 42, y + 7, 26, 22, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { disabled: RUN || S.depth >= S.maxDepth }); y += 50;
     TW(this, 12, y, '只有一个操作：移动。武器自动攻击最近的敌人，没有冲刺和主动技能。', w - 24, { size: 8, color: COL.faint, parent: c });
+  }
+  /* 装备：竖屏原生（身上 + 属性 → 背包 → 选中物品的详情抽屉） */
+  win_gear(c, w, h) {
+    this.equipSlots(c, 12, 14, (i) => { if (i) { selId = selId === i.id ? null : i.id; this.refresh(); } }, it => it && it.id === selId);
+    { const cv = dollCanvas(S.equip, 0); if (this.textures.exists('doll_ui')) this.textures.remove('doll_ui'); this.textures.addCanvas('doll_ui', cv);
+      rect(this, 38, 40, 24, 24, '#120c18', 1, c); const im = img(this, 38 + 12 - DOLL_W / 2, 40 + 24 - DOLL_H, 'doll_ui', c); im.setCrop(DOLL_W / 2 - 12, 0, 24, DOLL_H); }
+    const P = STATS;
+    [['预计秒伤', fmt(P.dps), COL.emberHi], ['生命', fmt(P.life), '#ff8a7a'], ['护盾', `${fmt(P.shield)} +${r1(P.shieldRegen)}/秒`, '#bfe0ff'], ['护甲', `${fmt(P.armor)} 减伤${Math.round(armorDr(P.armor, typicalHit(S.depth)) * 100)}%`], ['闪避', P.dodge + '%'], ['冲刺槽', String(P.dashMax)]]
+      .forEach(([a, b, col], i) => { T(this, 100, 12 + i * 11, a, { size: 8, color: COL.dim, parent: c }); T(this, w - 10, 12 + i * 11, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); });
+    T(this, 100, 80, '抗性', { size: 8, color: COL.dim, parent: c });
+    ELEM.forEach((e, i) => T(this, 124 + i * 20, 80, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
+    T(this, 12, 98, `背包 ${S.stash.length}/${STASH_CAP}`, { size: 8, color: COL.dim, parent: c });
+    mkBtn(this, c, w - 140, 94, 40, 16, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
+    mkBtn(this, c, w - 96, 94, 86, 16, confirmKey === 'junk' ? '再点确认' : '拆解普通', () => { if (confirm2('junk')) { S.stash.filter(x => x.rar === 0).forEach(salvage); save(); } this.refresh(); }, { size: 8, style: confirmKey === 'junk' ? 'r' : 'n' });
+    const cols = 10, st = Math.floor((w - 20) / cols), cs = st - 2;
+    for (let i = 0; i < STASH_CAP; i++) {
+      const it = S.stash[i]; const x = 10 + (i % cols) * st, y = 114 + (i / cols | 0) * st;
+      mkCell(this, c, x, y, it, { size: cs, sel: it && it.id === selId, upg: true, onClick: v => { if (!v) return; if (selId === v.id) equipItem(v); selId = v.id; v.isNew = false; save(); this.refresh(); } });
+    }
+    this.gearY = 114 + Math.ceil(STASH_CAP / cols) * st + 4;
+    T(this, 12, this.gearY, '点一下选中，再点一下装备。绿色箭头 = 比身上的好。', { size: 8, color: COL.faint, parent: c });
+    this.paneC = this.add.container(0, this.gearY + 14); c.add(this.paneC); this.paneW = w; this.paneH = h - this.gearY - 14;
+    this.renderPane();
+  }
+  renderPane() {
+    if (!this.paneC || this.winId !== 'gear') return;
+    const p = this.paneC, w = this.paneW; p.removeAll(true);
+    const f = selId ? findItem(selId) : null; if (!f) return;
+    const it = f.it, bw = Math.floor((w - 28) / 4), B = (i, n, fn, o) => mkBtn(this, p, 10 + i * (bw + 2), 0, bw, 18, n, fn, Object.assign({ size: 8 }, o));
+    rect(this, 4, -4, w - 8, this.paneH, '#17111f', 0.97, p); rect(this, 4, -4, w - 8, 1, '#5a4a6a', 1, p);
+    if (f.where === 'stash') {
+      if (it.kind === 'weapon') { B(0, '装左手', () => { equipItem(it, 'wl'); save(); this.refresh(); }, { style: 'w' }); B(1, '装右手', () => { equipItem(it, 'wr'); save(); this.refresh(); }, { style: 'w', disabled: !unlocked('wr') }); }
+      else B(0, '装备', () => { equipItem(it); save(); this.refresh(); }, { style: 'w' });
+      B(2, confirmKey === 'sal' + it.id ? '确认' : '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { style: confirmKey === 'sal' + it.id ? 'r' : 'n' });
+    } else {
+      B(0, '卸下', () => { unequip(f.slot); save(); this.refresh(); });
+      if (it.sock || ['core', 'engine', 'hub'].includes(f.slot)) B(1, '符文', () => { modWeapon = f.slot; this.openWin('mods'); });
+    }
+    B(3, '铁砧', () => { craftId = it.id; craftAff = -1; craftTab = 0; this.openWin('craft'); }, { disabled: !unlocked('craft') });
+    mkCard(this, p, 10, 24, it, w - 20, { compare: true });
+  }
+  /* 符文：竖屏原生（部位页签 → 槽位和武器数据 → 符文库存） */
+  win_mods(c, w, h) {
+    const host = S.equip[modWeapon], hosts = ['wl', 'wr', 'core', 'engine', 'hub'], bw = Math.floor((w - 20) / 5);
+    hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 8, bw - 2, 18, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
+    const isHub = modWeapon === 'hub'; let y = 34;
+    if (!host) { T(this, 10, y + 4, '这个位置没有装备。', { size: 8, color: COL.faint, parent: c }); y += 20; }
+    else {
+      mkCell(this, c, 10, y, host, { size: 24 });
+      T(this, 40, y, itemName(host), { color: icol(host), parent: c });
+      TW(this, 40, y + 14, '标签：' + itemTags(host).filter(t => TAG_N[t] && t !== 'Weapon').map(t => TAG_N[t]).join(' '), w - 50, { size: 8, color: COL.dim, parent: c });
+      y += 34; T(this, 10, y, isHub ? '升级槽：符文在这里随击杀成长' : `符文槽 ${host.sock}`, { size: 8, color: COL.faint, parent: c }); y += 12;
+      if (!host.sock) { T(this, 10, y, '这件装备没有符文槽。', { size: 8, color: COL.faint, parent: c }); y += 14; }
+      for (let i = 0; i < host.sock; i++) {
+        const m = host.mods[i], x = 10 + i * 32;
+        if (isHub) rect(this, x - 2, y - 2, 32, 32, '#c08a1c', 1, c);
+        mkCell(this, c, x, y, m, { size: 28, host, onHover: v => { if (v) showTip(modTip(v, host)); }, onOut: hideTip, onClick: v => { if (v && feedOn && feedSrc && feedSrc !== v) return this.doFeed(v); if (v) { host.mods[i] = null; S.mods.unshift(v); refreshStats(); save(); this.refresh(); } } });
+      }
+      if (host.sock) y += 36;
+      const Wi = modWeapon === 'wl' ? STATS.weapons[0] : modWeapon === 'wr' ? STATS.weapons[1] : modWeapon === 'engine' ? STATS.engine : null;
+      if (Wi) [Wi.form === 'engine' ? `冲刺伤害 ${fmt(Wi.avg)}` : `秒伤 ${fmt(Wi.dps)} · 每秒 ${r1(Wi.aps)} 次 · 暴击 ${pct(Math.min(1, Wi.crit))} ×${Wi.critMult.toFixed(2)}`,
+        ELEM.filter(e => Wi.max[e] > 0).map(e => `${ELEM_N[e]} ${fmt(Wi.min[e])}–${fmt(Wi.max[e])}`).join('  '),
+        [Wi.pierce && '无限穿透', Wi.chain && `${Wi.form === 'proj' ? '弹射' : '连锁'} ${Wi.chain}`, Wi.split && `分裂 ${Wi.split}`, Wi.ret && '回旋', Wi.extra && `额外攻击 ${Wi.extra}`].filter(Boolean).join('  ') || '没有弹道加成',
+        '异常：' + (ELEM.filter(e => Wi.ail[e] > 0).map(e => `${AIL[e].n} ${pct(Math.min(1, Wi.ail[e]))}`).join('  ') || '无')]
+        .forEach(s => { const r = TW(this, 10, y, s, w - 20, { size: 8, color: COL.text, parent: c }); y += r.h + 1; });
+    }
+    y += 4; rect(this, 10, y, w - 20, 1, '#33293f', 1, c); y += 6;
+    T(this, 10, y, `符文 ${S.mods.length}`, { size: 8, color: COL.dim, parent: c });
+    mkBtn(this, c, w - 90, y - 3, 80, 16, feedOn ? '喂养：开' : '喂养：关', () => { feedOn = !feedOn; feedSrc = null; this.refresh(); }, { size: 8, style: feedOn ? 's' : 'n', disabled: !unlocked('feed') });
+    y += 16; const cols = 10, st = Math.floor((w - 20) / cols), rows = Math.max(1, Math.floor((h - y - 40) / st));
+    S.mods.slice(0, cols * rows).forEach((m, i) => {
+      const x = 10 + (i % cols) * st, yy = y + (i / cols | 0) * st;
+      if (feedOn && feedSrc === m) rect(this, x - 1, yy - 1, st, st, COL.ember, 1, c);
+      mkCell(this, c, x, yy, m, { size: st - 2, host, onHover: v => showTip(modTip(v, host)), onOut: hideTip, onClick: v => {
+        m.isNew = false;
+        if (feedOn) { if (!feedSrc || feedSrc === v) { feedSrc = feedSrc === v ? null : v; return this.refresh(); } return this.doFeed(v); }
+        if (!host) return toast('这个位置没有装备');
+        const k = host.mods.indexOf(null); if (k < 0) return toast(host.sock ? '槽满了，先点上面的符文取下' : '这件装备没有符文槽');
+        host.mods[k] = v; S.mods = S.mods.filter(x => x !== v); refreshStats(); save(); this.refresh();
+      } });
+    });
+    y += Math.max(1, Math.ceil(Math.min(S.mods.length, cols * rows) / cols)) * st + 4;
+    TW(this, 10, y, feedOn ? (feedSrc ? `已选 ${MOD_BY[feedSrc.mid].n} 当饲料，再点要喂的符文。` : `先点一个符文当饲料：被喂的获得它经验的 ${Math.round(DATA.runes.feed.mul * 100)}%。`) : '点符文插进当前装备，点槽里的符文取下。红色等级表示在这里不生效。', w - 20, { size: 8, color: feedOn ? COL.emberHi : COL.faint, parent: c });
+  }
+  /* 铁砧：竖屏原生（物品格 → 词条卡 → 操作 → 加词条） */
+  win_craft(c, w, h) {
+    [['铁砧', true], ['熔铸', unlocked('fuse')]].forEach(([n, ok], i) => mkBtn(this, c, 10 + i * 50, 6, 46, 18, n, () => { craftTab = i; this.refresh(); }, { size: 8, style: craftTab === i ? 's' : 'n', disabled: !ok }));
+    if (craftTab === 1 && unlocked('fuse')) return this.fusePaneM(c, w, h);
+    const all = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash];
+    let it = all.find(x => x.id === craftId); if (!it) { it = all.find(craftable) || all[0]; craftId = it && it.id; craftAff = -1; }
+    GLYPHS.forEach((g, i) => T(this, 116 + i * 24, 10, `${g.n.slice(0, 1)}${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: c }));
+    const cols = 14, st = Math.floor((w - 20) / cols);
+    all.slice(0, cols * 5).forEach((x, i) => mkCell(this, c, 10 + (i % cols) * st, 30 + (i / cols | 0) * st, x, { size: st - 1, sel: x === it, onClick: v => { craftId = v.id; craftAff = -1; craftLog = []; addPage = 0; this.refresh(); } }));
+    let y = 30 + Math.max(1, Math.ceil(Math.min(all.length, cols * 5) / cols)) * st + 6;
+    if (craftLog[0]) { const r = TW(this, 10, y, craftLog[0], w - 20, { size: 8, color: COL.good, parent: c }); y += r.h + 4; }
+    if (!it) return T(this, 10, y, '没有可锻造的装备。', { size: 8, color: COL.faint, parent: c });
+    if (craftAff >= it.affs.length) craftAff = -1;
+    const card = mkCard(this, c, 10, y, it, w - 20, { pick: craftable(it) ? i => { craftAff = craftAff === i ? -1 : i; this.refresh(); } : null, selAff: craftAff });
+    y += card.h + 6;
+    const done = msg => { craftLog.unshift(msg); sfx('craft'); refreshStats(); save(); this.refresh(); }, adv = unlocked('craftAdv');
+    if (useHope && !glyphN('hope')) useHope = false; if (useChaos && !glyphN('chaos')) useChaos = false;
+    const bw = Math.floor((w - 24) / 3), B = (i, row, n, fn, o) => mkBtn(this, c, 10 + i * (bw + 2), y + row * 20, bw, 18, n, fn, Object.assign({ size: 8 }, o));
+    const sel = it.affs[craftAff], uw = upWhy(it, craftAff);
+    mkBtn(this, c, 10, y, w - 20, 18, sel ? `升一档 · 碎片 ${shardN(sel.k)}` : '升一档（先点一条词条）', () => done(craftUp(it, craftAff, useHope, useChaos)), { size: 8, style: 'w', disabled: !!uw });
+    y += 20;
+    const rw = adv ? refineWhy(it, craftAff) : unlockText('craftAdv'), sw = adv ? stripWhy(it) : unlockText('craftAdv'), ow = oathWhy(it);
+    B(0, 0, '洗数值', () => done(craftRefine(it, craftAff)), { disabled: !!rw });
+    B(1, 0, '移除', () => done(craftStrip(it)), { disabled: !!sw });
+    B(2, 0, `立誓 ×${glyphN('oath')}`, () => done(craftOath(it)), { disabled: !!ow });
+    B(0, 1, useHope ? '带希望符' : '不带希望', () => { useHope = !useHope; this.refresh(); }, { style: useHope ? 's' : 'n', disabled: !glyphN('hope') });
+    B(1, 1, useChaos ? '带混沌符' : '不带混沌', () => { useChaos = !useChaos; this.refresh(); }, { style: useChaos ? 's' : 'n', disabled: !glyphN('chaos') });
+    B(2, 1, confirmKey === 'shat' + it.id ? '确认拆解' : '拆解', () => { if (!confirm2('shat' + it.id)) return this.refresh(); const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片`); }, { style: confirmKey === 'shat' + it.id ? 'r' : 'n' });
+    y += 44;
+    const opts = craftable(it) ? AFF.filter(a => shardN(a.k) > 0 && canAdd(it, a)) : [];
+    const per = Math.max(1, Math.floor((h - y - 16) / 17)), pages = Math.max(1, Math.ceil(opts.length / per)); addPage = Math.min(addPage, pages - 1);
+    T(this, 10, y + 2, `加词条（${opts.length} 种可加）`, { size: 8, color: COL.dim, parent: c });
+    if (pages > 1) { mkBtn(this, c, w - 60, y - 2, 24, 16, '<', () => { addPage = (addPage + pages - 1) % pages; this.refresh(); }, { size: 8 }); mkBtn(this, c, w - 34, y - 2, 24, 16, '>', () => { addPage = (addPage + 1) % pages; this.refresh(); }, { size: 8 }); }
+    y += 16; const aw = anvilWhy(it);
+    if (!opts.length) TW(this, 10, y, aw || (it.affs.length >= AFF_MAX ? `已经有 ${AFF_MAX} 条词条` : '没有能加到这件装备上的碎片。'), w - 20, { size: 8, color: COL.faint, parent: c });
+    opts.slice(addPage * per, addPage * per + per).forEach((a, i) => mkBtn(this, c, 10, y + i * 17, w - 20, 16, `${a.type === 'P' ? '前' : '后'} ${affName(a)} ×${shardN(a.k)}`, () => done(craftAdd(it, a.k, useHope)), { size: 8, labelX: 4, disabled: !!addWhy(it, a.k) }));
+  }
+  fusePaneM(c, w, h) {
+    const items = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash], us = items.filter(x => x.u && !x.leg);
+    let u = us.find(x => x.id === craftId) || us[0]; craftId = u && u.id;
+    const cols = 14, st = Math.floor((w - 20) / cols); let y = 32;
+    T(this, 10, y, `独特装备 ${us.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
+    us.slice(0, cols * 2).forEach((x, i) => mkCell(this, c, 10 + (i % cols) * st, y + (i / cols | 0) * st, x, { size: st - 1, sel: x === u, onClick: v => { craftId = v.id; fuseId = null; this.refresh(); } }));
+    y += Math.max(1, Math.ceil(Math.min(us.length, cols * 2) / cols)) * st + 6;
+    if (!u) return TW(this, 10, y, '没有可以熔铸的独特装备。独特装备保留固定词条，再从同部位稀有装备转移词条。', w - 20, { size: 8, color: COL.faint, parent: c });
+    const rs = items.filter(x => x.kind === u.kind && x.rar === 2 && !x.u), r = rs.find(x => x.id === fuseId) || null, why = fuseWhy(u, r);
+    mkBtn(this, c, 10, y, w - 20, 20, confirmKey === 'fuse' ? '再点一次确认' : '熔铸', () => { if (!confirm2('fuse')) return this.refresh(); craftLog.unshift(craftFuse(u, r)); fuseId = null; sfx('craft'); save(); this.refresh(); }, { style: confirmKey === 'fuse' ? 'r' : 'w', size: 8, disabled: !!why });
+    y += 26; T(this, 10, y, `同部位的稀有装备 ${rs.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
+    rs.slice(0, cols * 2).forEach((x, i) => mkCell(this, c, 10 + (i % cols) * st, y + (i / cols | 0) * st, x, { size: st - 1, sel: x === r, onClick: v => { fuseId = v.id; this.refresh(); } }));
+    y += Math.max(1, Math.ceil(Math.min(rs.length, cols * 2) / cols)) * st + 6;
+    mkCard(this, c, 10, y, u, w - 20);
+  }
+  /* 天赋：复用星图，窄屏默认收起两侧栏 */
+  win_tree(c, w, h) {
+    if (!this._treeInit) { this._treeInit = 1; treeUI.left = false; treeUI.right = false; }
+    super.win_tree(c, w, h);
   }
   /* 天梯：竖屏原生（段位 → 选层和挑战 → 各元素最好 → 最近记录） */
   win_ladder(c, w, h) {
