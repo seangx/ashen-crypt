@@ -80,6 +80,9 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
 @media (hover: hover) {
   .back:hover, .seg button:hover, .hand button:hover, .switch:hover, .nav a:hover { border-color: var(--ember); color: var(--ink); }
 }
+.nav { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)) 76px repeat(3, minmax(0,1fr)); align-items: end; background: #1a1522; border-top: 2px solid var(--gold); overflow: visible; }
+.nav a { min-width: 0; font-size: 13px; min-height: 60px; }
+.nav a.battle { position: relative; top: -14px; min-height: 76px; border: 2px solid #ffe08a; background: linear-gradient(#ffb25c, #c8913a); color: #1a1208; font-weight: 700; font-size: 15px; box-shadow: 0 0 0 2px #1a1208, 0 4px 0 #6b3d14; }
 </style>
 </head>
 <body>
@@ -119,6 +122,10 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
       <button type="button" class="switch od-fixed" id="nums" role="switch" aria-checked="true">开</button>
     </div>
     <div class="row od-row">
+      <div class="od-field od-fill"><span>移动方式</span><span>默认：浮动虚拟摇杆（左下按哪出哪），松手后回到自动</span></div>
+      <button type="button" class="switch od-fixed" id="automove" role="switch" aria-checked="false">自动</button>
+    </div>
+    <div class="row od-row">
       <div class="od-field od-fill"><span>自动拾取</span><span>走过掉落即拾取</span></div>
       <button type="button" class="switch od-fixed" id="loot" role="switch" aria-checked="false">关</button>
     </div>
@@ -126,7 +133,7 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
       <div class="od-row">
         <div class="od-field od-fill">
           <span>左右手</span>
-          <span id="handOut">右手持机：摇杆在左，四键在右</span>
+          <span id="handOut">右手持机：摇杆在左，球与按钮在右</span>
         </div>
         <div class="hand od-fixed" role="group" aria-label="左右手">
           <button type="button" data-hand="right" aria-pressed="true">右手</button>
@@ -134,8 +141,8 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
         </div>
       </div>
       <div class="mini" id="mini">
-        <div class="joy"><span>摇杆</span></div>
-        <div class="keys"><span>战技</span><span>药水</span><span>灯火</span><span>冲刺</span></div>
+        <div class="joy"><span>浮动摇杆</span></div>
+        <div class="keys"><span>自动 / 推层</span><span>继续</span></div>
       </div>
     </div>
     <div class="row od-row">
@@ -154,8 +161,10 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
     <a href="mobile-gear.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="7" y="1" width="2" height="9" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/></svg><span>装备</span></a>
     <a href="mobile-tree.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="7" y="7" width="2" height="2" fill="currentColor"/><rect x="7" y="1" width="2" height="4" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/><rect x="1" y="7" width="4" height="2" fill="currentColor"/><rect x="11" y="7" width="4" height="2" fill="currentColor"/></svg><span>天赋</span></a>
     <a href="mobile-forge.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="2" y="10" width="12" height="4" fill="currentColor"/><rect x="4" y="6" width="8" height="4" fill="currentColor"/><rect x="7" y="2" width="2" height="4" fill="currentColor"/></svg><span>铁砧</span></a>
+    <a href="mobile-hud.html" class="battle" aria-label="战斗（主线）"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:28px"><rect x="7" y="1" width="2" height="9" fill="currentColor"/><rect x="4" y="9" width="8" height="2" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/><rect x="6" y="0" width="4" height="1" fill="#ffe08a"/></svg><span>战斗</span></a>
     <a href="mobile-runes.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="6" y="1" width="4" height="4" fill="currentColor"/><rect x="3" y="6" width="4" height="4" fill="currentColor"/><rect x="9" y="6" width="4" height="4" fill="currentColor"/><rect x="6" y="11" width="4" height="4" fill="currentColor"/></svg><span>符文</span></a>
     <a href="mobile-ladder.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="3" y="2" width="2" height="12" fill="currentColor"/><rect x="11" y="2" width="2" height="12" fill="currentColor"/><rect x="5" y="4" width="6" height="2" fill="currentColor"/><rect x="5" y="8" width="6" height="2" fill="currentColor"/><rect x="5" y="12" width="6" height="2" fill="currentColor"/></svg><span>阶梯</span></a>
+    <a href="mobile-settings.html" aria-current="page"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="6" y="1" width="4" height="3" fill="currentColor"/><rect x="6" y="12" width="4" height="3" fill="currentColor"/><rect x="1" y="6" width="3" height="4" fill="currentColor"/><rect x="12" y="6" width="3" height="4" fill="currentColor"/><rect x="5" y="5" width="6" height="6" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>设置</span></a>
   </nav>
   <div></div>
 </div>
@@ -178,8 +187,8 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
     });
     document.getElementById('mini').classList.toggle('flip', hand === 'left');
     document.getElementById('handOut').textContent = hand === 'left'
-      ? '左手持机：四键在左，摇杆在右'
-      : '右手持机：摇杆在左，四键在右';
+      ? '左手持机：摇杆在右，球与按钮在左'
+      : '右手持机：摇杆在左，球与按钮在右';
     try { localStorage.setItem('ashen-crypt-hand', hand); } catch (err) { /* 预览若禁止存储，示意仍会切换 */ }
     summary();
   }

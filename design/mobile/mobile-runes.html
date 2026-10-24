@@ -80,6 +80,9 @@ h2 { margin: 8px 0 0; font-size: 22px; }
   .tab:hover, .slot:hover, .rune:hover, .nav a:hover { border-color: var(--ember); }
   .nav a:hover { color: var(--ink); }
 }
+.nav { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)) 76px repeat(3, minmax(0,1fr)); align-items: end; background: #1a1522; border-top: 2px solid var(--gold); overflow: visible; }
+.nav a { min-width: 0; font-size: 13px; min-height: 60px; }
+.nav a.battle { position: relative; top: -14px; min-height: 76px; border: 2px solid #ffe08a; background: linear-gradient(#ffb25c, #c8913a); color: #1a1208; font-weight: 700; font-size: 15px; box-shadow: 0 0 0 2px #1a1208, 0 4px 0 #6b3d14; }
 </style>
 </head>
 <body>
@@ -100,8 +103,10 @@ h2 { margin: 8px 0 0; font-size: 22px; }
     <a href="mobile-gear.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="7" y="1" width="2" height="9" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/></svg><span>装备</span></a>
     <a href="mobile-tree.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="7" y="7" width="2" height="2" fill="currentColor"/><rect x="7" y="1" width="2" height="4" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/><rect x="1" y="7" width="4" height="2" fill="currentColor"/><rect x="11" y="7" width="4" height="2" fill="currentColor"/></svg><span>天赋</span></a>
     <a href="mobile-forge.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="2" y="10" width="12" height="4" fill="currentColor"/><rect x="4" y="6" width="8" height="4" fill="currentColor"/><rect x="7" y="2" width="2" height="4" fill="currentColor"/></svg><span>铁砧</span></a>
+    <a href="mobile-hud.html" class="battle" aria-label="战斗（主线）"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:28px"><rect x="7" y="1" width="2" height="9" fill="currentColor"/><rect x="4" y="9" width="8" height="2" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/><rect x="6" y="0" width="4" height="1" fill="#ffe08a"/></svg><span>战斗</span></a>
     <a href="mobile-runes.html" aria-current="page"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="6" y="1" width="4" height="4" fill="currentColor"/><rect x="3" y="6" width="4" height="4" fill="currentColor"/><rect x="9" y="6" width="4" height="4" fill="currentColor"/><rect x="6" y="11" width="4" height="4" fill="currentColor"/></svg><span>符文</span></a>
     <a href="mobile-ladder.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="3" y="2" width="2" height="12" fill="currentColor"/><rect x="11" y="2" width="2" height="12" fill="currentColor"/><rect x="5" y="4" width="6" height="2" fill="currentColor"/><rect x="5" y="8" width="6" height="2" fill="currentColor"/><rect x="5" y="12" width="6" height="2" fill="currentColor"/></svg><span>阶梯</span></a>
+    <a href="mobile-settings.html"><svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:20px"><rect x="6" y="1" width="4" height="3" fill="currentColor"/><rect x="6" y="12" width="4" height="3" fill="currentColor"/><rect x="1" y="6" width="3" height="4" fill="currentColor"/><rect x="12" y="6" width="3" height="4" fill="currentColor"/><rect x="5" y="5" width="6" height="6" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>设置</span></a>
   </nav>
   <div></div>
 </div>

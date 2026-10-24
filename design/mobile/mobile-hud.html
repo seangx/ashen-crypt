@@ -257,6 +257,11 @@ button { cursor: pointer; }
   left: 36px;
   top: 36px;
 }
+ .stick-slot.float { position: relative; min-height: 196px; display: block; border: 2px dashed rgba(255,154,60,0.45); background: rgba(255,154,60,0.06); touch-action: none; }
+.float-hint { margin: 0; padding: 6px 8px 0; font-size: 13px; line-height: 1.35; color: #e9d8c0; }
+.stick-slot.float .stick { position: absolute; border: 2px solid rgba(255,154,60,0.8); }
+.stick-slot.float.idle .stick { opacity: 0.35; }
+.touch-dot { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; background: #fff3d6; opacity: 0.8; pointer-events: none; }
 .stick.is-back .knob { transition: left 150ms var(--ease), top 150ms var(--ease); }
 .auto-banner {
   margin: 0;
@@ -330,6 +335,9 @@ button { cursor: pointer; }
   .mote { animation: none; }
   .stick.is-back .knob { transition: none; }
 }
+.ctl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ctl .text-btn { min-height: 44px; display: grid; place-items: center; text-decoration: none; }
+.ctl .main { grid-column: span 2; background: #c8913a; color: #1a1208; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -388,12 +396,12 @@ button { cursor: pointer; }
   </div>
   <div class="hands" id="hands">
     <div class="col">
-      <button type="button" class="text-btn" id="autoBtn" aria-pressed="false">自动移动</button>
-      <div class="stick-slot">
-        <div class="stick" id="stick" role="slider" aria-label="虚拟摇杆" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="居中" tabindex="0">
+      <div class="stick-slot float" id="stickZone">
+        <p class="float-hint">左下任意处按下 → 摇杆出现在拇指下；松手几秒后回到自动</p>
+        <div class="stick" id="stick" role="slider" aria-label="浮动虚拟摇杆" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="居中" tabindex="0" style="left:30px;top:66px">
           <div class="knob" id="knob"></div>
         </div>
-        <p class="auto-banner" id="autoBanner" hidden>自动战斗中</p>
+        <span class="touch-dot" id="touchDot" style="left:90px;top:126px"></span>
       </div>
       <div class="orb-row">
         <div class="orb orb-hp" aria-label="生命 435，护盾加 243">
@@ -404,35 +412,23 @@ button { cursor: pointer; }
       </div>
     </div>
     <div class="col">
-      <div class="skills" id="skills">
-        <button type="button" data-cd="3" data-name="战技" aria-label="战技">
-          <svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:16px"><rect x="7" y="1" width="2" height="9" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><rect x="7" y="11" width="2" height="4" fill="currentColor"/></svg>
-          <span>战技</span>
-        </button>
-        <button type="button" data-cd="4" data-name="药水" aria-label="药水">
-          <svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:16px"><rect x="6" y="1" width="4" height="2" fill="currentColor"/><rect x="7" y="3" width="2" height="2" fill="currentColor"/><rect x="4" y="5" width="8" height="9" fill="currentColor"/><rect x="6" y="8" width="4" height="4" fill="#c0282d"/></svg>
-          <span>药水</span>
-        </button>
-        <button type="button" data-cd="2" data-name="灯火" aria-label="灯火">
-          <svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:16px"><rect x="7" y="1" width="2" height="3" fill="#ff9a3c"/><rect x="5" y="4" width="6" height="4" fill="#ff9a3c"/><rect x="6" y="8" width="4" height="2" fill="currentColor"/><rect x="4" y="10" width="8" height="4" fill="currentColor"/></svg>
-          <span>灯火</span>
-        </button>
-        <button type="button" data-cd="2" data-name="冲刺" aria-label="冲刺">
-          <svg class="od-icon" viewBox="0 0 16 16" aria-hidden="true" style="--od-icon-size:16px"><rect x="2" y="7" width="8" height="2" fill="currentColor"/><rect x="8" y="4" width="2" height="8" fill="currentColor"/><rect x="10" y="6" width="2" height="4" fill="currentColor"/><rect x="12" y="7" width="2" height="2" fill="currentColor"/></svg>
-          <span>冲刺</span>
-        </button>
+      <div class="ctl" id="ctl">
+        <button type="button" class="text-btn" id="aiBtn" aria-pressed="true">自动</button>
+        <button type="button" class="text-btn" id="lockBtn" aria-pressed="false">推层</button>
+        <button type="button" class="text-btn main" id="mainBtn">继续</button>
+        <a class="text-btn" href="mobile-gear.html">菜单</a>
       </div>
       <div class="mana-wrap">
-        <div class="orb orb-mp" aria-label="法力 93%，每秒 7.8">
+        <div class="orb orb-mp" aria-label="灯火 93%，每秒 −7.8">
           <b class="od-nowrap">93%</b>
-          <span class="od-nowrap">7.8/秒</span>
+          <span class="od-nowrap">−7.8/秒</span>
         </div>
       </div>
     </div>
   </div>
   <div class="safe"></div>
   <div class="zones" id="zones">
-    <div class="zone">左手热区</div>
+    <div class="zone"></div>
     <div class="zone">右手热区</div>
   </div>
 </div>
@@ -442,9 +438,7 @@ button { cursor: pointer; }
   var screen = document.getElementById('screen');
   var stick = document.getElementById('stick');
   var knob = document.getElementById('knob');
-  var autoBtn = document.getElementById('autoBtn');
-  var autoBanner = document.getElementById('autoBanner');
-  var zoneToggle = document.getElementById('zoneToggle');
+      var zoneToggle = document.getElementById('zoneToggle');
   var zones = document.getElementById('zones');
   var live = document.getElementById('live');
   var timers = new WeakMap();
@@ -460,15 +454,19 @@ button { cursor: pointer; }
     live.textContent = on ? '已隐藏拇指热区' : '已显示拇指热区';
   });
 
-  autoBtn.addEventListener('click', function () {
-    var on = autoBtn.getAttribute('aria-pressed') === 'true';
-    var next = !on;
-    autoBtn.setAttribute('aria-pressed', next ? 'true' : 'false');
-    stick.hidden = next;
-    autoBanner.hidden = !next;
-    live.textContent = next ? '自动战斗中' : '已关闭自动移动';
+  var zone = document.getElementById('stickZone');
+  var dot = document.getElementById('touchDot');
+  /* 浮动摇杆：在左下热区任意处按下，摇杆中心跳到按下点；松手后淡出留在原处 */
+  zone.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('.stick')) return;
+    var r = zone.getBoundingClientRect();
+    var x = Math.max(60, Math.min(r.width - 60, e.clientX - r.left));
+    var y = Math.max(60, Math.min(r.height - 60, e.clientY - r.top));
+    stick.style.left = (x - 60) + 'px'; stick.style.top = (y - 60) + 'px';
+    dot.style.left = x + 'px'; dot.style.top = y + 'px';
+    zone.classList.remove('idle');
+    live.textContent = '摇杆出现在拇指位置';
   });
-
   var dragging = false;
   var center = 36;
   var maxR = 32;
@@ -486,7 +484,7 @@ button { cursor: pointer; }
   }
 
   stick.addEventListener('pointerdown', function (e) {
-    if (stick.hidden) return;
+    
     dragging = true;
     stick.classList.remove('is-back');
     stick.setPointerCapture(e.pointerId);
@@ -524,37 +522,11 @@ button { cursor: pointer; }
     }, 180);
   });
 
-  document.getElementById('skills').addEventListener('click', function (e) {
-    var btn = e.target.closest('button');
-    if (!btn || btn.getAttribute('aria-disabled') === 'true') return;
-    var total = Number(btn.getAttribute('data-cd'));
-    var name = btn.getAttribute('data-name');
-    var label = btn.querySelector('span');
-    var left = total;
-    btn.setAttribute('aria-disabled', 'true');
-    btn.classList.add('is-cd');
-    label.textContent = String(left);
-    btn.setAttribute('aria-label', name + ' 冷却 ' + left + ' 秒');
-    live.textContent = name + ' 已使用';
-    var prev = timers.get(btn);
-    if (prev) clearInterval(prev);
-    var timer = setInterval(function () {
-      left -= 1;
-      if (left <= 0) {
-        clearInterval(timer);
-        timers.delete(btn);
-        btn.setAttribute('aria-disabled', 'false');
-        btn.classList.remove('is-cd');
-        label.textContent = name;
-        btn.setAttribute('aria-label', name);
-        live.textContent = name + ' 冷却结束';
-        return;
-      }
-      label.textContent = String(left);
-      btn.setAttribute('aria-label', name + ' 冷却 ' + left + ' 秒');
-    }, 1000);
-    timers.set(btn, timer);
-  });
+  /* 与桌面版底栏一致：自动/手动、推层/锁层、开始/继续/暂停；没有主动技能，攻击全自动 */
+  var ai = document.getElementById('aiBtn'), lock = document.getElementById('lockBtn'), mainB = document.getElementById('mainBtn');
+  ai.addEventListener('click', function () { var on = ai.getAttribute('aria-pressed') !== 'true'; ai.setAttribute('aria-pressed', String(on)); ai.textContent = on ? '自动' : '手动'; });
+  lock.addEventListener('click', function () { var on = lock.getAttribute('aria-pressed') !== 'true'; lock.setAttribute('aria-pressed', String(on)); lock.textContent = on ? '锁层' : '推层'; });
+  mainB.addEventListener('click', function () { mainB.textContent = mainB.textContent === '暂停' ? '继续' : '暂停'; });
 })();
 </script>
 </body>
