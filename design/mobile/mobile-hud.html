@@ -230,9 +230,6 @@ button { cursor: pointer; }
   padding-bottom: 8px;
   align-items: end;
 }
-.screen.hand-left .hands { direction: rtl; }
-.screen.hand-left .hands > * { direction: ltr; }
-.screen.hand-left .zones { flex-direction: row-reverse; }
 .col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .stick-slot {
   min-height: 128px;
@@ -432,7 +429,7 @@ button { cursor: pointer; }
   <div class="safe"></div>
   <div class="zones" id="zones">
     <div class="zone"></div>
-    <div class="zone">右手热区</div>
+    <div class="zone">按钮区</div>
   </div>
 </div>
 <p class="vh" id="live" aria-live="polite"></p>
@@ -445,10 +442,6 @@ button { cursor: pointer; }
   var zones = document.getElementById('zones');
   var live = document.getElementById('live');
   var timers = new WeakMap();
-
-  try {
-    if (localStorage.getItem('ashen-crypt-hand') === 'left') screen.classList.add('hand-left');
-  } catch (err) { /* 存储不可用时保持右手 */ }
 
   zoneToggle.addEventListener('click', function () {
     var on = zoneToggle.getAttribute('aria-pressed') === 'true';

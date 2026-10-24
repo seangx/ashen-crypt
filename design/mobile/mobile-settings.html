@@ -62,14 +62,11 @@ button { cursor: pointer; }
 .row .od-field span:last-child { color: var(--muted); }
 .vol { min-width: 140px; height: 44px; accent-color: var(--ember); }
 .seg { display: flex; gap: 8px; }
-.seg button, .hand button { min-height: 44px; min-width: 52px; padding: 0 10px; border: 2px solid #6a5433; background: #1a1522; color: var(--ink); }
-.seg button[aria-pressed="true"], .hand button[aria-pressed="true"] { background: var(--ember); color: #1a1208; border-color: var(--ember); }
+.seg button { min-height: 44px; min-width: 52px; padding: 0 10px; border: 2px solid #6a5433; background: #1a1522; color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ember); color: #1a1208; border-color: var(--ember); }
 .switch { width: 64px; height: 44px; border: 2px solid var(--gold); background: #1a1522; color: var(--ink); }
 .switch[aria-checked="true"] { background: var(--ember); color: #1a1208; border-color: var(--ember); }
 select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); background: #1a1522; color: var(--ink); padding: 0 8px; }
-.mini { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; border: 2px solid var(--gold); background: #14111c; }
-.mini.flip { direction: rtl; }
-.mini.flip > * { direction: ltr; }
 .joy, .keys { min-height: 72px; border: 2px dashed rgba(255, 154, 60, 0.7); display: grid; place-items: center; }
 .keys { grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; }
 .keys span, .joy span { display: block; }
@@ -78,7 +75,7 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
 .nav a span { display: block; line-height: 1.2; }
 :focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 @media (hover: hover) {
-  .back:hover, .seg button:hover, .hand button:hover, .switch:hover, .nav a:hover { border-color: var(--ember); color: var(--ink); }
+  .back:hover, .seg button:hover, .switch:hover, .nav a:hover { border-color: var(--ember); color: var(--ink); }
 }
 .nav { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)) 76px repeat(3, minmax(0,1fr)); align-items: end; background: #1a1522; border-top: 2px solid var(--gold); overflow: visible; }
 .nav a { min-width: 0; font-size: 13px; min-height: 60px; }
@@ -129,23 +126,7 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
       <div class="od-field od-fill"><span>自动拾取</span><span>走过掉落即拾取</span></div>
       <button type="button" class="switch od-fixed" id="loot" role="switch" aria-checked="false">关</button>
     </div>
-    <div class="row od-stack">
-      <div class="od-row">
-        <div class="od-field od-fill">
-          <span>左右手</span>
-          <span id="handOut">右手持机：摇杆在左，球与按钮在右</span>
-        </div>
-        <div class="hand od-fixed" role="group" aria-label="左右手">
-          <button type="button" data-hand="right" aria-pressed="true">右手</button>
-          <button type="button" data-hand="left" aria-pressed="false">左手</button>
-        </div>
-      </div>
-      <div class="mini" id="mini">
-        <div class="joy"><span>浮动摇杆</span></div>
-        <div class="keys"><span>自动 / 推层</span><span>继续</span></div>
-      </div>
-    </div>
-    <div class="row od-row">
+  <div class="row od-row">
       <label class="od-field od-fill" for="lang">
         <span>语言</span>
         <span>界面文字</span>
@@ -174,25 +155,10 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
   var vol = document.getElementById('vol');
   var volOut = document.getElementById('volOut');
   var qual = '中';
-  var hand = 'right';
-  try { hand = localStorage.getItem('ashen-crypt-hand') || 'right'; } catch (err) { hand = 'right'; }
 
   function summary() {
-    live.textContent = '画质' + qual + ' · 音量 ' + vol.value + ' · ' + (hand === 'left' ? '左手持机' : '右手持机');
+    live.textContent = '画质' + qual + ' · 音量 ' + vol.value;
   }
-  function applyHand(next) {
-    hand = next;
-    document.querySelectorAll('.hand button').forEach(function (btn) {
-      btn.setAttribute('aria-pressed', btn.dataset.hand === hand ? 'true' : 'false');
-    });
-    document.getElementById('mini').classList.toggle('flip', hand === 'left');
-    document.getElementById('handOut').textContent = hand === 'left'
-      ? '左手持机：摇杆在右，球与按钮在左'
-      : '右手持机：摇杆在左，球与按钮在右';
-    try { localStorage.setItem('ashen-crypt-hand', hand); } catch (err) { /* 预览若禁止存储，示意仍会切换 */ }
-    summary();
-  }
-
   vol.addEventListener('input', function () {
     volOut.textContent = vol.value;
     vol.setAttribute('aria-valuetext', vol.value);
@@ -216,16 +182,9 @@ select { min-height: 44px; min-width: 132px; border: 2px solid var(--gold); back
       btn.textContent = on ? '开' : '关';
     });
   });
-  document.querySelector('.hand').addEventListener('click', function (e) {
-    var btn = e.target.closest('button');
-    if (!btn) return;
-    applyHand(btn.dataset.hand);
-    btn.focus();
-  });
   document.getElementById('lang').addEventListener('change', function (e) {
     live.textContent = e.target.value === 'en' ? 'Language set to English. This mock stays in Chinese.' : '语言为简体中文';
   });
-  applyHand(hand);
 })();
 </script>
 </body>
