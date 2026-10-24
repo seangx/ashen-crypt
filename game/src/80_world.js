@@ -96,7 +96,7 @@ class World extends Phaser.Scene {
         case 'text': this.label(e.x, e.y, e.s, e.c); break;
         case 'beam': this.lines.push({ ...e, life: 0.09, jag: e.el === 'ele' }); break;
         case 'bolt': this.lines.push({ ...e, life: 0.15, jag: true }); break;
-        case 'frostburst': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.3, max: 0.3, el: 'cold', fill: false }); this.em.spark2.particleTint = 0xbfeaff; this.em.spark2.explode(12, e.x, e.y); break; /* 冰封球终爆：冷色环 + 冰屑，不放火花、不闪白 */
+        case 'frostburst': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.3, max: 0.3, el: 'cold', fill: false }); this.em.spark2.particleTint = 0x6fb4e8; this.em.spark2.explode(6, e.x, e.y); break; /* 冰封球终爆：冷色环 + 冰屑，不放火花、不闪白 */
         case 'boom': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.25, max: 0.25, el: e.el, fill: true }); this.em.fire.explode(10, e.x, e.y); this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(8, e.x, e.y); if (this.post) this.post.waves.push({ x: e.x, y: e.y, r: e.r * 1.4 + 16, k: 1, life: 0.35, t0: G.time }); break;
         case 'ring': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.18, max: 0.18, el: e.el }); break;
         case 'shield': this.rings.push({ x: e.x, y: e.y - 6, r: 11, life: 0.2, max: 0.2, el: 'cyan' }); break;
@@ -276,8 +276,8 @@ class World extends Phaser.Scene {
   drawProj(g, p, t) {
     // 光晕 + 短拖尾（叠加发光层）
     const gg = this.glowG;
-    if (gg && p.oshard) { gg.fillStyle(0x5fb8ff, 0.12).fillCircle(p.x, p.y, 1.5); } /* 冰锥只给一点点光，几十片叠加也不会糊成白团 */
-    else if (gg && p.orb) { gg.fillStyle(0x3a8fe0, 0.16).fillCircle(p.x, p.y, 9); }
+    if (gg && p.oshard) { gg.fillStyle(0x3f86c8, 0.06).fillCircle(p.x, p.y, 1.5); } /* 冰锥只给一点点光，几十片叠加也不会糊成白团 */
+    else if (gg && p.orb) { gg.fillStyle(0x2a6fb0, 0.07).fillCircle(p.x, p.y, 8); }
     else if (gg && !p.mine && !p.spark) {
       const c = p.enemy ? 0xff5a4a : hex(ELEM_C[p.el]), y0 = p.lob ? p.y - p.z : p.y, tr = p._tr || (p._tr = []);
       tr.unshift(p.x, y0); if (tr.length > 12) tr.length = 12;
@@ -291,17 +291,17 @@ class World extends Phaser.Scene {
     if (p.orb) { /* 寒魄球（参考暗黑 2/3 冰封球）：外层冷雾 + 三条旋臂 + 冰晶本体 + 旋转冰棱 + 闪烁冰屑；只用冷色，和敌方红紫区分开 */
       const sp = p.age * 7, x = p.x, y = p.y;
       const tr = p.tr || (p.tr = []); tr.unshift(x, y); if (tr.length > 16) tr.length = 16;
-      for (let i = 2; i < tr.length; i += 2) g.fillStyle(0x5fb8ff, 0.22 * (1 - i / 16)).fillCircle(tr[i], tr[i + 1], 5 - i * 0.2);
-      g.fillStyle(0x2a6fc0, 0.14).fillCircle(x, y, 10);
-      for (let arm = 0; arm < 3; arm++) for (let j = 1; j <= 5; j++) { const a = sp + arm * 2.094 + j * 0.45, r = 3 + j * 1.5; g.fillStyle(j > 3 ? 0x7fd0ff : 0xcff4ff, 0.9 - j * 0.13).fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r), 1, 1); }
-      g.fillStyle(0x1d5fa8, 1).fillCircle(x, y, 5); g.fillStyle(0x7fd6ff, 1).fillCircle(x, y, 4); g.fillStyle(0xa8e4ff, 1).fillCircle(x - 0.5, y - 0.5, 2.5);
-      for (let i = 0; i < 4; i++) { const a = -sp * 0.6 + i * Math.PI / 2, cx = Math.cos(a), cy = Math.sin(a); g.fillStyle(0xe8fbff, 1).fillRect(Math.round(x + cx * 5), Math.round(y + cy * 5), 1, 1); g.fillStyle(0x9fe3ff, 1).fillRect(Math.round(x + cx * 6.5), Math.round(y + cy * 6.5), 1, 1); }
-      g.fillStyle(0xffffff, 0.9).fillRect(Math.round(x - 2), Math.round(y - 2), 1, 1);
-      for (let i = 0; i < 5; i++) { const h = Math.sin(i * 12.9898 + Math.floor(p.age * 10) * 78.233) * 43758.5453, fr = h - Math.floor(h); if (fr > 0.55) continue; const a = fr * 11.4 + i, r = 7 + fr * 8; g.fillStyle(i & 1 ? 0xe8fbff : 0x9fe3ff, 0.85).fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r), 1, 1); }
+      for (let i = 2; i < tr.length; i += 2) g.fillStyle(0x3f86c8, 0.12 * (1 - i / 16)).fillCircle(tr[i], tr[i + 1], 4 - i * 0.15);
+      g.fillStyle(0x24508f, 0.1).fillCircle(x, y, 9);
+      for (let arm = 0; arm < 3; arm++) for (let j = 1; j <= 5; j++) { const a = sp + arm * 2.094 + j * 0.45, r = 3 + j * 1.5; g.fillStyle(j > 3 ? 0x4f9ed8 : 0x8fcff0, 0.7 - j * 0.1).fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r), 1, 1); }
+      g.fillStyle(0x163f73, 0.95).fillCircle(x, y, 5); g.fillStyle(0x3f8fd0, 0.9).fillCircle(x, y, 4); g.fillStyle(0x7cc4ec, 0.9).fillCircle(x - 0.5, y - 0.5, 2.2);
+      for (let i = 0; i < 4; i++) { const a = -sp * 0.6 + i * Math.PI / 2, cx = Math.cos(a), cy = Math.sin(a); g.fillStyle(0xa8ddf5, 0.85).fillRect(Math.round(x + cx * 5), Math.round(y + cy * 5), 1, 1); g.fillStyle(0x5fa8e0, 0.8).fillRect(Math.round(x + cx * 6.5), Math.round(y + cy * 6.5), 1, 1); }
+      g.fillStyle(0xd8f2ff, 0.7).fillRect(Math.round(x - 2), Math.round(y - 2), 1, 1);
+      for (let i = 0; i < 5; i++) { const h = Math.sin(i * 12.9898 + Math.floor(p.age * 10) * 78.233) * 43758.5453, fr = h - Math.floor(h); if (fr > 0.55) continue; const a = fr * 11.4 + i, r = 7 + fr * 8; g.fillStyle(i & 1 ? 0xb8e6ff : 0x6fb4e8, 0.6).fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r), 1, 1); }
       return; }
     if (p.oshard) { /* 冰封球的冰锥：沿速度方向 4 像素长，白头蓝尾 */
       const v = Math.hypot(p.vx, p.vy) || 1, ux = p.vx / v, uy = p.vy / v;
-      for (let j = 0; j < 4; j++) g.fillStyle(j === 0 ? 0xf2fdff : j === 1 ? 0xbfeaff : 0x5fb8ff, 1 - j * 0.2).fillRect(Math.round(p.x - ux * j), Math.round(p.y - uy * j), 1, 1);
+      for (let j = 0; j < 4; j++) g.fillStyle(j === 0 ? 0xbfe8ff : j === 1 ? 0x8cc8f0 : 0x4a8fd0, 0.85 - j * 0.18).fillRect(Math.round(p.x - ux * j), Math.round(p.y - uy * j), 1, 1);
       return; }
     if (p.shard) { g.fillStyle(0xe8fbff, 1).fillRect(p.x - 1, p.y - 1, 2, 2); g.fillStyle(c, 1).fillRect(p.x - p.vx / NV.shardSpeed * 2 - 0.5, p.y - p.vy / NV.shardSpeed * 2 - 0.5, 1, 1); return; } // 碎冰的冰片
     const k = p.W.key;

@@ -205,7 +205,7 @@ function shatter(m) {
   const W = STATS.weapons.find(w => w && (w.frostNova || w.tags.includes('Nova'))); if (!W) return;
   const n = NV.shardN + (STATS.spawnAdd || 0), a0 = rf(0, Math.PI * 2);
   const old = projs.filter(p => p.shard && !p.dead), over = old.length + n - NV.maxShards; for (let k = 0; k < over && k < old.length; k++) old[k].dead = true;
-  for (let i = 0; i < n; i++) { const a = a0 + i / n * Math.PI * 2, p = shoot(W, m.x, m.y - 5, a, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set([m]), mul: NV.shardMul * (1 + ((STATS.raw['inc:proj'] || 0) + (STATS.tree.add['inc:proj'] || 0)) / 100), life: NV.shardLife, shard: 1 }); p.vx = Math.cos(a) * NV.shardSpeed; p.vy = Math.sin(a) * NV.shardSpeed; p.r = 2; }
+  for (let i = 0; i < n; i++) { const a = a0 + i / n * Math.PI * 2 + rf(-1, 1) * (OB.jitter || 0) * Math.PI / 180, p = shoot(W, m.x, m.y - 5, a, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set([m]), mul: NV.shardMul * (1 + ((STATS.raw['inc:proj'] || 0) + (STATS.tree.add['inc:proj'] || 0)) / 100), life: NV.shardLife, shard: 1 }); p.vx = Math.cos(a) * NV.shardSpeed; p.vy = Math.sin(a) * NV.shardSpeed; p.r = 2; }
   if (RUN && RUN.dmg) RUN.dmg.shards = (RUN.dmg.shards || 0) + n;
 }
 function kill(m) {
@@ -766,7 +766,7 @@ function bossAct(m, aim, bl) {
 }
 function orbShards(W, x, y, n, a0, mul, cast, gen, skip) { // 寒魄球的冰片：不穿透，算投射物（寒魄宝珠本身有投射物标签），同屏最多 maxShards
   const old = projs.filter(p => p.shard && !p.dead), over = old.length + n - OB.maxShards; for (let k = 0; k < over && k < old.length; k++) old[k].dead = true;
-  for (let i = 0; i < n; i++) { const a = a0 + i / n * Math.PI * 2, p = shoot(W, x, y, a, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set(skip ? [skip] : []), mul, life: OB.shardLife, shard: 1, oshard: 1, cast, gen }); p.vx = Math.cos(a) * OB.shardSpeed; p.vy = Math.sin(a) * OB.shardSpeed; p.r = 2; }
+  for (let i = 0; i < n; i++) { const a = a0 + i / n * Math.PI * 2 + rf(-1, 1) * (OB.jitter || 0) * Math.PI / 180, p = shoot(W, x, y, a, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set(skip ? [skip] : []), mul, life: OB.shardLife, shard: 1, oshard: 1, cast, gen }); p.vx = Math.cos(a) * OB.shardSpeed; p.vy = Math.sin(a) * OB.shardSpeed; p.r = 2; }
   if (RUN && RUN.dmg) RUN.dmg.oshards = (RUN.dmg.oshards || 0) + n;
 }
 function orbShardHit(p, m) { // 冰片命中：打中冻结的敌人返还灯火；碎冰连锁再派生一层
