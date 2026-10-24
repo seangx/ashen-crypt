@@ -47,7 +47,8 @@ async function run(build, IL) {
     const topT = (a, it) => { let top = 0; a.tiers.forEach((t, i) => { if (it.ilvl >= t[2]) top = i; }); return Math.min(A.craftTop(a), top); };
     // 天赋
     const ids = Object.keys(A.TREE.nodes).sort((a, b) => { const na = A.TREE.nodes[a], nb = A.TREE.nodes[b]; return (na.x * na.x + na.y * na.y) - (nb.x * nb.x + nb.y * nb.y) || (a < b ? -1 : 1); });
-    const route = () => { if (S.tree.includes(BP.treeKey)) return null; const prev = { start: null }, q = ['start', ...S.tree]; for (const x of S.tree) prev[x] = null; while (q.length) { const c = q.shift(); if (c === BP.treeKey) break; for (const n of A.TREE.nodes[c].nb) if (!(n in prev)) { prev[n] = c; q.push(n); } } let c = BP.treeKey; while (prev[c] && !S.tree.includes(prev[c]) && prev[c] !== 'start') c = prev[c]; return A.treeCanAlloc(c) ? c : null; };
+    const routeTo = K => { if (S.tree.includes(K)) return null; const prev = { start: null }, q = ['start', ...S.tree]; for (const x of S.tree) prev[x] = null; while (q.length) { const c = q.shift(); if (c === K) break; for (const n of A.TREE.nodes[c].nb) if (!(n in prev)) { prev[n] = c; q.push(n); } } let c = K; while (prev[c] && !S.tree.includes(prev[c]) && prev[c] !== 'start') c = prev[c]; return A.treeCanAlloc(c) ? c : null; };
+        const route = () => { for (const K of [BP.treeKey, ...(BP.defKeys || [])]) { if (!A.TREE.nodes[K]) continue; const r = routeTo(K); if (r) return r; } return null; }; // 先走到流派大天赋，再走到主修的通用防御大天赋（spec-tree-defense §5）
     for (let go = true; go;) { go = false;
       if (build === 'random') { const c = ids.filter(id => A.treeCanAlloc(id)); if (c.length) { S.tree.push(pick(c)); go = true; } continue; }
       const r = ARCH ? route() : null; if (r) { S.tree.push(r); go = true; continue; }

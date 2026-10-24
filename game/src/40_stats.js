@@ -37,7 +37,7 @@ function computeStats(eq = S.equip) {
     for (const s of ['shieldDmg', 'armor', 'deflect', 'dodge', 'mass', 'energy', 'time']) if (b[s]) base[s] = (base[s] || 0) + qv(b[s], it.q);
     if (b.res) base['res:' + b.el] = (base['res:' + b.el] || 0) + qv(b.res, it.q);
   }
-  A.shieldDmg = (A.shieldDmg || 0) + (base.shieldDmg || 0); // 圣徽盾的隐性盾牌伤害
+  A.shieldDmg = (A.shieldDmg || 0) + (base.shieldDmg || 0) + (TA.shieldDmg || 0); A.delayInc = (A.delayInc || 0) + (TA.delayInc || 0); /* 天赋里的盾牌伤害、延迟伤害和装备相加 */ // 圣徽盾的隐性盾牌伤害
   // 主属性
   P.mass = Math.round(((base.mass || 0) + (A.mass || 0) + (TA.mass || 0)) * Math.max(0, 1 + ((F.massInc || 0) + (TA.massInc || 0)) / 100));
   P.energy = Math.round(((base.energy || 0) + (A.energy || 0) + (TA.energy || 0)) * Math.max(0, 1 + ((F.energyInc || 0) + (TA.energyInc || 0)) / 100));
@@ -47,7 +47,7 @@ function computeStats(eq = S.equip) {
   // 原来的灵障并进护盾；天赋/独特里“护甲总降”的代价改成护盾总降
   P.armorOut = P.armor; // 盾扔出去时没有格挡
   if (FL.martyrArmor && eq.shield) P.armorOut = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) - qv(baseOf(eq.shield).armor || 0, eq.shield.q) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100))); // 殉道者之盾：盾在飞时不算盾的护甲
-  if (eq.shield && A.block) P.armor = Math.round(P.armor * (1 + A.block / 100)); // 格挡：盾在手上时护甲提高
+  const blk = (A.block || 0) + (TA.block || 0); if (eq.shield && blk) P.armor = Math.round(P.armor * (1 + blk / 100)); // 格挡：盾在手上时护甲提高
   P.shield = Math.round((PLAYER.shield + (base.deflect || 0) + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
   P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
   P.life = Math.max(1, Math.round((PLAYER.life + PLAYER.lifePerLevel * ((S.level || 1) - 1) + (A.life || 0) + (TA.life || 0)) * (1 + ((A.lifeInc || 0) + (TA.lifeInc || 0)) / 100) * (TM.life ?? 1))); // 天赋代价可以是生命总降
@@ -62,7 +62,7 @@ function computeStats(eq = S.equip) {
   // 移动：所有遁靴共享按品质的推力表
   const eng = eq.engine; const thrust = ENGINE_THRUST[eng ? eng.q : 0];
   const eb = eng ? baseOf(eng) : null;
-  P.speed = (PLAYER.baseSpeed + thrust * PLAYER.thrustToSpeed) * (TM.speed ?? 1) * (1 + ((A.velocity || 0) + (A.moveInc || 0) + (TA.velocity || 0) + (eb && eb.thrustInc ? qv(eb.thrustInc, eng.q) : 0)) / 100) * (1 + P.time * MECH.timeFlow);
+  P.speed = (PLAYER.baseSpeed + thrust * PLAYER.thrustToSpeed) * (TM.speed ?? 1) * (1 + ((A.velocity || 0) + (A.moveInc || 0) + (TA.velocity || 0) + (TA.moveInc || 0) + (eb && eb.thrustInc ? qv(eb.thrustInc, eng.q) : 0)) / 100) * (1 + P.time * MECH.timeFlow);
   P.accel = P.speed * PLAYER.accelMul * Math.max(MECH.massAccelMin, 1 + P.mass * MECH.massAccel);
   P.timeMul = 1 + P.time * MECH.timeFlow;
   // 冲刺槽
@@ -73,10 +73,16 @@ function computeStats(eq = S.equip) {
   P.soulMax = SOUL.base + P.energy * SOUL.perEnergy;
   P.soulRegen = (SOUL.regen + P.energy * SOUL.regenPerEnergy) * (1 + ((A.soulRegen || 0) + (TA.soulRegen || 0)) / 100);
   P.soulGainMul = 1 + ((A.soulRegen || 0) + (TA.soulRegen || 0) + (A.soulKillInc || 0) + (TA.soulKillInc || 0)) / 100; // 推关里提高击杀回的灯火（魂火回复 + 击杀回灯火）
-  P.burnMul = (1 - Math.min(GEAR.burnLessCap, A.burnLess || 0) / 100) * (1 + (FL.burnMore || 0) / 100); // 灯火燃烧降低；誓约“灯火燃烧 +%”
-  P.delayAdd = (A.delayAdd || 0) + (TA.delayAdd || 0); P.spawnAdd = A.spawnAdd || 0; P.frozenTaken = ((A.frozenTaken || 0) + (TA.frozenTaken || 0)) / 100; P.freezeMul = 1 + (TA.freezeDur || 0) / 100; // 新流派用（第 4 步）
+  P.burnMul = (1 - Math.min(GEAR.burnLessCap, (A.burnLess || 0) + (TA.burnLess || 0)) / 100) * (1 + (FL.burnMore || 0) / 100); // 灯火燃烧降低；誓约“灯火燃烧 +%”
+  P.delayAdd = (A.delayAdd || 0) + (TA.delayAdd || 0); P.spawnAdd = (A.spawnAdd || 0) + (TA.spawnAdd || 0); P.frozenTaken = ((A.frozenTaken || 0) + (TA.frozenTaken || 0)) / 100; P.freezeMul = 1 + (TA.freezeDur || 0) / 100; // 新流派用（第 4 步）
   P.soulLess = Math.min(SOUL.costCap, (A.soulLess || 0) + (TA.soulLess || 0)) / 100;
   P.dashRegen = MECH.dashRegen * (1 + ((A.dashRegen || 0) + (TA.dashRegen || 0) + P.energy * MECH.energyDash * 100) / 100) + (F.dashPerSec || 0);
+  // 通用防御（spec-tree-defense §1）：装备 + 天赋 + 法阵力场相加；四个大天赋改上限和倍数
+  { const GD = MECH.generic, sum = k => (A[k] || 0) + (TA[k] || 0) + (F[k] || 0);
+    P.ctrlCap = FL.ctrlPrison ? DATA.rules.ctrlPrison.cap : GD.ctrlCap; P.ctrlWeaken = Math.min(P.ctrlCap, (FL.ctrlPrison ? DATA.rules.ctrlPrison.base : GD.ctrlBase) + sum('ctrlWeaken'));
+    P.closePer = (GD.closeBase + sum('closePer')) * (FL.ironWall ? DATA.rules.ironWall.mul : 1); P.closeCap = Math.min(FL.ironWall ? DATA.rules.ironWall.hard : GD.closeHard, GD.closeCapBase + sum('closeCap'));
+    P.farCap = FL.loneWolf ? DATA.rules.loneWolf.cap : GD.farCap; P.farDR = Math.min(P.farCap, sum('farDR') * (FL.loneWolf ? DATA.rules.loneWolf.mul : 1));
+    P.shieldOnHit = sum('shieldOnHit') * (FL.drinkShield ? DATA.rules.drinkShield.mul : 1); P.sohCap = FL.drinkShield ? DATA.rules.drinkShield.cap : GD.sohCapPct; }
   P.pickup = PLAYER.pickup;
   // 全局伤害修正
   P.aspdInc = (A.aspd || 0) + (TA.aspd || 0);
@@ -223,7 +229,7 @@ function weaponStats(it, P, isEngine) {
   W.sparkLifeMul = Math.max(0.1, 1 + (P.durInc + W.projDurInc) / 100) * W.projDurMore; // 游雷：持续时间提高 + 投射物持续时间提高（相加），再乘符文总增
   W.aoeR = qv(b.aoe || 0, q) * UNIT * (1 + aoeInc / 100);
   W.auraDps = b.aura ? qv(b.aura, q) * (1 + inc / 100) * W.more * W.dotMore : 0;
-  W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100) * (has('Projectile') ? Math.max(GEAR.projSlowMin, 1 - ((P.raw.projSlow || 0) + (TA.projSlow || 0) + (IM.projSlow || 0)) / 100) : 1); // 投射物速度降低（寒魄球的收益）
+  W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100) * (has('Projectile') ? TM.projSpd ?? 1 : 1) * (has('Projectile') ? Math.max(GEAR.projSlowMin, 1 - ((P.raw.projSlow || 0) + (TA.projSlow || 0) + (IM.projSlow || 0)) / 100) : 1); // 投射物速度降低（寒魄球的收益）
   if (b.form === 'shieldThrow' && P.flag.martyrThrow) W.chain *= UQX.martyrChainMul; // 殉道者之盾：弹射 ×2
   if (b.form === 'shieldThrow') { W.pierce = 1; W.thSpd = SHT.speed * W.spd / (b.fast ? MECH.projSpeedFast : MECH.projSpeed); W.thLife = SHT.life * W.sparkLifeMul; } // 圣盾掷：无限穿透
   if (b.form === 'orb') { const sk = W.spd / (b.fast ? MECH.projSpeedFast : MECH.projSpeed); W.orbSpd = OB.orbSpeed * Math.max(GEAR.projSlowMin, sk); W.orbLife = OB.orbLife * W.sparkLifeMul; W.orbEmit = OB.emit; W.orbCost = 1;

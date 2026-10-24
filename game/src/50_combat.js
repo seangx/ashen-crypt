@@ -131,6 +131,7 @@ function hitMob(m, W, o = {}) {
   if (W.doubleChance && rnd() < W.doubleChance) mul *= 2;
   if (W.killInc && RUN) mul *= 1 + Math.min(RL.killInc.max, W.killInc * RUN.kills) / 100;
   mul *= ruleMul(m);
+  if (STATS.flag.ctrlPrison && !isCtrl(m)) mul *= 1 - RL.ctrlPrison.less / 100; /* 寒狱：对未受控的敌人总降 */
   if (m.frzT > 0 && STATS.frozenTaken) mul *= 1 + STATS.frozenTaken; // 冻结的敌人受到的伤害提高
   if (m.frzT > 0 && STATS.flag.frozenMore) mul *= 1 + STATS.flag.frozenMore / 100; // 誓约：对冻结的敌人总增
   if (STATS.flag.fullShieldMore && player.shield >= STATS.shield - 0.5) mul *= 1 + STATS.flag.fullShieldMore / 100; // 誓约：护盾全满时总增
@@ -142,6 +143,7 @@ function hitMob(m, W, o = {}) {
     d = mitigate(m, e, d); by[e] = d; total += d; if (d > topv) { topv = d; top = e; }
   }
   damage(m, total, top, crit, W.cont);
+  if (!W.cont && !o.ground && !o.arc && !o.re) shieldOnHit(); /* 续航：持续伤害、地面效果不算命中 */
   if (W.cull && !m.dead && !m.boss && m.hp / m.max * 100 < W.cull) kill(m);
   if (STATS.flag.arc && !o.arc && rnd() < RL.arc.chance / 100 * (W.cont ? 1 / W.aps : 1)) { const hit = new Set([m]); for (let k = 0; k < RL.arc.n; k++) { const n = nearest(m.x, m.y - 4, RL.arc.r, hit); if (!n) break; hit.add(n); fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: n.x, y2: n.y - 5, el: 'ele' }); hitMob(n, W, { mul: RL.arc.dmg / 100, arc: 1, noDebris: o.noDebris }); } }
   const aoh = W.armorOnHit + (STATS.raw.armorOnHit || 0); // 吸髓符文 + 装备词条 + 旋身符文：命中回生命（吸血）
@@ -291,7 +293,34 @@ function hurtFeedback(d) {
   player.fbT0 = G.time; player.fb = Math.min(1, 0.3 + d / STATS.life * 5); player.fbT = 0.2; sfx('hurt');
   if (G.world && d > STATS.life * 0.08) G.world.shake(60, 0.002 + 0.002 * player.fb);
 }
-function hurtPlayer(d, el) {
+/* 通用防御（spec-tree-defense §1）
+   控场：出手那一刻怪身上有你的控制 → 这一下 ×(1 − 控场%)；投射物、火圈在发射/放置时记下 ck
+   贴身 / 远离：每帧数一遍身边的怪（closeStep），受伤时按当时的计数结算 */
+const GD = MECH.generic;
+const isCtrl = m => !!m && (m.chill > 0 || m.frzT > 0 || m.stunT > 0 || m.blindT > 0 || m.slowT > 0 || Math.hypot(m.kx || 0, m.ky || 0) > GD.knockMin);
+const ctrlK = m => isCtrl(m) ? 1 - STATS.ctrlWeaken / 100 : 1;
+function closeStep() {
+  let n = 0, far = true; const r1 = GD.closeR ** 2, r2 = GD.farR ** 2;
+  for (const m of mobs) { if (m.dead || m.rise > 0.2) continue; const d2 = dist2(m, player); if (d2 < r2) far = false; if (d2 < r1) n += m.boss ? 3 : m.elite ? 2 : 1; }
+  player.closeN = n; player.farOK = far;
+  const T = RUN.gd ??= { t: 0, closeT: 0, hitC: 0, hitF: 0 }; T.t += 1 / 60; if (n > 0) T.closeT += 1 / 60;
+}
+function genericTaken() {
+  const FL = STATS.flag, n = player.closeN || 0; let k = 1;
+  if (n > 0) k *= 1 - Math.min(STATS.closeCap, n * STATS.closePer) / 100;
+  if (player.farOK && STATS.farDR > 0) k *= 1 - STATS.farDR / 100;
+  if (FL.ironWall && n === 0) k *= 1 + RL.ironWall.alone / 100;
+  if (FL.loneWolf && n > 0) k *= 1 + RL.loneWolf.crowd / 100;
+  return k;
+}
+/* 续航：命中回护盾上限的 ‰，每秒最多 sohCap%（1 秒的桶） */
+function shieldOnHit() {
+  if (!STATS.shieldOnHit || !RUN || player.shield >= STATS.shield) return;
+  if (!(player.sohT > RUN.t)) { player.sohT = RUN.t + 1; player.sohGot = 0; }
+  const cap = STATS.shield * STATS.sohCap / 100, g = Math.min(STATS.shield * STATS.shieldOnHit / 1000, cap - player.sohGot); if (g <= 0) return;
+  player.sohGot += g; player.shield = Math.min(STATS.shield, player.shield + g); if (RUN.soh !== undefined) RUN.soh += g;
+}
+function hurtPlayer(d, el, ck = 1) {
   if (!RUN || RUN.ending || player.dashT > 0 || player.hurtT > 0) return;
   if (rnd() * 100 < STATS.dodge) {
     fx({ t: 'text', x: player.x, y: player.y - 16, s: '闪避', c: COL.dim });
@@ -299,6 +328,7 @@ function hurtPlayer(d, el) {
     return;
   }
   const FL = STATS.flag;
+  d *= ck * genericTaken(); /* 控场、贴身、远离：流派减伤这一格，各自相乘 */
   if (FL.still && isStill()) d *= 1 - RL.still.takenLess / 100;
   if (FL.rotFlesh) { const R = RL.rotFlesh; let n = 0; for (const x of mobs) if (!x.dead && x.rad.length && dist2(x, player) < R.r * R.r) n++; d *= 1 - Math.min(R.max, n * R.per) / 100; }
   const tk = FL.takenKin || 0;
@@ -307,6 +337,7 @@ function hurtPlayer(d, el) {
   if (STATS.flag.vortexTreads && vortexState() === 1) d *= 1 - UQX.vortex.takenFull / 100; // 旋涡之履
   if (player.guardT > 0) d *= 1 - MECH.meleeGuardLess;
   d *= 1 - Math.max(0, ...STATS.weapons.map((W, i) => W && W.whirl ? Math.min(WH.drCap, WH.drPerStack * player.spin[i].n) : 0)) / 100; // 旋身：每层当前旋转减伤，有上限
+  if (RUN.gd) RUN.gd[player.closeN > 0 ? 'hitC' : 'hitF'] += d / STATS.life; /* 模拟统计：贴身 / 不贴身时的承伤（按生命上限的比例） */
   if (player.shield > 0) { const a = Math.min(player.shield, d); player.shield -= a; d -= a; fx({ t: 'shield', x: player.x, y: player.y }); }
   if (d > 0 && FL.absorb) player.shield = Math.min(STATS.shield, player.shield + d * RL.absorb.pct / 100); // 圣盾：扣到生命的一部分转成护盾
   if (d > 0) { player.life -= d; player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); hurtFeedback(d); }
@@ -542,6 +573,7 @@ function logic(dt) {
   if (player.adT > 0) player.adT -= dt;
   if (player.hurtT > 0) player.hurtT -= dt;
   if (player.fbT > 0) player.fbT -= dt;
+  if (RUN) { closeStep(); if (RUN.gd) { RUN.gd.t += dt - 1 / 60; if (player.closeN > 0) RUN.gd.closeT += dt - 1 / 60; } }
   if (player.guardT > 0) player.guardT -= dt;
   player.shield = Math.min(P.shield, player.shield + P.shieldRegen * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
   player.swing = player.swing.map(v => Math.max(0, v - dt));
@@ -667,12 +699,12 @@ function logic(dt) {
     const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd;
     m.atkCd -= dt * ck; m.cd -= dt * ck; // 冰缓也降攻速
     const MA = PROG.monsterAttack;
-    if (d < m.size + MA.touch && m.atkCd <= 0) { hurtPlayer(m.dmg * bl, m.el); m.atkCd = MA.meleeCd; }
+    if (d < m.size + MA.touch && m.atkCd <= 0) { hurtPlayer(m.dmg * bl, m.el, ctrlK(m)); m.atkCd = MA.meleeCd; }
     slamStep(m, dt * ck, bl);
     if (m.boss && m.cd <= 0) bossAct(m, Math.atan2(dy, dx), bl);
     else if (m.d.ai === 'ranged' && m.cd <= 0) {
       m.cd = m.d.cd; const lt = m.d.lead ? d / MA.shotSpd * m.d.lead : 0, a = Math.atan2(player.y + player.vy * lt - m.y, player.x + player.vx * lt - m.x); // lead：按角色速度预判落点
-      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, el: m.el, chill: m.d.chill, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
+      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, ck: ctrlK(m), el: m.el, chill: m.d.chill, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
     }
   }
   // 互相推开
@@ -701,7 +733,7 @@ function slamStep(m, dt, bl) {
     m.slam.t -= dt; if (m.slam.t > 0) return;
     const s = m.slam; m.slam = null;
     fx({ t: 'slam', x: s.x, y: s.y, r: s.r });
-    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el); }
+    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m)); }
     return;
   }
   m.slamCd = (m.slamCd ?? C.every * rf(0.5, 1)) - dt;
@@ -709,7 +741,7 @@ function slamStep(m, dt, bl) {
 }
 // Boss 招式：每个 Boss 一套
 function bossAct(m, aim, bl) {
-  const shot = (a, v, k) => projs.push({ enemy: true, x: m.x, y: m.y - 8, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: PROG.monsterAttack.shotLife, dmg: m.dmg * k * bl, el: m.el });
+  const shot = (a, v, k) => projs.push({ enemy: true, x: m.x, y: m.y - 8, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: PROG.monsterAttack.shotLife, dmg: m.dmg * k * bl, ck: ctrlK(m), el: m.el });
   const B = PAT[m.d.pat];
   switch (m.d.pat) {
     case 'ring': m.cd = B.cd; for (let k = 0; k < B.shots; k++) shot(k / B.shots * Math.PI * 2 + m.t, B.shotSpd, B.shotDmg); break;
@@ -722,7 +754,7 @@ function bossAct(m, aim, bl) {
       break;
     }
     case 'pool':
-      m.cd = B.cd; zones.push({ enemy: true, x: player.x, y: player.y, r: B.r, t: B.dur, tickT: B.poolTick, dmg: m.dmg * B.poolDmg * bl, el: 'nuc' });
+      m.cd = B.cd; zones.push({ enemy: true, x: player.x, y: player.y, r: B.r, t: B.dur, tickT: B.poolTick, dmg: m.dmg * B.poolDmg * bl, ck: ctrlK(m), el: 'nuc' });
       for (let k = 0; k < B.shots; k++) shot(aim + (k - (B.shots - 1) / 2) * B.spread, B.shotSpd, B.shotDmg);
       break;
     case 'bolt':
@@ -798,9 +830,9 @@ function stepZones(dt) {
       if (z.y < F.y0 || z.y > F.y1) { z.ang = -z.ang; z.y = clamp(z.y, F.y0, F.y1); }
     }
     if (z.ice) { if (z.tick <= 0) { z.tick = z.tickT; for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, z) < (z.r + m.size) ** 2) chillOn(m, UQX.iceGround.chillPerSec * z.tickT); } continue; } // 永冬冰地：只叠冰缓
-    if (z.enemy) { if (z.tick <= 0) { z.tick = z.tickT || 0.5; if (dist2(player, z) < (z.r + 3) ** 2) hurtPlayer(z.dmg, z.el); } continue; }
+    if (z.enemy) { if (z.tick <= 0) { z.tick = z.tickT || 0.5; if (dist2(player, z) < (z.r + 3) ** 2) hurtPlayer(z.dmg, z.el, z.ck || 1); } continue; }
     if (z.pull) for (const m of mobs) if (!m.dead && !m.boss && dist2(m, z) < (z.pullR || z.r * 1.6) ** 2) { const dx = z.x - m.x, dy = z.y - m.y, d = Math.hypot(dx, dy) || 1; m.x += dx / d * z.pull * dt; m.y += dy / d * z.pull * dt; }
-    if (z.tick <= 0) { z.tick = z.tickT || 0.2; let zh = false; for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, z) < (z.r + m.size) ** 2 && !(z.trail && m.trailT > RUN.t)) { if (z.fire) m.groundT = RUN.t + z.tickT + 0.1; const d = hitMob(m, z.W, { mul: z.mul || 1 }); if (z.devil && RUN.dmg) RUN.dmg.devil += d; zh = true; if (z.trail) m.trailT = RUN.t + 0.19; } } // 小旋风打中不回灯火
+    if (z.tick <= 0) { z.tick = z.tickT || 0.2; let zh = false; for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, z) < (z.r + m.size) ** 2 && !(z.trail && m.trailT > RUN.t)) { if (z.fire) m.groundT = RUN.t + z.tickT + 0.1; const d = hitMob(m, z.W, { mul: z.mul || 1, ground: !z.devil }); if (z.devil && RUN.dmg) RUN.dmg.devil += d; zh = true; if (z.trail) m.trailT = RUN.t + 0.19; } } // 小旋风打中不回灯火
   }
   zones = zones.filter(z => z.t > 0);
 }
@@ -808,8 +840,8 @@ function stepProjs(dt) {
   for (const p of projs) {
     if (p.enemy) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
-      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el) && p.chill) chillPlayer(p.chill); p.dead = true; }
-      if (p.pool && (p.dead || p.life <= 0)) { zones.push({ enemy: true, x: p.x, y: p.y + 6, r: p.pool.r, t: p.pool.dur, tickT: p.pool.tick, dmg: p.pool.dmg, el: p.el }); p.pool = null; p.dead = true; }
+      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el, p.ck || 1) && p.chill) chillPlayer(p.chill); p.dead = true; }
+      if (p.pool && (p.dead || p.life <= 0)) { zones.push({ enemy: true, x: p.x, y: p.y + 6, r: p.pool.r, t: p.pool.dur, tickT: p.pool.tick, dmg: p.pool.dmg, ck: p.ck, el: p.el }); p.pool = null; p.dead = true; }
     } else if (p.orb) { stepOrb(p, dt);
     } else if (p.sthrow) { stepThrow(p, dt);
     } else if (p.mine) {

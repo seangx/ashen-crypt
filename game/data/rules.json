@@ -40,5 +40,9 @@
   "multicrit": { "text": "多重暴击不再衰减" },
   "finale": { "text": "火油罐飞到尽头时也会爆炸" },
   "splitEnd": { "text": "可分裂的投射物飞到尽头时也会分裂" },
-  "killInc": { "max": 200, "_说明": "独特装备“噬魂骨刺”：每次击杀的伤害提高最多叠到 max%" }
+  "killInc": { "max": 200, "_说明": "独特装备“噬魂骨刺”：每次击杀的伤害提高最多叠到 max%" },
+  "ironWall": { "mul": 2, "hard": 60, "alone": 20, "text": "【贴身】每个贴身敌人的减伤 ×{mul}，上限 {hard}%；身边没有敌人时受到的伤害 +{alone}%" },
+  "ctrlPrison": { "base": 20, "cap": 70, "less": 15, "text": "【控场】受控敌人伤害降低的基础值 {base}%，上限 {cap}%；对未受控的敌人伤害总降 {less}%" },
+  "drinkShield": { "mul": 1.5, "cap": 10, "text": "【续航】命中回护盾 ×{mul}，每秒上限 {cap}%" },
+  "loneWolf": { "mul": 2, "cap": 60, "crowd": 30, "text": "【远离】无人贴身时的减伤 ×{mul}，上限 {cap}%；被贴身时受到的伤害 +{crowd}%" }
 }

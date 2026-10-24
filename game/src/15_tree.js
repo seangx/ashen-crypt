@@ -16,13 +16,17 @@ const TREE_TEXT = {
   aspd: v => `攻击速度提高 ${v}%`, aoeInc: v => `范围提高 ${v}%`, areaInc: v => `范围武器伤害提高 ${v}%`, dotInc: v => `持续伤害提高 ${v}%`, dashRegen: v => `冲刺回复${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`, velocity: v => `移动速度提高 ${v}%`,
   dashMax: v => `冲刺槽 +${v}`, critInc: v => `暴击率提高 ${v}%`, critDmg: v => `暴击伤害 ${v >= 0 ? '+' : ''}${v}%`, 'res:all': v => `全部抗性 ${v >= 0 ? '+' : ''}${v}%`, 'inc:all': v => `全部伤害提高 ${v}%`,
   projSpd: v => `投射物速度提高 ${v}%`, projDur: v => `投射物持续时间提高 ${v}%`, bossInc: v => `对 Boss 伤害总增 ${v}%`, chain: v => `弹射 +${v}（投射物碰到屏幕边反弹的次数，用完就飞出屏幕；闪电链类的瞬发电弧则是在敌人之间连锁）`, projAdd: v => `投射物 +${v}`, durInc: v => `持续时间提高 ${v}%`, pierce: () => '投射物无限穿透', double: v => `${v}% 几率造成双倍伤害`,
+  /* 通用防御（spec-tree-defense §1）和新标签属性：和装备上同名词条相加 */
+  ctrlWeaken: v => `控场：受控敌人对你的伤害降低 ${v}%`, closePer: v => `贴身：每个贴身敌人减伤 +${v}%`, closeCap: v => `贴身减伤上限 +${v}%`, farDR: v => `远离：身边没有敌人时受到的伤害降低 ${v}%`, shieldOnHit: v => `续航：命中回护盾上限的 ${v}‰`,
+  delayInc: v => `延迟伤害提高 ${v}%`, frozenTaken: v => `冻结的敌人受到的伤害提高 ${v}%`, chainStep: v => `每次弹射伤害 +${v}%`, projSlow: v => `投射物速度降低 ${v}%`, spawnAdd: v => `派生 +${v}`, block: v => `格挡 ${v}%（盾在手上时护甲提高）`, shieldDmg: v => `盾牌伤害提高 ${v}%`,
+  burnLess: v => `灯火燃烧降低 ${v}%`, soulKillInc: v => `击杀回灯火提高 ${v}%`, moveInc: v => `移动速度提高 ${v}%`,
 };
 const INC_N = { proj: '投射物', melee: '近战', engine: '遁靴' };
 const treeText = (k, v) => k.startsWith('inc:') && k !== 'inc:all' ? `${INC_N[k.slice(4)] || ELEM_N[k.slice(4)]}伤害提高 ${v}%` : k.startsWith('ail:') ? `${AIL[k.slice(4)].n}几率 +${Math.round(v * 100)}%` : k.startsWith('res:') && k !== 'res:all' ? `${ELEM_N[k.slice(4)]}抗性 +${v}%` : TREE_TEXT[k](v);
 // 改规则的效果文字：{参数} 取 data/rules.json 里这条规则的参数，{v} 是天赋或装备给的数值，{别的规则.参数} 引用别的规则
 const RULES = DATA.rules; RULES.whirl = DATA.mechanics.whirl; RULES.spark = DATA.mechanics.spark; RULES.nova = DATA.mechanics.nova; RULES.meteor = DATA.mechanics.meteor; RULES.orb = DATA.mechanics.orb; RULES.shield = DATA.mechanics.shield; // {whirl.参数} 引用 mechanics.json 的 whirl
 const ruleText = (k, v) => { const R = RULES[k]; return R && R.text ? R.text.replace(/\{(\w+)(?:\.(\w+))?\}/g, (m, a, b) => b ? RULES[a][b] : a === 'v' ? v : R[a]) : null; };
-const MORE_N = { 'dmg:hit': '命中伤害', 'dmg:nonEle': '闪电以外的伤害', 'dmg:nonCold': '寒霜以外的伤害', 'dmg:nonKin': '物理以外的伤害', 'dmg:nonPla': '圣光以外的伤害', 'dmg:thermal': '元素伤害', 'dmg:nonAoe': '非范围武器伤害', 'dmg:proj': '投射物伤害',
+const MORE_N = { 'dmg:hit': '命中伤害', 'dmg:nonEle': '闪电以外的伤害', 'dmg:nonCold': '寒霜以外的伤害', 'dmg:nonKin': '物理以外的伤害', 'dmg:nonPla': '圣光以外的伤害', 'dmg:thermal': '元素伤害', 'dmg:nonAoe': '非范围武器伤害', 'dmg:proj': '投射物伤害', projSpd: '投射物速度',
   speed: '移动速度', armor: '护盾', deflect: '护盾', deflRate: '护盾回复速度', life: '生命', aspd: '攻击速度', dot: '持续伤害', rad: '疫病伤害', blind: '致盲效果', crit: '暴击率' };
 for (const e of ELEM) MORE_N['dmg:' + e] = ELEM_N[e] + '伤害';
 const moreText = (k, v) => k === 'dashMax' ? `冲刺槽 ${v}（至少 1）` : `${MORE_N[k] || k}${v >= 1 ? '总增' : '总降'} ${Math.round(Math.abs(v - 1) * 100)}%`;
@@ -165,7 +169,7 @@ const treeUI = { left: true, right: true, q: '', tag: null, preset: null, scroll
 const TREE_TAGS = [
   { n: '投射物', re: /投射物/ }, { n: '弹射', re: /弹射/ }, { n: '范围', re: /范围/ },
   { n: '近战', re: /近战|旋风/ }, { n: '持续', re: /持续/ }, { n: '暴击', re: /暴击/ },
-  { n: '穿透', re: /穿透/ }, { n: '防御', re: /护甲|护盾|闪避|抗性/ }, { n: '速度', re: /速度|冲刺/ },
+  { n: '穿透', re: /穿透/ }, { n: '防御', re: /护甲|护盾|闪避|抗性|控场|贴身|远离|续航|格挡/ }, { n: '速度', re: /速度|冲刺/ },
 ];
 // 5×5 像素图标
 const TREE_ICONS = {
@@ -181,7 +185,7 @@ const ELEM_ICON = { ele: 'bolt', exp: 'fire', kin: 'bone', pla: 'sun', nuc: 'spo
 function treeIcon(nd) {
   if (nd.icon) return nd.icon;
   const ks = [...Object.keys(nd.add || {}), ...Object.keys(nd.more || {}), ...Object.keys(nd.flag || {})].join(' ');
-  const R = [[/crit/i, 'crit'], [/deathBoom|fireTrail|still/, 'trap'], [/chain|proj|pierce|arc/, 'arrow'], [/melee|whirl|exec/, 'sword'], [/aoe|area|shockAura|blindAura/, 'aoe'],
+  const R = [[/crit/i, 'crit'], [/ctrlWeaken|ctrlPrison/, 'frost'], [/closeCap|closePer|ironWall|shieldOnHit|drinkShield/, 'shield'], [/farDR|loneWolf/, 'speed'], [/burnLess|soulKill/, 'life'], [/deathBoom|fireTrail|still/, 'trap'], [/chain|proj|pierce|arc/, 'arrow'], [/melee|whirl|exec/, 'sword'], [/aoe|area|shockAura|blindAura/, 'aoe'],
     [/:ele|spark|shock/, 'bolt'], [/:exp|burn/, 'fire'], [/:kin|corrode/, 'bone'], [/:pla|judge|martyr/, 'sun'], [/:nuc|rad|rot|contagion/, 'spore'], [/:cold|chill|frozen/, 'frost'],
     [/dot|dur|time/, 'time'], [/armor|deflect|deflRate|res:|dodge|absorb|thorns/, 'shield'], [/aspd|velocity|dash|speed/, 'speed'], [/life|energy|mass/, 'life']];
   for (const [re, ic] of R) if (re.test(ks)) return nd.icon = ic;

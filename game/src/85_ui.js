@@ -176,7 +176,7 @@ class UI extends Phaser.Scene {
       c.g = g; c.key = ''; return c;
     };
     this.hpOrb = orb(1, 'orb_hp', () => [{ t: `生命 ${Math.ceil(player.life)} / ${fmt(STATS.life)}`, c: '#ff8a7a' }, { t: '生命归零就阵亡。推关和天梯里不会自己回，只靠命中回生命（吸血）和打掉守关 Boss，回营地回满。', s: 8 }, { t: `护盾（球边的白蓝色）${Math.ceil(player.shield)} / ${fmt(STATS.shield)}，每秒回复 ${r1(STATS.shieldRegen)}`, s: 8, c: '#bfe0ff' }, { t: '护盾先挡伤害，挨打时也照常回复。', s: 8, c: COL.dim }, { t: `护甲 ${fmt(STATS.armor)}：本层普通怪一下（约 ${fmt(typicalHit(RUN ? RUN.L : S.depth))}）减伤 ${Math.round(armorDr(STATS.armor, typicalHit(RUN ? RUN.L : S.depth)) * 100)}%`, s: 8, c: COL.text }, { t: '护甲对小伤害减得多，对重击减得少。', s: 8, c: COL.dim }, { t: '球上方的点是冲刺槽：空格或右键冲刺，冲刺时无敌。', s: 8, c: COL.dim }, ...(MECH.leechHitCap != null || MECH.leechCapPct != null ? [{ t: `命中回护甲有上限：${MECH.leechHitCap != null ? `每次挥砍最多算 ${MECH.leechHitCap} 个敌人` : ''}${MECH.leechHitCap != null && MECH.leechCapPct != null ? '，' : ''}${MECH.leechCapPct != null ? `每秒最多回 ${fmt(STATS.armor * MECH.leechCapPct / 100)}（护甲上限的 ${MECH.leechCapPct}%）` : ''}${player.leechCapped > 0 ? '。现在已经封顶' : ''}`, s: 8, c: player.leechCapped > 0 ? COL.emberHi : COL.dim }] : [])]);
-    this.hpT = T(this, 32, 27, '', { align: 'center', parent: this.hpOrb }); this.defT = T(this, 32, 40, '', { size: 8, color: '#bfe0ff', align: 'center', parent: this.hpOrb });
+    this.hpT = T(this, 32, 27, '', { align: 'center', parent: this.hpOrb }); this.defT = T(this, 32, 40, '', { size: 8, color: '#bfe0ff', align: 'center', parent: this.hpOrb }); this.gdT = T(this, 66, 2, '', { size: 8, color: '#e8dcc0', parent: this.hpOrb }); /* 血球右上：当前贴身 / 远离减伤 */
     this.soulOrb = orb(W - 65, 'orb_soul', () => [{ t: `灯火 ${Math.round(player.soul)} / ${STATS.soulMax}`, c: '#b9a2ff' }, { t: `推关时每秒燃烧 ${SOUL.burn} + 层数 × ${SOUL.burnPerFloor}，击杀回（普通 ${SOUL.onKill.normal}、精英 ${SOUL.onKill.elite}、Boss ${SOUL.onKill.boss}，×${Math.round(STATS.soulGainMul * 100) / 100}）；烧完平安返回，阵亡则捡到的东西每件 ${SOUL.deathKeep}% 保住。`, s: 8 }, { t: `天梯里不燃烧，每秒回复 ${Math.round(STATS.soulRegen * 10) / 10}。`, s: 8, c: COL.dim }, { t: `旋风斩转的时候每秒消耗 ${Math.round(WH.soulPerSec * (1 - STATS.soulLess) * 100) / 100}，每砍中一个敌人回 ${WH.soulPerHit}（一次最多 ${WH.soulHitCap} 个）。`, s: 8, c: '#9a7cff' }]);
     this.soulT = T(this, 32, 27, '', { color: '#e6dcff', align: 'center', parent: this.soulOrb }); this.burnT = T(this, 32, 40, '', { size: 8, color: '#b9a2ff', align: 'center', parent: this.soulOrb });
     // 血球上方：旋转层数、冲刺槽
@@ -241,6 +241,7 @@ class UI extends Phaser.Scene {
     this.drawOrb(this.soulOrb, sf, player.soul <= 0 ? 0x5a4a7a : blink ? 0xd8a040 : 0x7a55d0, blink ? 0xffe08a : 0xc9b0ff, 0x3a2470, 0, 0);
     const ht = String(Math.ceil(player.life)); if (this.hpT.text !== ht) this.hpT.setText(ht);
     const dt = P.shield ? '+' + Math.ceil(player.shield) : ''; if (this.defT.text !== dt) this.defT.setText(dt);
+    const n = player.closeN || 0, gt = !RUN ? '' : n > 0 ? `贴 −${Math.round(Math.min(P.closeCap, n * P.closePer))}%` : player.farOK && P.farDR > 0 ? `远 −${P.farDR}%` : ''; if (this.gdT.text !== gt) { this.gdT.setText(gt); this.gdT.setTint(hex(n > 0 ? '#e8dcc0' : '#9fd0ff')); }
     const st = Math.round(sf * 100) + '%'; if (this.soulT.text !== st) this.soulT.setText(st);
     const bt = !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul)}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
     const g = this.dashG; g.clear();
@@ -395,9 +396,9 @@ class UI extends Phaser.Scene {
       rect(this, 44, 46, 24, 24, '#120c18', 1, c); const im = img(this, 44 + 12 - DOLL_W / 2, 46 + 24 - DOLL_H, 'doll_ui', c); im.setCrop(DOLL_W / 2 - 12, 0, 24, DOLL_H); }
     const P = STATS;
     const rows = [['预计秒伤', fmt(P.dps), COL.emberHi], ['生命', fmt(P.life), '#ff8a7a'], ['护盾', `${fmt(P.shield)}（每秒 +${r1(P.shieldRegen)}）`, '#bfe0ff'], ['护甲', `${fmt(P.armor)}（减伤 ${Math.round(armorDr(P.armor, typicalHit(S.depth)) * 100)}%）`], ['闪避', P.dodge + '%'], ['冲刺槽', String(P.dashMax)],
-      ['属性', `${P.mass} / ${P.energy} / ${P.time}`]];
+      ['通用防御', `控${P.ctrlWeaken} 贴${r1(P.closePer)}/${P.closeCap} 远${P.farDR}${P.shieldOnHit ? ' 续' + r1(P.shieldOnHit) + '‰' : ''}`, '#bfe0ff']]; /* 原“属性”行（体魄 / 时砂已从天赋树拿掉），悬停看四种通用防御 */
     const az = rect(this, 8, 152, 124, 10, '#000', 0, c).setInteractive();
-    az.on('pointerover', () => showTip([{ t: `${ATTR_N.mass} ${P.mass} / ${ATTR_N.energy} ${P.energy} / ${ATTR_N.time} ${P.time}`, c: COL.emberHi }, { t: `${ATTR_N.mass}每点：护甲提高 2%，物理伤害总增 1%，加速降低 1%。`, s: 8 }, { t: `${ATTR_N.energy}每点：灵障提高 2%，冲刺回复提高 1%，元素伤害总增 1%。`, s: 8 }, { t: `${ATTR_N.time}每点：攻击和移动快 1%。`, s: 8 }])); az.on('pointerout', hideTip);
+    az.on('pointerover', () => showTip([{ t: '通用防御（各自相乘）', c: COL.emberHi }, ...[P.ctrlWeaken > 0 && `控场：受控敌人伤害降低 ${P.ctrlWeaken}%（上限 ${P.ctrlCap}%）`, P.closePer > 0 && `贴身：每个贴身敌人减伤 ${r1(P.closePer)}%（上限 ${P.closeCap}%；精英算 2、Boss 算 3）`, P.farDR > 0 && `远离：身边 ${MECH.generic.farR} 像素没有敌人时减伤 ${P.farDR}%`, P.shieldOnHit > 0 && `续航：命中回护盾 ${r1(P.shieldOnHit)}‰（每秒上限 ${P.sohCap}%）`, `${ATTR_N.energy} ${P.energy}：灯火上限和护盾都吃`].filter(Boolean).map(t => ({ t, s: 8 }))])); az.on('pointerout', hideTip);
     rows.forEach(([a, b, col], i) => { const y = 102 + i * 10; T(this, 10, y, a, { size: 8, color: COL.dim, parent: c }); T(this, 128, y, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); });
     T(this, 10, 164, '抗性', { size: 8, color: COL.dim, parent: c });
     ELEM.forEach((e, i) => T(this, 10 + i * 20, 175, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));

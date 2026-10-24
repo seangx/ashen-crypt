@@ -133,6 +133,7 @@ function autoAfterRun(r) {
       if (++A.fails >= P.lossesToRetreat) { A.fails = 0; A.back = true; S.depth = Math.max(1, Math.min(S.depth, S.maxDepth) - 1); }
     }
   }
+  if (RUN && RUN.gd) r.gd = { ...RUN.gd }; /* 通用防御统计（模拟用） */
   AUTO.last = r; AUTO.lastT = AUTO.clock;
   AUTO.nextT = S.auto.loop || LAD.pending ? CAMP.idleStay : 0; // 在营地停留一会儿再出发
 }
