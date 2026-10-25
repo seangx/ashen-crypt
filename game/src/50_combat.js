@@ -227,7 +227,7 @@ function kill(m) {
   const L = RUN.L;
   const mult = (m.boss || (lad && !LD.run.mobDrops) ? 0 : m.elite ? DROP.eliteMul : 1) * mm * hk; // 天梯：怪物不掉落，只有通关宝箱
   const shardDrop = () => { const k = rollShard(L); dropThing(m, { kind: 'shard', k }); if (rnd() * 100 < LX.twin) dropThing(m, { kind: 'shard', k }); };
-  if (rnd() < DROP.item * mult * (1 + LX.iiq / 100)) dropThing(m, { kind: 'item', item: rollItem(L, LX.iir) });
+  if (rnd() < DROP.item * mult * (1 + LX.iiq / 100)) RUN.cache = (RUN.cache || 0) + 1; // 战斗中不掉装备：记进这一层的 Boss 宝箱，打掉 Boss 一次掉出来
   if (rnd() < DROP.shard * mult * (1 + LX.dice / 100)) shardDrop();
   if (rnd() < DROP.mod * mult * (1 + LX.runes / 100)) dropThing(m, { kind: 'mod', mod: rollModDrop(L) });
   if (rnd() < DROP.map * mult * (1 + LX.mapDrop / 100)) dropThing(m, { kind: 'map', map: rollMapDrop(L) });
@@ -236,7 +236,10 @@ function kill(m) {
   else if (m.boss) {
     const BL = PROG.bossLoot;
     const n = Math.round(BL.items * (1 + LX.iiq / 100)) + (rnd() * 100 < LX.chest ? ATLAS.marble.chestItems : 0);
-    for (let i = 0; i < n; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir, true) });
+    for (let i = 0; i < n; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir, true) }, 1);
+    const c = Math.round((RUN.cache || 0) * BL.cacheMul); RUN.cache = 0; // 这一层攒下的装备（倍数补偿撤回 / 灯灭时没打到 Boss 的那部分）
+    for (let i = 0; i < c; i++) dropThing(m, { kind: 'item', item: rollItem(L, LX.iir) }, 1);
+    fx({ t: 'chest', x: m.x, y: m.y, n: n + c });
     for (let i = 0; i < BL.shards; i++) shardDrop();
     for (let i = 0; i < BL.runes; i++) dropThing(m, { kind: 'mod', mod: rollModDrop(L + BL.runeIlvlBonus) });
     if (rnd() < DROP.mapBoss * (1 + LX.mapDrop / 100)) dropThing(m, { kind: 'map', map: rollMapDrop(L) });
@@ -248,10 +251,10 @@ function kill(m) {
     const bid = RUN.bossD.id; const k = S.bossKills[bid] = (S.bossKills[bid] || 0) + 1; const bi = BOON_AT.indexOf(k);
     if (bi >= 0) RUN.gain.boon = { b: bid, i: bi };
     if (bi >= 0) refreshStats();
-    if (G.ui) G.ui.banner(bi >= 0 ? `获得祝福：${BOONS[bid][bi].n}` : RUN.result === 'retreat' ? '险胜 · 撤回' : `第 ${RUN.base} 层通过`);
+    if (G.ui) G.ui.banner(bi >= 0 ? `获得祝福：${BOONS[bid][bi].n}` : RUN.result === 'retreat' ? `险胜 · 撤回 · 宝箱 ${n + c} 件` : `第 ${RUN.base} 层通过 · 宝箱 ${n + c} 件`);
   }
 }
-function dropThing(m, o) { drops.push({ ...o, x: m.x + rf(-6, 6), y: m.y + rf(-4, 4), z: 6, vz: rf(50, 80), vx: rf(-30, 30), vy: rf(-14, 14), age: 0 }); if ((o.kind === 'item' && o.item.rar >= 2) || o.kind === 'glyph') sfx('rare'); }
+function dropThing(m, o, burst) { const a = burst ? rf(0, Math.PI * 2) : 0, sp = burst ? rf(40, 90) : 0; drops.push({ ...o, x: m.x + rf(-6, 6), y: m.y + rf(-4, 4), z: 6, vz: burst ? rf(90, 130) : rf(50, 80), vx: burst ? Math.cos(a) * sp : rf(-30, 30), vy: burst ? Math.sin(a) * sp * .6 : rf(-14, 14), age: 0 }); if ((o.kind === 'item' && o.item.rar >= 2) || o.kind === 'glyph') sfx('rare'); }
 function collect(dp) {
   const g = RUN && RUN.gain;
   if (dp.kind === 'item') { addItem(dp.item); g && g.items.push(dp.item); if (G.ui) G.ui.feedItem(dp.item); }
