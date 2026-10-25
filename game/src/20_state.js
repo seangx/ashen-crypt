@@ -46,6 +46,7 @@ function load(data) {
     if (seen.size < old) { S.tree = S.tree.filter(id => seen.has(id)); 
       const n = old - seen.size, tell = () => G.ui ? toast(`天赋树改版了：返还 ${n} 个天赋点`, COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); } delete S.treeGone; }
   if (!S.equip.wl) starterKit();
+  if (!S.seenUnlocks) migrateUnlocks(); S.events ??= {};
   // 副手改版：右手不再拿武器。旧存档右手的武器放回背包（符文还在上面），按主手标签送一件普通副手
   if (!S.offV) { const o = S.equip.wr; if (o && o.kind === 'weapon') { S.equip.wr = null; S.stash.unshift(o); const OH = DATA.mechanics.offhand, tg = S.equip.wl ? itemTags(S.equip.wl) : [];
       const b = (OH.starterByTag.find(([t]) => tg.includes(t)) || [0, OH.fallback])[1], w = S.equip.wl, it = newItem('off', b, w ? w.ilvl : 1, w ? w.q : 0, 0); S.equip.wr = it;
@@ -121,9 +122,9 @@ function migrateGems() {
 function starterKit() {
   const K = PROG.starter;
   const w = newItem('weapon', K.weapon, 1, 0, 0); S.equip.wl = w;
-  const g = newGem(K.gem || 'GemBolt', { var: K.weapon, sock: K.gemSockets || 1 }); K.gemRunes.forEach((id, i) => { g.mods[i] = newMod(id); }); S.equip.gem = g; S.gemV = 1; S.legacyV = 1; // 技能石：骨矢 1 级
+  const g = newGem(K.gem || 'GemBolt', { var: K.weapon, sock: K.gemSockets || 1 }); K.gemRunes.forEach((id, i) => { g.mods[i] = newMod(id); }); S.equip.gem = g; S.gemV = 1; S.legacyV = 1; S.seenUnlocks = {}; S.events = {}; S.treeSeen = []; // 技能石：骨矢 1 级
   if (K.engine) S.equip.engine = newItem('engine', K.engine, 1, 0, 0);
   if (K.shield) S.equip.shield = newItem('shield', K.shield, 1, 0, 0);
-  { const OH = DATA.mechanics.offhand, tg = itemTags(g), b = (OH.starterByTag.find(([t]) => tg.includes(t)) || [0, OH.fallback])[1]; S.equip.wr = newItem('off', b, 1, 0, 0); } // 新档：按主手标签送一件普通副手
+  if (PROG.unlocks.wr && PROG.unlocks.wr.event && !UNLOCK_ALL) { /* 渐进式披露：副手由第一只 Boss 宝箱保底给 */ } else { const OH = DATA.mechanics.offhand, tg = itemTags(g), b = (OH.starterByTag.find(([t]) => tg.includes(t)) || [0, OH.fallback])[1]; S.equip.wr = newItem('off', b, 1, 0, 0); } // 新档：按主手标签送一件普通副手
   if (K.hub) { const h = newItem('hub', K.hub, 1, 0, 0); h.sock = Math.max(1, h.sock); h.mods = Array(h.sock).fill(null); S.equip.hub = h; }
 }

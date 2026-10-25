@@ -11,6 +11,8 @@ function findItem(id) {
 }
 const MENU = [{ id: 'gear', n: '装备', ic: 'i_w_crossbow' }, { id: 'mods', n: '符文', ic: 'mod_Chain' }, { id: 'craft', n: '铁砧', ic: 'i_anvil' }, { id: 'tree', n: '天赋', ic: 'i_star' }, { id: 'ladder', n: '天梯', ic: 'i_ladder' }, { id: 'help', n: '手册', ic: 'i_book' }];
 const pct = v => Math.round(v * 100) + '%';
+const FAC_FLASH = {};
+const visMenu = () => MENU.filter(m => unlocked(m.id)); // 渐进式披露：没开放的菜单不画，快捷键按显示顺序编号
 // 营地设施的悬浮说明
 const FAC_TIP = {
   gate: () => `往下走：下一趟从第 ${descentStart()} 层出发。点开可以选层、锁层。`,
@@ -170,7 +172,7 @@ class UI extends Phaser.Scene {
     kb.on('keydown-SHIFT', () => tryDash());
     kb.on('keydown-ENTER', () => { ac(); if (!this.winId) this.toggleLoop(); });
     kb.on('keydown-ESC', () => this.closeWin());
-    ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN'].forEach((k, i) => kb.on('keydown-' + k, () => this.toggleWin(MENU[i].id)));
+    ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN'].forEach((k, i) => kb.on('keydown-' + k, () => { const m = visMenu()[i]; if (m) this.toggleWin(m.id); }));
   }
   /* --- HUD：顶部绶带 + 骨头条，左下血球，右下灯火瓶，中间石台底栏 --- */
   buildHud() {
@@ -213,10 +215,10 @@ class UI extends Phaser.Scene {
       const b = this.add.container(28 + i * 25, 7); bot.add(b);
       const bg = nine(this, 0, 0, 24, 24, 'sock'), hl = nine(this, 0, 0, 24, 24, 'sock_h').setVisible(false); b.add([bg, hl]);
       const tex = this.textures.get(m.ic).getSourceImage(); b.ic = img(this, Math.round(12 - tex.width / 2), Math.round(12 - tex.height / 2), m.ic, b);
-      T(this, 2, 0, String(i + 1), { size: 'num', color: COL.faint, parent: b });
+      b.num = T(this, 2, 0, String(i + 1), { size: 'num', color: COL.faint, parent: b });
       b.badge = T(this, 23, -2, '', { size: 'num', color: COL.ember, align: 'right', parent: b });
       const z = this.add.zone(0, 0, 24, 24).setOrigin(0).setInteractive(); b.add(z);
-      z.on('pointerover', () => { b.hov = true; showTip([{ t: `${m.n}  [${i + 1}]`, c: COL.emberHi }, ...(!unlocked(m.id) ? [{ t: unlockText(m.id), s: 8, c: COL.dim }] : [])]); });
+      z.on('pointerover', () => { b.hov = true; showTip([{ t: `${m.n}  [${visMenu().indexOf(m) + 1}]`, c: COL.emberHi }]); });
       z.on('pointerout', () => { b.hov = false; b.y = 7; hideTip(); });
       z.on('pointerdown', () => { if (unlocked(m.id)) b.y = 8; });
       z.on('pointerup', () => { b.y = 7; if (!unlocked(m.id)) { toast(`${m.n}：${unlockText(m.id)}`); return; } sfx('click'); this.toggleWin(m.id); });
@@ -285,7 +287,8 @@ class UI extends Phaser.Scene {
     const dps = fmt(STATS.dps); if (this.dpsT.text !== dps) this.dpsT.setText(dps);
     const sh = fmt(Object.values(S.shards).reduce((a, b) => a + b, 0)); if (this.diceT.text !== sh) { this.diceT.setText(sh); this.shardI.x = DW - 6 - textW(sh, 8) - 5; }
     this.menuBtns.forEach((bt, i) => {
-      const id = MENU[i].id, on = unlocked(id); let badge = '';
+      const id = MENU[i].id, on = unlocked(id), vi = visMenu().indexOf(MENU[i]); let badge = '';
+      bt.setVisible(on); if (on) { bt.x = 28 + vi * 25; if (bt.num.text !== String(vi + 1)) bt.num.setText(String(vi + 1)); }
       if (id === 'gear') { const n = S.stash.filter(x => x.isNew).length; badge = n ? String(n) : ''; }
       if (id === 'mods' && S.mods.some(m => m.isNew)) badge = '!';
       if (id === 'tree' && treePoints() > 0) badge = String(treePoints());
@@ -427,7 +430,7 @@ class UI extends Phaser.Scene {
     let y = 32 + Math.max(1, Math.ceil(show.length / cols)) * (cs + gap) + 6;
     const life = Math.round(player.life / STATS.life * 100);
     T(this, 12, y, `生命 ${life}% · 灯火 ${Math.round(player.soul / STATS.soulMax * 100)}% · 下一层 ${RUN.base + 1}`, { size: 8, color: COL.text, parent: c }); y += 14;
-    const tabs = [['gear', '装备'], ['mods', '符文'], ['tree', '天赋'], ['craft', '铁砧'], ['bulk', '拆解']].filter(([id]) => id === 'bulk' || unlocked(id)), bh = mob ? 40 : 18, tw = Math.floor((w - 24 - (tabs.length - 1) * 4) / Math.max(1, tabs.length));
+    const tabs = [['gear', '装备'], ['mods', '符文'], ['tree', '天赋'], ['craft', '铁砧'], ['bulk', '拆解']].filter(([id]) => unlocked(id === 'bulk' ? 'salvage' : id)), bh = mob ? 40 : 18, tw = Math.floor((w - 24 - (tabs.length - 1) * 4) / Math.max(1, tabs.length));
     tabs.forEach(([id, n], i) => mkBtn(this, c, 12 + i * (tw + 4), y, tw, bh, n, () => id === 'bulk' ? this.openBulk() : this.openWin(id)));
     y += bh + 6;
     const by = mob ? Math.max(y + 18, h - bh - 12) : h - bh - 10, half = Math.floor((w - 28) / 2);
@@ -460,6 +463,7 @@ class UI extends Phaser.Scene {
     const pos = { gem: [0, 0], core: [26, 0], wl: [0, 26], wr: [52, 26], hub: [0, 52], engine: [26, 52], shield: [52, 52] };
     const ghost = { gem: 'i_w_crossbow', wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
     for (const s of SLOTS) {
+      if (s.id === 'wr' && !unlocked('wr') && !S.equip.wr) continue; // 副手格：解锁前不画
       const it = S.equip[s.id]; const [x, y] = pos[s.id];
       mkCell(this, c, ox + x, oy + y, it, { size: 24, sel: selFn(it, s.id), ghost: ghost[s.id], tip: [{ t: s.id === 'wr' && !unlocked('wr') ? `${s.n}：${unlockText('wr')}` : `${s.n}（空）`, c: COL.dim }], onHover: i => { if (i) { hoverId = i.id; this.renderPane(); } }, onOut: () => { hoverId = null; this.renderPane(); }, onClick: i => onClick(i, s.id) });
     }
@@ -473,9 +477,9 @@ class UI extends Phaser.Scene {
     const P = STATS;
     const rows = [['预计秒伤', fmt(P.dps), COL.emberHi], ['生命', fmt(P.life), '#ff8a7a'], ['护盾', `${fmt(P.shield)}（每秒 +${r1(P.shieldRegen)}）`, '#bfe0ff'], ['护甲', `${fmt(P.armor)}（减伤 ${Math.round(armorDr(P.armor, typicalHit(S.depth)) * 100)}%）`], ['闪避', P.dodge + '%'], ['冲刺槽', String(P.dashMax)],
       ['通用防御', `控${P.ctrlWeaken} 贴${r1(P.closePer)}/${P.closeCap} 远${P.farDR}${P.shieldOnHit ? ' 续' + r1(P.shieldOnHit) + '‰' : ''}`, '#bfe0ff']]; /* 原“属性”行（体魄 / 时砂已从天赋树拿掉），悬停看四种通用防御 */
-    const az = rect(this, 8, 152, 124, 10, '#000', 0, c).setInteractive();
+    const az = rect(this, 8, 154, 124, 9, '#000', 0, c).setInteractive();
     az.on('pointerover', () => showTip([{ t: '通用防御（各自相乘）', c: COL.emberHi }, ...[P.ctrlWeaken > 0 && `控场：受控敌人伤害降低 ${P.ctrlWeaken}%（上限 ${P.ctrlCap}%）`, P.closePer > 0 && `贴身：每个贴身敌人减伤 ${r1(P.closePer)}%（上限 ${P.closeCap}%；精英算 2、Boss 算 3）`, P.farDR > 0 && `远离：身边 ${MECH.generic.farR} 像素没有敌人时减伤 ${P.farDR}%`, P.shieldOnHit > 0 && `续航：命中回护盾 ${r1(P.shieldOnHit)}‰（每秒上限 ${P.sohCap}%）`, `${ATTR_N.energy} ${P.energy}：灯火上限和护盾都吃`].filter(Boolean).map(t => ({ t, s: 8 }))])); az.on('pointerout', hideTip);
-    rows.forEach(([a, b, col], i) => { const y = 102 + i * 10; T(this, 10, y, a, { size: 8, color: COL.dim, parent: c }); T(this, 128, y, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); });
+    rows.forEach(([a, b, col], i) => { const y = 99 + i * 9.5 | 0; T(this, 10, y, a, { size: 8, color: COL.dim, parent: c }); T(this, 128, y, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); });
     T(this, 10, 164, '抗性', { size: 8, color: COL.dim, parent: c });
     ELEM.forEach((e, i) => T(this, 10 + i * 20, 175, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
     T(this, 10, 186, `上限 ${P.maxRes}%`, { size: 8, color: COL.faint, parent: c });
@@ -484,13 +488,13 @@ class UI extends Phaser.Scene {
     // 背包
     T(this, 140, 6, `背包 ${S.stash.length}/${STASH_CAP}`, { size: 8, color: COL.dim, parent: c });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一个分页
-    [['装备', 0], [`技能石 ${nGem}`, 1]].forEach(([n, t], i) => mkBtn(this, c, 140 + i * 56, 138, 54, 15, n, () => { stashTab = t; this.refresh(); }, { size: 8, style: stashTab === t ? 's' : 'n' }));
+    if (!unlocked('gems') && !nGem) stashTab = 0; else [['装备', 0], [`技能石 ${nGem}`, 1]].forEach(([n, t], i) => mkBtn(this, c, 140 + i * 56, 138, 54, 15, n, () => { stashTab = t; this.refresh(); }, { size: 8, style: stashTab === t ? 's' : 'n' }));
     for (let i = 0; i < STASH_CAP; i++) {
       const it = view[i]; const x = 140 + (i % 10) * 16, y = 18 + (i / 10 | 0) * 16;
       mkCell(this, c, x, y, it, { size: 16, sel: it && it.id === selId, upg: true, onHover: v => { if (v) { hoverId = v.id; this.renderPane(); } }, onOut: () => { hoverId = null; this.renderPane(); }, onClick: v => { if (!v) return; if (selId === v.id) equipItem(v); selId = v.id; v.isNew = false; save(); this.refresh(); } });
     }
     mkBtn(this, c, 140, 118, 40, 16, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
-    mkBtn(this, c, 184, 118, 116, 16, confirmKey === 'junk' ? '再点一次确认' : '批量拆解…', () => this.openBulk(), { size: 8 });
+    if (unlocked('salvage')) mkBtn(this, c, 184, 118, 116, 16, confirmKey === 'junk' ? '再点一次确认' : '批量拆解…', () => this.openBulk(), { size: 8 });
     T(this, 140, 158, '点一下选中，再点一下装备。', { size: 8, color: COL.faint, parent: c });
     T(this, 140, 169, '绿色箭头表示比身上那件更好。', { size: 8, color: COL.faint, parent: c });
     this.paneC = this.add.container(306, 6); c.add(this.paneC);
@@ -509,13 +513,13 @@ class UI extends Phaser.Scene {
       mkBtn(this, p, 104, by, 48, 16, confirmKey === 'sal' + it.id ? '确认' : '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { size: 8, style: confirmKey === 'sal' + it.id ? 'r' : 'n', tip: [{ t: '拆解', c: COL.emberHi }, { t: `毁掉装备，每条词条给 ${CRAFT.shatter.perAffix} 个对应的碎片，T${CRAFT.shatter.bonusTier} 及以上多给 ${CRAFT.shatter.bonus} 个。`, s: 8 }] });
     } else {
       mkBtn(this, p, 0, by, 48, 16, '卸下', () => { unequip(f.slot); save(); this.refresh(); }, { size: 8 });
-      if (it.sock || ['core', 'engine', 'hub'].includes(f.slot)) mkBtn(this, p, 52, by, 48, 16, '符文', () => { modWeapon = f.slot; this.openWin('mods'); }, { size: 8 });
+      if (unlocked('mods') && (it.sock || ['core', 'engine', 'hub'].includes(f.slot))) mkBtn(this, p, 52, by, 48, 16, '符文', () => { modWeapon = f.slot; this.openWin('mods'); }, { size: 8 });
     }
     if (it.kind === 'gem') { // 技能石：打磨、开孔（代替铁砧）
-      mkBtn(this, p, 0, by - 20, 74, 16, `打磨 ${GEMC.polishCost}碎片`, () => { const r = gemPolish(it); if (r) toast(r, COL.emberHi); this.refresh(); }, { size: 8, disabled: !canPolish(it), tip: [{ t: '打磨', c: COL.emberHi }, { t: `花 ${GEMC.polishCost} 个随机词条碎片，品质 +1%（最高 ${GEMC.qMax}%）`, s: 8 }] });
-      mkBtn(this, p, 78, by - 20, 74, 16, `开孔 (${S.glyphs.socket || 0})`, () => { const r = gemSocket(it); if (r) toast(r, COL.emberHi); this.refresh(); }, { size: 8, disabled: !canSocket(it), tip: [{ t: '开孔符', c: COL.emberHi }, { t: `技能石 +1 符文槽（最多 ${GEMC.maxSock}）。天梯宝箱掉落。`, s: 8 }] });
+      if (unlocked('craftAdv')) mkBtn(this, p, 0, by - 20, 74, 16, `打磨 ${GEMC.polishCost}碎片`, () => { const r = gemPolish(it); if (r) toast(r, COL.emberHi); this.refresh(); }, { size: 8, disabled: !canPolish(it), tip: [{ t: '打磨', c: COL.emberHi }, { t: `花 ${GEMC.polishCost} 个随机词条碎片，品质 +1%（最高 ${GEMC.qMax}%）`, s: 8 }] });
+      if (unlocked('glyph')) mkBtn(this, p, 78, by - 20, 74, 16, `开孔 (${S.glyphs.socket || 0})`, () => { const r = gemSocket(it); if (r) toast(r, COL.emberHi); this.refresh(); }, { size: 8, disabled: !canSocket(it), tip: [{ t: '开孔符', c: COL.emberHi }, { t: `技能石 +1 符文槽（最多 ${GEMC.maxSock}）。天梯宝箱掉落。`, s: 8 }] });
       return; }
-    mkBtn(this, p, f.where === 'stash' ? 0 : 104, by - 20, f.where === 'stash' ? 152 : 48, 16, '铁砧', () => { craftId = it.id; craftAff = -1; this.openWin('craft'); }, { size: 8, disabled: !unlocked('craft'), tip: unlocked('craft') ? null : [{ t: unlockText('craft'), s: 8 }] });
+    if (unlocked('craft')) mkBtn(this, p, f.where === 'stash' ? 0 : 104, by - 20, f.where === 'stash' ? 152 : 48, 16, '铁砧', () => { craftId = it.id; craftAff = -1; this.openWin('craft'); }, { size: 8, disabled: !unlocked('craft'), tip: unlocked('craft') ? null : [{ t: unlockText('craft'), s: 8 }] });
   }
   /* 符文 */
   win_mods(c) {
@@ -571,7 +575,7 @@ class UI extends Phaser.Scene {
   /* 铁砧 */
   win_craft(c, w, h) {
     const tabs = [['铁砧', true], ['熔铸', unlocked('fuse')]];
-    tabs.forEach(([n, ok], i) => mkBtn(this, c, 10 + i * 46, 4, 43, 15, n, () => { craftTab = i; this.refresh(); }, { size: 8, style: craftTab === i ? 's' : 'n', disabled: !ok, tip: ok ? null : [{ t: unlockText('fuse'), s: 8 }] }));
+    tabs.forEach(([n, ok], i) => ok && mkBtn(this, c, 10 + i * 46, 4, 43, 15, n, () => { craftTab = i; this.refresh(); }, { size: 8, style: craftTab === i ? 's' : 'n', disabled: !ok, tip: ok ? null : [{ t: unlockText('fuse'), s: 8 }] }));
     if (craftTab === 1 && unlocked('fuse')) return this.fusePane(c, w, h);
     const all = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash];
     let it = all.find(x => x.id === craftId); if (!it) { it = all.find(craftable) || all[0]; craftId = it && it.id; craftAff = -1; }
@@ -585,16 +589,16 @@ class UI extends Phaser.Scene {
     // 铸符数量和附带开关
     GLYPHS.forEach((g, i) => T(this, X + i * 30, 6, `${g.n.slice(0, 1)} ${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: c }));
     if (useHope && !glyphN('hope')) useHope = false; if (useChaos && !glyphN('chaos')) useChaos = false;
-    mkBtn(this, c, X, 18, 72, 14, useHope ? '附带希望符' : '不带希望符', () => { useHope = !useHope; this.refresh(); }, { size: 8, style: useHope ? 's' : 'n', disabled: !glyphN('hope'), tip: [{ t: '希望符', c: GLYPH_BY.hope.c }, { t: `加词条或升档时附带一张：${Math.round(CRAFT.glyphs.hopeChance * 100)}% 几率这次不扣潜力。`, s: 8 }] });
-    mkBtn(this, c, X + 76, 18, 72, 14, useChaos ? '附带混沌符' : '不带混沌符', () => { useChaos = !useChaos; this.refresh(); }, { size: 8, style: useChaos ? 's' : 'n', disabled: !glyphN('chaos'), tip: [{ t: '混沌符', c: GLYPH_BY.chaos.c }, { t: '升档时附带一张：升档后这条词条换成同类型（前缀或后缀）里随机的另一条，档位不变。', s: 8 }] });
+    if (unlocked('glyph')) mkBtn(this, c, X, 18, 72, 14, useHope ? '附带希望符' : '不带希望符', () => { useHope = !useHope; this.refresh(); }, { size: 8, style: useHope ? 's' : 'n', disabled: !glyphN('hope'), tip: [{ t: '希望符', c: GLYPH_BY.hope.c }, { t: `加词条或升档时附带一张：${Math.round(CRAFT.glyphs.hopeChance * 100)}% 几率这次不扣潜力。`, s: 8 }] });
+    if (unlocked('glyph')) mkBtn(this, c, X + 76, 18, 72, 14, useChaos ? '附带混沌符' : '不带混沌符', () => { useChaos = !useChaos; this.refresh(); }, { size: 8, style: useChaos ? 's' : 'n', disabled: !glyphN('chaos'), tip: [{ t: '混沌符', c: GLYPH_BY.chaos.c }, { t: '升档时附带一张：升档后这条词条换成同类型（前缀或后缀）里随机的另一条，档位不变。', s: 8 }] });
     const sel = it.affs[craftAff];
     const uw = upWhy(it, craftAff), extra = sel ? Math.floor((sel.t + 2) / AV.upgradeTierDiv) : 0;
     mkBtn(this, c, X, 36, 148, 16, sel ? `升一档 · 碎片 ${shardN(sel.k)}` : '升一档（先点一条词条）', () => done(craftUp(it, craftAff, useHope, useChaos)), { size: 8, style: 'w', disabled: !!uw, tip: [{ t: '升一档', c: COL.emberHi }, { t: `花 1 个该词条的碎片，潜力扣 ${AV.upgrade[0]}–${AV.upgrade[1]}${extra ? ` + ${extra}` : ''}。数值重新随。最高两档（溢彩）只能掉落。`, s: 8 }, ...(uw ? [{ t: uw, s: 8, c: COL.bad }] : [])] });
     const rw = adv ? refineWhy(it, craftAff) : unlockText('craftAdv'), sw = adv ? stripWhy(it) : unlockText('craftAdv');
-    mkBtn(this, c, X, 55, 72, 16, '洗数值', () => done(craftRefine(it, craftAff)), { size: 8, disabled: !!rw, tip: [{ t: '洗数值', c: GLYPH_BY.refine.c }, { t: `花 1 张洗练符，选中的词条在同档内重新随数值，潜力扣 ${AV.refine[0]}–${AV.refine[1]}。`, s: 8 }, ...(rw ? [{ t: rw, s: 8, c: COL.bad }] : [])] });
-    mkBtn(this, c, X + 76, 55, 72, 16, '移除', () => done(craftStrip(it)), { size: 8, disabled: !!sw, tip: [{ t: '移除', c: GLYPH_BY.strip.c }, { t: `花 1 张剥离符，随机去掉一条词条，潜力扣 ${AV.strip[0]}–${AV.strip[1]}。`, s: 8 }, ...(sw ? [{ t: sw, s: 8, c: COL.bad }] : [])] });
-    const ow = oathWhy(it); mkBtn(this, c, X + 76, 74, 72, 16, `立誓 ×${glyphN('oath')}`, () => done(craftOath(it)), { size: 8, disabled: !!ow, tip: [{ t: '立誓', c: GLYPH_BY.oath.c }, { t: `花 1 张立誓符，随机打一条这个部位能出的誓约（一正一负，已有就替换），潜力扣 ${OATH.fpCost}。`, s: 8 }, ...(ow ? [{ t: ow, s: 8, c: COL.bad }] : [])] });
-    mkBtn(this, c, X, 74, 72, 16, confirmKey === 'shat' + it.id ? '确认拆解' : '拆解', () => {
+    if (unlocked('craftAdv')) mkBtn(this, c, X, 55, 72, 16, '洗数值', () => done(craftRefine(it, craftAff)), { size: 8, disabled: !!rw, tip: [{ t: '洗数值', c: GLYPH_BY.refine.c }, { t: `花 1 张洗练符，选中的词条在同档内重新随数值，潜力扣 ${AV.refine[0]}–${AV.refine[1]}。`, s: 8 }, ...(rw ? [{ t: rw, s: 8, c: COL.bad }] : [])] });
+    if (unlocked('craftAdv')) mkBtn(this, c, X + 76, 55, 72, 16, '移除', () => done(craftStrip(it)), { size: 8, disabled: !!sw, tip: [{ t: '移除', c: GLYPH_BY.strip.c }, { t: `花 1 张剥离符，随机去掉一条词条，潜力扣 ${AV.strip[0]}–${AV.strip[1]}。`, s: 8 }, ...(sw ? [{ t: sw, s: 8, c: COL.bad }] : [])] });
+    const ow = oathWhy(it); if (unlocked('oath')) mkBtn(this, c, X + 76, 74, 72, 16, `立誓 ×${glyphN('oath')}`, () => done(craftOath(it)), { size: 8, disabled: !!ow, tip: [{ t: '立誓', c: GLYPH_BY.oath.c }, { t: `花 1 张立誓符，随机打一条这个部位能出的誓约（一正一负，已有就替换），潜力扣 ${OATH.fpCost}。`, s: 8 }, ...(ow ? [{ t: ow, s: 8, c: COL.bad }] : [])] });
+    if (unlocked('salvage')) mkBtn(this, c, X, 74, 72, 16, confirmKey === 'shat' + it.id ? '确认拆解' : '拆解', () => {
       if (!confirm2('shat' + it.id)) return this.refresh();
       const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片`);
     }, { size: 8, style: confirmKey === 'shat' + it.id ? 'r' : 'n', tip: [{ t: '拆解', c: COL.emberHi }, { t: `毁掉装备，每条词条给 ${CRAFT.shatter.perAffix} 个对应碎片，T${CRAFT.shatter.bonusTier} 及以上多给 ${CRAFT.shatter.bonus} 个。`, s: 8 }] });
@@ -659,6 +663,7 @@ class UI extends Phaser.Scene {
     const tag = TREE_TAGS.find(t => t.n === U.tag);
     const match = id => { const nd = TREE.nodes[id]; if (nd.kind === 'start') return false; const s = txt(nd); return (!U.q || s.includes(U.q)) && (!tag || tag.re.test(s)); };
     const filt = !!(U.q || tag), hit = new Set(filt ? Object.keys(TREE.nodes).filter(match) : []);
+    const fog = id => treeFogged(id) && !hit.has(id) && !on(id); // 天赋树雾（spec-unlocks §3.5）：搜索命中的照样显示
     const pre = U.preset && DEMO_SAVES[U.preset] ? new Set(JSON.parse(DEMO_SAVES[U.preset]).tree) : null;
     let hov = null, path = new Set();
     const labels = [];
@@ -675,6 +680,7 @@ class UI extends Phaser.Scene {
       // 连线：像素线（星座线）
       for (const [a, b] of TREE.edges) {
         const A = TREE.nodes[a], B = TREE.nodes[b]; const l = clip(sx(A.x), sy(A.y), sx(B.x), sy(B.y)); if (!l) continue;
+        if (fog(a) && fog(b)) continue; // 雾里的连线不画
         const lit = on(a) && on(b), pv = (path.has(a) || on(a)) && (path.has(b) || on(b)) && (path.has(a) || path.has(b));
         if (lit) { pxLine(g, l, 0x9fc8ff, 0.18, 3); pxLine(g, l, 0xf4f8ff, 1); }
         else if (pv) { pxLine(g, l, 0xffd36a, 0.2, 3); pxLine(g, l, 0xffe9a8, 0.95); }
@@ -688,9 +694,10 @@ class UI extends Phaser.Scene {
         if (pre && pre.has(id) && !got) pxRing(g, X, Y, r + 2, 0x7fc8ff, 0.7);
         if (pv && !got) pxRing(g, X, Y, r + 2, 0xffd36a, 0.9);
         else if (can) pxRing(g, X, Y, r + 1, 0xffd36a, 0.55 * dim);
+        if (fog(id)) { g.fillStyle(0x2a2440, 0.9); g.fillRect(X - 1, Y - 1, 3, 3); g.fillStyle(0x4a4068, 0.5); g.fillRect(X, Y - 2, 1, 1); continue; } // 雾：只剩一粒暗点
         treeNodeGfx(g, nd, X, Y, r, got, dim);
       }
-      for (const [nd, t] of labels) { const x = sx(nd.x), y = sy(nd.y) + rad(nd) + 4; t.setPosition(x, y); t.setVisible(V.z >= 1.1 && inV(x - 20, y) && inV(x + 20, y + 9)); }
+      for (const [nd, t] of labels) { const x = sx(nd.x), y = sy(nd.y) + rad(nd) + 4; t.setPosition(x, y); t.setVisible(!fog(nd.id) && V.z >= 1.1 && inV(x - 20, y) && inV(x + 20, y + 9)); }
       for (const [nd, t] of brL) { const x = sx(nd.x) + 14, y = sy(nd.y) - 4; t.setPosition(x, y); t.setVisible(inV(x - 12, y) && inV(x + 12, y + 9)); }
     };
     // 预览路径：从已点节点出发到悬停节点的最短路
@@ -704,6 +711,7 @@ class UI extends Phaser.Scene {
     const pick = () => { let best = null, bd = 1e9; const lx = mouse.x - c.x, ly = mouse.y - c.y; if (!inV(lx, ly)) return null; for (const id in TREE.nodes) { const nd = TREE.nodes[id]; const d = (sx(nd.x) - lx) ** 2 + (sy(nd.y) - ly) ** 2, r = rad(nd) + 3; if (d < r * r && d < bd) { bd = d; best = id; } } return best; };
     const RAR = { s: ['普通 · 小节点', '#dfe8ff'], n: ['稀有 · 中节点', COL.cyan], k: ['传奇 · 大型节点', COL.emberHi], start: ['起点', COL.emberHi] };
     const tipFor = id => {
+      if (fog(id)) return [{ t: '迷雾', c: COL.dim }, { t: '点亮相邻的节点后，雾会散开', s: 8, c: COL.faint }];
       const nd = TREE.nodes[id], got = on(id), can = treeCanAlloc(id), [rn, rc] = RAR[nd.kind], need = path.size;
       const bn = nd.b >= 0 ? TREE_BRANCH[nd.b].n + ' · ' : '';
       const act = got ? (nd.kind === 'start' ? '起点' : treeCanRefund(id) ? '点击退回' : '退回会断开别的节点') : can ? '点击点亮' : need ? `还没连上 · 走过去要 ${need} 点（金色路径）` : pts ? '还没连上' : '没有天赋点';
@@ -721,7 +729,7 @@ class UI extends Phaser.Scene {
     z.on('pointerup', () => {
       const d = drag; drag = null; if (d && d.moved) return;
       const id = pick(); if (!id) return; const nd = TREE.nodes[id];
-      if (treeCanAlloc(id)) { S.tree.push(id); sfx('craft'); }
+      if (treeCanAlloc(id)) { S.tree.push(id); treeFogReveal(id); sfx('craft'); }
       else if (on(id) && treeCanRefund(id)) treeKeep(S.tree.filter(x => x !== id));
       else return;
       refreshStats(); save(); this.refresh();
@@ -761,7 +769,7 @@ class UI extends Phaser.Scene {
       if (pre) {
         const left = [...pre].filter(id => !S.tree.includes(id) && TREE.nodes[id]).length;
         mkBtn(this, c, 7, cy, 78, 13, left ? `按预设点亮 (${left})` : '预设已点满', () => {
-          let n = 0; for (let more = true; more && treePoints() > 0;) { more = false; for (const id of pre) if (treeCanAlloc(id)) { S.tree.push(id); n++; more = true; if (!treePoints()) break; } }
+          let n = 0; for (let more = true; more && treePoints() > 0;) { more = false; for (const id of pre) if (treeCanAlloc(id)) { S.tree.push(id); treeFogReveal(id); n++; more = true; if (!treePoints()) break; } }
           if (n) { sfx('craft'); refreshStats(); save(); } else toast(treePoints() ? '预设里没有能连上的节点' : '没有天赋点'); this.refresh();
         }, { size: 8, disabled: !left, tip: [{ t: '按顺序点亮预设里能连上的节点，点数用完为止。不会退回已点的天赋。', s: 8 }] });
         cy += 16;
@@ -848,9 +856,10 @@ class UI extends Phaser.Scene {
       ['灯火', `推关是一趟往下走：从最深层往回退 ${SOUL.startBack} 层出发（锁层时从锁定的层出发），每层打满进度、打掉守关 Boss 后直接进入下一层。灯火（护甲条下的紫色细条）进入时是满的，每秒燃烧，越深烧得越快；推关中不会自然回复，只靠击杀补（Boss 补得最多）。灯火烧完就平安返回，这一趟捡到的全部带走；最深层附近的某一层打得太险（最低血量低于 ${SOUL.returnHp}%），打完那层的 Boss 也会自动撤回；最深层附近护甲一旦跌到 ${SOUL.returnHpNow}% 以下，会立刻紧急撤回，同样全部带走；阵亡的话，捡到的装备、符文、词条碎片每件有 ${SOUL.deathKeep}% 几率保住。旋风斩等流派技能也从同一条里扣。天梯里不燃烧。`],
       ['营地', `营地是主页：一趟结束后回到这里。点地窖入口出发（可以选层、锁层），点储物箱、天赋石像、符文台打开对应的窗口；铁砧和分解祭坛在通关第 ${PROG.unlocks.craft.depth} 层后清出来，天梯石碑在通关第 ${PROG.unlocks.ladder.depth} 层后清出来，天梯从石碑出发。自动刷时在营地停留 ${CAMP.idleStay} 秒再出发。分解祭坛：每次回营地，按规则把带回的装备拆成词条碎片（默认分解普通、罕见，保留稀有；物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的全部分解；带收藏词条的留下）。独特、传奇、溢彩装备和技能石永远不自动分解。`],
       ['防御', '护甲就是生命。灵障先吸收伤害，2 秒没受伤就开始回复。抗性按百分比减伤，有上限。闪避直接躲开一次攻击。'],
+      ['已解锁', (S.unlockLog || []).length ? S.unlockLog.map(([id, t]) => `${new Date(t).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}  ${(PROG.unlocks[id] || {}).hint || id}`).join('\n') : '还没有新解锁的系统。往下走，新东西会一样样出现。'],
       ['存档', '毕业存档：旋风斩成型，100 级，最深层开满，天梯打到 70 层左右；两把回旋骨刃插旋身符文，头冠是风暴之眼，旋风之心已点。游雷毕业存档：100 级，两把雷灵插 20 级游雷符文，每串 18 颗游雷，头冠是雷冠，织雷之心已点，天梯 63 层。载入前会把你现在的进度备份一份，之后可以一键恢复（只备份第一次载入前的进度）。正在打的一趟会作废。'],
     ];
-    pages.forEach(([n], i) => mkBtn(this, c, 10, 8 + i * 18, 70, 16, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
+    pages.forEach(([n], i) => mkBtn(this, c, 10, 6 + i * 16, 70, 15, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
     const [n, txt] = pages[helpTopic];
     T(this, 92, 10, n, { color: COL.emberHi, parent: c });
     TW(this, 92, 28, txt, 360, { size: 12, color: COL.text, parent: c });
@@ -896,7 +905,7 @@ class UI extends Phaser.Scene {
     if (!lad && r.lost) TW(this, 16, 126, `阵亡：捡到的东西每件 ${SOUL.deathKeep}% 几率保住，这次丢了装备 ${r.lost.items} 件、符文 ${r.lost.mods} 个、碎片 ${r.lost.shards} 个。`, w - 32, { size: 8, color: COL.bad, parent: c });
     else if (!win) TW(this, 16, 126, '失败不会丢掉已经捡起的东西。地上没捡的会消失。', w - 32, { size: 8, color: COL.faint, parent: c });
     mkBtn(this, c, w / 2 - 128, h - 32, 72, 22, '装备', () => { this.closeWin(); this.openWin('gear'); }, { size: 8, icon: 'i_w_crossbow', iconX: 6, labelX: 26 });
-    mkBtn(this, c, w / 2 - 52, h - 32, 72, 22, '铁砧', () => { this.closeWin(); this.openWin('craft'); }, { size: 8, icon: 'i_anvil', iconX: 6, labelX: 26, disabled: !unlocked('craft') });
+    if (unlocked('craft')) mkBtn(this, c, w / 2 - 52, h - 32, 72, 22, '铁砧', () => { this.closeWin(); this.openWin('craft'); }, { size: 8, icon: 'i_anvil', iconX: 6, labelX: 26, disabled: !unlocked('craft') });
     mkBtn(this, c, w / 2 + 24, h - 32, 104, 22, lad ? '再打天梯' : `再下行 · ${descentStart()} 层`, () => { this.closeWin(); if (lad) ladderChallenge(S.ladder.unlocked); else startRun(); }, { size: 8, style: 'w', icon: 'torch', iconX: 6, labelX: 18 });
   }
   /* --- 营地 --- */
@@ -904,32 +913,34 @@ class UI extends Phaser.Scene {
   buildCamp() {
     const c = this.add.container(0, 0).setDepth(8); this.campC = c; this.campG = this.add.graphics(); c.add(this.campG);
     this.facs = CAMP.facilities.map(f => {
-      const mi = MENU.findIndex(m => m.id === f.win), cw = mi >= 0 ? 11 : 0, lw = textW(f.n, 8);
+      const mi = visMenu().findIndex(m => m.id === f.win), cw = mi >= 0 ? 11 : 0, lw = textW(f.n, 8);
       const lab = T(this, f.x - cw / 2, f.y + 4, f.id === 'gate' ? '' : f.n, { size: 8, color: COL.dim, align: 'center', parent: c });
       if (mi >= 0) { const kx = Math.round(f.x - cw / 2 + lw / 2 + 2); c.add(nine(this, kx, f.y + 4, 9, 10, 'f_btn_w', 3)); T(this, kx + 5, f.y + 5, String(mi + 1), { size: 'num', color: '#2a1306', align: 'center', shadow: false, parent: c }); } // 快捷键小铜牌
       if (f.id === 'gate') this.goBtn = mkBtn(this, c, f.x - 40, f.y + 2, 80, 15, '', () => { if (RUN || this.winId) return; ac(); startRun(); }, { style: 'w', size: 8, icon: 'torch', iconX: 4, labelX: 14, tip: () => [{ t: '下行', c: COL.emberHi }, { t: `从第 ${descentStart()} 层出发，一直往下走到灯火燃尽。点入口本身可以选层。`, s: 8 }] });
       const z = this.add.zone(f.x - f.r, f.y - f.r * 1.6, f.r * 2, f.r * 1.6 + 6).setOrigin(0).setInteractive(); c.add(z);
       const o = { f, lab, hover: false };
-      z.on('pointerover', () => { o.hover = true; showTip(facOpen(f) ? [{ t: f.n, c: COL.emberHi }, { t: FAC_TIP[f.id](), s: 8 }] : [{ t: '被碎石堵住了', c: COL.dim }, { t: `${f.n}：${unlockText(f.unlock)}`, s: 8, c: COL.faint }]); });
+      z.on('pointerover', () => { o.hover = true; if (!facOpen(f) && f.id !== 'stele') return; showTip(facOpen(f) ? [{ t: f.n, c: COL.emberHi }, { t: FAC_TIP[f.id](), s: 8 }] : [{ t: f.n, c: COL.dim }, { t: `${unlockText(f.unlock)}后，石碑会亮起`, s: 8, c: COL.faint }]); });
       z.on('pointerout', () => { o.hover = false; hideTip(); });
-      z.on('pointerup', () => { if (this.winId || RUN) return; if (!facOpen(f)) { toast(`${f.n}：${unlockText(f.unlock)}`); return; } sfx('click'); this.openWin(f.win); });
+      z.on('pointerup', () => { if (this.winId || RUN) return; if (!facOpen(f)) { if (f.id === 'stele') toast(`${f.n}：${unlockText(f.unlock)}后，石碑会亮起`); return; } sfx('click'); S.seenFac ??= {}; S.seenFac[f.id] = 1; this.openWin(f.win); });
       return o;
     });
   }
   updateCamp() {
-    if (!this.campC) this.buildCamp();
+    const ck = visMenu().map(m => m.id).join(); if (this.campC && this.campKey !== ck) { this.campC.destroy(); this.campC = null; } // 菜单变了：快捷键铜牌重编号
+    if (!this.campC) { this.buildCamp(); this.campKey = ck; }
     const show = !RUN && !this.winId; this.campC.setVisible(show);
     if (RUN) return;
     // 新清出来的设施：提示一次，亮几秒
     S.campSeen ??= CAMP.facilities.filter(facOpen).map(f => f.id);
-    for (const o of this.facs) if (facOpen(o.f) && !S.campSeen.includes(o.f.id)) { S.campSeen.push(o.f.id); o.flashT = G.time + 4; toast(`营地里清出了${o.f.n}`, COL.emberHi); save(); }
+    for (const o of this.facs) if (facOpen(o.f) && !S.campSeen.includes(o.f.id)) { S.campSeen.push(o.f.id); FAC_FLASH[o.f.id] = G.time + 3; (S.newFac ??= {})[o.f.id] = 1; save(); } // 解锁横幅另播（unlockBanners）
     if (!show) return;
     const gl = `下行 · 第 ${descentStart()} 层`; if (this.goBtn.lab.text !== gl) this.goBtn.setLabel(gl);
     const g = this.campG; g.clear();
     for (const o of this.facs) {
       const op = facOpen(o.f), col = o.hover ? COL.emberHi : op ? COL.text : COL.faint;
-      if (o.lab.tintTopLeft !== hex(col)) o.lab.setTint(hex(col));
-      if (op && o.flashT > G.time) { const k = (o.flashT - G.time) / 4, r = o.f.r * (1.4 - 0.4 * ((G.time * 1.5) % 1)); g.fillStyle(0xffd36a, 0.7 * k); for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; g.fillRect(Math.round(o.f.x + Math.cos(a) * r), Math.round(o.f.y - 8 + Math.sin(a) * r * 0.55), 1, 1); } }
+      if (o.lab.tintTopLeft !== hex(col)) o.lab.setTint(hex(col)); o.lab.setVisible(op || o.f.id === 'stele'); if (o.kb) o.kb.forEach(k => k.setVisible(op));
+      if (op && S.newFac && S.newFac[o.f.id] && !(S.seenFac || {})[o.f.id]) { g.fillStyle(0xffd36a, 0.6 + 0.4 * Math.sin(G.time * 6)); const ex = o.f.x, ey = o.f.y - o.f.r * 1.6 - 10; g.fillRect(ex - 1, ey, 2, 5); g.fillRect(ex - 1, ey + 6, 2, 2); } // 新设施头顶的“!”，点开一次后消失
+      if (op && FAC_FLASH[o.f.id] > G.time) { const k = (FAC_FLASH[o.f.id] - G.time) / 4, r = o.f.r * (1.4 - 0.4 * ((G.time * 1.5) % 1)); g.fillStyle(0xffd36a, 0.7 * k); for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; g.fillRect(Math.round(o.f.x + Math.cos(a) * r), Math.round(o.f.y - 8 + Math.sin(a) * r * 0.55), 1, 1); } }
     }
   }
   // 一趟结束：角色从地窖入口走出来；不在自动循环时打开结算
@@ -980,6 +991,7 @@ class UI extends Phaser.Scene {
   }
   update() {
     this.updateHud(); this.updateCamp();
+    if (unlockQ.length && (!RUN || this.winId === 'prep') && G.time >= (this.unlT || 0)) { this.banner(unlockQ.shift(), COL.emberHi); sfx('open'); this.unlT = G.time + 2.5; if (this.winId) this.refresh(); } // 解锁横幅：不打断战斗，一条 2.5 秒
     if (this.winId === 'prep' && this.prepCdT && this.prepCdT.active) this.prepCdT.setText(this.prepCdText());
     if (this.tipC) this.placeTip();
     const mode = RUN && !this.winId && mouse.y > TOP_H && mouse.y < BOT_Y ? 'cross' : 'arrow';

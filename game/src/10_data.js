@@ -263,7 +263,7 @@ const PLAYER = PROG.player;
 const xpNeed = L => Math.round(PROG.xp.base * Math.pow(PROG.xp.growth, L - 1));
 // 系统解锁：已通关的最深层数、角色等级、天梯最高层都达到要求才开放
 const unlockOf = id => PROG.unlocks[id];
-const unlocked = id => { const u = unlockOf(id); return !u || (S.maxDepth - 1 >= (u.depth || 0) && S.level >= (u.level || 0) && (S.ladder ? S.ladder.best : 0) >= (u.ladder || 0)); };
+const unlocked = id => { const u = unlockOf(id); if (!u || UNLOCK_ALL) return true; return S.maxDepth - 1 >= (u.depth || 0) && S.level >= (u.level || 0) && (S.ladder ? S.ladder.best : 0) >= (u.ladder || 0) && (!u.event || UNLOCK_EV || !!(S.events && S.events[u.event])); };
 const unlockText = id => { const u = unlockOf(id); const p = []; if (u && u.depth) p.push(`通关第 ${u.depth} 层`); if (u && u.level) p.push(`角色 ${u.level} 级`); if (u && u.ladder) p.push(`天梯通过第 ${u.ladder} 层`); return p.join('、') + '后开放'; };
 
 const THEMES = [

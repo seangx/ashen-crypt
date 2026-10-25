@@ -16,7 +16,7 @@ const path = require('path'), fs = require('fs');
 let pw; try { pw = require('playwright'); } catch (e) { pw = require('/opt/node22/lib/node_modules/playwright'); }
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const ROOT = path.resolve(__dirname, '..');
-const opt = { runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', 'auto'), tree: arg('tree', 'none'), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), json: arg('json', null), maxT: +arg('maxT', 3600), minutes: +arg('minutes', 0), ladderArg: arg('ladder', ''), craft: arg('craft', 'none'), build: arg('build', 'none'), lock: process.argv.includes('--lock') };
+const opt = { unlocks: arg('unlocks', 'off'), runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', 'auto'), tree: arg('tree', 'none'), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), json: arg('json', null), maxT: +arg('maxT', 3600), minutes: +arg('minutes', 0), ladderArg: arg('ladder', ''), craft: arg('craft', 'none'), build: arg('build', 'none'), lock: process.argv.includes('--lock') };
 // 天梯：every:K = 每 K 趟推关排一次；every:10m = 每 10 分钟游戏时间排一次（每次最多连打 ladderCap 局）。--build whirl/random 默认 every:10m
 { const la = opt.ladderArg || (['whirl', 'random', 'spark', 'nova', 'meteor', 'orb', 'shield'].includes(opt.build) ? 'every:10m' : ''), v = (la.split(':')[1] || '');
   opt.ladder = /m$/.test(v) ? 0 : +v || 0; opt.ladderMin = /m$/.test(v) ? parseFloat(v) : 0; opt.ladderCap = +arg('ladderCap', 3); }
@@ -63,6 +63,7 @@ if (seedsArg) {
   await p.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 20000 });
   const out = await p.evaluate(opt => {
     const A = window.__ash; A.G.fx = false; A.setPrepOff(true); window.__reseed(opt.seed * 7919 + 1);
+    if (opt.unlocks !== 'on') A.setUnlockAll('ev'); window.__unl = []; const unlSeen = { ...(A.S.seenUnlocks || {}) }; // --unlocks on：按 spec-unlocks 逐步开放，记下每个系统几分钟开的
     const S = A.S; const rows = [];
     if (A.G.ui.closeWin) A.G.ui.closeWin();
     const WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, B = opt.build;
@@ -117,6 +118,7 @@ if (seedsArg) {
       const res = A.AUTO.last ? A.AUTO.last.result : '?';
       const soulE = t > 0 ? A.player.soulEmpty : 0; // 这局魂火见底的秒数
       A.G.ui.closeWin();
+      for (const k of Object.keys(S.seenUnlocks || {})) if (!unlSeen[k]) { unlSeen[k] = 1; window.__unl.push(`${k}@${(simT / 60).toFixed(1)}分`); }
       // 换装：分数（秒伤 + 护甲 + 灵障）变高就换
       if (opt.gear === 'auto') for (const it of [...S.stash]) {
         if (it.kind === 'chip') continue;
@@ -194,6 +196,7 @@ if (seedsArg) {
     }
     return rows;
   }, opt);
+  if (opt.unlocks === 'on') console.log('解锁顺序：' + ((await p.evaluate(() => window.__unl)) || []).join(' '));
   const RES_N = { lampout: '灯灭', retreat: '撤回', emergency: '紧急撤回', dead: '阵亡', win: '到底', timeout: '超时' };
   const lastC = out.length ? out[out.length - 1].crafts : null;
   for (const r of out) if (r.mode === 'ladder') console.log(`#${String(r.run).padStart(3)} ${String(r.min).padStart(4)}分 天梯${String(r.L).padStart(3)}层 ${r.res.padEnd(7)} ${String(r.lad.t).padStart(3)}s ${r.res === 'win' ? '跳+' + r.lad.jump : '    '} 解锁到${String(r.lad.unlocked).padStart(3)} 最高${String(r.lad.best).padStart(3)} 等级${String(r.lv).padStart(3)} 秒伤${String(r.dps).padStart(8)} 护甲${String(r.armor).padStart(7)} 最低血${String(r.minHp).padStart(4)}% 魂空${String(Math.round(r.soulE / Math.max(1, r.t) * 100)).padStart(3)}%`); else console.log(`#${String(r.run).padStart(3)} ${String(r.min).padStart(4)}分 第${String(r.depth).padStart(3)}层起 过${String(r.fl).padStart(3)}层 ${(RES_N[r.res] || r.res).padEnd(2, '　')} 下次${String(r.next).padStart(3)}${r.back ? '退' : ' '} ${String(r.t).padStart(4)}s 等级${String(r.lv).padStart(3)} 秒伤${String(r.dps).padStart(8)} 护甲${String(r.armor).padStart(7)} 灵障${String(r.deflect).padStart(6)} 最低血${String(r.minHp).padStart(4)}% 魂空${String(Math.round(r.soulE / Math.max(1, r.t) * 100)).padStart(3)}% 碎片${String(r.shards).padStart(4)} 铸符${String(r.glyphs).padStart(3)} 符文${String(r.mods).padStart(3)} ${(r.wf || '').padEnd(3, '　')}| ${r.eq}`);
