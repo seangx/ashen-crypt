@@ -380,16 +380,48 @@ class UI extends Phaser.Scene {
   }
   toggleWin(id) { if (this.winId === id) this.closeWin(); else this.openWin(id); }
   openWin(id, arg) { if (MENU.some(m => m.id === id) && !unlocked(id)) return; if (id === 'ladder') ladPick = S.ladder.unlocked; this.winId = id; this.winArg = arg; confirmKey = null; hoverId = null; sfx('open'); this.refresh(true); }
-  closeWin() {
+  closeWin(force) {
     if (!this.winId) return;
+    if (this.winId === 'prep' && RUN && RUN.prep && !force) return; // 整备面板只能用按钮离开
+    const back = this.winId !== 'prep' && RUN && RUN.prep && !RUN.ending; // 从整备里打开的装备 / 符文 / 天赋 / 铁砧，关掉就回整备
     this.winId = null; hideTip(); if (this.winC) { this.winC.destroy(); this.winC = null; } if (this.dimR) { this.dimR.destroy(); this.dimR = null; }
+    if (back) this.openWin('prep');
+  }
+  // 整备：Boss 宝箱捡完后由核心调用（世界已暂停）
+  openPrep() {
+    this.closePopup && this.closePopup(); if (this.winId) { this.winId = null; if (this.winC) { this.winC.destroy(); this.winC = null; } if (this.dimR) { this.dimR.destroy(); this.dimR = null; } }
+    if (!this.prepTap) { this.prepTap = true; this.input.on('pointerdown', () => { if (RUN && RUN.prep && RUN.prep.cd) { RUN.prep.cd = false; this.prepCdT && this.prepCdT.setText('倒计时已取消'); } }); }
+    this.openWin('prep');
+  }
+  closePrep() { if (this.winId === 'prep') this.closeWin(true); }
+  prepCdText() { const R = RUN && RUN.prep; return !R ? '' : R.cd ? `${Math.max(1, Math.ceil(R.t))} 秒后自动继续 · 点任意处取消` : S.auto.loop ? '倒计时已取消' : ''; }
+  win_prep(c, w, h) {
+    const R = RUN.prep, title = `整备 · 第 ${RUN.base} 层通过`, mob = typeof MOBILE !== 'undefined' && MOBILE;
+    const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: COL.emberHi, align: 'center', parent: c });
+    const live = R.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it));
+    const best = [...live].sort((a, b) => b.rar - a.rar || b.q - a.q), cs = mob ? 30 : 20, gap = mob ? 3 : 1, cols = Math.max(1, Math.floor((w - 20) / (cs + gap)));
+    T(this, 12, 18, `宝箱 ${live.length} 件 · ` + (mob ? '点物品看详情、装备或拆解' : '悬停看详情，点一下装备'), { size: 8, color: COL.dim, parent: c });
+    const rows = mob ? 4 : 2, show = best.slice(0, cols * rows);
+    show.forEach((it, i) => mkCell(this, c, 12 + (i % cols) * (cs + gap), 32 + (i / cols | 0) * (cs + gap), it, mob ? { size: cs, upg: true, acts: v => this.itemActs(v) } : { size: cs, upg: true, onClick: v => { if (slotsFor(v)[0]) { equipItem(v); save(); refreshStats(); this.refresh(); } } }));
+    if (!show.length) T(this, w / 2, 40, '没有留下装备', { size: 8, color: COL.faint, align: 'center', parent: c });
+    if (best.length > show.length) T(this, w - 12, 18, `另 ${best.length - show.length} 件在背包`, { size: 8, color: COL.faint, align: 'right', parent: c });
+    let y = 32 + Math.max(1, Math.ceil(show.length / cols)) * (cs + gap) + 6;
+    const life = Math.round(player.life / STATS.life * 100);
+    T(this, 12, y, `生命 ${life}% · 灯火 ${Math.round(player.soul / STATS.soulMax * 100)}% · 下一层 ${RUN.base + 1}`, { size: 8, color: COL.text, parent: c }); y += 14;
+    const tabs = [['gear', '装备'], ['mods', '符文'], ['tree', '天赋'], ['craft', '铁砧']].filter(([id]) => unlocked(id)), bh = mob ? 40 : 18, tw = Math.floor((w - 24 - (tabs.length - 1) * 4) / Math.max(1, tabs.length));
+    tabs.forEach(([id, n], i) => mkBtn(this, c, 12 + i * (tw + 4), y, tw, bh, n, () => this.openWin(id)));
+    y += bh + 6;
+    const by = mob ? Math.max(y + 18, h - bh - 12) : h - bh - 10, half = Math.floor((w - 28) / 2);
+    this.prepCdT = T(this, w / 2, by - 14, this.prepCdText(), { size: 8, color: COL.emberHi, align: 'center', parent: c });
+    mkBtn(this, c, 12, by, half, bh, '返回营地', () => prepReturn(), { style: 'r' });
+    mkBtn(this, c, 16 + half, by, half, bh, '继续下一层', () => prepContinue(), { style: 'w' });
   }
   refresh(anim) {
     hideTip();
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) return;
-    if (!this.dimR) { this.dimR = rect(this, 0, TOP_H, W, BOT_Y - TOP_H, COL.ink, 0.6).setDepth(90).setInteractive(); this.dimR.on('pointerup', () => { if (this.winId !== 'summary') this.closeWin(); }); }
-    const [w, h] = { summary: [372, 176], depart: [300, 134] }[this.winId] || [470, 210];
+    if (!this.dimR) { this.dimR = rect(this, 0, TOP_H, W, BOT_Y - TOP_H, COL.ink, 0.6).setDepth(90).setInteractive(); this.dimR.on('pointerup', () => { if (this.winId !== 'summary' && this.winId !== 'prep') this.closeWin(); }); }
+    const [w, h] = { summary: [372, 176], depart: [300, 134], prep: [372, 170] }[this.winId] || [470, 210];
     const x = Math.round((W - w) / 2), y = TOP_H + Math.round((BOT_Y - TOP_H - h) / 2);
     const c = this.add.container(x, y).setDepth(100); this.winC = c;
     const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[this.winId] || 'f_win'; // 装备皮革、铁砧石板、其余铁框
@@ -1001,6 +1033,7 @@ class UI extends Phaser.Scene {
   }
   update() {
     this.updateHud(); this.updateCamp();
+    if (this.winId === 'prep' && this.prepCdT && this.prepCdT.active) this.prepCdT.setText(this.prepCdText());
     if (this.tipC) this.placeTip();
     const mode = RUN && !this.winId && mouse.y > TOP_H && mouse.y < BOT_Y ? 'cross' : 'arrow';
     if (mode !== this.curMode) { this.curMode = mode; this.game.canvas.style.cursor = this.curCss[mode]; }

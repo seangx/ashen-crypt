@@ -40,6 +40,8 @@
   "spawnCapBase": 6,
   "spawnCapMaxExtra": 14,
   "spawnFirst": 1,
+  "prepAuto": 5,
+  "_prep说明": "整备：Boss 宝箱捡完后暂停；自动循环开着时 prepAuto 秒后自动继续下一层",
   "spawnInterval": 0.8,
   "spawnIntervalPerLevel": 0.02,
   "spawnIntervalMin": 0.25,
