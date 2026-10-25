@@ -231,7 +231,7 @@ class MobileUI extends UI {
   }
   equipSlots(c, ox, oy, onClick, selFn) {
     const pos = { core: [32, 0], wl: [0, 32], wr: [64, 32], hub: [0, 64], engine: [32, 64], shield: [64, 64] };
-    const ghost = { wl: 'i_w_crossbow', wr: 'i_w_sickle', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
+    const ghost = { wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
     for (const s of SLOTS) { const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); }
   }
   /* 装备：竖屏原生（身上 + 属性 → 背包 → 选中物品的详情抽屉） */
@@ -264,8 +264,8 @@ class MobileUI extends UI {
     const it = f.it, bw = Math.floor((w - 28) / 4), B = (i, n, fn, o) => mkBtn(this, p, 10 + i * (bw + 2), 0, bw, 28, n, fn, Object.assign({ size: 8 }, o));
     rect(this, 4, -4, w - 8, this.paneH, '#17111f', 0.97, p); rect(this, 4, -4, w - 8, 1, '#5a4a6a', 1, p);
     if (f.where === 'stash') {
-      if (it.kind === 'weapon') { B(0, '装左手', () => { equipItem(it, 'wl'); save(); this.refresh(); }, { style: 'w' }); B(1, '装右手', () => { equipItem(it, 'wr'); save(); this.refresh(); }, { style: 'w', disabled: !unlocked('wr') }); }
-      else B(0, '装备', () => { equipItem(it); save(); this.refresh(); }, { style: 'w' });
+      if (it.kind === 'off') B(0, '装副手', () => { equipItem(it, 'wr'); save(); this.refresh(); }, { style: 'w', disabled: !unlocked('wr') });
+      else B(0, it.kind === 'weapon' ? '装主手' : '装备', () => { equipItem(it); save(); this.refresh(); }, { style: 'w' });
       B(2, '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { style: 'n' });
     } else {
       B(0, '卸下', () => { unequip(f.slot); save(); this.refresh(); });
@@ -276,7 +276,7 @@ class MobileUI extends UI {
   }
   /* 符文：竖屏原生（部位页签 → 槽位和武器数据 → 符文库存） */
   win_mods(c, w, h) {
-    const host = S.equip[modWeapon], hosts = ['wl', 'wr', 'core', 'engine', 'hub'], bw = Math.floor((w - 20) / 5); this.sockR = [];
+    const host = S.equip[modWeapon], hosts = ['wl', 'core', 'engine', 'hub'], bw = Math.floor((w - 20) / 4); this.sockR = [];
     hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 6, bw - 2, 28, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
     const isHub = modWeapon === 'hub'; let y = 40;
     if (!host) { T(this, 10, y + 4, '这个位置没有装备。', { size: 8, color: COL.faint, parent: c }); y += 20; }
@@ -552,7 +552,7 @@ class MobileUI extends UI {
     y += Math.ceil(ELEM.length / 2) * 12 + 6; rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 6;
     T(this, 12, y, `最近记录（共 ${L.records.length} 条）`, { size: 8, color: COL.emberHi, parent: c }); y += 12;
     if (!L.records.length) T(this, 12, y, '通过一层后会记下用时和当时的配装', { size: 8, color: COL.faint, parent: c });
-    const nm = q => q.u ? UNIQUE_BY[q.u].n : baseOf({ kind: q.slot === 'wl' || q.slot === 'wr' ? 'weapon' : q.slot, b: q.b }).n;
+    const nm = q => q.u ? UNIQUE_BY[q.u].n : baseOf({ kind: q.slot === 'wl' || (q.slot === 'wr' && WEAPONS[q.b]) ? 'weapon' : q.slot === 'wr' ? 'off' : q.slot, b: q.b }).n;
     L.records.slice(0, Math.max(0, Math.floor((h - y - 6) / 11))).forEach((r, i) => {
       const wp = r.build.equip.find(q => q.slot === 'wl') || r.build.equip[0], tc = LADDER_TIERS[ladderTier(r.lvl)];
       T(this, 12, y + i * 11, `${r.lvl} 层 · ${mmss(r.time)} · +${r.jump}`, { size: 8, color: tc ? tc.c : COL.text, parent: c });
@@ -620,8 +620,8 @@ class MobileUI extends UI {
   itemActs(it) {
     const f = findItem(it.id), A = [], R = () => { save(); this.refresh(); }; it.isNew = false; if (!f) return A;
     if (f.where === 'stash') {
-      if (it.kind === 'weapon') { A.push({ l: '装左手', style: 'w', fn: () => { equipItem(it, 'wl'); R(); } }); if (unlocked('wr')) A.push({ l: '装右手', style: 'w', fn: () => { equipItem(it, 'wr'); R(); } }); }
-      else if (slotsFor(it)[0]) A.push({ l: '装备', style: 'w', fn: () => { equipItem(it); R(); } });
+      if (it.kind === 'off') { if (unlocked('wr')) A.push({ l: '装副手', style: 'w', fn: () => { equipItem(it, 'wr'); R(); } }); }
+      else if (slotsFor(it)[0]) A.push({ l: it.kind === 'weapon' ? '装主手' : '装备', style: 'w', fn: () => { equipItem(it); R(); } });
       A.push({ l: '拆解', fn: () => this.ask(`拆解 ${itemName(it)}？`, () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); R(); }, '拆解', '会变成词条碎片，不能撤销。') });
     } else {
       A.push({ l: '卸下', fn: () => { unequip(f.slot); R(); } });
