@@ -383,7 +383,7 @@ class UI extends Phaser.Scene {
   win_bulk(c, w, h) {
     const mob = typeof MOBILE !== 'undefined' && MOBILE, sel = bulkSel(), pick = this.bulkPick || (this.bulkPick = new Map());
     const all = S.stash.filter(bulkOk), list = bulkList(pick), yld = list.reduce((a, it) => a + bulkYield(it), 0);
-    let y = mob ? 8 : 10;
+    let y = mob ? 20 : 10;
     T(this, 10, y, mob ? '勾选品质，或点物品单独加入/移出' : '勾选品质，或点物品单独加入/移出；身上穿着的不会被拆', { size: 8, color: COL.dim, parent: c }); y += 14;
     const bh = mob ? 40 : 18, bw = Math.floor((w - 20 - 3 * 4) / 4);
     BULK_CATS.forEach((n, i) => { const cnt = all.filter(it => bulkCat(it) === i).length;
@@ -392,7 +392,7 @@ class UI extends Phaser.Scene {
     const cs = mob ? 30 : 18, gap = mob ? 2 : 1, cols = Math.max(1, Math.floor((w - 20 + gap) / (cs + gap))), rows = mob ? Math.max(1, Math.floor((h - y - 110) / (cs + gap))) : 4;
     S.stash.slice(0, cols * rows).forEach((it, i) => { if (!it) return; const ok = bulkOk(it), on = ok && bulkHit(it, pick);
       const cx = 10 + (i % cols) * (cs + gap), cy = y + (i / cols | 0) * (cs + gap);
-      mkCell(this, c, cx, cy, it, { size: cs, sel: on, onClick: v => { if (!v || !bulkOk(v)) return; pick.set(v.id, !bulkHit(v, pick)); this.refresh(); } });
+      mkCell(this, c, cx, cy, it, { size: cs, sel: on, direct: true, onClick: v => { if (!v || !bulkOk(v)) return; pick.set(v.id, !bulkHit(v, pick)); this.refresh(); } });
       if (on) T(this, cx + cs - 2, cy + 1, '✕', { size: 8, color: '#ff6a5a', align: 'right', parent: c }); });
     if (S.stash.length > cols * rows) T(this, 10, y + rows * (cs + gap) + 1, `另 ${S.stash.length - cols * rows} 件未显示（按品质勾选仍会计入）`, { size: 8, color: COL.faint, parent: c });
     const by = h - (mob ? 50 : 26);
