@@ -102,7 +102,7 @@ function baseLines(it) {
   const b = baseOf(it), q = it.q, out = [], dim = '#b8afc4';
   if (it.kind === 'off') { // 副手：不带技能，只强化主手技能
     out.push([`副手 · ${b.d}`, COL.dim]); const o = offSupport(it), r = v => Math.round(v);
-    const L = { more: v => `主手技能伤害总增 ${r(v)}%`, extra: v => `主手投射物 +${v}（投射物技能）`, inc: v => `主手技能伤害提高 ${r(v)}%`, projInc: v => `投射物伤害提高 ${r(v)}%`, aoeInc: v => `范围提高 ${r(v)}%`, areaInc: v => `范围伤害提高 ${r(v)}%（范围技能）`, aspdMore: v => `主手攻速总增 ${r(v)}%`, critInc: v => `暴击率提高 ${r(v)}%`, critDmg: v => `暴击伤害 +${r(v)}%`, ail: v => `异常效果提高 ${r(v)}%`, gain: v => `额外获得 ${r(v)}% 主手元素伤害` };
+    const L = { chain: v => `主手弹射 +${v}（可弹射技能）`, more: v => `主手技能伤害总增 ${r(v)}%`, extra: v => `主手投射物 +${v}（投射物技能）`, inc: v => `主手技能伤害提高 ${r(v)}%`, projInc: v => `投射物伤害提高 ${r(v)}%`, aoeInc: v => `范围提高 ${r(v)}%`, areaInc: v => `范围伤害提高 ${r(v)}%（范围技能）`, aspdMore: v => `主手攻速总增 ${r(v)}%`, critInc: v => `暴击率提高 ${r(v)}%`, critDmg: v => `暴击伤害 +${r(v)}%`, ail: v => `异常效果提高 ${r(v)}%`, gain: v => `额外获得 ${r(v)}% 主手元素伤害` };
     for (const k of OFF_SUP) if (o[k] >= 0.5) out.push([L[k](o[k]), '#9fd8ff']);
     return out; }
   if (it.kind === 'weapon' || it.kind === 'engine') {
