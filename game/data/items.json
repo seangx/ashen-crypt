@@ -70,5 +70,13 @@
  "chip": {
   "Chip": { "n": "印记", "ic": "a_sigil", "req": 12, "w": 1000 },
   "EmpoweredChip": { "n": "强化印记", "ic": "a_sigil_e", "req": 70, "w": 100 }
+ },
+ "offhand": {
+  "_说明": "副手：不带独立技能，只强化主手技能。sup 是隐性支援效果 [品质 0 的值, 品质 10 的值]（中间线性）：extra 主手投射物 +N（主手带投射物标签才生效）；inc 主手技能伤害提高%；projInc 投射物伤害提高%（主手带投射物）；aoeInc 范围提高%；areaInc 范围伤害提高%（主手带范围）；aspdMore 主手攻速总增%；critInc 暴击率提高%；critDmg 暴击伤害 +%；ail 主手异常效果 +%（全元素）；gain 额外获得主手元素伤害%。tags 决定能掷出哪些带标签的词条（any = 全部）；d 是一句话定位。",
+  "BoneQuiver": { "n": "骨羽箭袋", "ic": "o_quiver", "tags": ["Offhand", "Projectile", "ProjectileCanChain"], "w": 1000, "req": 1, "sup": { "more": [70, 110], "extra": [1, 1], "projInc": [25, 70] }, "d": "投射物技能：多射一发" },
+  "SoulSource": { "n": "幽魂法源", "ic": "o_source", "tags": ["Offhand", "any"], "w": 1000, "req": 1, "sup": { "more": [70, 110], "inc": [30, 90], "gain": [5, 15] }, "d": "通用：直接放大主手技能" },
+  "AshCenser": { "n": "焚骨香炉", "ic": "o_censer", "tags": ["Offhand", "AoE"], "w": 900, "req": 6, "sup": { "more": [70, 110], "aoeInc": [15, 40], "areaInc": [30, 80] }, "d": "范围技能：更大、更痛" },
+  "BoneTotem": { "n": "骸铃图腾", "ic": "o_totem", "tags": ["Offhand", "any"], "w": 900, "req": 6, "sup": { "more": [70, 110], "aspdMore": [15, 35] }, "d": "通用：主手出手更快" },
+  "GraveLantern": { "n": "冥火提灯", "ic": "o_lantern", "tags": ["Offhand", "any"], "w": 800, "req": 12, "sup": { "more": [70, 110], "critInc": [60, 150], "critDmg": [25, 70], "ail": [20, 50] }, "d": "暴击与异常：每一下更致命" }
  }
 }

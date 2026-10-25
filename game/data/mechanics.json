@@ -1978,5 +1978,16 @@
     ]
    }
   }
+ },
+ "offhand": {
+  "_说明": "副手（右手槽 wr，kind off）：没有独立技能，只强化主手技能。底材和隐性效果在 data/items.json 的 offhand。weaponAffixes：武器上非局部的词条（攻速、范围、投射物、暴击……）也能掷在副手上。affixes 是副手专属词条：offMore 主手技能伤害总增%，offAspd 主手攻速总增%，extra 投射物 +N。migrate：旧存档右手的武器放回背包，并按主手标签送一件普通副手（starterByTag 按顺序匹配，都不中用 fallback）。",
+  "weaponAffixes": true,
+  "starterByTag": [["Projectile", "BoneQuiver"], ["AoE", "AshCenser"]],
+  "fallback": "SoulSource",
+  "affixes": {
+   "OffSkillMore": { "text": "主手技能伤害总增 #%", "stat": "offMore", "type": "P", "on": ["off"], "grp": "OffSkillMore", "tiers": [[[4, 7], 1000, 1, 999], [[8, 12], 600, 20, 999], [[13, 18], 250, 45, 999], [[19, 25], 80, 70, 999]] },
+   "OffSkillSpeed": { "text": "主手技能攻速总增 #%", "stat": "offAspd", "type": "S", "on": ["off"], "grp": "OffSkillSpeed", "tiers": [[[3, 5], 1000, 1, 999], [[6, 9], 500, 25, 999], [[10, 14], 150, 55, 999]] },
+   "OffExtraProj": { "text": "投射物 +#", "stat": "extra", "type": "P", "on": ["off"], "tag": "Projectile", "grp": "OffExtraProj", "tiers": [[[1, 1], 120, 30, 999]] }
+  }
  }
 }

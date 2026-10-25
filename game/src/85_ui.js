@@ -100,6 +100,11 @@ function helpPages() {
 }
 function baseLines(it) {
   const b = baseOf(it), q = it.q, out = [], dim = '#b8afc4';
+  if (it.kind === 'off') { // 副手：不带技能，只强化主手技能
+    out.push([`副手 · ${b.d}`, COL.dim]); const o = offSupport(it), r = v => Math.round(v);
+    const L = { more: v => `主手技能伤害总增 ${r(v)}%`, extra: v => `主手投射物 +${v}（投射物技能）`, inc: v => `主手技能伤害提高 ${r(v)}%`, projInc: v => `投射物伤害提高 ${r(v)}%`, aoeInc: v => `范围提高 ${r(v)}%`, areaInc: v => `范围伤害提高 ${r(v)}%（范围技能）`, aspdMore: v => `主手攻速总增 ${r(v)}%`, critInc: v => `暴击率提高 ${r(v)}%`, critDmg: v => `暴击伤害 +${r(v)}%`, ail: v => `异常效果提高 ${r(v)}%`, gain: v => `额外获得 ${r(v)}% 主手元素伤害` };
+    for (const k of OFF_SUP) if (o[k] >= 0.5) out.push([L[k](o[k]), '#9fd8ff']);
+    return out; }
   if (it.kind === 'weapon' || it.kind === 'engine') {
     if (it.kind === 'engine') { out.push([DASH_N[b.dash], COL.cyan]); out.push([`移动推力 ${ENGINE_THRUST[q]}` + (b.thrustInc ? `，移动速度提高 ${qv(b.thrustInc, q)}%` : ''), dim]); }
     else if (FORM_N[b.form]) out.push([FORM_N[b.form], COL.dim]);
@@ -402,7 +407,7 @@ class UI extends Phaser.Scene {
   // 身上 6 个槽位
   equipSlots(c, ox, oy, onClick, selFn) {
     const pos = { core: [26, 0], wl: [0, 26], wr: [52, 26], hub: [0, 52], engine: [26, 52], shield: [52, 52] };
-    const ghost = { wl: 'i_w_crossbow', wr: 'i_w_sickle', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
+    const ghost = { wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
     for (const s of SLOTS) {
       const it = S.equip[s.id]; const [x, y] = pos[s.id];
       mkCell(this, c, ox + x, oy + y, it, { size: 24, sel: selFn(it, s.id), ghost: ghost[s.id], tip: [{ t: s.id === 'wr' && !unlocked('wr') ? `${s.n}：${unlockText('wr')}` : `${s.n}（空）`, c: COL.dim }], onHover: i => { if (i) { hoverId = i.id; this.renderPane(); } }, onOut: () => { hoverId = null; this.renderPane(); }, onClick: i => onClick(i, s.id) });
@@ -447,8 +452,7 @@ class UI extends Phaser.Scene {
     if (hoverId && hoverId !== selId) return;
     const by = 176;
     if (f.where === 'stash') {
-      if (it.kind === 'weapon') { mkBtn(this, p, 0, by, 48, 16, '装左手', () => { equipItem(it, 'wl'); save(); this.refresh(); }, { size: 8, style: 'w' }); mkBtn(this, p, 52, by, 48, 16, '装右手', () => { equipItem(it, 'wr'); save(); this.refresh(); }, { size: 8, style: 'w', disabled: !unlocked('wr'), tip: unlocked('wr') ? null : [{ t: unlockText('wr'), s: 8 }] }); }
-      else mkBtn(this, p, 0, by, 100, 16, '装备', () => { equipItem(it); save(); this.refresh(); }, { size: 8, style: 'w' });
+      mkBtn(this, p, 0, by, 100, 16, it.kind === 'weapon' ? '装主手' : it.kind === 'off' ? '装副手' : '装备', () => { equipItem(it); save(); this.refresh(); }, { size: 8, style: 'w' });
       mkBtn(this, p, 104, by, 48, 16, confirmKey === 'sal' + it.id ? '确认' : '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { size: 8, style: confirmKey === 'sal' + it.id ? 'r' : 'n', tip: [{ t: '拆解', c: COL.emberHi }, { t: `毁掉装备，每条词条给 ${CRAFT.shatter.perAffix} 个对应的碎片，T${CRAFT.shatter.bonusTier} 及以上多给 ${CRAFT.shatter.bonus} 个。`, s: 8 }] });
     } else {
       mkBtn(this, p, 0, by, 48, 16, '卸下', () => { unequip(f.slot); save(); this.refresh(); }, { size: 8 });
@@ -459,7 +463,7 @@ class UI extends Phaser.Scene {
   /* 符文 */
   win_mods(c) {
     const host = S.equip[modWeapon];
-    const hosts = ['wl', 'wr', 'core', 'engine', 'hub'];
+    const hosts = ['wl', 'core', 'engine', 'hub']; // 副手没有符文槽
     hosts.forEach((s, i) => mkBtn(this, c, 10 + i * 46, 8, 43, 16, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
     const isHub = modWeapon === 'hub';
     if (!host) { TW(this, 10, 34, '这个位置没有装备。', 200, { size: 8, color: COL.faint, parent: c }); }
@@ -474,7 +478,7 @@ class UI extends Phaser.Scene {
         if (isHub) rect(this, x - 2, y - 2, 28, 28, '#c08a1c', 1, c);
         mkCell(this, c, x, y, m, { size: 24, host, onHover: v => { if (v) showTip(modTip(v, host)); else showTip([{ t: '空槽', c: COL.dim }, { t: '从右边点一个符文插进来。', s: 8 }]); }, onOut: hideTip, onClick: v => { if (v && feedOn && feedSrc && feedSrc !== v) return this.doFeed(v); if (v) { host.mods[i] = null; S.mods.unshift(v); refreshStats(); save(); this.refresh(); } } });
       }
-      const Wi = modWeapon === 'wl' ? STATS.weapons[0] : modWeapon === 'wr' ? STATS.weapons[1] : modWeapon === 'engine' ? STATS.engine : null;
+      const Wi = modWeapon === 'wl' ? STATS.weapons[0] : modWeapon === 'engine' ? STATS.engine : null;
       if (Wi) {
         const lines = [Wi.form === 'engine' ? `冲刺伤害 ${fmt(Wi.avg)}` : `秒伤 ${fmt(Wi.dps)} · 每秒攻击 ${r1(Wi.aps)} · 暴击 ${pct(Math.min(1, Wi.crit))} ×${Wi.critMult.toFixed(2)}`,
           ELEM.filter(e => Wi.max[e] > 0).map(e => `${ELEM_N[e]} ${fmt(Wi.min[e])}–${fmt(Wi.max[e])}`).join('  '),
@@ -855,7 +859,7 @@ class UI extends Phaser.Scene {
     recs.forEach((r, i) => {
       const x = 270 + Math.floor(i / half) * 96, y = 24 + (i % half) * 18;
       const wp = r.build.equip.find(q => q.slot === 'wl') || r.build.equip[0];
-      const nm = q => q.u ? UNIQUE_BY[q.u].n : baseOf({ kind: q.slot === 'wl' || q.slot === 'wr' ? 'weapon' : q.slot, b: q.b }).n;
+      const nm = q => q.u ? UNIQUE_BY[q.u].n : baseOf({ kind: q.slot === 'wl' || (q.slot === 'wr' && WEAPONS[q.b]) ? 'weapon' : q.slot === 'wr' ? 'off' : q.slot, b: q.b }).n;
       const tc = LADDER_TIERS[ladderTier(r.lvl)];
       T(this, x, y, `${r.lvl} 层 · ${mmss(r.time)} · +${r.jump}`, { size: 8, color: tc ? tc.c : COL.text, parent: c });
       T(this, x, y + 9, `${r.date.slice(5, 10)} ${ELEM_N[r.build.elem]} ${wp ? nm(wp) : ''}`, { size: 8, color: COL.faint, parent: c });

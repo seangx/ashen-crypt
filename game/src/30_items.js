@@ -1,13 +1,14 @@
 /* ---------------- 物品 ---------------- */
 const RARE_A = ['怨毒', '幽寂', '灰烬', '骸鸣', '血月', '寒鸦', '腐朽', '雷殛', '余晖', '深渊', '残烛', '碎骨', '暮色', '嚎风', '冥火', '铁锈', '哀歌', '霜咬'];
-const RARE_B = { weapon: ['之牙', '之刃', '裁决', '断罪', '悲鸣'], shield: ['壁垒', '之墙', '庇护', '骨盾'], core: ['之冠', '遗容', '之眼', '面甲'], engine: ['之步', '疾影', '残迹', '飞踪'], hub: ['之环', '法阵', '誓约', '回响'], chip: ['之印', '刻痕', '烙印', '铭文'] };
+const RARE_B = { weapon: ['之牙', '之刃', '裁决', '断罪', '悲鸣'], shield: ['壁垒', '之墙', '庇护', '骨盾'], core: ['之冠', '遗容', '之眼', '面甲'], engine: ['之步', '疾影', '残迹', '飞踪'], off: ['之器', '遗物', '之握', '低语', '残响'], hub: ['之环', '法阵', '誓约', '回响'], chip: ['之印', '刻痕', '烙印', '铭文'] };
 const AFF_LIMIT = [LOOT.affixCount.limit.normal, LOOT.affixCount.limit.magic, LOOT.affixCount.limit.rare]; // [前缀, 后缀] 上限：普通 / 罕见 / 稀有
 
 const baseOf = it => it.fb ? it.fb : it.kind === 'weapon' ? WEAPONS[it.b] : ARMORS[it.kind][it.b];
 const iconOf = it => it.kind === 'map' ? 'a_map' : baseOf(it).ic;
-const slotsFor = it => it.kind === 'weapon' ? ['wl', 'wr'] : it.kind === 'chip' ? [] : [it.kind];
+const slotsFor = it => it.kind === 'weapon' ? ['wl'] : it.kind === 'off' ? ['wr'] : it.kind === 'chip' ? [] : [it.kind];
 const itemTags = it => it.fb ? it.fb.tags : it.kind === 'weapon' ? WEAPONS[it.b].tags : it.kind === 'engine' ? (ARMORS.engine[it.b].tags || ['Engine']) : (ARMORS[it.kind] && ARMORS[it.kind][it.b] && ARMORS[it.kind][it.b].tags) || [KIND_TAG[it.kind]]; // 圣徽盾带自己的标签
-const canRollOn = (a, it) => !a.off && (a.on.includes(it.kind) || (it.b === 'EmpoweredChip' && a.on.includes('chipE'))) && (!a.tag || it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)); // tag 只限制武器
+const canRollOn = (a, it) => !a.off && (a.on.includes(it.kind) || (it.b === 'EmpoweredChip' && a.on.includes('chipE'))) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
+const offTagOk = (it, tag) => { const t = (ARMORS.off[it.b] || {}).tags || []; return t.includes('any') || t.includes(tag); }; // 副手：箭袋只出投射物类，法源 / 图腾 / 提灯什么都能出 // tag 只限制武器
 const KIND_TAG = { shield: 'Shield', core: 'Core', engine: 'Engine', hub: 'Nexus', chip: 'Chip' };
 function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : baseOf(it).n; }
 const qv = (v, q) => Array.isArray(v) ? v[q] : v; // 按品质取值
@@ -141,8 +142,7 @@ const STASH_CAP = LOOT.stashCap;
 function addItem(it) { S.stash.push(it); it.isNew = true; }
 function equipItem(it, slot) {
   if (it.kind === 'chip') return equipChip(it);
-  slot = slot || (it.kind === 'weapon' ? (!S.equip.wl ? 'wl' : !S.equip.wr && unlocked('wr') ? 'wr' : 'wl') : it.kind);
-  if (slot === 'wr' && !unlocked('wr')) slot = 'wl';
+  slot = it.kind === 'weapon' ? 'wl' : it.kind === 'off' ? 'wr' : it.kind; // 武器只进主手，副手只进副手槽
   const cur = S.equip[slot];
   S.stash = S.stash.filter(x => x !== it);
   for (const k in S.equip) if (S.equip[k] === it) S.equip[k] = null;

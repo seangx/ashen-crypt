@@ -94,9 +94,9 @@ function computeStats(eq = S.equip) {
   P.durMul = Math.max(0.1, 1 + P.durInc / 100);
   P.engine = eng && eb.min ? weaponStats(eng, P, true) : null;
   P.engineKind = eb ? eb.dash : null;
-  P.weapons = ['wl', 'wr'].map(s => eq[s] ? weaponStats(eq[s], P) : null);
-  P.twin = ['wl', 'wr'].filter(s => eq[s] && eq[s].u === 'TheTwin').length;
-  if (P.twin === 2) P.weapons = ['wl', 'wr'].map(s => weaponStats(eq[s], P));
+  P.off = offSupport(eq.wr); // 副手没有技能：只把支援效果交给主手
+  P.twin = eq.wl && eq.wl.u === 'TheTwin' && eq.wr ? 2 : 0; // 双生圣焰铳：拿着副手时生效
+  P.weapons = [eq.wl && eq.wl.kind === 'weapon' ? weaponStats(eq.wl, P) : null, null];
   P.armorHeld = P.armor; P.shieldW = shieldWeapon(eq.shield, P); // 圣盾掷：盾变成一把虚拟武器
   P.dps = P.weapons.reduce((s, w) => s + (w ? w.dps : 0), 0) + (P.shieldW ? P.shieldW.dps : 0);
   return P;
@@ -108,6 +108,14 @@ function shieldWeapon(sh, P) { // 圣徽盾插圣盾掷符文：单次伤害 = �
   const r = activeRunes(sh, P).find(x => x.fx.shieldThrow); if (!r) return null;
   const ab = qv(baseOf(sh).armor || 0, sh.q) * (1 + ((P.raw.armorInc || 0) + (P.tree.add.armorInc || 0)) / 100);
   return weaponStats({ ...sh, kind: 'weapon', fb: THROW_B, src: sh, u: null, affs: [], throwDmg: ab * r.fx.throwK }, P);
+}
+/* 副手的隐性支援效果：sup 每项 [品质 0, 品质 10]，按品质线性 */
+const OFF_SUP = ['extra', 'inc', 'projInc', 'aoeInc', 'areaInc', 'aspdMore', 'critInc', 'critDmg', 'ail', 'gain', 'more'];
+const supVal = (r, q) => Array.isArray(r) ? r[0] + (r[1] - r[0]) * clamp(q, 0, 10) / 10 : r || 0;
+function offSupport(it) {
+  if (!it || it.kind !== 'off') return null; const sup = (ARMORS.off[it.b] || {}).sup || {}, o = {};
+  for (const k of OFF_SUP) o[k] = k === 'extra' ? Math.round(supVal(sup[k], it.q)) : supVal(sup[k], it.q);
+  return o;
 }
 /* 武器（或带伤害的遁靴）的最终数值 */
 function weaponStats(it, P, isEngine) {
@@ -150,13 +158,15 @@ function weaponStats(it, P, isEngine) {
   // 符文
   let inc = (TA['inc:all'] || 0) + (b.cont || b.aura ? (TA.dotInc || 0) + U('dotInc') : 0) + (has('AoE') ? TA.areaInc || 0 : 0) + (has('Projectile') ? TA['inc:proj'] || 0 : 0) + (has('Melee') ? TA['inc:melee'] || 0 : 0) + (isEngine ? TA['inc:engine'] || 0 : 0), aspdMore = (TM.aspd ?? 1) * (1 - U('aspdLess') / 100), rangeInc = (TA.rangeInc || 0), aoeInc = (TA.aoeInc || 0) + (P.raw.aoeInc || 0), critInc = TA.critInc || 0, critDmg = TA.critDmg || 0, projSpd = (TA.projSpd || 0) + (has('Projectile') ? P.raw.projSpd || 0 : 0), pure = false;
   const R = P.raw; inc += (has('Projectile') ? R['inc:proj'] || 0 : 0) + (has('AoE') ? R['inc:aoe'] || 0 : 0) + (has('Melee') ? R['inc:melee'] || 0 : 0) + (has('Delayed') ? R.delayInc || 0 : 0) + (has('Shield') ? R.shieldDmg || 0 : 0) + (IM.inc || 0) + (b.cont || b.aura ? IM.dotInc || 0 : 0); critInc += (R.critChance || 0) + (IM.critInc || 0); critDmg += IM.critDmg || 0; aoeInc += IM.aoeInc || 0; rangeInc += IM.rangeInc || 0; projSpd += IM.projSpd || 0; W.projDurInc += has('Projectile') ? IM.projDur || 0 : 0; aspdMore *= 1 + (IM.aspd || 0) / 100; // 标签伤害词条、头冠暴击率（§3.2）
+  if (P.off && !isEngine && !it.fb) { const O = P.off; if (has('Projectile')) { W.extra += O.extra; inc += O.projInc; } inc += O.inc; aoeInc += O.aoeInc; if (has('AoE')) inc += O.areaInc; critInc += O.critInc; critDmg += O.critDmg; aspdMore *= 1 + O.aspdMore / 100; for (const e of ELEM) W.ail[e] += O.ail / 100; W.offGain = O.gain / 100; W.more *= 1 + O.more / 100; } // 副手：强化主手技能（隐性 sup）
+  if (!isEngine && !it.fb) { aspdMore *= 1 + (R.offAspd || 0) / 100; W.more *= 1 + (R.offMore || 0) / 100; } // 副手词条：主手技能总增
   W.blindMore *= TM.blind ?? 1; W.radMore *= TM.rad ?? 1; W.dotMore *= TM.dot ?? 1;
   if (!b.cont && !b.aura) W.more *= TM['dmg:hit'] ?? 1;
   if (!has('AoE')) W.more *= TM['dmg:nonAoe'] ?? 1;
   if (has('Projectile')) W.more *= TM['dmg:proj'] ?? 1;
   if (P.flag.whirlHeart) { if (has('Melee') && has('AoE')) W.more *= WH.heartMore; else if (!isEngine && !has('Melee')) W.more *= WH.offhandMul; } // 旋风之心：【近战·范围】
   if (P.flag.sparkHeart) { if (has('ProjectileCanChain')) W.more *= SP.heartMore; else if (!isEngine) W.more *= SP.offhandMul; } // 织雷之心：【投射物·弹射】
-  const gain = {}, rflat = {};
+  const gain = {}, rflat = {}; if (W.offGain) gain[b.el] = W.offGain; // 幽魂法源：额外获得主手元素伤害
   for (const { m, fx } of activeRunes(it.src || it, P)) {
     W.runes.push(m.mid);
     if (fx.pure) pure = true;
