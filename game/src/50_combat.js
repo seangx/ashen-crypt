@@ -66,6 +66,8 @@ const fieldActive = () => RUN && (mouse.on || mouse.touch) && !(G.ui && G.ui.win
 
 /* ---------- 敌人 ---------- */
 function pickMob(L) { const pool = Object.entries(MOBS).filter(([, m]) => L >= (m.minL || 1)); return wpick(pool, ([, m]) => m.w)[0]; }
+// 怪海有效数量：基础 count × 视野面积比（手机竖屏视野更大，按面积补怪，密度不比桌面低）
+function hordeN() { const HD = PROG.run.horde, a = (F.x1 - F.x0) * (F.y1 - F.y0); return HD.count * clamp(a / (HD.refArea || a), 1, HD.areaMax || 1); }
 function spawnMob(type, o = {}) {
   const d = o.d || MOBS[type] || BOSS; const L = RUN.L; const mx = RUN.mob || {};
   const rp = o.x == null ? ringPoint() : null; // 默认刷在视野外一圈
@@ -215,7 +217,7 @@ function kill(m) {
   sfx(m.boss ? 'bossdie' : 'kill');
   if (!RUN) return;
   RUN.kills++;
-  const hk = m.boss ? 1 : 1 / PROG.run.horde.count; // 怪海：每只的推进、经验、灯火、掉落按数量摊薄
+  const hk = m.boss ? 1 : 1 / hordeN(); // 怪海：每只的推进、经验、灯火、掉落按数量摊薄
   if (!m.boss) RUN.prog += (RUN.mode === 'ladder' ? (m.elite ? LD.run.eliteP : LD.run.normalP) : 1) * hk;
   if (RUN.mode !== 'ladder') player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * (RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
   deathRules(m);
@@ -633,7 +635,7 @@ function logic(dt) {
   // 刷怪（天梯：上限 ×密度，间隔 ÷密度）
   if (!RUN.boss) {
     RUN.spawnT -= dt;
-    const R = PROG.run, HD = R.horde, cap = Math.round((R.spawnCapBase + Math.min(R.spawnCapMaxExtra, RUN.L)) * RUN.dens * HD.count);
+    const R = PROG.run, HD = R.horde, HN = hordeN(), cap = Math.min(HD.hardCap || 999, Math.round((R.spawnCapBase + Math.min(R.spawnCapMaxExtra, RUN.L)) * RUN.dens * HN));
     if (RUN.spawnT <= 0 && mobs.length < cap) { // 一次刷一群，挤在场边同一处
       let o = {};
       if (RUN.lastPack && rnd() < (HD.surround || 0)) { // 包围：刷到上一群的对面（以角色为中心对称，再贴到最近的场边）
@@ -641,7 +643,7 @@ function logic(dt) {
       }
       const n = Math.min(cap - mobs.length, ri(HD.pack[0], HD.pack[1])), first = spawnMob(pickMob(RUN.L), o); RUN.lastPack = { x: first.x, y: first.y };
       for (let i = 1; i < n; i++) spawnMob(pickMob(RUN.L), { x: first.x + rf(-14, 14), y: first.y + rf(-10, 10) });
-      RUN.spawnT = Math.max(R.spawnIntervalMin, R.spawnInterval - RUN.L * R.spawnIntervalPerLevel) / RUN.dens / HD.count * n;
+      RUN.spawnT = Math.max(R.spawnIntervalMin, R.spawnInterval - RUN.L * R.spawnIntervalPerLevel) / RUN.dens / HN * n;
     }
     if (RUN.prog >= RUN.need - 1e-6) spawnBoss();
   }
