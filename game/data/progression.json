@@ -309,10 +309,11 @@
   "_cache": "怪物不掉装备，按原掉率记进本层宝箱；Boss 死时宝箱掉出 cache×cacheMul 件（补偿没打到 Boss 就结束的那部分）"
  },
  "starter": {
-  "_说明": "新角色的装备：武器底材、它的符文槽数和插好的符文、遁靴、盾、法阵",
+  "_说明": "新角色的装备：武器底材、技能石（spec-skill-gems：骨矢 1 级、gemSockets 槽）和插好的符文、遁靴、盾、法阵",
   "weapon": "Cannon",
-  "weaponSockets": 2,
-  "weaponRunes": [
+  "gem": "GemBolt",
+  "gemSockets": 1,
+  "gemRunes": [
    "Pierce"
   ],
   "engine": "Thruster",

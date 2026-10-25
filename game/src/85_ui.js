@@ -1,5 +1,5 @@
 /* ---------- 界面状态 ---------- */
-let selId = null, hoverId = null, modWeapon = 'wl', craftId = null, confirmKey = null, craftLog = [], helpTopic = 0;
+let selId = null, hoverId = null, modWeapon = 'gem', stashTab = 0, craftId = null, confirmKey = null, craftLog = [], helpTopic = 0;
 let craftAff = -1, craftTab = 0, addPage = 0, useHope = false, useChaos = false, fuseId = null, feedOn = false, feedSrc = null;
 let atlasTab = 0, atlasSel = null, ladPick = 1;
 const treeView = { x: 0, y: 0, z: 1 };
@@ -37,9 +37,11 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   img(sc, 0, 0, 'i_' + iconOf(it), c);
   T(sc, 17, 1, itemName(it), { color: icol(it), parent: c });
   cy = 16;
+  if (it.kind === 'gem') { T(sc, 0, cy, `技能石 · ${it.lvl} 级 · 品质 ${it.q || 0}%`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
+  else {
   T(sc, 0, cy, `${rarName(it)} · ${KIND_N[it.kind]}${it.rar === 2 ? ' · ' + b.n : ''} · 物品等级 ${it.ilvl}`, { size: 8, color: COL.dim, parent: c }); cy += 11;
   for (let i = 0; i <= 10; i++) rect(sc, i * 5, cy + 2, 4, 3, i <= it.q ? COL.ember : '#2f2740', 1, c);
-  T(sc, 58, cy, `品质：${QN[it.q]}`, { size: 8, color: COL.dim, parent: c }); cy += 11;
+  T(sc, 58, cy, `品质：${QN[it.q]}`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
   rect(sc, 0, cy + 1, w, 1, '#3a3049', 1, c); cy += 4;
   const ln = (t, col = '#b8afc4') => { const r = TW(sc, 0, cy, t, w, { size: 8, color: col, parent: c }); cy += r.h; };
   for (const [t, col] of baseLines(it)) ln(t, col);
@@ -71,7 +73,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   if (it.oath) ln(oathText(it.oath), '#c0392b'); // 誓约：暗红，在词条最下面
   if (it.u) { rect(sc, 0, cy + 1, w, 1, '#5a3a14', 1, c); cy += 4; for (const r of ruleLines(it)) ln(r, '#ff9a3c'); }
   if (it.kind === 'chip') ln(chipSock(it) ? '已插在天赋树的印记槽里' : '插在天赋树的印记槽里生效（先点亮旁边的天赋）', COL.faint);
-  if (it.rar < 3 && it.kind !== 'map') { T(sc, 0, cy + 1, `词条 ${it.affs.length}/${AFF_MAX} · 锻造潜力 ${it.fp || 0}`, { size: 8, color: it.fp > 0 ? COL.faint : COL.bad, parent: c }); cy += 11; }
+  if (it.rar < 3 && it.kind !== 'map' && it.kind !== 'gem') { T(sc, 0, cy + 1, `词条 ${it.affs.length}/${AFF_MAX} · 锻造潜力 ${it.fp || 0}`, { size: 8, color: it.fp > 0 ? COL.faint : COL.bad, parent: c }); cy += 11; }
   if (it.u) { T(sc, 0, cy + 1, it.leg ? '传奇：已熔铸' : `传奇潜力 ${it.lp || 0}`, { size: 8, color: it.leg ? LEG_C : COL.faint, parent: c }); cy += 11; }
   if (o.compare) for (const ln of compareLines(it)) { const t = TW(sc, 0, cy + 1, ln.t, w, { size: 8, color: ln.c, parent: c }); cy += t.h; }
   return { c, h: cy };
@@ -80,8 +82,26 @@ const DASH_N = { step: '冲刺：纯位移', warp: '冲刺：瞬移到落点并�
 const FORM_N = { proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人', reflect: '受到攻击时伤害周围敌人' };
 const r1 = v => Math.round(v * 10) / 10;
 // 底材行：按品质的固有数值
+function gemLines(g) { // 技能石：形态、倍率、标签、并进来的形态符文
+  const G = GEM_BY[g.b], out = [], src = G.src.length ? WEAPONS[gemVar(g)] : null;
+  out.push([FORM_N[G.form] || '', COL.dim]);
+  if (src) { const sk = skillItem({ ...S.equip, gem: g }), [mn, mx] = sk ? weaponBase(sk.fb, sk.q) : [0, 0]; out.push([`伤害 = 主手 × ${r2(gemMul(G, g.lvl) * (1 + (g.q || 0) / 100))}（等级、品质）`, '#e9d9a8']); if (sk) out.push([`用现在的主手：${ELEM_N[src.el]}伤害 ${fmt(mn)}–${fmt(mx)}${src.cont ? ' / 秒' : ''}${sk.fb.aff ? '（对口 ×' + GEMC.affinity + '）' : '（不对口）'}`, ELEM_C[src.el]]); if (G.src.length > 1) out.push([`变体：${src.n}`, COL.dim]); }
+  else out.push([`伤害 = 盾的护甲 × 系数（需要装备盾牌）`, '#e9d9a8']);
+  if (G.fr) { const fx = MOD_BY[G.fr].fx(clamp(g.lvl, 1, LOOT.runeDrop.levelCap)); out.push([MOD_BY[G.fr].d(fx), '#9fd8ff']); }
+  out.push(['标签：' + gemTags(g).filter(t => TAG_N[t] && t !== 'Weapon').map(t => TAG_N[t]).join(' '), COL.faint]);
+  if (g.lvl < MOD_MAX) out.push([`经验 ${fmt(g.xp)} / ${fmt(MOD_XP[g.lvl - 1])}（装备时吃击杀经验）`, COL.faint]);
+  return out;
+}
 function baseLines(it) {
   const b = baseOf(it), q = it.q, out = [], dim = '#b8afc4';
+  if (it.kind === 'gem') return gemLines(it);
+  if (it.kind === 'weapon') { // 主手只给数值（spec-skill-gems）：类别、对口、暴击；伤害按技能石算
+    const cat = GEMC.cats[b.cat], g = S.equip.gem, sk = skillItem({ ...S.equip, wl: it }), sb = sk ? sk.fb : null;
+    out.push([`类别：${cat ? cat.n : '—'}${cat ? `（对口：${cat.tags.map(t => TAG_N[t] || t).join('、')}）` : ''}${b.retired ? ' · 已停止掉落' : ''}`, COL.dim]);
+    if (sb && sb.min) { const [mn, mx] = weaponBase(sb, q); out.push([`${sb.n}：${ELEM_N[sb.el]}伤害 ${fmt(mn)}–${fmt(mx)}${sb.cont ? ' / 秒' : ''}${sb.aff ? ' · 对口 ×' + GEMC.affinity : ''}`, ELEM_C[sb.el]]); }
+    else if (g && GEM_BY[g.b].form === 'shieldThrow') out.push(['当前技能圣盾掷：伤害看盾的护甲', COL.dim]);
+    const p = []; if (b.crit) p.push(`暴击 ${b.crit}%`); if (sb && sb.aps) p.push(`每秒攻击 ${r1(sb.aps)}`); if (p.length) out.push([p.join(' · '), dim]);
+    return out; }
   if (it.kind === 'off') { // 副手：不带技能，只强化主手技能
     out.push([`副手 · ${b.d}`, COL.dim]); const o = offSupport(it), r = v => Math.round(v);
     const L = { chain: v => `主手弹射 +${v}（可弹射技能）`, more: v => `主手技能伤害总增 ${r(v)}%`, extra: v => `主手投射物 +${v}（投射物技能）`, inc: v => `主手技能伤害提高 ${r(v)}%`, projInc: v => `投射物伤害提高 ${r(v)}%`, aoeInc: v => `范围提高 ${r(v)}%`, areaInc: v => `范围伤害提高 ${r(v)}%（范围技能）`, aspdMore: v => `主手攻速总增 ${r(v)}%`, critInc: v => `暴击率提高 ${r(v)}%`, critDmg: v => `暴击伤害 +${r(v)}%`, ail: v => `异常效果提高 ${r(v)}%`, gain: v => `额外获得 ${r(v)}% 主手元素伤害` };
@@ -448,8 +468,8 @@ class UI extends Phaser.Scene {
   }
   // 身上 6 个槽位
   equipSlots(c, ox, oy, onClick, selFn) {
-    const pos = { core: [26, 0], wl: [0, 26], wr: [52, 26], hub: [0, 52], engine: [26, 52], shield: [52, 52] };
-    const ghost = { wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
+    const pos = { gem: [0, 0], core: [26, 0], wl: [0, 26], wr: [52, 26], hub: [0, 52], engine: [26, 52], shield: [52, 52] };
+    const ghost = { gem: 'i_w_crossbow', wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
     for (const s of SLOTS) {
       const it = S.equip[s.id]; const [x, y] = pos[s.id];
       mkCell(this, c, ox + x, oy + y, it, { size: 24, sel: selFn(it, s.id), ghost: ghost[s.id], tip: [{ t: s.id === 'wr' && !unlocked('wr') ? `${s.n}：${unlockText('wr')}` : `${s.n}（空）`, c: COL.dim }], onHover: i => { if (i) { hoverId = i.id; this.renderPane(); } }, onOut: () => { hoverId = null; this.renderPane(); }, onClick: i => onClick(i, s.id) });
@@ -474,14 +494,16 @@ class UI extends Phaser.Scene {
     rz.on('pointerover', () => showTip([{ t: '抗性', c: COL.emberHi }, ...ELEM.map(e => ({ t: `${ELEM_N[e]} ${P.res[e]}%`, c: ELEM_C[e], s: 8 })), { t: `按百分比减少对应元素的伤害，上限 ${P.maxRes}%。`, s: 8 }])); rz.on('pointerout', hideTip);
     // 背包
     T(this, 140, 6, `背包 ${S.stash.length}/${STASH_CAP}`, { size: 8, color: COL.dim, parent: c });
+    const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一个分页
+    [['装备', 0], [`技能石 ${nGem}`, 1]].forEach(([n, t], i) => mkBtn(this, c, 140 + i * 56, 138, 54, 15, n, () => { stashTab = t; this.refresh(); }, { size: 8, style: stashTab === t ? 's' : 'n' }));
     for (let i = 0; i < STASH_CAP; i++) {
-      const it = S.stash[i]; const x = 140 + (i % 10) * 16, y = 18 + (i / 10 | 0) * 16;
+      const it = view[i]; const x = 140 + (i % 10) * 16, y = 18 + (i / 10 | 0) * 16;
       mkCell(this, c, x, y, it, { size: 16, sel: it && it.id === selId, upg: true, onHover: v => { if (v) { hoverId = v.id; this.renderPane(); } }, onOut: () => { hoverId = null; this.renderPane(); }, onClick: v => { if (!v) return; if (selId === v.id) equipItem(v); selId = v.id; v.isNew = false; save(); this.refresh(); } });
     }
     mkBtn(this, c, 140, 118, 40, 16, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
     mkBtn(this, c, 184, 118, 116, 16, confirmKey === 'junk' ? '再点一次确认' : '批量拆解…', () => this.openBulk(), { size: 8 });
-    T(this, 140, 140, '点一下选中，再点一下装备。', { size: 8, color: COL.faint, parent: c });
-    T(this, 140, 151, '绿色箭头表示比身上那件更好。', { size: 8, color: COL.faint, parent: c });
+    T(this, 140, 158, '点一下选中，再点一下装备。', { size: 8, color: COL.faint, parent: c });
+    T(this, 140, 169, '绿色箭头表示比身上那件更好。', { size: 8, color: COL.faint, parent: c });
     this.paneC = this.add.container(306, 6); c.add(this.paneC);
     this.renderPane();
   }
@@ -500,12 +522,16 @@ class UI extends Phaser.Scene {
       mkBtn(this, p, 0, by, 48, 16, '卸下', () => { unequip(f.slot); save(); this.refresh(); }, { size: 8 });
       if (it.sock || ['core', 'engine', 'hub'].includes(f.slot)) mkBtn(this, p, 52, by, 48, 16, '符文', () => { modWeapon = f.slot; this.openWin('mods'); }, { size: 8 });
     }
+    if (it.kind === 'gem') { // 技能石：打磨、开孔（代替铁砧）
+      mkBtn(this, p, 0, by - 20, 74, 16, `打磨 ${GEMC.polishCost}碎片`, () => { const r = gemPolish(it); if (r) toast(r, COL.emberHi); this.refresh(); }, { size: 8, disabled: !canPolish(it), tip: [{ t: '打磨', c: COL.emberHi }, { t: `花 ${GEMC.polishCost} 个随机词条碎片，品质 +1%（最高 ${GEMC.qMax}%）`, s: 8 }] });
+      mkBtn(this, p, 78, by - 20, 74, 16, `开孔 (${S.glyphs.socket || 0})`, () => { const r = gemSocket(it); if (r) toast(r, COL.emberHi); this.refresh(); }, { size: 8, disabled: !canSocket(it), tip: [{ t: '开孔符', c: COL.emberHi }, { t: `技能石 +1 符文槽（最多 ${GEMC.maxSock}）。天梯宝箱掉落。`, s: 8 }] });
+      return; }
     mkBtn(this, p, f.where === 'stash' ? 0 : 104, by - 20, f.where === 'stash' ? 152 : 48, 16, '铁砧', () => { craftId = it.id; craftAff = -1; this.openWin('craft'); }, { size: 8, disabled: !unlocked('craft'), tip: unlocked('craft') ? null : [{ t: unlockText('craft'), s: 8 }] });
   }
   /* 符文 */
   win_mods(c) {
     const host = S.equip[modWeapon];
-    const hosts = ['wl', 'core', 'engine', 'hub']; // 副手没有符文槽
+    const hosts = ['gem', 'core', 'engine', 'hub']; // 副手没有符文槽
     hosts.forEach((s, i) => mkBtn(this, c, 10 + i * 46, 8, 43, 16, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
     const isHub = modWeapon === 'hub';
     if (!host) { TW(this, 10, 34, '这个位置没有装备。', 200, { size: 8, color: COL.faint, parent: c }); }
@@ -520,7 +546,7 @@ class UI extends Phaser.Scene {
         if (isHub) rect(this, x - 2, y - 2, 28, 28, '#c08a1c', 1, c);
         mkCell(this, c, x, y, m, { size: 24, host, onHover: v => { if (v) showTip(modTip(v, host)); else showTip([{ t: '空槽', c: COL.dim }, { t: '从右边点一个符文插进来。', s: 8 }]); }, onOut: hideTip, onClick: v => { if (v && feedOn && feedSrc && feedSrc !== v) return this.doFeed(v); if (v) { host.mods[i] = null; S.mods.unshift(v); refreshStats(); save(); this.refresh(); } } });
       }
-      const Wi = modWeapon === 'wl' ? STATS.weapons[0] : modWeapon === 'engine' ? STATS.engine : null;
+      const Wi = modWeapon === 'gem' ? STATS.shieldW || STATS.weapons[0] : modWeapon === 'engine' ? STATS.engine : null;
       if (Wi) {
         const lines = [Wi.form === 'engine' ? `冲刺伤害 ${fmt(Wi.avg)}` : `秒伤 ${fmt(Wi.dps)} · 每秒攻击 ${r1(Wi.aps)} · 暴击 ${pct(Math.min(1, Wi.crit))} ×${Wi.critMult.toFixed(2)}`,
           ELEM.filter(e => Wi.max[e] > 0).map(e => `${ELEM_N[e]} ${fmt(Wi.min[e])}–${fmt(Wi.max[e])}`).join('  '),
@@ -545,7 +571,7 @@ class UI extends Phaser.Scene {
     if (feedOn) TW(this, 244, 132, feedSrc ? `已选 ${MOD_BY[feedSrc.mid].n}（经验 ${fmt(feedSrc.xp)}）作为饲料，再点要喂的符文（右边或左边槽里的都行）。` : `先点一个符文当饲料：被喂的符文获得它累计经验的 ${Math.round(DATA.runes.feed.mul * 100)}%。`, 214, { size: 8, color: COL.emberHi, parent: c });
     else {
       TW(this, 244, 132, '点一个符文插进当前装备。红色等级表示在这里不生效。', 214, { size: 8, color: COL.faint, parent: c });
-      TW(this, 244, 152, '武器、头冠、遁靴的符文槽让符文生效；法阵的升级槽让符文成长。', 214, { size: 8, color: COL.faint, parent: c });
+      TW(this, 244, 152, '技能石、头冠、遁靴的符文槽让符文生效；法阵的升级槽让符文成长。', 214, { size: 8, color: COL.faint, parent: c });
     }
     mkBtn(this, c, 244, 176, 80, 18, feedOn ? '喂养：开' : '喂养：关', () => { feedOn = !feedOn; feedSrc = null; this.refresh(); }, { size: 8, style: feedOn ? 's' : 'n', disabled: !unlocked('feed'), tip: [{ t: '符文喂养', c: COL.emberHi }, { t: unlocked('feed') ? '把一枚符文喂给另一枚，被喂的获得它的经验。' : unlockText('feed'), s: 8 }] });
   }

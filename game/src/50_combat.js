@@ -231,7 +231,7 @@ function kill(m) {
   const shardDrop = () => { const k = rollShard(L); dropThing(m, { kind: 'shard', k }); if (rnd() * 100 < LX.twin) dropThing(m, { kind: 'shard', k }); };
   if (rnd() < DROP.item * mult * (1 + LX.iiq / 100)) RUN.cache = (RUN.cache || 0) + 1; // 战斗中不掉装备：记进这一层的 Boss 宝箱，打掉 Boss 一次掉出来
   if (rnd() < DROP.shard * mult * (1 + LX.dice / 100)) shardDrop();
-  if (rnd() < DROP.mod * mult * (1 + LX.runes / 100)) dropThing(m, { kind: 'mod', mod: rollModDrop(L) });
+  if (rnd() < DROP.mod * mult * (1 + LX.runes / 100)) dropRune(m, L);
   if (rnd() < DROP.map * mult * (1 + LX.mapDrop / 100)) dropThing(m, { kind: 'map', map: rollMapDrop(L) });
   if (m.boss) player.life = Math.min(STATS.life, player.life + STATS.life * MECH.bossKillLife / 100); // 打掉守关 Boss 回一截生命
   if (m.boss && RUN.mode === 'ladder') ladderWin(m);
@@ -243,7 +243,7 @@ function kill(m) {
     for (let i = 0; i < c; i++) dropThing(m, { kind: 'item', item: rollItem(L, LX.iir) }, 1);
     fx({ t: 'chest', x: m.x, y: m.y, n: n + c });
     for (let i = 0; i < BL.shards; i++) shardDrop();
-    for (let i = 0; i < BL.runes; i++) dropThing(m, { kind: 'mod', mod: rollModDrop(L + BL.runeIlvlBonus) });
+    for (let i = 0; i < BL.runes; i++) dropRune(m, L + BL.runeIlvlBonus);
     if (rnd() < DROP.mapBoss * (1 + LX.mapDrop / 100)) dropThing(m, { kind: 'map', map: rollMapDrop(L) });
     S.stats.bosses++; RUN.descent.floors++; (RUN.descent.mins = RUN.descent.mins || []).push([RUN.base, Math.round(RUN.descent.minHp * 100), RUN.base >= RUN.descent.prevMax - 1]); // 每层最低血量（模拟用）
     if (RUN.base >= S.maxDepth && RUN.base < PROG.run.maxDepth) S.maxDepth = RUN.base + 1;
@@ -256,6 +256,8 @@ function kill(m) {
     if (G.ui) G.ui.banner(bi >= 0 ? `获得祝福：${BOONS[bid][bi].n}` : RUN.result === 'retreat' ? `险胜 · 撤回 · 宝箱 ${n + c} 件` : `第 ${RUN.base} 层通过 · 宝箱 ${n + c} 件`);
   }
 }
+// 符文掉落判定：gems.dropShare 的几率换成技能石（spec-skill-gems §3.4）
+function dropRune(m, L, burst) { if (rnd() < GEMC.dropShare) dropThing(m, { kind: 'item', item: rollGemDrop(L) }, burst); else dropThing(m, { kind: 'mod', mod: rollModDrop(L) }, burst); }
 function dropThing(m, o, burst) { const a = burst ? rf(0, Math.PI * 2) : 0, sp = burst ? rf(40, 90) : 0; drops.push({ ...o, x: m.x + rf(-6, 6), y: m.y + rf(-4, 4), z: 6, vz: burst ? rf(90, 130) : rf(50, 80), vx: burst ? Math.cos(a) * sp : rf(-30, 30), vy: burst ? Math.sin(a) * sp * .6 : rf(-14, 14), age: 0 }); if ((o.kind === 'item' && o.item.rar >= 2) || o.kind === 'glyph') sfx('rare'); }
 function collect(dp) {
   const g = RUN && RUN.gain;
@@ -274,8 +276,10 @@ function gainXp(x) {
 }
 // 法阵的升级槽：插在里面的符文吃击杀经验（累计门槛）
 function modXp(x) {
-  const hub = S.equip.hub; if (!hub) return;
   let up = false;
+  const g = S.equip.gem; // 装备中的技能石吃击杀经验
+  if (g && g.kind === 'gem' && g.lvl < MOD_MAX) { g.xp += x; const L = modLevelOf(g.xp); if (L > g.lvl) { g.lvl = L; up = true; if (G.ui) G.ui.feed(`${GEM_BY[g.b].n} ${g.lvl} 级`, COL.cyan, 'i_' + iconOf(g)); } }
+  const hub = S.equip.hub; if (!hub) { if (up) refreshStats(); return; }
   for (const m of hub.mods) {
     if (!m || m.lvl >= MOD_MAX) continue;
     m.xp += x; const L = modLevelOf(m.xp);

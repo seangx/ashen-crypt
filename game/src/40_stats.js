@@ -17,7 +17,7 @@ function sumGlobal(items) {
 }
 // 符文效果：等级 = 自身等级 + 「所有符文等级」
 const runeLvl = (m, P, extra = 0) => clamp(m.lvl + (P.modLvl || 0) + extra, 1, LOOT.runeDrop.levelCap);
-function activeRunes(it, P) { const ex = uval(it, 'runeLvl'); return (it.mods || []).filter(m => m && modActive(m, it)).map(m => ({ m, fx: MOD_BY[m.mid].fx(runeLvl(m, P, ex)) })); }
+function activeRunes(it, P, ex0 = 0) { const ex = ex0 + uval(it, 'runeLvl'); const ms = (it.mods || []).filter(m => m && MOD_BY[m.mid] && modActive(m, it)); if (it.kind === 'gem') { const f = gemFormRune(it); if (f) ms.unshift(f); } return ms.map(m => ({ m, fx: MOD_BY[m.mid].fx(runeLvl(m, P, ex)) })); } // 技能石：并进来的形态符文按技能石等级算
 
 function computeStats(eq = S.equip) {
   const items = Object.values(eq).filter(Boolean);
@@ -96,18 +96,19 @@ function computeStats(eq = S.equip) {
   P.engineKind = eb ? eb.dash : null;
   P.off = offSupport(eq.wr); // 副手没有技能：只把支援效果交给主手
   P.twin = eq.wl && eq.wl.u === 'TheTwin' && eq.wr ? 2 : 0; // 双生圣焰铳：拿着副手时生效
-  P.weapons = [eq.wl && eq.wl.kind === 'weapon' ? weaponStats(eq.wl, P) : null, null];
-  P.armorHeld = P.armor; P.shieldW = shieldWeapon(eq.shield, P); // 圣盾掷：盾变成一把虚拟武器
+  P.gem = eq.gem && eq.gem.kind === 'gem' ? eq.gem : null; const sk = skillItem(eq); // 技能石（spec-skill-gems）：主手只给数值
+  P.weapons = [sk ? weaponStats(sk, P) : null, null];
+  P.armorHeld = P.armor; P.shieldW = sk ? null : shieldWeapon(eq.shield, P, P.gem); // 圣盾掷：盾变成一把虚拟武器
   P.dps = P.weapons.reduce((s, w) => s + (w ? w.dps : 0), 0) + (P.shieldW ? P.shieldW.dps : 0);
   return P;
 }
 
 const THROW_B = { key: 'ShieldThrow', form: 'shieldThrow', el: 'pla', aps: SHT.aps, crit: SHT.crit, range: SHT.range, tags: ['Shield', 'Projectile', 'ProjectileCanChain', 'ProjectileCanPierce', 'Attack', 'AttackSpeed', 'Hit'] };
-function shieldWeapon(sh, P) { // 圣徽盾插圣盾掷符文：单次伤害 = 盾的护甲（底子 × (1 + 护甲提高%)）× throwK
-  if (!sh || !sh.sock) return null;
-  const r = activeRunes(sh, P).find(x => x.fx.shieldThrow); if (!r) return null;
+function shieldWeapon(sh, P, g) { // 圣盾掷技能石：单次伤害 = 盾的护甲（底子 × (1 + 护甲提高%)）× throwK × (1 + 技能石品质%)
+  if (!sh || !g) return null;
+  const r = activeRunes(g, P, uval(S.equip.wl, 'runeLvl')).find(x => x.fx.shieldThrow); if (!r) return null;
   const ab = qv(baseOf(sh).armor || 0, sh.q) * (1 + ((P.raw.armorInc || 0) + (P.tree.add.armorInc || 0)) / 100);
-  return weaponStats({ ...sh, kind: 'weapon', fb: THROW_B, src: sh, u: null, affs: [], throwDmg: ab * r.fx.throwK }, P);
+  return weaponStats({ ...sh, kind: 'weapon', fb: THROW_B, src: g, gem: g, th: 1, u: null, affs: [], throwDmg: ab * r.fx.throwK * (1 + (g.q || 0) / 100) }, P);
 }
 /* 副手的隐性支援效果：sup 每项 [品质 0, 品质 10]，按品质线性 */
 const OFF_SUP = ['extra', 'inc', 'projInc', 'aoeInc', 'areaInc', 'aspdMore', 'critInc', 'critDmg', 'ail', 'gain', 'more', 'chain'];
@@ -126,7 +127,7 @@ function weaponStats(it, P, isEngine) {
     pierceMore: 1, chainInc: 0, splitInc: 0, knock: b.knock || 0, more: 1, dotMore: 1, debrisMore: 1, blindMore: 1, radMore: 1, doubleChance: 0,
     armorOnHit: 0, dashOnHit: 0, cull: 0, perDashInc: 0, bossMore: b.bossMore ? 1 + qv(b.bossMore, q) / 10 : 1 };
   const TA = P.tree.add, TM = P.tree.more, U = k => uval(it, k);
-  const IM = it.kind === 'weapon' && !it.fb && IMPL[it.b] ? IMPL[it.b].fx : {}; // 底子的隐性倾向
+  const IM = it.kind === 'weapon' && !it.th && (!it.fb || it.gem) && IMPL[it.b] ? IMPL[it.b].fx : {}; // 底子的隐性倾向
   W.chain += IM.chain || 0; W.pierce += IM.pierce || 0; if (IM.knock) W.knock = 1; W.pierceMore *= IM.pierceMore || 1; W.bossMore *= 1 + (IM.bossInc || 0) / 100; W.impSpawn = IM.spawn || 0;
   for (const e of ELEM) W.ail[e] = (b['ail_' + e] || 0) + (TA['ail:' + e] || 0) + U('ail:' + e) / 100 + ((IM.ail || {})[e] || 0);
   // 独特装备的局部规则
@@ -158,16 +159,16 @@ function weaponStats(it, P, isEngine) {
   // 符文
   let inc = (TA['inc:all'] || 0) + (b.cont || b.aura ? (TA.dotInc || 0) + U('dotInc') : 0) + (has('AoE') ? TA.areaInc || 0 : 0) + (has('Projectile') ? TA['inc:proj'] || 0 : 0) + (has('Melee') ? TA['inc:melee'] || 0 : 0) + (isEngine ? TA['inc:engine'] || 0 : 0), aspdMore = (TM.aspd ?? 1) * (1 - U('aspdLess') / 100), rangeInc = (TA.rangeInc || 0), aoeInc = (TA.aoeInc || 0) + (P.raw.aoeInc || 0), critInc = TA.critInc || 0, critDmg = TA.critDmg || 0, projSpd = (TA.projSpd || 0) + (has('Projectile') ? P.raw.projSpd || 0 : 0), pure = false;
   const R = P.raw; inc += (has('Projectile') ? R['inc:proj'] || 0 : 0) + (has('AoE') ? R['inc:aoe'] || 0 : 0) + (has('Melee') ? R['inc:melee'] || 0 : 0) + (has('Delayed') ? R.delayInc || 0 : 0) + (has('Shield') ? R.shieldDmg || 0 : 0) + (IM.inc || 0) + (b.cont || b.aura ? IM.dotInc || 0 : 0); critInc += (R.critChance || 0) + (IM.critInc || 0); critDmg += IM.critDmg || 0; aoeInc += IM.aoeInc || 0; rangeInc += IM.rangeInc || 0; projSpd += IM.projSpd || 0; W.projDurInc += has('Projectile') ? IM.projDur || 0 : 0; aspdMore *= 1 + (IM.aspd || 0) / 100; // 标签伤害词条、头冠暴击率（§3.2）
-  if (P.off && !isEngine && !it.fb) { const O = P.off; if (has('Projectile')) { W.extra += O.extra; inc += O.projInc; } if (has('ProjectileCanChain')) W.chain += O.chain; inc += O.inc; aoeInc += O.aoeInc; if (has('AoE')) inc += O.areaInc; critInc += O.critInc; critDmg += O.critDmg; aspdMore *= 1 + O.aspdMore / 100; for (const e of ELEM) W.ail[e] += O.ail / 100; W.offGain = O.gain / 100; W.more *= 1 + O.more / 100; } // 副手：强化主手技能（隐性 sup）
-  if (!isEngine && !it.fb) { aspdMore *= 1 + (R.offAspd || 0) / 100; W.more *= 1 + (R.offMore || 0) / 100; } // 副手词条：主手技能总增
+  if (P.off && !isEngine && !it.th && (!it.fb || it.gem)) { const O = P.off; if (has('Projectile')) { W.extra += O.extra; inc += O.projInc; } if (has('ProjectileCanChain')) W.chain += O.chain; inc += O.inc; aoeInc += O.aoeInc; if (has('AoE')) inc += O.areaInc; critInc += O.critInc; critDmg += O.critDmg; aspdMore *= 1 + O.aspdMore / 100; for (const e of ELEM) W.ail[e] += O.ail / 100; W.offGain = O.gain / 100; W.more *= 1 + O.more / 100; } // 副手：强化主手技能（隐性 sup）
+  if (!isEngine && !it.th && (!it.fb || it.gem)) { aspdMore *= 1 + (R.offAspd || 0) / 100; W.more *= 1 + (R.offMore || 0) / 100; } // 副手词条：主手技能总增
   W.blindMore *= TM.blind ?? 1; W.radMore *= TM.rad ?? 1; W.dotMore *= TM.dot ?? 1;
   if (!b.cont && !b.aura) W.more *= TM['dmg:hit'] ?? 1;
   if (!has('AoE')) W.more *= TM['dmg:nonAoe'] ?? 1;
   if (has('Projectile')) W.more *= TM['dmg:proj'] ?? 1;
-  if (P.flag.whirlHeart) { if (has('Melee') && has('AoE')) W.more *= WH.heartMore; else if (!isEngine && !has('Melee')) W.more *= WH.offhandMul; } // 旋风之心：【近战·范围】
-  if (P.flag.sparkHeart) { if (has('ProjectileCanChain')) W.more *= SP.heartMore; else if (!isEngine) W.more *= SP.offhandMul; } // 织雷之心：【投射物·弹射】
+  if (P.flag.whirlHeart) { if (has('Melee') && has('AoE')) W.more *= WH.heartMore; } // 旋风之心：【近战·范围】
+  if (P.flag.sparkHeart) { if (has('ProjectileCanChain')) W.more *= SP.heartMore; } // 织雷之心：【投射物·弹射】
   const gain = {}, rflat = {}; if (W.offGain) gain[b.el] = W.offGain; // 幽魂法源：额外获得主手元素伤害
-  for (const { m, fx } of activeRunes(it.src || it, P)) {
+  for (const { m, fx } of activeRunes(it.src || it, P, it.src && !it.th ? U('runeLvl') : 0)) {
     W.runes.push(m.mid);
     if (fx.pure) pure = true;
     if (fx.more) W.more *= fx.more;
@@ -211,10 +212,10 @@ function weaponStats(it, P, isEngine) {
   if (has('Delayed') && P.flag.delayMore) W.more *= 1 + P.flag.delayMore / 100; // 誓约：延迟类伤害总增
   if (b.form === 'meteor') { W.delayTot = (W.delay || MT.delay) + P.delayAdd; if (P.flag.delayCrown) W.more *= 1 + P.flag.delayCrown / 100 * W.delayTot / UQX.delayStep; } // 末日冠：每 0.1 秒延迟总增
   if (b.form === 'nova' && P.flag.autoNova) { W.autoNova = 1; W.more *= P.flag.autoNova; } // 永冬法阵：自动脉冲 ×(0.5–0.65)
-  if (P.flag.echoShield) { if (has('Shield')) W.more *= SHT.heartMore; else if (!isEngine) W.more *= SHT.offhandMul; } // 回响圣盾：【盾】
-  if (P.flag.shardChain) { if (has('Spawn')) W.more *= OB.heartMore; else if (!isEngine) W.more *= OB.offhandMul; } // 碎冰连锁：【派生】
-  if (P.flag.starfall) { if (has('Delayed')) W.more *= MT.heartMore; else if (!isEngine) W.more *= MT.offhandMul; } // 星坠雨：【延迟】
-  if (P.flag.shatter) { if (has('Nova') || W.frostNova) W.more *= NV.heartMore; else if (!isEngine) W.more *= NV.offhandMul; } // 碎冰：【新星】
+  if (P.flag.echoShield) { if (has('Shield')) W.more *= SHT.heartMore; } // 回响圣盾：【盾】
+  if (P.flag.shardChain) { if (has('Spawn')) W.more *= OB.heartMore; } // 碎冰连锁：【派生】
+  if (P.flag.starfall) { if (has('Delayed')) W.more *= MT.heartMore; } // 星坠雨：【延迟】
+  if (P.flag.shatter) { if (has('Nova') || W.frostNova) W.more *= NV.heartMore; } // 碎冰：【新星】
   conv('kin', THERMAL_E, U('convKinThermal') / 100); conv('exp', ['nuc'], U('convExpNuc') / 100); conv('pla', ['nuc'], U('convPlaNuc') / 100);
   // 额外获得：按加成前总伤害的比例
   const tmin = ELEM.reduce((s, e) => s + W.min[e], 0), tmax = ELEM.reduce((s, e) => s + W.max[e], 0);
@@ -238,7 +239,7 @@ function weaponStats(it, P, isEngine) {
   W.projLifeMul = Math.max(0.1, 1 + W.projDurInc / 100) * W.projDurMore; // 普通投射物：只吃投射物持续时间
   W.sparkLifeMul = Math.max(0.1, 1 + (P.durInc + W.projDurInc) / 100) * W.projDurMore; // 游雷：持续时间提高 + 投射物持续时间提高（相加），再乘符文总增
   W.aoeR = qv(b.aoe || 0, q) * UNIT * (1 + aoeInc / 100);
-  W.auraDps = b.aura ? qv(b.aura, q) * (1 + inc / 100) * W.more * W.dotMore : 0;
+  W.auraDps = b.aura ? qv(b.aura, q) * (b.gI || 1) * (1 + inc / 100) * W.more * W.dotMore : 0;
   W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100) * (has('Projectile') ? TM.projSpd ?? 1 : 1) * (has('Projectile') ? Math.max(GEAR.projSlowMin, 1 - ((P.raw.projSlow || 0) + (TA.projSlow || 0) + (IM.projSlow || 0)) / 100) : 1); // 投射物速度降低（寒魄球的收益）
   if (b.form === 'shieldThrow' && P.flag.martyrThrow) W.chain *= UQX.martyrChainMul; // 殉道者之盾：弹射 ×2
   if (b.form === 'shieldThrow') { W.pierce = 1; W.thSpd = SHT.speed * W.spd / (b.fast ? MECH.projSpeedFast : MECH.projSpeed); W.thLife = SHT.life * W.sparkLifeMul; } // 圣盾掷：无限穿透

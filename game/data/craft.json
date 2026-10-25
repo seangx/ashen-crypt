@@ -56,7 +56,8 @@
     "n": "立誓符",
     "c": "#c0392b",
     "special": 1
-   }
+   },
+   { "id": "socket", "n": "开孔符", "c": "#7fe0c0", "special": 1, "_说明": "spec-skill-gems：技能石 +1 槽（上限 5）；天梯宝箱 gems.socketDrop% 掉一个" }
   ]
  },
  "fuse": {

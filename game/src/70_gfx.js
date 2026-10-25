@@ -262,7 +262,8 @@ function mkCell(sc, parent, x, y, it, o = {}) {
     if (!isMod) c.add(nine(sc, 1, 1, s - 2, s - 2, 'f_glow', 3).setTint(hex(icol(it))).setAlpha(it.rar ? 1 : 0.45));
     const key = isMod ? 'mod_' + it.mid : 'i_' + iconOf(it); const tw = sc.textures.get(key).getSourceImage().width, th = sc.textures.get(key).getSourceImage().height;
     img(sc, Math.round((s - tw) / 2), Math.round((s - th) / 2), key, c);
-    if (isMod) T(sc, 1, s - 8, String(it.lvl), { size: 'num', color: modActiveHere(it, o.host) ? COL.text : COL.bad, parent: c });
+    if (it.kind === 'gem') { const gr = sc.add.graphics(); gr.lineStyle(1, hex(COL.cyan), 0.85); gr.strokeCircle(s / 2, s / 2, s / 2 - 2); c.add(gr); T(sc, 1, s - 8, String(it.lvl), { size: 'num', color: COL.cyan, parent: c }); } // 技能石：圆形宝石框 + 等级
+    else if (isMod) T(sc, 1, s - 8, String(it.lvl), { size: 'num', color: modActiveHere(it, o.host) ? COL.text : COL.bad, parent: c });
     else if (it.kind === 'map') T(sc, 1, s - 8, String(it.tier), { size: 'num', color: COL.text, parent: c });
     else if (it.q) T(sc, 1, s - 8, String(it.q), { size: 'num', color: COL.dim, parent: c });
     if (!isMod && o.upg && isUpgrade(it)) img(sc, s - 7, 1, 'up', c);
@@ -287,7 +288,7 @@ function showTip(content) { G.ui && G.ui.setTip(content); }
 function hideTip() { G.ui && G.ui.setTip(null); }
 function toast(msg, color) { G.ui && G.ui.toast(msg, color); }
 function feed(msg, color) { G.ui && G.ui.feed(msg, color); }
-function feedItem(it) { feed(`${itemName(it)} · ${QN[it.q]} · ${rarName(it)}`, icol(it)); }
+function feedItem(it) { feed(it.kind === 'gem' ? `技能石 ${itemName(it)} · ${it.lvl} 级 · ${it.sock} 槽` : `${itemName(it)} · ${QN[it.q]} · ${rarName(it)}`, it.kind === 'gem' ? COL.cyan : icol(it)); }
 
 /* ---------- 场景背景 ---------- */
 const SCONCES = [{ x: 90, y: 38 }, { x: 240, y: 38 }, { x: 390, y: 38 }];
