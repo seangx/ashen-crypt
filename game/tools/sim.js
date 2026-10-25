@@ -62,7 +62,7 @@ if (seedsArg) {
   await p.goto('file://' + tmp);
   await p.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 20000 });
   const out = await p.evaluate(opt => {
-    const A = window.__ash; A.G.fx = false; window.__reseed(opt.seed * 7919 + 1);
+    const A = window.__ash; A.G.fx = false; A.setPrepOff(true); window.__reseed(opt.seed * 7919 + 1);
     const S = A.S; const rows = [];
     if (A.G.ui.closeWin) A.G.ui.closeWin();
     const WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, B = opt.build;

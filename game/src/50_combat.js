@@ -236,7 +236,7 @@ function kill(m) {
   if (m.boss) player.life = Math.min(STATS.life, player.life + STATS.life * MECH.bossKillLife / 100); // 打掉守关 Boss 回一截生命
   if (m.boss && RUN.mode === 'ladder') ladderWin(m);
   else if (m.boss) {
-    const BL = PROG.bossLoot;
+    const BL = PROG.bossLoot; RUN.prepFrom = RUN.gain ? RUN.gain.items.length : 0; // 整备面板列出的宝箱装备从这里开始
     const n = Math.round(BL.items * (1 + LX.iiq / 100)) + (rnd() * 100 < LX.chest ? ATLAS.marble.chestItems : 0);
     for (let i = 0; i < n; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir, true) }, 1);
     const c = Math.round((RUN.cache || 0) * BL.cacheMul); RUN.cache = 0; // 这一层攒下的装备（倍数补偿撤回 / 灯灭时没打到 Boss 的那部分）
@@ -553,6 +553,7 @@ function leech(W, a) {
 }
 function logic(dt) {
   const P = STATS;
+  if (RUN && RUN.prep && !RUN.ending) return prepStep(dt); // 整备：世界暂停
   leechFrame++;
   leechClock += dt; while (leechLog.length && leechClock - leechLog[0][0] >= 1) leechLog.shift();
   if (player.leechCapped > 0) player.leechCapped -= dt;
@@ -614,7 +615,7 @@ function logic(dt) {
   if (RUN.next) { // 下一层之前：捡起地上的东西
     for (const dp of drops) { dp.age += dt; if (dp.z > 0 || dp.vz > 0) { dp.vz -= 260 * dt; dp.z = Math.max(0, dp.z + dp.vz * dt); dp.x += dp.vx * dt; dp.y += dp.vy * dt; if (!dp.z) dp.vz = 0; } else if (dp.age > 0.6) { const dx = player.x - dp.x, dy = player.y - dp.y, dl = Math.hypot(dx, dy); if (dl < 6) { collect(dp); dp.done = true; } else { dp.x += dx / dl * Math.min(260 * dt, dl); dp.y += dy / dl * Math.min(260 * dt, dl); } } } // 宝箱先炸开落地，再飞向玩家
     drops = drops.filter(d => !d.done);
-    RUN.next = Math.max(0, RUN.next - dt); if (!RUN.next) { for (const dp of drops) collect(dp); drops = []; nextFloor(); }
+    RUN.next = Math.max(0, RUN.next - dt); if (!RUN.next) { for (const dp of drops) collect(dp); drops = []; openPrep(); }
     stepProjs(dt); return;
   }
   // 转旋风的时候：风暴之眼把身边的怪卷过来；旋风之心不断甩出小旋风
@@ -909,8 +910,21 @@ function swapSave(raw) {
 function loadDemo(name) { try { if (!hasBackup()) localStorage.setItem(BACKUP_KEY, JSON.stringify(S)); } catch (e) { } swapSave(DEMO_SAVES[name]); }
 function restoreBackup() { let raw = null; try { raw = localStorage.getItem(BACKUP_KEY); } catch (e) { } if (!raw) return; swapSave(raw); try { localStorage.removeItem(BACKUP_KEY); } catch (e) { } }
 /* 提前返回：玩家手动结束这一趟。语义同紧急撤回（平安返回、捡到的和地上的都带走、不算阵亡、当前层不算通过），并停掉自动循环 */
-function abandonRun() {
+// 整备（层间）：宝箱捡完后世界暂停，换装 / 插符文 / 点天赋，再继续下一层或回营地。
+// 自动循环开着时倒计时 prepAuto 秒自动继续（点任意处取消）；模拟（PREP_OFF）和没有界面时直接下一层。
+var PREP_OFF = false;
+function openPrep() {
+  if (PREP_OFF || !G.ui || !G.ui.openPrep) return nextFloor();
+  RUN.prep = { items: (RUN.gain ? RUN.gain.items.slice(RUN.prepFrom || 0) : []), t: S.auto.loop ? PROG.run.prepAuto : 0, cd: !!S.auto.loop };
+  G.ui.openPrep();
+}
+function prepStep(dt) { const R = RUN.prep; if (R.cd && !(G.ui && G.ui.winId && G.ui.winId !== 'prep')) { R.t -= dt; if (R.t <= 0) prepContinue(); } }
+function prepCancelCd() { if (RUN && RUN.prep) RUN.prep.cd = false; }
+function prepContinue() { if (!RUN || !RUN.prep) return; RUN.prep = null; if (G.ui && G.ui.closePrep) G.ui.closePrep(); refreshStats(); nextFloor(); }
+function prepReturn() { if (!RUN || !RUN.prep) return; RUN.prep = null; if (G.ui && G.ui.closePrep) G.ui.closePrep(); refreshStats(); abandonRun(true); }
+function abandonRun(cleared) {
   if (!RUN || RUN.ending) return false;
+  if (RUN.prep) { RUN.prep = null; if (G.ui && G.ui.closePrep) G.ui.closePrep(); }
   RUN.result = 'abandon'; RUN.ending = 0.8; RUN.next = 0; S.auto.loop = false; sfx('out');
   if (G.ui) G.ui.banner('提前返回', COL.emberHi); return true;
 }
