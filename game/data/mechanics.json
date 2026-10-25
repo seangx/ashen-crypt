@@ -263,7 +263,7 @@
   "decay": 2,
   "morePer": 1.08,
   "rngPer": 4,
-  "heartMore": 2.3,
+  "heartMore": 2.7,
   "offhandMul": 0.5,
   "dashMul": 1,
   "spinMoveMul": 0.8,
