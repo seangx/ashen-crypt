@@ -192,7 +192,7 @@ class MobileUI extends UI {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) return;
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
-    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'atlas', 'help'].includes(id);
+    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'atlas', 'help', 'prep'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
     const y = native ? MTOP + 8 : Math.round(clamp((H - NAV_H - h) / 2, MTOP + 12, H)), c = this.add.container(this.panMax ? 4 - this.pan : Math.round((W - w) / 2), y).setDepth(100); this.winC = c; c.w = w;
@@ -215,7 +215,7 @@ class MobileUI extends UI {
     if (anim) { c.setAlpha(0.6); this.tweens.add({ targets: c, alpha: 1, duration: 90 }); }
   }
   openWin(id, arg) { if (this.winId !== id) this.pan = 0; super.openWin(id, arg); }
-  closeWin() { STICK.on = false; this.closePopup(); super.closeWin(); }
+  closeWin(force) { STICK.on = false; this.closePopup(); super.closeWin(force); }
   /* 设置：竖屏原生 */
   win_settings(c, w, h) {
     const row = (y, name, sub, val, fn) => { c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, name, { parent: c }); T(this, 16, y + 21, sub, { size: 8, color: COL.dim, parent: c }); if (val != null) mkBtn(this, c, w - 70, y + 7, 54, 22, val, () => { fn(); save(); this.refresh(); }, { style: 'w' }); };
@@ -679,6 +679,7 @@ class MobileUI extends UI {
     this.updateHud(); this.updateCamp();
     this.dimR && this.dimR.setVisible(!!this.winId); this.drawStick(Math.min(0.05, (delta || 16) / 1000));
     if (this.tipC) this.placeTip();
+    if (this.winId === 'prep' && this.prepCdT && this.prepCdT.active) this.prepCdT.setText(this.prepCdText());
     this.feedC.list.forEach(t => { const age = G.time - t.feed.t; t.setAlpha(age > 8 ? Math.max(0, 1 - (age - 8) / 2) : 1); });
     this.feedC.setVisible(!this.winId); this.autoT.setVisible(!this.winId);
   }
