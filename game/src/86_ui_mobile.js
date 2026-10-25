@@ -226,8 +226,8 @@ class MobileUI extends UI {
     row(y, '特效', '飘字、拾取记录、横幅和震屏', G.fx ? '开' : '关', () => { G.fx = !G.fx; }); y += 42;
     row(y, '推层', S.auto.lock ? `锁定在难度 ${S.depth}` : '打赢就去最深层，连输退一层', S.auto.lock ? '锁层' : '推层', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; }); y += 42;
     c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, `难度 ${S.depth}`, { parent: c }); T(this, 16, y + 21, `最深纪录：第 ${S.maxDepth - 1} 层通关`, { size: 8, color: COL.dim, parent: c });
-    mkBtn(this, c, w - 70, y + 7, 26, 22, '<', () => { if (S.depth > 1 && !RUN) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { disabled: RUN || S.depth <= 1 });
-    mkBtn(this, c, w - 42, y + 7, 26, 22, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { disabled: RUN || S.depth >= S.maxDepth }); y += 50;
+    mkBtn(this, c, w - 74, y + 4, 30, 28, '<', () => { if (S.depth > 1 && !RUN) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { disabled: RUN || S.depth <= 1 });
+    mkBtn(this, c, w - 42, y + 4, 30, 28, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { disabled: RUN || S.depth >= S.maxDepth }); y += 50;
     TW(this, 12, y, '只有一个操作：移动。武器自动攻击最近的敌人，没有冲刺和主动技能。', w - 24, { size: 8, color: COL.faint, parent: c });
   }
   equipSlots(c, ox, oy, onClick, selFn) {
@@ -356,7 +356,7 @@ class MobileUI extends UI {
     const opts = craftable(it) ? AFF.filter(a => shardN(a.k) > 0 && canAdd(it, a)) : [];
     const per = Math.max(1, Math.floor((h - y - 16) / 30)), pages = Math.max(1, Math.ceil(opts.length / per)); addPage = Math.min(addPage, pages - 1);
     T(this, 10, y + 2, `加词条（${opts.length} 种可加）`, { size: 8, color: COL.dim, parent: c });
-    if (pages > 1) { mkBtn(this, c, w - 70, y - 6, 28, 24, '<', () => { addPage = (addPage + pages - 1) % pages; this.refresh(); }, { size: 8 }); mkBtn(this, c, w - 38, y - 6, 28, 24, '>', () => { addPage = (addPage + 1) % pages; this.refresh(); }, { size: 8 }); }
+    if (pages > 1) { mkBtn(this, c, w - 70, y - 8, 28, 28, '<', () => { addPage = (addPage + pages - 1) % pages; this.refresh(); }, { size: 8 }); mkBtn(this, c, w - 38, y - 8, 28, 28, '>', () => { addPage = (addPage + 1) % pages; this.refresh(); }, { size: 8 }); }
     y += 16; const aw = anvilWhy(it);
     if (!opts.length) TW(this, 10, y, aw || (it.affs.length >= AFF_MAX ? `已经有 ${AFF_MAX} 条词条` : '没有能加到这件装备上的碎片。'), w - 20, { size: 8, color: COL.faint, parent: c });
     opts.slice(addPage * per, addPage * per + per).forEach((a, i) => mkBtn(this, c, 10, y + i * 30, w - 20, 28, `${a.type === 'P' ? '前' : '后'} ${affName(a)} ×${shardN(a.k)}`, () => done(craftAdd(it, a.k, useHope)), { size: 8, labelX: 4, disabled: !!addWhy(it, a.k) }));
@@ -446,7 +446,7 @@ class MobileUI extends UI {
     const n = S.stash.filter(salvWhy).length;
     mkBtn(this, c, 12, y, w - 24, 30, `现在分解背包（${n} 件）`, () => this.ask(`分解背包里 ${n} 件？`, '分解', '会变成词条碎片，不能撤销。', () => { const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个`, '#d9cfb8'); save(); this.refresh(); }), { size: 8, style: 'w', disabled: !n }); y += 38;
     T(this, 12, y, `收藏词条 ${fav.length} 个${R.fav ? '' : '（默认）'}`, { size: 8, color: COL.emberHi, parent: c });
-    if (R.fav) mkBtn(this, c, w - 84, y - 6, 72, 22, '恢复默认', () => { R.fav = null; save(); this.refresh(); }, { size: 8 });
+    if (R.fav) mkBtn(this, c, w - 84, y - 8, 72, 26, '恢复默认', () => { R.fav = null; save(); this.refresh(); }, { size: 8 });
     y += 18;
     const list = AFF.filter(a => !a.tk).sort((a, b) => (fav.includes(b.k) - fav.includes(a.k)) || (affName(a) < affName(b) ? -1 : 1));
     const rows = Math.max(1, Math.floor((h - y - 40) / 24)), per = rows * 2, pages = Math.ceil(list.length / per); this.salvPage = Math.min(this.salvPage || 0, pages - 1);
@@ -480,11 +480,11 @@ class MobileUI extends UI {
     T(this, w - 12, 30, L.best ? `最高 ${L.best} 层 · ${mmss(L.bestTime)}` : '还没有通过任何一层', { size: 8, align: 'right', parent: c });
     T(this, 12, 46, `已解锁到第 ${L.unlocked} 层`, { size: 8, color: COL.good, parent: c });
     let y = 60;
-    mkBtn(this, c, 12, y, 30, 24, '<', () => { ladPick = Math.max(1, ladPick - 1); this.refresh(); }, { disabled: ladPick <= 1 });
+    mkBtn(this, c, 12, y, 30, 28, '<', () => { ladPick = Math.max(1, ladPick - 1); this.refresh(); }, { disabled: ladPick <= 1 });
     T(this, 82, y + 12, `第 ${ladPick} 层`, { align: 'center', valign: 'middle', color: COL.emberHi, parent: c });
-    mkBtn(this, c, 122, y, 30, 24, '>', () => { ladPick = Math.min(L.unlocked, ladPick + 1); this.refresh(); }, { disabled: ladPick >= L.unlocked });
-    mkBtn(this, c, 158, y, 50, 24, '最高', () => { ladPick = L.unlocked; this.refresh(); }, { size: 8, disabled: ladPick >= L.unlocked });
-    mkBtn(this, c, 212, y, w - 224, 24, L.chain ? '连打开' : '连打关', () => { L.chain = !L.chain; save(); this.refresh(); }, { size: 8, style: L.chain ? 's' : 'n' });
+    mkBtn(this, c, 122, y, 30, 28, '>', () => { ladPick = Math.min(L.unlocked, ladPick + 1); this.refresh(); }, { disabled: ladPick >= L.unlocked });
+    mkBtn(this, c, 158, y, 50, 28, '最高', () => { ladPick = L.unlocked; this.refresh(); }, { size: 8, disabled: ladPick >= L.unlocked });
+    mkBtn(this, c, 212, y, w - 224, 28, L.chain ? '连打开' : '连打关', () => { L.chain = !L.chain; save(); this.refresh(); }, { size: 8, style: L.chain ? 's' : 'n' });
     y += 30; const busy = ladderBusy(), queued = LAD.pending;
     mkBtn(this, c, 12, y, w - 24, 28, busy ? '进行中' : queued ? '已排队（这局打完后开始）' : RUN ? '挑战（这局打完后开始）' : '挑战', () => { ladderChallenge(ladPick); this.refresh(); }, { style: 'w', disabled: !!(busy || queued) });
     y += 36; const R = LD.run, J = LD.jumps.list;

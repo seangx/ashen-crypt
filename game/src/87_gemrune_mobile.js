@@ -35,7 +35,7 @@ const rbGems = sel => S.stash.filter(g => g.kind === 'gem' && sel[bandOf(g.lvl)]
 Object.assign(MobileUI.prototype, {
   chipRow(c, x, y, w, opts, cur, fn) { // 筛选小按钮：[[值, 文字], …]
     const bw = Math.floor((w - (opts.length - 1) * 2) / opts.length);
-    opts.forEach(([v, n], i) => mkBtn(this, c, x + i * (bw + 2), y, bw, 26, n, () => fn(v), { size: 8, style: cur === v ? 's' : 'n' }));
+    opts.forEach(([v, n], i) => mkBtn(this, c, x + i * (bw + 2), y, bw, 28, n, () => fn(v), { size: 8, style: cur === v ? 'w' : 'n' }));
   },
   badge(c, x, y, s, n, anyNew) {
     if (n > 1) { rect(this, x + s - 17, y + 1, 16, 9, COL.ink, 0.8, c); T(this, x + s - 2, y + 1, '×' + n, { size: 'num', color: COL.emberHi, align: 'right', parent: c }); }
@@ -78,7 +78,8 @@ Object.assign(MobileUI.prototype, {
     const stacks = stackBy(S.mods.filter(F), runeKey).sort(runeSort === 'lvl' ? (a, b) => b[0].lvl - a[0].lvl || MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) : (a, b) => MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) || b[0].lvl - a[0].lvl);
     const cols = MCOLS, st = TOUCH, x0 = Math.round((w - cols * st) / 2), rows = Math.max(1, Math.floor((h - y - 52) / st)), per = cols * rows, pages = Math.max(1, Math.ceil(stacks.length / per));
     runePage = clamp(runePage, 0, pages - 1);
-    if (!stacks.length) TW(this, 12, y + 6, S.mods.length ? { fit: host ? `没有能在${SLOTS.find(s => s.id === modWeapon).n}上生效的符文。` : '先选一个有装备的部位。', new: '没有新符文。', field: '没有力场符文（力场符文只在法阵里生效）。' }[runeF] || '没有符合的符文。' : '还没有符文。打怪会掉落，Boss 宝箱里也有。', w - 24, { size: 8, color: COL.faint, parent: c });
+    if (!stacks.length) TW(this, 12, y + 6, S.mods.length ? { fit: host ? `没有能在${SLOTS.find(s => s.id === modWeapon).n}上生效的符文。` : '先选一个有装备的部位。', new: '没有新符文。', field: '没有力场符文（力场符文只在法阵里生效）。' }[runeF] || '没有符合的符文。' : '还没有符文。打怪会掉落，Boss 宝箱里也有。', w - 24, { size: 8, color: COL.dim, parent: c });
+    if (!stacks.length && runeF !== 'all' && S.mods.length) mkBtn(this, c, 12, y + 34, 96, 28, '显示全部', () => { runeF = 'all'; this.refresh(); }, { size: 8 });
     stacks.slice(runePage * per, runePage * per + per).forEach((sk, i) => {
       const x = x0 + (i % cols) * st, yy = y + (i / cols | 0) * st, rep = sk[0];
       if (feedOn && sk.includes(feedSrc)) rect(this, x - 1, yy - 1, st, st, COL.ember, 1, c);
@@ -132,7 +133,8 @@ Object.assign(MobileUI.prototype, {
     const cur = S.equip.gem && GEM_BY[S.equip.gem.b], F = { all: () => true, new: g => g.isNew, form: g => cur && GEM_BY[g.b].form === cur.form }[gemF] || (() => true);
     const all = S.stash.filter(g => g.kind === 'gem'), stacks = stackBy(all.filter(F), gemKey).sort(gemSort === 'lvl' ? (a, b) => b[0].lvl - a[0].lvl || (b[0].q || 0) - (a[0].q || 0) : (a, b) => (b[0].q || 0) - (a[0].q || 0) || b[0].lvl - a[0].lvl);
     const cols = MCOLS, st = TOUCH, x0 = Math.round((w - cols * st) / 2);
-    if (!stacks.length) TW(this, 12, y + 6, all.length ? { new: '没有新技能石。', form: cur ? `没有和${cur.n}同形态的技能石。` : '身上还没有技能石。' }[gemF] || '没有符合的技能石。' : '背包里没有技能石。Boss 宝箱和精英会掉。', w - 24, { size: 8, color: COL.faint, parent: c });
+    if (!stacks.length) TW(this, 12, y + 6, all.length ? { new: '没有新技能石。', form: cur ? `没有和${cur.n}同形态的技能石。` : '身上还没有技能石。' }[gemF] || '没有符合的技能石。' : '背包里没有技能石。Boss 宝箱和精英会掉。', w - 24, { size: 8, color: COL.dim, parent: c });
+    if (!stacks.length && gemF !== 'all' && all.length) mkBtn(this, c, 12, y + 34, 96, 28, '显示全部', () => { gemF = 'all'; this.refresh(); }, { size: 8 });
     stacks.slice(0, cols * 8).forEach((sk, i) => {
       const x = x0 + (i % cols) * st, yy = y + (i / cols | 0) * st;
       mkCell(this, c, x, yy, sk[0], { size: st, upg: true, acts: v => { sk.forEach(g => { g.isNew = false; }); return this.itemActs(v); } });
