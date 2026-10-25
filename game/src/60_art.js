@@ -145,7 +145,7 @@ function buildSprites() {
   SPR.skull = sprite(ART.skull); SPR.torch = sprite(ART.torch);
   SPR.icons = {};
   for (const k of ['sword', 'dagger', 'staff', 'axe', 'scepter', 'hood', 'helm', 'crown', 'robe', 'armor', 'armorg', 'mail', 'ring', 'ringb', 'ringm', 'ringd', 'amulet', 'amber', 'flame', 'heart', 'lantern', 'scythe']) SPR.icons[k] = sprite(ART[k]);
-  for (const k in ART) if (/^[wa]_/.test(k)) SPR.icons[k] = sprite(ART[k]);
+  for (const k in ART) if (/^[wao]_/.test(k)) SPR.icons[k] = sprite(ART[k]);
   SPR.hero = [sprite(ART.hero0), sprite(ART.hero1)]; SPR.heroFl = SPR.hero.map(c => silhouette(c, '#ffffff'));
   SPR.shard = sprite(ART.shard); SPR.glyphs = {}; for (const g of GLYPHS) SPR.glyphs[g.id] = makeGlyph(g.c);
   SPR.mods = {}; for (const m of MODS) SPR.mods[m.id] = makeGem(modColor(m));
@@ -250,6 +250,16 @@ Object.assign(ART, {
   a_sigil_e: ['............', '.....kk.....', '....koOk....', '...koyyok...', '..koywwyok..', '.koyw..wyok.', '.koyw..wyok.', '..koywwyok..', '...koyyok...', '....koOk....', '.....kk.....', '............'],
   a_mask: ['............', '...wwwwww...', '..wwbwwbww..', '..wkkwwkkw..', '..wwwqqwww..', '..wbwqqwbw..', '...wqwwqw...', '...wwqqww...', '....wwww....', '............', '............', '............'],
 });
+// 副手图标 12×12（箭袋 / 法源 / 香炉 / 图腾 / 提灯）
+Object.assign(ART, {
+  o_quiver: ['.......w.w..', '......wbwb..', '.....N.v.v..', '....NnNv.v..', '...NnnNnv...', '...nnnnNn...', '..NnnnnN....', '..nnnnNn....', '.NnnnnN.....', '.nnnnNn.....', '.NnnN.......', '..NN........'],
+  o_source: ['.....pp.....', '....pPPp....', '...pPllPp...', '..pPlwwlPp..', '..pPlwwlPp..', '...pPllPp...', '....pPPp....', '.....pp.....', '....kVVk....', '...kVvvVk...', '...kkkkkk...', '............'],
+  o_censer: ['.....o......', '....oyo.....', '.....o......', '...NNNNN....', '..NnnnnnN...', '.NnyonyonN..', '.NnnnnnnnN..', '..NnnnnnN...', '...NNNNN....', '....N.N.....', '...NN.NN....', '............'],
+  o_totem: ['...wwwww....', '..wbwwwbw...', '..wkwwwkw...', '..wwbbbww...', '...wkwkw....', '....nnn.....', '...yYyYy....', '...YyYyY....', '....nnn.....', '....nNn.....', '....nNn.....', '....NNN.....'],
+  o_lantern: ['.....kk.....', '....k..k....', '...kkkkkk...', '...kcCCck...', '..kcCllCck..', '..kCllwlCk..', '..kCllllCk..', '..kcCllCck..', '...kcCCck...', '...kkkkkk...', '....kkkk....', '............'],
+});
+// 副手在纸娃娃手上（小图，[行, 握点 x, 握点 y]）
+Object.assign(HELD, { BoneQuiver: [['.ww', 'nNw', 'nN.', 'N..'], 1, 1], SoulSource: [['.p.', 'plp', '.p.'], 1, 2], AshCenser: [['.o.', 'NnN', '.N.'], 1, 1], BoneTotem: [['www', 'wkw', '.n.', '.n.'], 1, 2], GraveLantern: [['.k.', 'kck', 'klk', '.k.'], 1, 0] });
 // 头冠在纸娃娃上：换兜帽颜色，或者叠一层头饰
 const HEAD_DOLL = {
   TitaniumCore: { over: ['..ssss..', '.sSvvSs.', 'sSSSSSSs'], ox: 2, oy: -1 },

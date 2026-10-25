@@ -67,7 +67,7 @@ async function run(build, IL) {
       it.rar = it.affs.length > 2 ? 2 : it.affs.length ? 1 : 0; it.rn = it.rar === 2 ? '毕业' : null; return it;
     };
     const Q = (() => { const ok = A.DATA.loot.quality.list.map((q, i) => i).filter(i => IL >= A.DATA.loot.quality.list[i].ilvlMin); return ok[ok.length - 1]; })();
-    const pools = { wl: ['weapon', A.WEAPONS], wr: ['weapon', A.WEAPONS], shield: ['shield', A.ARMORS.shield], core: ['core', A.ARMORS.core], engine: ['engine', A.ARMORS.engine], hub: ['hub', A.ARMORS.hub] };
+    const pools = { wl: ['weapon', A.WEAPONS], wr: ['off', A.ARMORS.off], shield: ['shield', A.ARMORS.shield], core: ['core', A.ARMORS.core], engine: ['engine', A.ARMORS.engine], hub: ['hub', A.ARMORS.hub] };
     const make = (kind, b) => { const it = A.newItem(kind, b, IL, Q, 0); return it; };
     const RL = Math.max(1, Math.min(20, Math.round(IL / 5))), xpAt = L => L <= 1 ? 0 : A.DATA.astro.modXp[L - 2];
     const runesFor = (it, order) => { if (!it.sock) return; it.sock = it.kind === 'shield' ? 2 : Math.max(it.sock, 4); it.mods = Array(it.sock).fill(null); const cands = (order || A.DATA.runes.list.map(r => r.id)).map(id => A.newMod(id, xpAt(RL))).filter(m => A.modActive(m, it)); let k = 0; for (const m of (order ? cands : cands.sort(() => rnd() - 0.5))) { if (k >= it.sock) break; it.mods[k++] = m; } };
@@ -78,7 +78,7 @@ async function run(build, IL) {
       let best = null;
       const UQ = CORE || (build === 'whirl' ? 'StormEye' : BP.uniqueId); if (ARCH && s === 'core' && IL >= 20 && CORE !== 'none' && UQ) { best = { it: A.newUnique(UQ, IL) }; }
       else if (build === 'random') { const it = fill(make(kind, pick(bases)), s); best = { it }; }
-      else for (const b of bases) { let it; try { it = make(kind, b); } catch (e) { continue; } fill(it, s); if (s === 'wl' || s === 'wr' || (ARCH && s === BS)) runesFor(it, ARCH && s === BS ? BP.runeOrder : null); const v = ev({ ...S.equip, [s]: it }); if (!best || v > best.v) best = { v, it }; }
+      else for (const b of bases) { let it; try { it = make(kind, b); } catch (e) { continue; } fill(it, s); if (s === 'wl' || (ARCH && s === BS)) runesFor(it, ARCH && s === BS ? BP.runeOrder : null); const v = ev({ ...S.equip, [s]: it }); if (!best || v > best.v) best = { v, it }; }
       if ((best.it.kind === 'weapon' || (ARCH && s === BS)) && !(best.it.mods || []).some(Boolean)) runesFor(best.it, ARCH && s === BS ? BP.runeOrder : null);
       S.equip[s] = best.it;
     }

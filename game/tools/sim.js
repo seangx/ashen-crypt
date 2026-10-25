@@ -85,7 +85,7 @@ if (seedsArg) {
       // 符文：先插武器 / 头冠 / 遁靴（生效才插），剩下的塞进法阵
       if (opt.gear === 'auto') for (const m of [...S.mods]) {
         let placed = false;
-        for (const s of ['wl', 'wr', 'core', 'engine', 'hub']) { const w = S.equip[s]; if (!w || !w.sock) continue; const k = w.mods.indexOf(null); if (k < 0) continue; if (s === 'hub' || A.modActive(m, w)) { w.mods[k] = m; placed = true; break; } }
+        for (const s of ['wl', 'core', 'engine', 'hub']) { const w = S.equip[s]; if (!w || !w.sock) continue; const k = w.mods.indexOf(null); if (k < 0) continue; if (s === 'hub' || A.modActive(m, w)) { w.mods[k] = m; placed = true; break; } }
         if (placed) S.mods = S.mods.filter(x => x !== m);
       }
     };
@@ -120,9 +120,9 @@ if (seedsArg) {
       // 换装：分数（秒伤 + 护甲 + 灵障）变高就换
       if (opt.gear === 'auto') for (const it of [...S.stash]) {
         if (it.kind === 'chip') continue;
-        let slot = it.kind === 'weapon' ? (S.equip.wr ? (A.itemValue(it) > A.itemValue(S.equip.wl) ? 'wl' : 'wr') : 'wr') : it.kind;
+        let slot = it.kind === 'weapon' ? 'wl' : it.kind === 'off' ? 'wr' : it.kind; // 只有主手武器；副手另算
         if (ARCH && BS === 'shield' && it.kind === 'shield' && it.b === BASE && !(S.equip.shield && S.equip.shield.b === BASE)) { swapIn(it, 'shield'); continue; }
-        if (ARCH && BS === 'wl' && it.kind === 'weapon') { slot = it.b === BASE ? 'wl' : 'wr'; if (slot === 'wl' && !(S.equip.wl && S.equip.wl.b === BASE)) { swapIn(it, 'wl'); continue; } }
+        if (ARCH && BS === 'wl' && it.kind === 'weapon') { if (it.b !== BASE) continue; if (!(S.equip.wl && S.equip.wl.b === BASE)) { swapIn(it, 'wl'); continue; } }
         const cur = S.equip[slot]; if (!cur) { A.equipItem(it, slot); continue; }
         if (it.kind === 'weapon') { if (evS({ ...S.equip, [slot]: withMods(it, cur) }) > evS(S.equip)) swapIn(it, slot); continue; }
         const before = score(); A.equipItem(it, slot); if (score() < before) A.equipItem(cur, slot);
@@ -159,7 +159,7 @@ if (seedsArg) {
           };
           // 新底材：每个部位挑物品等级最高的 3 件，做完比身上的好就换上
           for (const s of slots) {
-            const kind = s === 'wl' || s === 'wr' ? 'weapon' : s;
+            const kind = s === 'wl' ? 'weapon' : s === 'wr' ? 'off' : s;
             const cands = S.stash.filter(x => x.kind === kind && fits(x, s) && A.craftable(x) && x.fp > 0).sort((a, b) => (b.ilvl + b.q * 5) - (a.ilvl + a.q * 5)).slice(0, 3);
             for (const it of cands) { craftOn(it, s); const cur = ev(S.equip); if (ev({ ...S.equip, [s]: kind === 'weapon' ? withMods(it, S.equip[s]) : it }) > cur) { kind === 'weapon' ? swapIn(it, s) : A.equipItem(it, s); crafts.swap = (crafts.swap || 0) + 1; } }
             A.refreshStats();

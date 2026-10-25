@@ -11,7 +11,7 @@ const RULE_TEXT = {
   dotMore: v => `持续伤害总增 ${v}%`, 'shred:nuc': v => `命中使敌人瘟疫抗性 -${v}%（3 秒）`, chain: v => `弹射 +${v}（投射物碰到屏幕边反弹的次数，用完就飞出屏幕；闪电链类的瞬发电弧则是在敌人之间连锁）`,
   flatPerMass: v => `每点${ATTR_N.mass}附加 ${v}–${v * 2} 物理伤害`, debrisPerEnergy: v => `每点${ATTR_N.energy}使碎骨范围提高 ${v}%`,
   killInc: v => `本次任务每击杀一个敌人，伤害提高 ${v}%（最多 ${RULES.killInc.max}%）`, cull: v => `敌人生命低于 ${v}% 时直接击杀`,
-  twinNuc: v => `两只手都拿着双生圣焰铳时，瘟疫伤害提高 ${v}%`, convPlaNuc: v => `${v}% 的圣光伤害转换为瘟疫伤害`, massAdd: v => `${ATTR_N.mass} +${v}`,
+  twinNuc: v => `装着副手时，瘟疫伤害提高 ${v}%`, convPlaNuc: v => `${v}% 的圣光伤害转换为瘟疫伤害`, massAdd: v => `${ATTR_N.mass} +${v}`,
   dotInc: v => `持续伤害提高 ${v}%`, burnSlow: v => `灼烧衰减降低 ${v}%`, kinBaseInc: v => `物理基础伤害提高 ${v}%`,
   kinShock: v => `物理伤害有 ${v}% 几率造成感电`, double: v => `${v}% 几率造成双倍伤害`, shockMul: v => `感电效果提高 ${v}%`, runeLvl: v => `这件装备上的符文等级 +${v}`,
   massInc: v => `${ATTR_N.mass}${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`, energyInc: v => `${ATTR_N.energy}${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`, timeInc: v => `${ATTR_N.time}${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`,

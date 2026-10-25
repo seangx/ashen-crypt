@@ -37,11 +37,11 @@ const rarName = it => it.leg ? '传奇' : it.ex ? '溢彩' + RAR[it.rar].n : RAR
 
 // 装备槽
 const SLOTS = [
-  { id: 'wl', n: '左手', kind: 'weapon' }, { id: 'wr', n: '右手', kind: 'weapon' },
+  { id: 'wl', n: '主手', kind: 'weapon' }, { id: 'wr', n: '副手', kind: 'off' }, // 只有主手武器带技能；副手只强化主手技能
   { id: 'shield', n: '盾牌', kind: 'shield' }, { id: 'core', n: '头冠', kind: 'core' },
   { id: 'engine', n: '遁靴', kind: 'engine' }, { id: 'hub', n: '法阵', kind: 'hub' },
 ];
-const KIND_N = { weapon: '武器', shield: '盾牌', core: '头冠', engine: '遁靴', hub: '法阵', chip: '印记' };
+const KIND_N = { weapon: '武器', off: '副手', shield: '盾牌', core: '头冠', engine: '遁靴', hub: '法阵', chip: '印记' };
 
 // 模组槽 / 升级槽数量的随机权重（原作配置：武器、头冠（原作：核心）、遁靴有模组槽；法阵有升级槽）
 const SOCKET_W = LOOT.sockets.weapon;
@@ -63,11 +63,13 @@ const WEAPONS = {};
 for (const k in WEAPON_SKIN) WEAPONS[k] = { key: k, ...ASTRO.weapons[k], ...WEAPON_SKIN[k], tags: ASTRO.weapons[k].tags.filter(t => t !== 'Weapon').concat('Weapon') };
 // 遁靴（原作：引擎，冲刺即技能；本身也带武器标签）
 const ENGINE_SKIN = DATA.items.engines;
-const ARMORS = { shield: {}, core: {}, engine: {}, hub: {} };
+const ARMORS = { shield: {}, core: {}, engine: {}, hub: {}, off: {} };
 for (const k in ENGINE_SKIN) ARMORS.engine[k] = { key: k, ...ASTRO.engines[k], ...ENGINE_SKIN[k] };
 const SHIELD_SKIN = DATA.items.shield, CORE_SKIN = DATA.items.core, HUB_SKIN = DATA.items.hub; // 头冠（原作：核心）
 for (const [kind, skin, src] of [['shield', SHIELD_SKIN, ASTRO.shield], ['core', CORE_SKIN, ASTRO.core], ['hub', HUB_SKIN, ASTRO.nexus]])
   for (const k in skin) ARMORS[kind][k] = { key: k, ...src[k], n: skin[k][0], ic: skin[k][1] };
+// 副手：data/items.json 的 offhand（隐性支援效果 sup）
+for (const k in DATA.items.offhand) if (k[0] !== '_') ARMORS.off[k] = { key: k, ...DATA.items.offhand[k] };
 // 印记（原作：芯片）：插在天赋树的印记槽里
 ARMORS.chip = Object.fromEntries(Object.entries(DATA.items.chip).map(([k, v]) => [k, { key: k, ...v }]));
 const ENGINE_THRUST = ASTRO.thrust; // 原作：所有引擎共享的推力 / 最高速度（按品质）
@@ -124,7 +126,9 @@ for (const k in AFF_TEXT) {
   AFF.push({ k, f, stat, el, local, grp: src.grp, type: src.type, on: src.on, pair: stat === 'flat', tiers: src.tiers, tk: CHIP_TEXT[k] && CHIP_TEXT[k][1], tm: CHIP_TEXT[k] && CHIP_TEXT[k][2] });
 }
 // 流派自带的词条族（data/mechanics.json 的 whirl.affixes）：text 里的 # 填数值
-for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.mechanics.whirl.affixes, ...DATA.mechanics.spark.affixes, ...DATA.mechanics.defense.affixes, ...DATA.mechanics.tags.affixes, ...DATA.mechanics.gear.affixes })) AFF.push({ k, f: v => a.text.replace('#', v), stat: a.stat, el: null, local: !!a.local, grp: a.grp, type: a.type, on: a.on, tag: a.tag, pair: false, tiers: a.tiers, off: !!a.off });
+for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.mechanics.whirl.affixes, ...DATA.mechanics.spark.affixes, ...DATA.mechanics.defense.affixes, ...DATA.mechanics.tags.affixes, ...DATA.mechanics.gear.affixes, ...DATA.mechanics.offhand.affixes })) AFF.push({ k, f: v => a.text.replace('#', v), stat: a.stat, el: null, local: !!a.local, grp: a.grp, type: a.type, on: a.on, tag: a.tag, pair: false, tiers: a.tiers, off: !!a.off });
+// 副手也能掷武器上的非局部词条（攻速、范围、投射物、暴击……）
+if (DATA.mechanics.offhand.weaponAffixes) for (const a of AFF) if (!a.local && a.on && a.on.includes('weapon') && !a.on.includes('off')) a.on = [...a.on, 'off'];
 // 不再掉落的词条（权重全 0 的空词条、等新流派的词条）：铁砧 / 重铸也不出
 for (const a of AFF) if (a.tiers.every(t => !t[1])) a.off = true;
 const AFF_BY = Object.fromEntries(AFF.map(a => [a.k, a]));
@@ -228,7 +232,7 @@ const GLYPHS = CRAFT.glyphs.list;
 const GLYPH_BY = Object.fromEntries(GLYPHS.map(g => [g.id, g]));
 const GLYPHS_DROP = GLYPHS.filter(g => !g.special); // 立誓符只从天梯宝箱单独掉
 const OATH = CRAFT.oath, OATH_BY = Object.fromEntries(OATH.list.map(o => [o.id, o])); // 誓约（spec-bd-gear §3.5）
-const oathFits = (o, it) => o.on.includes(it.kind) || (it.kind === 'weapon' && o.on.includes('wl'));
+const oathFits = (o, it) => o.on.includes(it.kind) || (it.kind === 'weapon' && o.on.includes('wl')) || (it.kind === 'off' && o.on.includes('wr'));
 const UQX = DATA.mechanics.uniq, IMPL = DATA.mechanics.implicit; // 第 5 步独特的固定数值、武器底子隐性倾向
 
 /* 机制常数（data/mechanics.json）和成长、怪物、掉落（data/progression.json、data/loot.json） */
