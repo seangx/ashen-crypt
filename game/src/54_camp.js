@@ -27,6 +27,16 @@ function autoSalvage(items) {
   }
   return out;
 }
+// 批量拆解（手动多选）：按品质勾选 + 单件点选；只动背包里的装备，印记不动，身上穿着的不在背包里
+const BULK_CATS = ['普通', '罕见', '稀有', '独特'];
+const bulkSel = () => { if (!Array.isArray(S.bulkSal) || S.bulkSal.length !== 4) S.bulkSal = [true, false, false, false]; return S.bulkSal; };
+const bulkCat = it => (it.u || it.leg || it.ex || it.rar >= 3) ? 3 : (it.rar | 0);
+const bulkOk = it => !!it && it.kind !== 'chip' && S.stash.includes(it);
+const bulkYield = it => (it.affs || []).reduce((a, x) => a + CRAFT.shatter.perAffix + (x.t + 1 >= CRAFT.shatter.bonusTier ? CRAFT.shatter.bonus : 0), 0);
+// pick：Map(id → true/false) 单件点选，覆盖品质勾选
+const bulkHit = (it, pick) => pick && pick.has(it.id) ? pick.get(it.id) : !!bulkSel()[bulkCat(it)];
+function bulkList(pick) { return S.stash.filter(it => bulkOk(it) && bulkHit(it, pick)); }
+function bulkSalvage(list) { const out = { n: 0, shards: 0 }; for (const it of list) { if (!bulkOk(it)) continue; out.shards += Object.values(salvage(it)).reduce((a, b) => a + b, 0); out.n++; } save(); return out; }
 // 营地里角色的走位：在篝火边慢慢踱步；快出发时走向地窖入口（天梯走向石碑）
 const CAMP_HOME = { x: 240, y: 158 };
 function campTarget() {

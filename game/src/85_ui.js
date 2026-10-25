@@ -395,6 +395,34 @@ class UI extends Phaser.Scene {
   }
   closePrep() { if (this.winId === 'prep') this.closeWin(true); }
   prepCdText() { const R = RUN && RUN.prep; return !R ? '' : R.cd ? `${Math.max(1, Math.ceil(R.t))} 秒后自动继续 · 点任意处取消` : S.auto.loop ? '倒计时已取消' : ''; }
+  openBulk() { this.bulkPick = new Map(); this.openWin('bulk'); }
+  doBulk() { const g = bulkSalvage(bulkList(this.bulkPick)); this.bulkPick = new Map(); if (g.n) toast(`拆解 ${g.n} 件，得到 ${g.shards} 个词条碎片`, '#d9cfb8'); this.refresh(); }
+  /* 批量拆解：按品质多选 + 单件点选（点一下加入/移出），确认后一起拆 */
+  win_bulk(c, w, h) {
+    const mob = typeof MOBILE !== 'undefined' && MOBILE, sel = bulkSel(), pick = this.bulkPick || (this.bulkPick = new Map());
+    const all = S.stash.filter(bulkOk), list = bulkList(pick), yld = list.reduce((a, it) => a + bulkYield(it), 0);
+    let y = mob ? 8 : 10;
+    T(this, 10, y, mob ? '勾选品质，或点物品单独加入/移出' : '勾选品质，或点物品单独加入/移出；身上穿着的不会被拆', { size: 8, color: COL.dim, parent: c }); y += 14;
+    const bh = mob ? 40 : 18, bw = Math.floor((w - 20 - 3 * 4) / 4);
+    BULK_CATS.forEach((n, i) => { const cnt = all.filter(it => bulkCat(it) === i).length;
+      mkBtn(this, c, 10 + i * (bw + 4), y, bw, bh, `${sel[i] ? '■' : '□'} ${n} ${cnt}`, () => { sel[i] = !sel[i]; [...pick.keys()].forEach(id => { const it = findItem(id); if (it && bulkCat(it.it) === i) pick.delete(id); }); save(); this.refresh(); }, { size: 8, style: sel[i] ? 'w' : 'n' }); });
+    y += bh + 6;
+    const cs = mob ? 30 : 18, gap = mob ? 2 : 1, cols = Math.max(1, Math.floor((w - 20 + gap) / (cs + gap))), rows = mob ? Math.max(1, Math.floor((h - y - 110) / (cs + gap))) : 4;
+    S.stash.slice(0, cols * rows).forEach((it, i) => { if (!it) return; const ok = bulkOk(it), on = ok && bulkHit(it, pick);
+      const cx = 10 + (i % cols) * (cs + gap), cy = y + (i / cols | 0) * (cs + gap);
+      mkCell(this, c, cx, cy, it, { size: cs, sel: on, onClick: v => { if (!v || !bulkOk(v)) return; pick.set(v.id, !bulkHit(v, pick)); this.refresh(); } });
+      if (on) T(this, cx + cs - 2, cy + 1, '✕', { size: 8, color: '#ff6a5a', align: 'right', parent: c }); });
+    if (S.stash.length > cols * rows) T(this, 10, y + rows * (cs + gap) + 1, `另 ${S.stash.length - cols * rows} 件未显示（按品质勾选仍会计入）`, { size: 8, color: COL.faint, parent: c });
+    const by = h - (mob ? 50 : 26);
+    T(this, w / 2, by - 16, list.length ? `已选 ${list.length} 件 · 约得词条碎片 ${yld}` : '还没有选中任何装备', { size: 8, color: list.length ? COL.emberHi : COL.faint, align: 'center', parent: c });
+    const hw = Math.floor((w - 24) / 2);
+    mkBtn(this, c, 10, by, hw, bh, '返回', () => this.closeWin(), { size: 8 });
+    const k = confirmKey === 'bulk';
+    mkBtn(this, c, 14 + hw, by, hw, bh, k ? `再点一次确认（${list.length} 件）` : `拆解 ${list.length} 件`, () => {
+      if (!list.length) return;
+      if (this.ask) return this.ask(`拆解 ${list.length} 件装备？`, () => this.doBulk(), '拆解', `约得到 ${yld} 个词条碎片。身上穿着的不受影响，拆了不能撤销。`);
+      if (confirm2('bulk')) this.doBulk(); else this.refresh(); }, { size: 8, style: 'r', disabled: !list.length });
+  }
   win_prep(c, w, h) {
     const R = RUN.prep, title = `整备 · 第 ${RUN.base} 层通过`, mob = typeof MOBILE !== 'undefined' && MOBILE;
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: COL.emberHi, align: 'center', parent: c });
@@ -408,8 +436,8 @@ class UI extends Phaser.Scene {
     let y = 32 + Math.max(1, Math.ceil(show.length / cols)) * (cs + gap) + 6;
     const life = Math.round(player.life / STATS.life * 100);
     T(this, 12, y, `生命 ${life}% · 灯火 ${Math.round(player.soul / STATS.soulMax * 100)}% · 下一层 ${RUN.base + 1}`, { size: 8, color: COL.text, parent: c }); y += 14;
-    const tabs = [['gear', '装备'], ['mods', '符文'], ['tree', '天赋'], ['craft', '铁砧']].filter(([id]) => unlocked(id)), bh = mob ? 40 : 18, tw = Math.floor((w - 24 - (tabs.length - 1) * 4) / Math.max(1, tabs.length));
-    tabs.forEach(([id, n], i) => mkBtn(this, c, 12 + i * (tw + 4), y, tw, bh, n, () => this.openWin(id)));
+    const tabs = [['gear', '装备'], ['mods', '符文'], ['tree', '天赋'], ['craft', '铁砧'], ['bulk', '拆解']].filter(([id]) => id === 'bulk' || unlocked(id)), bh = mob ? 40 : 18, tw = Math.floor((w - 24 - (tabs.length - 1) * 4) / Math.max(1, tabs.length));
+    tabs.forEach(([id, n], i) => mkBtn(this, c, 12 + i * (tw + 4), y, tw, bh, n, () => id === 'bulk' ? this.openBulk() : this.openWin(id)));
     y += bh + 6;
     const by = mob ? Math.max(y + 18, h - bh - 12) : h - bh - 10, half = Math.floor((w - 28) / 2);
     this.prepCdT = T(this, w / 2, by - 14, this.prepCdText(), { size: 8, color: COL.emberHi, align: 'center', parent: c });
@@ -421,14 +449,14 @@ class UI extends Phaser.Scene {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) return;
     if (!this.dimR) { this.dimR = rect(this, 0, TOP_H, W, BOT_Y - TOP_H, COL.ink, 0.6).setDepth(90).setInteractive(); this.dimR.on('pointerup', () => { if (this.winId !== 'summary' && this.winId !== 'prep') this.closeWin(); }); }
-    const [w, h] = { summary: [372, 176], depart: [300, 134], prep: [372, 170] }[this.winId] || [470, 210];
+    const [w, h] = { summary: [372, 176], depart: [300, 134], prep: [372, 170], bulk: [372, 200] }[this.winId] || [470, 210];
     const x = Math.round((W - w) / 2), y = TOP_H + Math.round((BOT_Y - TOP_H - h) / 2);
     const c = this.add.container(x, y).setDepth(100); this.winC = c;
     const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[this.winId] || 'f_win'; // 装备皮革、铁砧石板、其余铁框
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0)); // 九宫格拉伸会把噪点拉成色块，底纹单独平铺
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + this.winId](c, w, h);
-    const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', atlas: '墓图', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛' }[this.winId];
+    const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', atlas: '墓图', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', bulk: '批量拆解' }[this.winId];
     if (title) {
       const pw = textW(title) + 44; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: COL.emberHi, align: 'center', parent: c });
       mkBtn(this, c, w - 20, 4, 15, 14, 'x', () => this.closeWin(), { size: 8, tip: [{ t: '关闭  [Esc]', s: 8 }] });
@@ -469,7 +497,7 @@ class UI extends Phaser.Scene {
       mkCell(this, c, x, y, it, { size: 16, sel: it && it.id === selId, upg: true, onHover: v => { if (v) { hoverId = v.id; this.renderPane(); } }, onOut: () => { hoverId = null; this.renderPane(); }, onClick: v => { if (!v) return; if (selId === v.id) equipItem(v); selId = v.id; v.isNew = false; save(); this.refresh(); } });
     }
     mkBtn(this, c, 140, 118, 40, 16, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
-    mkBtn(this, c, 184, 118, 116, 16, confirmKey === 'junk' ? '再点一次确认' : '拆解所有普通装备', () => { if (confirm2('junk')) { S.stash.filter(x => x.rar === 0).forEach(salvage); save(); } this.refresh(); }, { size: 8, style: confirmKey === 'junk' ? 'r' : 'n' });
+    mkBtn(this, c, 184, 118, 116, 16, confirmKey === 'junk' ? '再点一次确认' : '批量拆解…', () => this.openBulk(), { size: 8 });
     T(this, 140, 140, '点一下选中，再点一下装备。', { size: 8, color: COL.faint, parent: c });
     T(this, 140, 151, '绿色箭头表示比身上那件更好。', { size: 8, color: COL.faint, parent: c });
     this.paneC = this.add.container(306, 6); c.add(this.paneC);
