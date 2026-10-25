@@ -1,6 +1,6 @@
 # 灰烬地窖 · 技能石方案（技能和武器解绑）
 
-2026-10-25 · 设计线程 · 状态：方案稿，未开工
+2026-10-25 · 设计线程 · 状态：方案稿，**已被 spec-skill-gems.md 取代**（改成单技能格 + 副手支援，以那份为准）
 
 Claude Doc（用户读这份）：https://claude.ai/artifact/LjghEy1iLu9kkbeEqApj4j ；本文件是同步副本。
 
