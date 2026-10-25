@@ -66,8 +66,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
       const z = sc.add.zone(-2, cy - 1, w + 4, rh).setOrigin(0).setInteractive(); c.add(z);
       const hl = rect(sc, -2, cy - 1, w + 4, rh, COL.cyan, 0.12, c); c.sendToBack(hl);
       z.on('pointerover', () => hl.setFillStyle(hex(COL.cyan), 0.3)); z.on('pointerout', () => hl.setFillStyle(hex(COL.cyan), 0.12));
-      z.on('pointerup', () => { if (MOBILE && sc.lpFired) { sc.lpFired = false; return; } o.pick(i); });
-      if (MOBILE) longPress(sc, z, () => affDetail(x));
+      z.on('pointerup', () => { if (MOBILE) return affDetail(x, [{ l: '选中这条', style: 'w', fn: () => o.pick(i) }]); o.pick(i); });
       if (MOBILE) cy += rh - 1 - t.h;
     }
     cy += t.h;
@@ -641,7 +640,7 @@ class UI extends Phaser.Scene {
       const out = []; let x = id; while (x && !on(x)) { out.push(x); x = prev[x]; } return out;
     };
     draw();
-    const pick = () => { let best = null, bd = 1e9; const lx = mouse.x - c.x, ly = mouse.y - c.y; if (!inV(lx, ly)) return null; for (const id in TREE.nodes) { const nd = TREE.nodes[id]; const d = (sx(nd.x) - lx) ** 2 + (sy(nd.y) - ly) ** 2, r = rad(nd) + 3; if (d < r * r && d < bd) { bd = d; best = id; } } return best; };
+    const pick = () => { let best = null, bd = 1e9; const lx = mouse.x - c.x, ly = mouse.y - c.y; if (!inV(lx, ly)) return null; for (const id in TREE.nodes) { const nd = TREE.nodes[id]; const d = (sx(nd.x) - lx) ** 2 + (sy(nd.y) - ly) ** 2, r = rad(nd) + (MOBILE ? 9 : 3); if (d < r * r && d < bd) { bd = d; best = id; } } return best; };
     const RAR = { s: ['普通 · 小节点', '#dfe8ff'], n: ['稀有 · 中节点', COL.cyan], k: ['传奇 · 大型节点', COL.emberHi], start: ['起点', COL.emberHi], sock: ['印记槽', COL.cyan] };
     const tipFor = id => {
       const nd = TREE.nodes[id], got = on(id), can = treeCanAlloc(id), [rn, rc] = RAR[nd.kind], need = path.size;
@@ -662,6 +661,14 @@ class UI extends Phaser.Scene {
     z.on('pointerup', () => {
       const d = drag; drag = null; if (d && d.moved) return;
       const id = pick(); if (!id) return; const nd = TREE.nodes[id];
+      if (MOBILE) { // 手机：点节点出详情，点亮 / 退回 / 取下在弹窗里
+        setHov(id); hideTip(); const L = tipFor(id).slice(0, -1), R = () => { refreshStats(); save(); this.refresh(); };
+        const a = treeCanAlloc(id) ? { l: '点亮', style: 'w', fn: () => { S.tree.push(id); sfx('craft'); R(); } }
+          : on(id) && nd.kind === 'sock' && chipIn(id) ? { l: '取下印记', fn: () => { unequipChip(id); R(); } }
+          : on(id) && nd.kind !== 'start' && treeCanRefund(id) ? { l: '退回', fn: () => { treeKeep(S.tree.filter(x => x !== id)); R(); } } : null;
+        if (!a) L.push({ t: tipFor(id).slice(-1)[0].t.replace('点击', ''), s: 8, c: COL.dim });
+        return this.showLines(L, a ? [a] : []);
+      }
       if (treeCanAlloc(id)) { S.tree.push(id); sfx('craft'); }
       else if (on(id) && nd.kind === 'sock' && chipIn(id)) { unequipChip(id); hideTip(); }
       else if (on(id) && treeCanRefund(id)) treeKeep(S.tree.filter(x => x !== id));

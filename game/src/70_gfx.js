@@ -275,8 +275,11 @@ function mkCell(sc, parent, x, y, it, o = {}) {
   zone.on('pointerover', () => { hl.setFillStyle(0xffffff, 0.12); if (o.onHover) o.onHover(it); else if (it) showTip({ item: it }); else if (o.tip) showTip(o.tip); });
   zone.on('pointerout', () => { hl.setFillStyle(0xffffff, 0); if (o.onOut) o.onOut(it); else hideTip(); });
   if (o.onDown) zone.on('pointerdown', p => o.onDown(it, p));
-  if (MOBILE && it) longPress(sc, zone, () => o.onLong ? o.onLong(it) : sc.showDetail && sc.showDetail(it, o.host));
-  zone.on('pointerup', () => { if (MOBILE && sc.lpFired) { sc.lpFired = false; return; } if (o.onClick) { sfx('click'); o.onClick(it); } });
+  zone.on('pointerup', () => {
+    // 手机：点一下就出详情（操作按钮在弹窗里）；选物品用的格子（o.direct）保持点一下就选中
+    if (MOBILE && it && !o.direct && sc.showDetail) { if (sc.drag && sc.drag.moved) return; sfx('click'); return sc.showDetail(it, o.host, o.acts ? o.acts(it) : o.onClick ? [{ l: o.actL || '选中', style: 'w', fn: () => o.onClick(it) }] : []); }
+    if (o.onClick) { sfx('click'); o.onClick(it); }
+  });
   return c;
 }
 // 手机长按：按住 450ms 不动触发；触发后吞掉这次松手的点击
@@ -285,10 +288,10 @@ function longPress(sc, zone, fn) {
     sc.lpT = setTimeout(() => { sc.lpT = null; if (p.isDown && Math.hypot(p.x - x, p.y - y) < 10 && zone.scene && !(sc.drag && sc.drag.moved)) { sc.lpFired = true; hideTip(); fn(); } }, 450); });
   zone.on('pointerout', () => { clearTimeout(sc.lpT); sc.lpT = null; });
 }
-function affDetail(x) {
+function affDetail(x, acts) {
   const a = AFF_BY[x.k], v = (a.tiers[x.t] || [])[0] || [], n = a.tiers.length, rg = a.pair ? `${v[0]}–${v[1]} 到 ${v[2]}–${v[3]}` : v.join(' – ');
   G.ui && G.ui.showLines && G.ui.showLines([{ t: affName(a), c: COL.emberHi }, { t: `${tierLabel(x)} · 第 ${x.t + 1} 档（共 ${n} 档）· ${a.type === 'P' ? '前缀' : '后缀'}`, s: 8, c: COL.dim }, { t: affText(x), c: '#efe2b6' },
-    ...(v.length ? [{ t: `本档数值范围：${rg}`, s: 8 }] : []), { t: `碎片 ${shardN(x.k)} 个`, s: 8, c: COL.faint }]);
+    ...(v.length ? [{ t: `本档数值范围：${rg}`, s: 8 }] : []), { t: `碎片 ${shardN(x.k)} 个`, s: 8, c: COL.faint }], acts);
 }
 function isUpgrade(it) {
   const slot = slotsFor(it)[0]; if (!slot) return false; const eq = S.equip[slot]; if (eq === it || Object.values(S.equip).includes(it)) return false;
