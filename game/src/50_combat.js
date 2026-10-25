@@ -610,8 +610,9 @@ function logic(dt) {
     stepProjs(dt); return;
   }
   if (RUN.next) { // 下一层之前：捡起地上的东西
-    for (const dp of drops) collect(dp); drops = [];
-    RUN.next = Math.max(0, RUN.next - dt); if (!RUN.next) nextFloor();
+    for (const dp of drops) { dp.age += dt; if (dp.z > 0 || dp.vz > 0) { dp.vz -= 260 * dt; dp.z = Math.max(0, dp.z + dp.vz * dt); dp.x += dp.vx * dt; dp.y += dp.vy * dt; if (!dp.z) dp.vz = 0; } else if (dp.age > 0.6) { const dx = player.x - dp.x, dy = player.y - dp.y, dl = Math.hypot(dx, dy); if (dl < 6) { collect(dp); dp.done = true; } else { dp.x += dx / dl * Math.min(260 * dt, dl); dp.y += dy / dl * Math.min(260 * dt, dl); } } } // 宝箱先炸开落地，再飞向玩家
+    drops = drops.filter(d => !d.done);
+    RUN.next = Math.max(0, RUN.next - dt); if (!RUN.next) { for (const dp of drops) collect(dp); drops = []; nextFloor(); }
     stepProjs(dt); return;
   }
   // 转旋风的时候：风暴之眼把身边的怪卷过来；旋风之心不断甩出小旋风
