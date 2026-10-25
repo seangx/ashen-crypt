@@ -10,7 +10,6 @@
   { "id": "anvil", "n": "铁砧", "x": 104, "y": 182, "r": 18, "unlock": "craft", "win": "craft" },
   { "id": "altar", "n": "分解祭坛", "x": 168, "y": 210, "r": 18, "unlock": "craft", "win": "salvage" },
   { "id": "runes", "n": "符文台", "x": 372, "y": 184, "r": 18, "unlock": "mods", "win": "mods" },
-  { "id": "atlas", "n": "墓图台", "x": 306, "y": 210, "r": 18, "unlock": "atlas", "win": "atlas" },
   { "id": "stele", "n": "天梯石碑", "x": 438, "y": 150, "r": 18, "unlock": "ladder", "win": "ladder" }
  ]
 }

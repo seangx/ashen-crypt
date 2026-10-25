@@ -7,10 +7,18 @@ const ladderNeed = N => LD.run.pointsBase + LD.run.pointsPerLevel * N;
 const ladderTier = lvl => { let t = -1; LADDER_TIERS.forEach((x, i) => { if (lvl >= x.at) t = i; }); return t; };
 const ladderJump = left => { for (const [s, j] of LD.jumps.list) if (left >= s) return j; return 1; };
 const ladderBusy = () => RUN && RUN.mode === 'ladder';
+// 天梯层词缀：由 (赛季种子, N) 决定，同一层每次一样（排行榜可比）
+function ladderMods(N) {
+  const M = LD.mods, n = Math.min(M.max, Math.floor(N / M.every)); if (!n) return [];
+  const r = seeded((M.seed * 7919 + N * 104729) >>> 0), pool = [...LAD_AFF], out = [];
+  for (let i = 0; i < n && pool.length; i++) { const a = pool.splice(Math.floor(r() * pool.length), 1)[0]; out.push({ k: a.k, v: Math.round(a.r[0] + r() * (a.r[1] - a.r[0])) }); }
+  return out;
+}
+const ladModText = x => LAD_AFF_BY[x.k].t(x.v);
 function startLadder(N) {
   refreshStats();
-  LX = lootFx(null, true);
-  RUN = { dmg: { whirl: 0, devil: 0, spark: 0, fork: 0 }, mode: 'ladder', L: N, base: N, map: null, mob: { ...(LD.run.mob || {}) }, bossD: bossFor(N), kills: 0, prog: 0, need: ladderNeed(N), limit: LD.run.timeLimit, dens: LD.run.density, eliteMul: LD.run.eliteMul,
+  const mods = ladderMods(N); LX = lootFx(mods); const mob = { ...(LD.run.mob || {}) }; for (const k in LX.mob) mob[k] = (mob[k] || 0) + LX.mob[k];
+  RUN = { dmg: { whirl: 0, devil: 0, spark: 0, fork: 0 }, mode: 'ladder', L: N, base: N, map: null, mods, mob, bossD: bossFor(N), kills: 0, prog: 0, need: Math.round(ladderNeed(N) * (1 + (mob.need || 0) / 100)), limit: LD.run.timeLimit, dens: LD.run.density, eliteMul: LD.run.eliteMul,
     boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, result: null, gain: { items: [], shards: 0, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
   arenaReset();
   if (G.ui) G.ui.banner(`天梯第 ${N} 层`, COL.emberHi);
@@ -34,7 +42,7 @@ function mainElem() {
 function ladderRecord(N, jump) {
   const equip = ['wl', 'wr', 'shield', 'core', 'engine', 'hub'].filter(s => S.equip[s]).map(s => { const it = S.equip[s]; return { slot: s, b: it.b, q: it.q, rar: it.rar, u: it.u || null, affs: it.affs.map(x => [x.k, x.t]) }; });
   const keys = S.tree.filter(id => TREE.nodes[id] && TREE.nodes[id].kind === 'k');
-  const rec = { v: 1, data: DATA_HASH, lvl: N, time: Math.round(RUN.t * 10) / 10, date: new Date().toISOString(), jump,
+  const rec = { v: 1, data: DATA_HASH, lvl: N, mods: (RUN.mods || []).map(x => x.k), time: Math.round(RUN.t * 10) / 10, date: new Date().toISOString(), jump,
     build: { equip, keys, dps: Math.round(STATS.dps), armor: Math.round(STATS.armor), life: Math.round(STATS.life), shield: Math.round(STATS.shield), elem: mainElem() } };
   S.ladder.records.unshift(rec);
   if (S.ladder.records.length > LD.records.max) S.ladder.records.length = LD.records.max;
@@ -45,14 +53,15 @@ function ladderWin(m) {
   const N = RUN.L, L = S.ladder, left = Math.max(0, RUN.limit - RUN.t), jump = ladderJump(left), R = LD.reward;
   S.stats.bosses++; RUN.result = 'win'; RUN.ending = 1.6;
   const exP = N >= R.exaltedFrom ? Math.min(R.exaltedMax, (N - R.exaltedFrom) * R.exaltedPerN) : 0;
-  for (let i = 0; i < R.items; i++) {
+  const nm = (RUN.mods || []).length, MB = LD.mods; // 每条词缀：宝箱 +1 件、碎片 +20%
+  for (let i = 0; i < R.items + nm * MB.items; i++) {
     let it;
     if (rnd() * 100 < exP) it = makeExalted(rollItem(N + R.ilvlBonus, 0, false, 2));
     else { it = rollItem(N + R.ilvlBonus, 0, true, null, true); if (it.u) it.lp = ri(...LOOT.legendary.ladder); }
     if (!it.u && rnd() * 100 < OATH.chestChance) addOath(it); // 天梯宝箱的装备 15% 带誓约
     dropThing(m, { kind: 'item', item: it });
   }
-  const ns = R.shardsBase + Math.floor(N / R.shardsPerN);
+  const ns = Math.round((R.shardsBase + Math.floor(N / R.shardsPerN)) * (1 + nm * MB.shards));
   for (let i = 0; i < ns; i++) dropThing(m, { kind: 'shard', k: rollShard(N) });
   for (const g of GLYPHS_DROP) if (rnd() * 100 < R.glyphBase + N * R.glyphPerN) dropThing(m, { kind: 'glyph', id: g.id });
   if (N >= OATH.glyphLadder && rnd() * 100 < OATH.glyphDrop) dropThing(m, { kind: 'glyph', id: 'oath' }); // 立誓符

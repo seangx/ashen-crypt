@@ -1,22 +1,15 @@
 /* ---------- 界面状态 ---------- */
 let selId = null, hoverId = null, modWeapon = 'gem', stashTab = 0, craftId = null, confirmKey = null, craftLog = [], helpTopic = 0;
 let craftAff = -1, craftTab = 0, addPage = 0, useHope = false, useChaos = false, fuseId = null, feedOn = false, feedSrc = null;
-let atlasTab = 0, atlasSel = null, ladPick = 1;
+let ladPick = 1;
 const treeView = { x: 0, y: 0, z: 1 };
-// 墓图的悬浮说明
-function mapTip(m) {
-  const out = [{ t: mapName(m), c: RCOL[m.rar] }, { t: `怪物等级 +${m.tier}`, s: 8, c: '#ff8a7a' }, { t: `物品数量提高 ${mapQty(m)}%` + (mapRar(m) ? `，物品稀有度提高 ${mapRar(m)}%` : ''), s: 8, c: '#e9d9a8' }];
-  for (const x of m.affs) { const a = MAP_AFF_BY[x.k]; out.push({ t: a.t(x.v), s: 8, c: a.bad ? '#ff9a8a' : '#a9c4ff' }); }
-  if (!m.affs.length) out.push({ t: '没有词条', s: 8, c: COL.faint });
-  return out;
-}
 function confirm2(key) { if (confirmKey === key) { confirmKey = null; return true; } confirmKey = key; setTimeout(() => { if (confirmKey === key) { confirmKey = null; G.ui && G.ui.refresh(); } }, 3000); return false; }
 function findItem(id) {
   for (const s of SLOTS) if (S.equip[s.id] && S.equip[s.id].id === id) return { it: S.equip[s.id], where: 'equip', slot: s.id };
   const it = S.stash.find(x => x.id === id); if (it) return { it, where: 'stash' };
   return null;
 }
-const MENU = [{ id: 'gear', n: '装备', ic: 'i_w_crossbow' }, { id: 'mods', n: '符文', ic: 'mod_Chain' }, { id: 'craft', n: '铁砧', ic: 'i_anvil' }, { id: 'tree', n: '天赋', ic: 'i_star' }, { id: 'atlas', n: '墓图', ic: 'i_a_map' }, { id: 'ladder', n: '天梯', ic: 'i_ladder' }, { id: 'help', n: '手册', ic: 'i_book' }];
+const MENU = [{ id: 'gear', n: '装备', ic: 'i_w_crossbow' }, { id: 'mods', n: '符文', ic: 'mod_Chain' }, { id: 'craft', n: '铁砧', ic: 'i_anvil' }, { id: 'tree', n: '天赋', ic: 'i_star' }, { id: 'ladder', n: '天梯', ic: 'i_ladder' }, { id: 'help', n: '手册', ic: 'i_book' }];
 const pct = v => Math.round(v * 100) + '%';
 // 营地设施的悬浮说明
 const FAC_TIP = {
@@ -26,7 +19,6 @@ const FAC_TIP = {
   anvil: () => '做装：加词条、升一档、拆解',
   altar: () => `回营地时按规则自动分解带回的装备。按现在的规则，背包里有 ${S.stash.filter(salvWhy).length} 件会被分解。`,
   runes: () => '插符文' + (unlocked('feed') ? '、喂养符文' : ''),
-  atlas: () => '墓图和命盘',
   stele: () => `天梯：最高第 ${S.ladder.best} 层，已解锁到第 ${S.ladder.unlocked} 层。从这里出发，打完回营地。`,
 };
 
@@ -72,7 +64,6 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   });
   if (it.oath) ln(oathText(it.oath), '#c0392b'); // 誓约：暗红，在词条最下面
   if (it.u) { rect(sc, 0, cy + 1, w, 1, '#5a3a14', 1, c); cy += 4; for (const r of ruleLines(it)) ln(r, '#ff9a3c'); }
-  if (it.kind === 'chip') ln(chipSock(it) ? '已插在天赋树的印记槽里' : '插在天赋树的印记槽里生效（先点亮旁边的天赋）', COL.faint);
   if (it.rar < 3 && it.kind !== 'map' && it.kind !== 'gem') { T(sc, 0, cy + 1, `词条 ${it.affs.length}/${AFF_MAX} · 锻造潜力 ${it.fp || 0}`, { size: 8, color: it.fp > 0 ? COL.faint : COL.bad, parent: c }); cy += 11; }
   if (it.u) { T(sc, 0, cy + 1, it.leg ? '传奇：已熔铸' : `传奇潜力 ${it.lp || 0}`, { size: 8, color: it.leg ? LEG_C : COL.faint, parent: c }); cy += 11; }
   if (o.compare) for (const ln of compareLines(it)) { const t = TW(sc, 0, cy + 1, ln.t, w, { size: 8, color: ln.c, parent: c }); cy += t.h; }
@@ -138,7 +129,7 @@ function baseLines(it) {
     if (b.deflect) p.push(`护盾 +${Math.round(qv(b.deflect, q))}`);
     if (b.dodge) p.push(`闪避 +${Math.round(qv(b.dodge, q))}`);
     if (b.res) p.push(`${ELEM_N[b.el]}抗性 +${qv(b.res, q)}%`);
-    for (const k of ['mass', 'energy', 'time']) if (b[k]) p.push(`${ATTR_N[k]} +${qv(b[k], q)}`);
+    if (b.energy) p.push(`${ATTR_N.energy} +${qv(b.energy, q)}`); if (b.mass) p.push(`护甲提高 ${2 * qv(b.mass, q)}%`); if (b.time) p.push(`攻击速度提高 ${qv(b.time, q)}%`); // 体魄 / 时砂已下线，换算成护甲 / 攻速
     out.push([p.join('，'), '#e9d9a8']);
     if (it.kind === 'hub') out.push(['插在升级槽里的符文会随击杀成长；力场符文只在这里生效', COL.faint]);
   }
@@ -146,7 +137,7 @@ function baseLines(it) {
 }
 function compareLines(it) {
   const slot = slotsFor(it)[0];
-  if (!slot) return chipSock(it) ? [{ t: '已插入', c: COL.dim }] : [];
+  if (!slot) return [];
   if (Object.values(S.equip).includes(it)) return [{ t: '已装备', c: COL.dim }];
   const cur = S.equip[slot]; const base = STATS; const next = computeStats({ ...S.equip, [slot]: it });
   const out = [];
@@ -240,8 +231,7 @@ class UI extends Phaser.Scene {
     this.mainBtn = mkBtn(this, bot, bx + 75, 7, 30, 24, '开始', () => { ac(); this.toggleLoop(); }, { style: 'w', tip: () => [
       { t: S.auto.loop ? '暂停  [回车]' : '开始自动刷  [回车]', c: COL.emberHi },
       { t: S.auto.loop ? '打完这一局就停下。' : '一趟接一趟自动打，每趟回营地后停留几秒再出发。', s: 8 },
-      { t: `下一趟：从第 ${descentStart()} 层出发${S.depth >= PROG.run.maxDepth ? `（已到最深层）` : ''}`, s: 8, c: COL.dim },
-      ...(armedMap() ? [{ t: `会消耗墓图台上的${mapName(armedMap())}（怪物等级 +${armedMap().tier}）`, s: 8, c: RCOL[armedMap().rar] }] : [])] });
+      { t: `下一趟：从第 ${descentStart()} 层出发${S.depth >= PROG.run.maxDepth ? `（已到最深层）` : ''}`, s: 8, c: COL.dim } ] });
   }
   // 球里的液体：按行画，留出 2 像素暗边；灵障是沿球边从下往上包的青色
   drawOrb(o, f, liq, hi, dark, rim, rimCol) {
@@ -276,7 +266,7 @@ class UI extends Phaser.Scene {
     this.spinC.setVisible(!!sw && !!RUN);
     if (sw) { const sp = player.spin[wi].n, spt = `${sp}`; if (this.spinT.text !== spt) this.spinT.setText(spt).setTint(hex(sp >= sw.stackMax ? COL.emberHi : COL.text)); }
     const L = RUN ? RUN.L : S.depth;
-    const dl = ladderBusy() ? `天梯 ${L} 层 · ${mmss(Math.max(0, RUN.limit - RUN.t))}` : RUN && RUN.map ? `墓图 ${RUN.map.tier} 阶 · 怪物等级 ${L}` : !RUN && armedMap() ? `难度 ${L} · 墓图 ${armedMap().tier} 阶` : RUN ? `第 ${L} 层 · ${themeFor(L).n}` : `营地 · 下一趟从第 ${descentStart()} 层出发`;
+    const dl = ladderBusy() ? `天梯 ${L} 层${(RUN.mods || []).length ? ' · ' + RUN.mods.map(x => LAD_AFF_BY[x.k].s).join(' ') : ''} · ${mmss(Math.max(0, RUN.limit - RUN.t))}` : RUN ? `第 ${L} 层 · ${themeFor(L).n}` : `营地 · 下一趟从第 ${descentStart()} 层出发`;
     if (this.depthT.text !== dl) { this.depthT.setText(dl); const tw = textW(dl), rw = tw + 44; this.ribbon.setSize(rw, 22); this.ribbon.x = Math.round(W / 2 - rw / 2); this.dPrev.x = this.ribbon.x - 16; this.dNext.x = this.ribbon.x + rw + 2; }
     this.dPrev.setVisible(!RUN).setDisabled(S.depth <= 1); this.dNext.setVisible(!RUN).setDisabled(S.depth >= S.maxDepth);
     this.bossC.setVisible(!!RUN); this.topC.setVisible(!this.winId);
@@ -299,7 +289,6 @@ class UI extends Phaser.Scene {
       if (id === 'gear') { const n = S.stash.filter(x => x.isNew).length; badge = n ? String(n) : ''; }
       if (id === 'mods' && S.mods.some(m => m.isNew)) badge = '!';
       if (id === 'tree' && treePoints() > 0) badge = String(treePoints());
-      if (id === 'atlas') { const n = S.maps.filter(m => m.isNew).length; badge = marblePoints() > 0 ? String(marblePoints()) : n ? String(n) : ''; }
       bt.badge.setText(on ? badge : '');
       bt.hl.setVisible(on && (this.winId === id || bt.hov)); bt.ic.setAlpha(on ? 1 : 0.3);
     });
@@ -451,14 +440,14 @@ class UI extends Phaser.Scene {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) return;
     if (!this.dimR) { this.dimR = rect(this, 0, TOP_H, W, BOT_Y - TOP_H, COL.ink, 0.6).setDepth(90).setInteractive(); this.dimR.on('pointerup', () => { if (this.winId !== 'summary' && this.winId !== 'prep') this.closeWin(); }); }
-    const [w, h] = { summary: [372, 176], depart: [300, 134], prep: [372, 170], bulk: [372, 200] }[this.winId] || [470, 210];
+    const [w, h] = { summary: [372, 176], depart: [300, 134], notice: [340, 190], prep: [372, 170], bulk: [372, 200] }[this.winId] || [470, 210];
     const x = Math.round((W - w) / 2), y = TOP_H + Math.round((BOT_Y - TOP_H - h) / 2);
     const c = this.add.container(x, y).setDepth(100); this.winC = c;
     const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[this.winId] || 'f_win'; // 装备皮革、铁砧石板、其余铁框
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0)); // 九宫格拉伸会把噪点拉成色块，底纹单独平铺
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + this.winId](c, w, h);
-    const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', atlas: '墓图', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', bulk: '批量拆解' }[this.winId];
+    const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', bulk: '批量拆解', notice: (S.notice || {}).t || '告示' }[this.winId];
     if (title) {
       const pw = textW(title) + 44; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: COL.emberHi, align: 'center', parent: c });
       mkBtn(this, c, w - 20, 4, 15, 14, 'x', () => this.closeWin(), { size: 8, tip: [{ t: '关闭  [Esc]', s: 8 }] });
@@ -713,12 +702,11 @@ class UI extends Phaser.Scene {
     };
     draw();
     const pick = () => { let best = null, bd = 1e9; const lx = mouse.x - c.x, ly = mouse.y - c.y; if (!inV(lx, ly)) return null; for (const id in TREE.nodes) { const nd = TREE.nodes[id]; const d = (sx(nd.x) - lx) ** 2 + (sy(nd.y) - ly) ** 2, r = rad(nd) + 3; if (d < r * r && d < bd) { bd = d; best = id; } } return best; };
-    const RAR = { s: ['普通 · 小节点', '#dfe8ff'], n: ['稀有 · 中节点', COL.cyan], k: ['传奇 · 大型节点', COL.emberHi], start: ['起点', COL.emberHi], sock: ['印记槽', COL.cyan] };
+    const RAR = { s: ['普通 · 小节点', '#dfe8ff'], n: ['稀有 · 中节点', COL.cyan], k: ['传奇 · 大型节点', COL.emberHi], start: ['起点', COL.emberHi] };
     const tipFor = id => {
       const nd = TREE.nodes[id], got = on(id), can = treeCanAlloc(id), [rn, rc] = RAR[nd.kind], need = path.size;
       const bn = nd.b >= 0 ? TREE_BRANCH[nd.b].n + ' · ' : '';
       const act = got ? (nd.kind === 'start' ? '起点' : treeCanRefund(id) ? '点击退回' : '退回会断开别的节点') : can ? '点击点亮' : need ? `还没连上 · 走过去要 ${need} 点（金色路径）` : pts ? '还没连上' : '没有天赋点';
-      if (nd.kind === 'sock') { const ch = chipIn(id); return ch ? [{ t: itemName(ch), c: RCOL[ch.rar] }, ...ch.affs.map(x => ({ t: affText(x), s: 8 })), ...ruleLines(ch).map(t => ({ t, s: 8, c: '#ff9a3c' })), { t: '点击取下', s: 8, c: COL.dim }] : [{ t: '印记槽', c: nd.c }, { t: got ? '点左栏的印记插进来' : act, s: 8, c: COL.dim }]; }
       return [{ t: nd.n || rn.split(' · ')[1], c: nd.kind === 's' ? nd.c : nd.kind === 'n' ? nd.c : COL.emberHi }, { t: bn + rn, s: 8, c: rc }, ...treeLines(nd).map(t => ({ t, s: 8 })), { t: act, s: 8, c: COL.dim }];
     };
     const z = this.add.zone(VX, VY, VW, VH).setOrigin(0).setInteractive(); c.add(z);
@@ -734,7 +722,6 @@ class UI extends Phaser.Scene {
       const d = drag; drag = null; if (d && d.moved) return;
       const id = pick(); if (!id) return; const nd = TREE.nodes[id];
       if (treeCanAlloc(id)) { S.tree.push(id); sfx('craft'); }
-      else if (on(id) && nd.kind === 'sock' && chipIn(id)) { unequipChip(id); hideTip(); }
       else if (on(id) && treeCanRefund(id)) treeKeep(S.tree.filter(x => x !== id));
       else return;
       refreshStats(); save(); this.refresh();
@@ -779,18 +766,6 @@ class UI extends Phaser.Scene {
         }, { size: 8, disabled: !left, tip: [{ t: '按顺序点亮预设里能连上的节点，点数用完为止。不会退回已点的天赋。', s: 8 }] });
         cy += 16;
       }
-      const chips = S.stash.filter(x => x.kind === 'chip');
-      if (chips.length) {
-        T(this, 8, cy, '印记', { size: 8, color: COL.cyan, parent: c }); cy += 11;
-        chips.slice(0, 10).forEach((it, i) => {
-          const bx = 7 + (i % 5) * 16, by = cy + Math.floor(i / 5) * 16;
-          rect(this, bx, by, 14, 14, it.rar === 3 ? '#5a3a14' : '#1a1e40', 1, c); img(this, bx + 1, by + 1, 'i_' + iconOf(it), c);
-          const zz = this.add.zone(bx, by, 14, 14).setOrigin(0).setInteractive(); c.add(zz);
-          zz.on('pointerover', () => showTip([{ t: itemName(it), c: RCOL[it.rar] }, ...it.affs.map(x => ({ t: affText(x), s: 8 })), ...ruleLines(it).map(t => ({ t, s: 8, c: '#ff9a3c' })), { t: '点击插到空的印记槽', s: 8, c: COL.dim }]));
-          zz.on('pointerout', hideTip);
-          zz.on('pointerup', () => { hideTip(); if (equipChip(it)) { sfx('craft'); save(); } this.refresh(); });
-        });
-      }
       mkBtn(this, c, 7, h - 22, 78, 15, confirmKey === 'respec' ? '确认重置' : '全部重置', () => { if (!S.tree.length) return; if (confirm2('respec')) { treeKeep([]); refreshStats(); save(); } this.refresh(); }, { size: 8, style: confirmKey === 'respec' ? 'r' : 'n', tip: [{ t: '退回全部天赋点（目前免费），插着的印记回到背包', s: 8 }, { t: '拖动平移，滚轮或右下角按钮缩放；只能点和已点节点相连的节点，点已点的节点可以退回。', s: 8, c: COL.dim }] });
     }
     mkBtn(this, c, (U.left ? LW + 3 : 4), 22, 9, 16, U.left ? '<' : '>', () => { U.left = !U.left; this.refresh(); }, { size: 8, tip: [{ t: U.left ? '收起左栏' : '展开左栏', s: 8 }] });
@@ -812,80 +787,6 @@ class UI extends Phaser.Scene {
     }
     mkBtn(this, c, U.right ? w - RW - 13 : w - 13, 22, 9, 16, U.right ? '>' : '<', () => { U.right = !U.right; this.refresh(); }, { size: 8, tip: [{ t: U.right ? '收起汇总' : '展开汇总', s: 8 }] });
   }
-  /* 墓图 · 命盘 · 祝福 */
-  win_atlas(c, w, h) {
-    ['墓图', '命盘', '祝福'].forEach((n, i) => mkBtn(this, c, 10 + i * 48, 6, 46, 16, n + (i === 1 && marblePoints() ? ` ${marblePoints()}` : ''), () => { atlasTab = i; this.refresh(); }, { size: 8, style: atlasTab === i ? 's' : 'n' }));
-    this['atlas_' + atlasTab](c, w, h);
-  }
-  atlas_0(c, w, h) {
-    const sel = S.maps.find(m => m.id === atlasSel) || null;
-    const armed = armedMap();
-    T(this, 10, 30, '墓图台', { size: 8, color: COL.dim, parent: c });
-    mkCell(this, c, 10, 40, armed, { size: 24, sel: armed && armed === sel, ghost: 'i_a_map', tip: [{ t: '墓图台（空）', c: COL.dim }, { t: '放上一张墓图，下次任务会消耗它。', s: 8 }], onHover: m => m && showTip(mapTip(m)), onClick: m => { if (m) { atlasSel = m.id; this.refresh(); } } });
-    TW(this, 40, 42, armed ? `下次任务：${mapName(armed)}` : '没放墓图：按普通难度出发', 150, { size: 8, color: armed ? RCOL[armed.rar] : COL.faint, parent: c });
-    T(this, 10, 72, `墓图 ${S.maps.length}`, { size: 8, color: COL.dim, parent: c });
-    const list = [...S.maps].sort((a, b) => b.tier - a.tier || b.rar - a.rar);
-    for (let i = 0; i < 40; i++) {
-      const m = list[i]; const x = 10 + (i % 10) * 19, y = 82 + Math.floor(i / 10) * 19;
-      mkCell(this, c, x, y, m, { size: 18, sel: m && (m.id === atlasSel || m.id === S.mapArmed), onHover: m => m && showTip(mapTip(m)), onClick: m => { if (!m) return; m.isNew = false; atlasSel = m.id; this.refresh(); } });
-    }
-    TW(this, 10, 162, '墓图从怪物和 Boss 身上掉落。阶级越高怪物越强，掉落越多。', 186, { size: 8, color: COL.faint, parent: c });
-    // 右侧：选中的墓图
-    const px = 214; rect(this, px - 8, 28, 1, h - 40, '#33293f', 1, c);
-    if (!sel) { TW(this, px, 34, '点一张墓图查看。', 240, { size: 8, color: COL.faint, parent: c }); return; }
-    img(this, px, 30, 'i_a_map', c); T(this, px + 17, 31, mapName(sel), { color: RCOL[sel.rar], parent: c });
-    let cy = 50;
-    for (const l of mapTip(sel).slice(1)) { const t = TW(this, px, cy, l.t, 240, { size: 8, color: l.c || '#b8afc4', parent: c }); cy += t.h; }
-    const on = sel.id === S.mapArmed;
-    mkBtn(this, c, px, 150, 92, 16, on ? '从墓图台取下' : '放上墓图台', () => { S.mapArmed = on ? null : sel.id; sel.isNew = false; save(); this.refresh(); }, { size: 8, style: on ? 'n' : 'w' });
-    mkBtn(this, c, px + 96, 150, 52, 16, confirmKey === 'dropmap' ? '确认' : '丢弃', () => { if (confirm2('dropmap')) { S.maps = S.maps.filter(m => m !== sel); if (S.mapArmed === sel.id) S.mapArmed = null; save(); } this.refresh(); }, { size: 8, style: confirmKey === 'dropmap' ? 'r' : 'n' });
-    TW(this, px, 172, '墓图的稀有度和词条在掉落时就定了。', 240, { size: 8, color: COL.faint, parent: c });
-  }
-  atlas_1(c, w, h) {
-    const pts = marblePoints();
-    T(this, 10, 30, `命盘点 ${pts}`, { color: pts ? COL.emberHi : COL.dim, parent: c });
-    TW(this, 10, 46, '每解锁一层难度、每完成两张墓图得 1 点。弹珠从顶上落下，只能点亮上方相邻钉子已点亮的钉子。', 120, { size: 8, color: COL.faint, parent: c });
-    // 汇总
-    const L = lootFx(null); let cy = 104;
-    const rows = Object.keys(MARBLE_TEXT).filter(k => !k.startsWith('call:') && L[k]).map(k => MARBLE_TEXT[k](L[k])).concat(Object.entries(L.call).map(([k, v]) => MARBLE_TEXT['call:' + k](v)));
-    for (const t of rows.slice(0, 9)) { T(this, 10, cy, t, { size: 8, color: '#e9d9a8', parent: c }); cy += 9; }
-    mkBtn(this, c, w - 64, 186, 56, 16, confirmKey === 'mreset' ? '确认' : '全部重置', () => { if (!S.marble.length) return; if (confirm2('mreset')) { S.marble = []; save(); } this.refresh(); }, { size: 8, style: confirmKey === 'mreset' ? 'r' : 'n', tip: [{ t: '退回全部命盘点（免费）', s: 8 }] });
-    const g = this.add.graphics(); c.add(g);
-    const cx = 290, top = 34, dx = 26, dy = 22;
-    const P = nd => [cx + (nd.c - nd.r / 2) * dx, top + nd.r * dy];
-    for (const id in MARBLE.nodes) { const nd = MARBLE.nodes[id]; const [x, y] = P(nd); for (const d of nd.down) { const [x2, y2] = P(MARBLE.nodes[d]); const lit = marbleOn(id) && marbleOn(d); g.lineStyle(1, hex(lit ? COL.emberHi : marbleOn(id) || marbleOn(d) ? '#6a5a7e' : '#33293f'), 1).lineBetween(x, y, x2, y2); } }
-    for (const id in MARBLE.nodes) {
-      const nd = MARBLE.nodes[id]; const [x, y] = P(nd); const got = marbleOn(id), can = marbleCanAlloc(id);
-      const r = nd.kind === 'k' ? 5 : nd.kind === 'n' ? 4 : nd.kind === 'start' ? 5 : 3;
-      const col = nd.kind === 'k' ? COL.emberHi : nd.kind === 'n' ? COL.cyan : '#e9d9a8';
-      g.fillStyle(0x120c18, 1).fillCircle(x, y, r + 1);
-      g.fillStyle(hex(got ? col : can ? '#4b3e60' : '#231b2e'), 1).fillCircle(x, y, r);
-      if (got) g.fillStyle(0xffffff, 0.6).fillRect(x - 1, y - r + 1, 2, 1);
-      if (can) { g.lineStyle(1, hex(COL.emberHi), (Math.sin(G.time * 6) + 1) / 4 + 0.4).strokeCircle(x, y, r + 2); }
-      const z = this.add.zone(x - r - 2, y - r - 2, r * 2 + 4, r * 2 + 4).setOrigin(0).setInteractive(); c.add(z);
-      z.on('pointerover', () => showTip([{ t: nd.kind === 'start' ? '弹珠起点' : nd.n || (nd.kind === 'n' ? '召唤' : '钉子'), c: col }, ...marbleLines(nd).map(t => ({ t, s: 8 })), ...(nd.kind === 'start' ? [] : [{ t: got ? (marbleCanRefund(id) ? '点击退回' : '退回会断开下面的钉子') : can ? '点击点亮' : pts ? '上方还没连上' : '没有命盘点', s: 8, c: COL.dim }])]));
-      z.on('pointerout', hideTip);
-      z.on('pointerup', () => { if (can) { S.marble.push(id); sfx('craft'); } else if (S.marble.includes(id) && marbleCanRefund(id)) S.marble = S.marble.filter(x => x !== id); else return; save(); this.refresh(); });
-    }
-    // 弹珠
-    g.fillStyle(0xdfe6ee, 1).fillCircle(cx, top - 10, 3); g.fillStyle(0xffffff, 1).fillRect(cx - 1, top - 12, 1, 1);
-  }
-  atlas_2(c, w, h) {
-    TW(this, 10, 30, '四个 Boss 按任务等级轮流出现。每个 Boss 击败 1、5、15 次后，各得到一种永久祝福。', 450, { size: 8, color: COL.faint, parent: c });
-    BOSSES.forEach((B, i) => {
-      const y = 48 + i * 36; const k = S.bossKills[B.id] || 0;
-      rect(this, 10, y, 450, 32, '#1a1422', 1, c);
-      img(this, 14, y + 2, 'm_boss_' + B.id + '_0', c).setScale(0.75);
-      T(this, 34, y + 4, B.n, { size: 8, color: ELEM_C[B.el], parent: c }); T(this, 34, y + 16, `击败 ${k} 次`, { size: 8, color: COL.dim, parent: c });
-      T(this, 34, y + 25, '', { size: 8, parent: c });
-      BOONS[B.id].forEach((bn, j) => {
-        const got = boonGot(B.id, j); const bx = 110 + j * 116;
-        rect(this, bx, y + 3, 112, 26, got ? '#3a2a12' : '#231b2e', 1, c);
-        T(this, bx + 4, y + 5, `${bn.n}${got ? '' : `（${BOON_AT[j]} 次）`}`, { size: 8, color: got ? COL.emberHi : COL.faint, parent: c });
-        T(this, bx + 4, y + 17, Object.entries(bn.add).map(([kk, v]) => treeText(kk, v)).join('，'), { size: 8, color: got ? '#e9d9a8' : '#5d5170', parent: c });
-      });
-    });
-  }
   /* 天梯 */
   win_ladder(c, w, h) {
     const L = S.ladder, ti = ladderTier(L.best), tier = LADDER_TIERS[ti], nx = LADDER_TIERS[ti + 1];
@@ -903,8 +804,12 @@ class UI extends Phaser.Scene {
     mkBtn(this, c, 12, 100, 92, 22, busy ? '进行中' : queued ? '已排队' : '挑战', () => ladderChallenge(ladPick), { style: 'w', disabled: !!(busy || queued), tip: () => [{ t: `挑战天梯第 ${ladPick} 层`, c: COL.emberHi }, { t: RUN && !busy ? '当前这局打完后开始。' : '马上开始。', s: 8 }, { t: '不消耗任何东西；失败没有损失。', s: 8, c: COL.dim }] });
     mkBtn(this, c, 108, 100, 48, 22, L.chain ? '连打 开' : '连打 关', () => { L.chain = !L.chain; save(); this.refresh(); }, { size: 8, style: L.chain ? 's' : 'n', tip: [{ t: '连打', c: COL.emberHi }, { t: '开着时，成功后接着打新的最高层；失败后回到推层。关着时只打一次。', s: 8 }] });
     const R = LD.run, J = LD.jumps.list;
-    const desc = TW(this, 12, 128, `怪物等级 = 层数，怪和精英更多。攒满 ${ladderNeed(ladPick)} 点（精英 ${R.eliteP} 点）出守关 Boss，限时 ${mmss(R.timeLimit)}；剩 ${J[0][0]} 秒以上跳 ${J[0][1]} 层，${J[1][0]} 秒以上跳 ${J[1][1]} 层。墓图和命盘不生效。宝箱：装备、碎片、铸符，${LD.reward.exaltedFrom} 层起可能出溢彩。新段位首次送每种铸符各 ${LD.tiers.firstGlyphs} 张。`, 150, { size: 8, color: COL.dim, parent: c });
-    if (!LD.run.mobDrops) TW(this, 12, 128 + desc.h + 2, '天梯里的怪物不掉落，只有通关宝箱。', 150, { size: 8, color: COL.emberHi, parent: c });
+    const desc = TW(this, 12, 128, `怪物等级 = 层数，怪和精英更多。攒满 ${ladderNeed(ladPick)} 点（精英 ${R.eliteP} 点）出守关 Boss，限时 ${mmss(R.timeLimit)}；剩 ${J[0][0]} 秒以上跳 ${J[0][1]} 层，${J[1][0]} 秒以上跳 ${J[1][1]} 层。宝箱：装备、碎片、铸符，${LD.reward.exaltedFrom} 层起可能出溢彩。新段位首次送每种铸符各 ${LD.tiers.firstGlyphs} 张。`, 150, { size: 8, color: COL.dim, parent: c });
+    let dy = 128 + desc.h + 2;
+    if (!LD.run.mobDrops) dy += TW(this, 12, dy, '天梯里的怪物不掉落，只有通关宝箱。', 150, { size: 8, color: COL.emberHi, parent: c }).h + 2;
+    const lm = ladderMods(ladPick); // 这一层的词缀：同一层每次一样
+    T(this, 12, dy, lm.length ? `第 ${ladPick} 层词缀（宝箱 +${lm.length * LD.mods.items} 件、碎片 +${Math.round(lm.length * LD.mods.shards * 100)}%）` : `第 ${LD.mods.every} 层起每 ${LD.mods.every} 层多 1 条词缀`, { size: 8, color: lm.length ? '#ff9a8a' : COL.faint, parent: c }); dy += 11;
+    for (const x of lm) { T(this, 16, dy, '· ' + ladModText(x), { size: 8, color: '#ff9a8a', parent: c }); dy += 10; }
     // 各元素最好成绩
     rect(this, 166, 8, 1, h - 16, '#33293f', 1, c);
     T(this, 174, 10, '各元素最好', { size: 8, color: COL.emberHi, parent: c });
@@ -936,12 +841,12 @@ class UI extends Phaser.Scene {
       ['操作', '亡魂跟着鼠标移动，两只手上的武器会自动攻击射程内最近的敌人。空格、Shift 或右键冲刺：冲刺时无敌，遁靴还会在冲刺时触发效果。回车开始任务，数字键 1–7 打开窗口；每升一级得 1 个天赋点。'],
       ['伤害', '伤害先算固定附加（武器底材和“附加 X–Y 伤害”），再乘“提高”（同类全部相加后乘一次），最后乘“总增”（每一条单独连乘）。武器上的词条只作用于那把武器。'],
       ['元素', '物理：碎骨，在周围炸开。火焰：余震，按比例再命中几次，并累积灼烧。闪电：感电，叠层降低全部抗性。圣光：致盲，3 秒内敌人伤害降低。瘟疫：疫病，4 秒内造成命中伤害的一部分，可叠加。'],
-      ['符文', '武器、头冠和遁靴有符文槽。符文只在满足条件的装备上生效，例如穿刺符文要武器能穿透。法阵的升级槽里的符文会随击杀获得经验并升级（最高 20 级），力场符文只在法阵里生效。'],
+      ['符文', '技能石、头冠和遁靴有符文槽。符文只在满足条件的技能上生效，例如穿刺符文要技能能穿透。法阵的升级槽里的符文会随击杀获得经验并升级（最高 20 级），力场符文只在法阵里生效。'],
       ['铁砧', `铁砧用词条碎片改装备。加词条：有空位时花 1 个该词条的碎片，从比物品等级允许的最高档低几档的地方开始。升一档：花 1 个该词条的碎片。每次都会扣“锻造潜力”，扣到 0 就不能再改了。最高两档（溢彩）做不出来，只从天梯宝箱里出。拆解装备、打怪都能得到碎片。洗数值和移除要用铸符，铸符主要从天梯宝箱里出。稀有度跟着词条数变：1–2 条罕见，3–4 条稀有。`],
-      ['墓图', '墓图从怪物和 Boss 身上掉落。放上墓图台后，下一次任务会消耗它：怪物等级加上墓图的阶级，词条让任务更难，同时提高物品数量。命盘只加掉落、经验和怪物等级，每解锁一层难度、每完成两张墓图得 1 点。四个 Boss 轮流出现，各击败 1、5、15 次后得到永久祝福。'],
-      ['天梯', `通关第 ${PROG.unlocks.ladder.depth} 层后开放。天梯的怪物等级等于层数，怪更多、精英更多，墓图和命盘不生效。打满进度后守关 Boss 出现，限时内击败它就通过，剩的时间越多跳的层越多。通过后开宝箱，并记下用时和配装。死亡或超时没有损失。可以随时手动接管。`],
+      ['技能石', '技能由身上的技能石决定：它定下技能的形态（投射物、光束、新星……）和元素。主手武器只给数值：伤害、攻速、暴击和词条，类别对口（近战 / 弓 / 法器 / 枪）时伤害再 ×1.2。符文插在技能石的符文槽里。技能石装备时吃击杀经验升级（最高 20 级）；打磨花 5 个词条碎片 +1% 品质；开孔符给技能石 +1 个符文槽。'],
+      ['天梯', `通关第 ${PROG.unlocks.ladder.depth} 层后开放。天梯的怪物等级等于层数，怪更多、精英更多。第 15 层起每 15 层多 1 条随机词缀（同一层每次一样），每条让宝箱多 1 件装备、碎片多 20%。打满进度后守关 Boss 出现，限时内击败它就通过，剩的时间越多跳的层越多。通过后开宝箱，并记下用时和配装。死亡或超时没有损失。可以随时手动接管。`],
       ['灯火', `推关是一趟往下走：从最深层往回退 ${SOUL.startBack} 层出发（锁层时从锁定的层出发），每层打满进度、打掉守关 Boss 后直接进入下一层。灯火（护甲条下的紫色细条）进入时是满的，每秒燃烧，越深烧得越快；推关中不会自然回复，只靠击杀补（Boss 补得最多）。灯火烧完就平安返回，这一趟捡到的全部带走；最深层附近的某一层打得太险（最低血量低于 ${SOUL.returnHp}%），打完那层的 Boss 也会自动撤回；最深层附近护甲一旦跌到 ${SOUL.returnHpNow}% 以下，会立刻紧急撤回，同样全部带走；阵亡的话，捡到的装备、符文、词条碎片每件有 ${SOUL.deathKeep}% 几率保住。旋风斩等流派技能也从同一条里扣。天梯里不燃烧。`],
-      ['营地', `营地是主页：一趟结束后回到这里。点地窖入口出发（可以选层、锁层），点储物箱、天赋石像、符文台、墓图台打开对应的窗口；铁砧和分解祭坛在通关第 ${PROG.unlocks.craft.depth} 层后清出来，天梯石碑在通关第 ${PROG.unlocks.ladder.depth} 层后清出来，天梯从石碑出发。自动刷时在营地停留 ${CAMP.idleStay} 秒再出发。分解祭坛：每次回营地，按规则把带回的装备拆成词条碎片（默认分解普通、罕见，保留稀有；物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的全部分解；带收藏词条的留下）。独特、传奇、溢彩装备和印记永远不自动分解。`],
+      ['营地', `营地是主页：一趟结束后回到这里。点地窖入口出发（可以选层、锁层），点储物箱、天赋石像、符文台打开对应的窗口；铁砧和分解祭坛在通关第 ${PROG.unlocks.craft.depth} 层后清出来，天梯石碑在通关第 ${PROG.unlocks.ladder.depth} 层后清出来，天梯从石碑出发。自动刷时在营地停留 ${CAMP.idleStay} 秒再出发。分解祭坛：每次回营地，按规则把带回的装备拆成词条碎片（默认分解普通、罕见，保留稀有；物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的全部分解；带收藏词条的留下）。独特、传奇、溢彩装备和技能石永远不自动分解。`],
       ['防御', '护甲就是生命。灵障先吸收伤害，2 秒没受伤就开始回复。抗性按百分比减伤，有上限。闪避直接躲开一次攻击。'],
       ['存档', '毕业存档：旋风斩成型，100 级，最深层开满，天梯打到 70 层左右；两把回旋骨刃插旋身符文，头冠是风暴之眼，旋风之心已点。游雷毕业存档：100 级，两把雷灵插 20 级游雷符文，每串 18 颗游雷，头冠是雷冠，织雷之心已点，天梯 63 层。载入前会把你现在的进度备份一份，之后可以一键恢复（只备份第一次载入前的进度）。正在打的一趟会作废。'],
     ];
@@ -970,7 +875,6 @@ class UI extends Phaser.Scene {
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
     const g = r.gain;
     const note = lad && win && r.lad.tierUp.length ? [`晋升${LADDER_TIERS[r.lad.tierUp[r.lad.tierUp.length - 1]].n}：送每种铸符各 ${LD.tiers.firstGlyphs} 张`, COL.emberHi]
-      : g.boon ? [`${BOSS_BY[g.boon.b].n}的祝福：${BOONS[g.boon.b][g.boon.i].n}（${treeText(...Object.entries(BOONS[g.boon.b][g.boon.i].add)[0])}）`, COL.emberHi]
       : abd ? [lad ? '提前离开天梯：这一层不算通过，没有损失' : '提前返回：东西全部带走，没打完的这一层不算通过', COL.emberHi]
       : emg ? [`护甲跌到 ${SOUL.returnHpNow}% 以下，带着全部东西撤回`, COL.emberHi]
       : back ? [`最后一层最低血量 ${Math.round(r.descent.minHp * 100)}%，打完守关 Boss 撤回，东西全部带走`, COL.emberHi]
@@ -978,15 +882,15 @@ class UI extends Phaser.Scene {
       : r.descent.floors ? [`打通到第 ${r.descent.from + r.descent.floors - 1} 层 · 最深纪录第 ${S.maxDepth - 1} 层`, COL.good] : null;
     if (note) T(this, w / 2, 16, note[0], { size: 8, color: note[1], align: 'center', parent: c });
     const floors = lad ? `${r.L}` : r.descent.from === r.base ? `${r.base}` : `${r.descent.from}–${r.base}`;
-    const cols = [['i_ladder', floors, r.map ? `墓图 ${r.map.tier} 阶` : '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
+    const cols = [['i_ladder', floors, '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
     cols.forEach(([ic, v, l], i) => { const cx = Math.round(w / 2 + (i - 2) * 66), s2 = this.textures.get(ic).getSourceImage(); img(this, cx - Math.round(s2.width / 2), 38 - Math.round(s2.height / 2), ic, c); T(this, cx, 48, v, { align: 'center', color: i === 3 ? COL.xp : COL.text, parent: c }); T(this, cx, 62, l, { size: 8, color: COL.dim, align: 'center', parent: c }); });
-    const kept = g.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it) || Object.values(S.chips).includes(it));
+    const kept = g.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it));
     const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q).slice(0, 15), x0 = Math.round(w / 2 - best.length * 21 / 2);
     best.forEach((it, i) => mkCell(this, c, x0 + i * 21, 80, it, { size: 20, upg: true }));
     if (!best.length) T(this, w / 2, 86, '没有留下装备', { size: 8, color: COL.faint, align: 'center', parent: c });
     else if (kept.length > best.length) T(this, x0 + best.length * 21 + 2, 86, `+${kept.length - best.length}`, { size: 8, color: COL.dim, parent: c });
-    // 符文、铸符、墓图：只放图标
-    const extra = [...g.mods.map(m => ['mod_' + m.mid, '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n]), ...(g.maps.length ? [['i_a_map', '×' + g.maps.length]] : [])];
+    // 符文、铸符：只放图标
+    const extra = [...g.mods.map(m => ['mod_' + m.mid, '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n])];
     let ex = Math.round(w / 2 - extra.reduce((a, [ic, t]) => a + this.textures.get(ic).getSourceImage().width + textW(t, 8) + 6, 0) / 2);
     for (const [ic, t] of extra) { const s2 = this.textures.get(ic).getSourceImage(); img(this, ex, 112 - Math.round(s2.height / 2), ic, c); ex += s2.width + 1; if (t) { T(this, ex, 107, t, { size: 8, parent: c }); ex += textW(t, 8); } ex += 5; }
     if (!lad && r.lost) TW(this, 16, 126, `阵亡：捡到的东西每件 ${SOUL.deathKeep}% 几率保住，这次丢了装备 ${r.lost.items} 件、符文 ${r.lost.mods} 个、碎片 ${r.lost.shards} 个。`, w - 32, { size: 8, color: COL.bad, parent: c });
@@ -1034,16 +938,20 @@ class UI extends Phaser.Scene {
     if (!S.auto.loop && !LAD.pending) this.openWin('summary', r);
   }
   /* 地窖入口：选层、锁层、出发 */
+  /* 存档迁移的告示：旧系统换成了什么 */
+  win_notice(c, w, h) {
+    const N = S.notice || { lines: [] }; let y = 8;
+    for (const l of N.lines) { for (const r of wrapText('· ' + l, w - 24, 8)) { T(this, 12, y, r, { size: 8, color: COL.text, parent: c }); y += 11; } y += 3; }
+    mkBtn(this, c, w / 2 - 50, h - 28, 100, 20, '知道了', () => { delete S.notice; save(); this.closeWin(); }, { size: 8, style: 'w' });
+  }
   win_depart(c, w, h) {
-    const m = armedMap();
     T(this, w / 2, 14, `下一趟从第 ${descentStart()} 层出发`, { align: 'center', color: COL.emberHi, parent: c });
     T(this, w / 2, 30, `最深纪录：第 ${S.maxDepth - 1} 层通关 · ${S.auto.lock ? '锁层：从选定的层出发' : `从最深层往回退 ${SOUL.startBack} 层热身`}`, { size: 8, color: COL.dim, align: 'center', parent: c });
     mkBtn(this, c, w / 2 - 62, 46, 18, 16, '<', () => { if (S.depth > 1) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { size: 8, disabled: S.depth <= 1 });
     T(this, w / 2, 50, `难度 ${S.depth}`, { align: 'center', parent: c });
     mkBtn(this, c, w / 2 + 44, 46, 18, 16, '>', () => { if (S.depth < S.maxDepth) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { size: 8, disabled: S.depth >= S.maxDepth });
     mkBtn(this, c, w / 2 - 62, 68, 124, 16, S.auto.lock ? '锁层：开（点击改为推层）' : '推层：开（点击改为锁层）', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; save(); this.refresh(); }, { size: 8 });
-    if (m) T(this, w / 2, 90, `会用掉墓图台上的${mapName(m)}（怪物等级 +${m.tier}）`, { size: 8, color: RCOL[m.rar], align: 'center', parent: c });
-    else if (unlocked('ladder')) T(this, w / 2, 90, '天梯从右边的天梯石碑出发', { size: 8, color: COL.faint, align: 'center', parent: c });
+    if (unlocked('ladder')) T(this, w / 2, 90, '天梯从右边的天梯石碑出发', { size: 8, color: COL.faint, align: 'center', parent: c });
     mkBtn(this, c, w / 2 - 110, h - 28, 104, 20, '出发', () => { this.closeWin(); startRun(); }, { size: 8, style: 'w' });
     mkBtn(this, c, w / 2 + 6, h - 28, 104, 20, S.auto.loop ? '停止自动刷' : '自动刷  [回车]', () => { this.closeWin(); this.toggleLoop(); }, { size: 8, tip: [{ t: '一趟接一趟自动打，每趟回营地后停留几秒再出发。', s: 8 }] });
   }
@@ -1055,7 +963,7 @@ class UI extends Phaser.Scene {
     tog(26, R.on, '自动分解', () => { R.on = !R.on; }, [{ t: '关掉后带回的装备都留着，可以在铁砧手动拆解。', s: 8 }]);
     ['普通', '罕见', '稀有'].forEach((n, i) => tog(44 + i * 16, R.rar[i], `${n}装备`, () => { R.rar[i] = !R.rar[i]; }, [{ t: `分解${n}装备（带收藏词条的留下）`, s: 8 }]));
     tog(94, R.old, `旧装备（物品等级 < ${Math.max(1, back)}）`, () => { R.old = !R.old; }, [{ t: `物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的装备全部分解，不看稀有度和收藏词条。`, s: 8 }]);
-    TW(this, 10, 114, '独特、传奇、溢彩装备和印记、符文、墓图永远不会被自动分解；身上穿着的也不会。', 160, { size: 8, color: COL.faint, parent: c });
+    TW(this, 10, 114, '独特、传奇、溢彩装备和技能石、符文永远不会被自动分解；身上穿着的也不会。', 160, { size: 8, color: COL.faint, parent: c });
     const n = S.stash.filter(salvWhy).length;
     mkBtn(this, c, 10, h - 30, 160, 20, confirmKey === 'salvNow' ? `确认分解 ${n} 件` : `现在分解背包（${n} 件）`, () => { if (!confirm2('salvNow')) return this.refresh(); const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个`, '#d9cfb8'); save(); this.refresh(); }, { size: 8, style: confirmKey === 'salvNow' ? 'r' : 'w', disabled: !n });
     // 收藏词条：带这些词条族的装备不按稀有度分解

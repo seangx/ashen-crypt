@@ -140,6 +140,7 @@ for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.me
 if (DATA.mechanics.offhand.weaponAffixes) for (const a of AFF) if (!a.local && a.on && a.on.includes('weapon') && !a.on.includes('off')) a.on = [...a.on, 'off'];
 // 不再掉落的词条（权重全 0 的空词条、等新流派的词条）：铁砧 / 重铸也不出
 for (const a of AFF) if (a.tiers.every(t => !t[1])) a.off = true;
+for (const a of AFF) if (a.on && a.on.length && a.on.every(o => o === 'chip' || o === 'chipE')) a.off = true; // 印记词条：印记已下线
 const AFF_BY = Object.fromEntries(AFF.map(a => [a.k, a]));
 // 原作的数值掷骰：value = lo + round((r-1)/254 * (hi-lo))，r 为 1..255 的字节
 const rollRange = (lo, hi) => lo + Math.round((ri(1, 255) - 1) / 254 * (hi - lo));

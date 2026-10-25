@@ -3,13 +3,13 @@
  "attributes": {
   "_说明": "每点主属性的效果。体魄：护甲 +massArmor（0.02 = 2%）、物理伤害总增 massKinMore、加速度 massAccel；魂力：灵障 energyDeflect、冲刺回复 energyDash、元素伤害总增 energyThermalMore；时砂：行动速度 timeFlow",
   "massArmor": 0.02,
-  "massKinMore": 0.01,
-  "massAccel": -0.01,
+  "massKinMore": 0,
+  "massAccel": 0,
   "massAccelMin": 0.3,
   "energyDeflect": 0.02,
   "energyDash": 0.01,
-  "energyThermalMore": 0.01,
-  "timeFlow": 0.01
+  "energyThermalMore": 0,
+  "timeFlow": 0
  },
  "defense": {
   "generic": {"_说明": "通用防御（design/spec-tree-defense.md §1）。控场 ctrlWeaken：攻击你的怪在出手那一刻处于冰缓/冻结/眩晕/致盲/击退中(knockMin 像素/秒)/时停减速，伤害 ×(1−控场%)；有控制就自带 ctrlBase%，上限 ctrlCap%。贴身：closeR 像素内敌人计数（普通 1、精英 2、Boss 3），减伤 = min(上限, 计数 × (closeBase + closePer))，上限 closeCapBase + closeCap，硬上限 closeHard。远离 farDR：farR 像素内没有敌人时减伤，上限 farCap。续航 shieldOnHit：每次命中回护盾上限的 ‰，每秒最多 sohCapPct%（持续伤害、地面效果不算命中）。大天赋参数在 rules.json：ironWall / ctrlPrison / drinkShield / loneWolf。", "ctrlBase": 10, "ctrlCap": 50, "knockMin": 12, "closeR": 40, "closeBase": 1.5, "closeCapBase": 30, "closeHard": 45, "farR": 60, "farCap": 40, "sohCapPct": 5},
@@ -1987,7 +1987,9 @@
   "affixes": {
    "OffSkillMore": { "text": "主手技能伤害总增 #%", "stat": "offMore", "type": "P", "on": ["off"], "grp": "OffSkillMore", "tiers": [[[4, 7], 1000, 1, 999], [[8, 12], 600, 20, 999], [[13, 18], 250, 45, 999], [[19, 25], 80, 70, 999]] },
    "OffSkillSpeed": { "text": "主手技能攻速总增 #%", "stat": "offAspd", "type": "S", "on": ["off"], "grp": "OffSkillSpeed", "tiers": [[[3, 5], 1000, 1, 999], [[6, 9], 500, 25, 999], [[10, 14], 150, 55, 999]] },
-   "OffExtraProj": { "text": "投射物 +#", "stat": "extra", "type": "P", "on": ["off"], "tag": "Projectile", "grp": "OffExtraProj", "tiers": [[[1, 1], 120, 30, 999]] }
+   "OffExtraProj": { "text": "投射物 +#", "stat": "extra", "type": "P", "on": ["off"], "tag": "Projectile", "grp": "OffExtraProj", "tiers": [[[1, 1], 120, 30, 999]] },
+   "CritDamage": { "text": "暴击伤害 +#%", "stat": "critDmgG", "type": "S", "on": ["off", "core"], "grp": "CritDamage", "tiers": [[[15, 25], 1000, 10, 999], [[26, 40], 600, 35, 999], [[41, 60], 250, 65, 999]], "_说明": "spec-legacy-cleanup §2.3：原印记上的暴击伤害搬到副手和头冠" },
+   "MoreDotTag": { "text": "带【持续伤害】标签的技能伤害总增 #%", "stat": "dotTagMore", "type": "S", "on": ["core"], "grp": "MoreDotTag", "tiers": [[[5, 8], 1000, 20, 999], [[9, 12], 400, 50, 999]], "_说明": "原印记的持续伤害总增" }
   }
  },
  "gems": {

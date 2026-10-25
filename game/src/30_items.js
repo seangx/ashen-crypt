@@ -7,7 +7,7 @@ const baseOf = it => it.fb ? it.fb : it.kind === 'weapon' ? WEAPONS[it.b] : ARMO
 const iconOf = it => it.kind === 'map' ? 'a_map' : baseOf(it).ic;
 const slotsFor = it => it.kind === 'gem' ? ['gem'] : it.kind === 'weapon' ? ['wl'] : it.kind === 'off' ? ['wr'] : it.kind === 'chip' ? [] : [it.kind];
 const itemTags = it => it.fb ? it.fb.tags : it.kind === 'gem' ? gemTags(it) : it.kind === 'weapon' ? WEAPONS[it.b].tags : it.kind === 'engine' ? (ARMORS.engine[it.b].tags || ['Engine']) : (ARMORS[it.kind] && ARMORS[it.kind][it.b] && ARMORS[it.kind][it.b].tags) || [KIND_TAG[it.kind]]; // 圣徽盾带自己的标签
-const canRollOn = (a, it) => !a.off && (a.on.includes(it.kind) || (it.b === 'EmpoweredChip' && a.on.includes('chipE'))) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
+const canRollOn = (a, it) => !a.off && a.on.includes(it.kind) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
 const offTagOk = (it, tag) => { const t = (ARMORS.off[it.b] || {}).tags || []; return t.includes('any') || t.includes(tag); }; // 副手：箭袋只出投射物类，法源 / 图腾 / 提灯什么都能出 // tag 只限制武器
 const KIND_TAG = { shield: 'Shield', core: 'Core', engine: 'Engine', hub: 'Nexus', chip: 'Chip' };
 function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : baseOf(it).n; }
@@ -91,7 +91,7 @@ const modWhere = m => MOD_BY[m.mid].field ? '法阵' : '武器、头冠或遁靴
 function allBases() {
   const out = [];
   for (const k in WEAPONS) if (!WEAPONS[k].retired) out.push(['weapon', k, WEAPONS[k]]); // 停止掉落的底子只为老存档保留
-  for (const kind in ARMORS) if (kind !== 'gem') for (const k in ARMORS[kind]) out.push([kind, k, ARMORS[kind][k]]);
+  for (const kind in ARMORS) if (kind !== 'gem' && kind !== 'chip') for (const k in ARMORS[kind]) out.push([kind, k, ARMORS[kind][k]]);
   return out;
 }
 // 独特装备：保底词条取指定档位（第 N 高档；loot.json 的 uniqueFixedTier 决定从词条族最高档还是从物品等级允许的最高档往下数），专属规则在范围里掷
@@ -168,14 +168,12 @@ function skillItem(eq) { // 技能格里的技能石 → 虚拟武器；圣盾�
 function removeItem(it) {
   S.stash = S.stash.filter(x => x !== it);
   for (const k in S.equip) if (S.equip[k] === it) S.equip[k] = null;
-  for (const k in S.chips) if (S.chips[k] === it) delete S.chips[k];
   if (it.mods) for (const m of it.mods) if (m) S.mods.push(m);
   refreshStats();
 }
 const STASH_CAP = LOOT.stashCap;
 function addItem(it) { S.stash.push(it); it.isNew = true; }
 function equipItem(it, slot) {
-  if (it.kind === 'chip') return equipChip(it);
   slot = it.kind === 'weapon' ? 'wl' : it.kind === 'off' ? 'wr' : it.kind; // 武器只进主手，副手只进副手槽
   const cur = S.equip[slot];
   S.stash = S.stash.filter(x => x !== it);

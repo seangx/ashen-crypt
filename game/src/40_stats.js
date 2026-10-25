@@ -39,9 +39,11 @@ function computeStats(eq = S.equip) {
   }
   A.shieldDmg = (A.shieldDmg || 0) + (base.shieldDmg || 0) + (TA.shieldDmg || 0); A.delayInc = (A.delayInc || 0) + (TA.delayInc || 0); /* 天赋里的盾牌伤害、延迟伤害和装备相加 */ // 圣徽盾的隐性盾牌伤害
   // 主属性
-  P.mass = Math.round(((base.mass || 0) + (A.mass || 0) + (TA.mass || 0)) * Math.max(0, 1 + ((F.massInc || 0) + (TA.massInc || 0)) / 100));
+  // 体魄、时砂已下线（spec-legacy-cleanup §3）：恒为 0。法阵底子上的体魄 / 时砂换成护甲提高 2X% / 攻速提高 X%
+  A.armorInc = (A.armorInc || 0) + 2 * (base.mass || 0); A.aspd = (A.aspd || 0) + (base.time || 0);
+  P.mass = 0;
   P.energy = Math.round(((base.energy || 0) + (A.energy || 0) + (TA.energy || 0)) * Math.max(0, 1 + ((F.energyInc || 0) + (TA.energyInc || 0)) / 100));
-  P.time = Math.round(((base.time || 0) + (A.time || 0) + (TA.time || 0)) * Math.max(0, 1 + ((F.timeInc || 0) + (TA.timeInc || 0)) / 100));
+  P.time = 0;
   // 防御三条（规格 design/spec-defense-v2.md）：护甲只管减伤；护盾是第一道血条，每秒回复；生命是第二道，归零阵亡，只靠吸血回
   P.armor = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100)));
   // 原来的灵障并进护盾；天赋/独特里“护甲总降”的代价改成护盾总降
@@ -49,7 +51,7 @@ function computeStats(eq = S.equip) {
   if (FL.martyrArmor && eq.shield) P.armorOut = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) - qv(baseOf(eq.shield).armor || 0, eq.shield.q) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100))); // 殉道者之盾：盾在飞时不算盾的护甲
   const blk = (A.block || 0) + (TA.block || 0); if (eq.shield && blk) P.armor = Math.round(P.armor * (1 + blk / 100)); // 格挡：盾在手上时护甲提高
   P.shield = Math.round((PLAYER.shield + (base.deflect || 0) + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
-  P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
+  P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0) + (TA.shieldRegenPct || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
   P.life = Math.max(1, Math.round((PLAYER.life + PLAYER.lifePerLevel * ((S.level || 1) - 1) + (A.life || 0) + (TA.life || 0)) * (1 + ((A.lifeInc || 0) + (TA.lifeInc || 0)) / 100) * (TM.life ?? 1))); // 天赋代价可以是生命总降
   P.dodgeCap = MECH.dodgeCap + (TS.flag.dodgeCap || 0);
   P.dodge = Math.min(P.dodgeCap, Math.round((base.dodge || 0) + (A.dodge || 0) + (TA.dodge || 0)));
@@ -155,12 +157,12 @@ function weaponStats(it, P, isEngine) {
     else if (a.stat === 'spinCap') spinCap += x.v;
   }
   if (U('kinBaseInc')) baseInc.kin = (baseInc.kin || 0) + U('kinBaseInc');
-  if (U('flatPerMass')) { const f = flat.kin || [0, 0], v = U('flatPerMass') * P.mass; flat.kin = [f[0] + v, f[1] + v * 2]; }
+  if (U('flatPerArmor')) { const f = flat.kin || [0, 0], v = Math.round(U('flatPerArmor') * (P.armor || 0) / 100); flat.kin = [f[0] + v, f[1] + v * 2]; } // 攻城骨弩：每 100 护甲加物理平伤
   // 符文
   let inc = (TA['inc:all'] || 0) + (b.cont || b.aura ? (TA.dotInc || 0) + U('dotInc') : 0) + (has('AoE') ? TA.areaInc || 0 : 0) + (has('Projectile') ? TA['inc:proj'] || 0 : 0) + (has('Melee') ? TA['inc:melee'] || 0 : 0) + (isEngine ? TA['inc:engine'] || 0 : 0), aspdMore = (TM.aspd ?? 1) * (1 - U('aspdLess') / 100), rangeInc = (TA.rangeInc || 0), aoeInc = (TA.aoeInc || 0) + (P.raw.aoeInc || 0), critInc = TA.critInc || 0, critDmg = TA.critDmg || 0, projSpd = (TA.projSpd || 0) + (has('Projectile') ? P.raw.projSpd || 0 : 0), pure = false;
   const R = P.raw; inc += (has('Projectile') ? R['inc:proj'] || 0 : 0) + (has('AoE') ? R['inc:aoe'] || 0 : 0) + (has('Melee') ? R['inc:melee'] || 0 : 0) + (has('Delayed') ? R.delayInc || 0 : 0) + (has('Shield') ? R.shieldDmg || 0 : 0) + (IM.inc || 0) + (b.cont || b.aura ? IM.dotInc || 0 : 0); critInc += (R.critChance || 0) + (IM.critInc || 0); critDmg += IM.critDmg || 0; aoeInc += IM.aoeInc || 0; rangeInc += IM.rangeInc || 0; projSpd += IM.projSpd || 0; W.projDurInc += has('Projectile') ? IM.projDur || 0 : 0; aspdMore *= 1 + (IM.aspd || 0) / 100; // 标签伤害词条、头冠暴击率（§3.2）
   if (P.off && !isEngine && !it.th && (!it.fb || it.gem)) { const O = P.off; if (has('Projectile')) { W.extra += O.extra; inc += O.projInc; } if (has('ProjectileCanChain')) W.chain += O.chain; inc += O.inc; aoeInc += O.aoeInc; if (has('AoE')) inc += O.areaInc; critInc += O.critInc; critDmg += O.critDmg; aspdMore *= 1 + O.aspdMore / 100; for (const e of ELEM) W.ail[e] += O.ail / 100; W.offGain = O.gain / 100; W.more *= 1 + O.more / 100; } // 副手：强化主手技能（隐性 sup）
-  if (!isEngine && !it.th && (!it.fb || it.gem)) { aspdMore *= 1 + (R.offAspd || 0) / 100; W.more *= 1 + (R.offMore || 0) / 100; } // 副手词条：主手技能总增
+  if (!isEngine && !it.th && (!it.fb || it.gem)) { aspdMore *= 1 + (R.offAspd || 0) / 100; W.more *= 1 + (R.offMore || 0) / 100; critDmg += R.critDmgG || 0; if (has('DoT')) W.more *= 1 + (R.dotTagMore || 0) / 100; } // 副手词条：主手技能总增
   W.blindMore *= TM.blind ?? 1; W.radMore *= TM.rad ?? 1; W.dotMore *= TM.dot ?? 1;
   if (!b.cont && !b.aura) W.more *= TM['dmg:hit'] ?? 1;
   if (!has('AoE')) W.more *= TM['dmg:nonAoe'] ?? 1;

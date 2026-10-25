@@ -68,8 +68,8 @@
   "IridiumNexus": ["灰石法阵", "a_circle"]
 },
  "chip": {
-  "Chip": { "n": "印记", "ic": "a_sigil", "req": 12, "w": 1000 },
-  "EmpoweredChip": { "n": "强化印记", "ic": "a_sigil_e", "req": 70, "w": 100 }
+  "Chip": { "n": "印记", "ic": "a_sigil", "req": 12, "w": 0 },
+  "EmpoweredChip": { "n": "强化印记", "ic": "a_sigil_e", "req": 70, "w": 0 }
  },
  "offhand": {
   "_说明": "副手：不带独立技能，只强化主手技能。sup 是隐性支援效果 [品质 0 的值, 品质 10 的值]（中间线性）：extra 主手投射物 +N（主手带投射物标签才生效）；inc 主手技能伤害提高%；projInc 投射物伤害提高%（主手带投射物）；aoeInc 范围提高%；areaInc 范围伤害提高%（主手带范围）；aspdMore 主手攻速总增%；critInc 暴击率提高%；critDmg 暴击伤害 +%；ail 主手异常效果 +%（全元素）；gain 额外获得主手元素伤害%。tags 决定能掷出哪些带标签的词条（any = 全部）；d 是一句话定位。",

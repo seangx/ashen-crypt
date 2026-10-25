@@ -1,5 +1,6 @@
 {
-  "_说明": "天梯（个人）。层数 N 从 1 到已解锁的最高层任选，怪物等级 = N。墓图和命盘在天梯里不生效。",
+  "_说明": "天梯（个人）。层数 N 从 1 到已解锁的最高层任选，怪物等级 = N。墓图和命盘已下线。",
+  "mods": { "_说明": "天梯层词缀（spec-legacy-cleanup §1.1）：第 N 层 floor(N / every) 条，最多 max 条，从 atlas.json maps.affixes 里 bad=1 的条目抽；由 (seed, N) 决定，同一层每次一样。每条让通关宝箱 +items 件装备、碎片 +shards×100%", "seed": 1, "every": 15, "max": 3, "items": 1, "shards": 0.2 },
 
   "run": {
     "_说明": "density：同屏怪物上限 ×density，刷怪间隔 ÷density；eliteMul 精英几率倍数；进度 normalP（普通怪）/ eliteP（精英）点，攒满 pointsBase + pointsPerLevel × N 召唤守关 Boss；timeLimit 限时（秒），超时或死亡算失败，没有损失",
