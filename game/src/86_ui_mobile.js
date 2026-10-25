@@ -24,7 +24,7 @@ class MobileUI extends UI {
   /* --- 顶栏 + 操作区 --- */
   buildHud() {
     const top = this.add.container(0, 0).setDepth(10); this.topC = top;
-    top.add(rect(this, 0, 0, W, MTOP, COL.ink, 0.82)); top.add(rect(this, 0, MTOP - 1, W, 1, '#6a5433', 1));
+    top.add(rect(this, 0, 0, W, MTOP, COL.ink, 0.82)); top.add(this.add.tileSprite(0, 0, W, MTOP, 'n_stone').setOrigin(0).setAlpha(0.45)); top.add(this.add.image(0, 0, 'g_vig').setOrigin(0).setDisplaySize(W, MTOP * 2).setAlpha(0.8)); top.add(rect(this, 0, MTOP - 2, W, 1, '#5a3a14', 1)); top.add(rect(this, 0, MTOP - 1, W, 1, '#c8913a', 1));
     this.ribbon = this.add.nineslice(0, 1, 'ribbon', null, 120, 22, 14, 14, 0, 0).setOrigin(0); top.add(this.ribbon);
     this.depthT = T(this, W / 2, 6, '', { align: 'center', color: COL.emberHi, parent: top });
     const bc = this.add.container(W / 2 - 100, 22); top.add(bc); this.bossC = bc;
@@ -73,10 +73,11 @@ class MobileUI extends UI {
   /* --- 底部导航：7 格，中间「战斗」凸起 --- */
   buildNav() {
     const y0 = H - NAV_H, c = this.add.container(0, y0).setDepth(60), sw = W / MNAV.length; this.navC = c;
-    c.add(rect(this, 0, 0, W, NAV_H, '#141019', 1)); c.add(rect(this, 0, 0, W, 1, '#c8913a', 1));
+    c.add(rect(this, 0, 0, W, NAV_H, '#141019', 1)); c.add(this.add.tileSprite(0, 2, W, NAV_H - 2, 'n_stone').setOrigin(0).setAlpha(0.7)); c.add(rect(this, 0, 0, W, 1, '#c8913a', 1)); c.add(rect(this, 0, 1, W, 1, '#5a3a14', 1));
     this.navs = MNAV.map((m, i) => {
       const x = Math.round(i * sw), w = Math.round((i + 1) * sw) - x, mid = m.id === 'battle', b = this.add.container(x, 0); c.add(b);
-      if (mid) { b.add(nine(this, 1, -10, w - 2, NAV_H + 8, 'f_btn_w', 4)); }
+      if (mid) { const gw = nine(this, -3, -14, w + 6, NAV_H + 16, 'f_glow', 3).setTint(0xffb45e).setAlpha(0.5); b.add(gw); this.tweens.add({ targets: gw, alpha: 0.95, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.inOut' }); b.add(nine(this, 1, -10, w - 2, NAV_H + 8, 'f_btn_w', 4)); b.add(this.add.image(1, -10, 'o_corner').setOrigin(0).setScale(0.7)); b.add(this.add.image(w - 1, -10, 'o_corner').setOrigin(1, 0).setFlipX(true).setScale(0.7)); }
+      else { b.ul = rect(this, 6, NAV_H - 4, w - 12, 2, '#ffd36a', 0, b); }
       b.hl = rect(this, 2, 2, w - 4, NAV_H - 4, '#ffd36a', 0, b);
       const iy = mid ? 0 : 9;
       if (m.ic) { const s = this.textures.get(m.ic).getSourceImage(); b.ic = img(this, Math.round(w / 2 - s.width / 2), iy + Math.round(8 - s.height / 2), m.ic, b); }
@@ -165,7 +166,7 @@ class MobileUI extends UI {
       if (id === 'gear') { const k = S.stash.filter(x => x.isNew).length; badge = k ? String(k) : ''; }
       if (id === 'mods' && S.mods.some(m => m.isNew)) badge = '!';
       if (id === 'tree' && treePoints() > 0) badge = String(treePoints());
-      set(bt.badge, on ? badge : ''); bt.hl.setFillStyle(0xffd36a, id === cur && id !== 'battle' ? 0.14 : 0); bt.ic.setAlpha(on ? 1 : 0.3); bt.setVisible(on); // 未解锁的导航项隐藏
+      set(bt.badge, on ? badge : ''); const sel = id === cur && id !== 'battle'; bt.hl.setFillStyle(0xffd36a, sel ? 0.14 : 0); if (bt.ul) bt.ul.setFillStyle(0xffd36a, sel ? 1 : 0); if (bt.ic && bt.icY0 === undefined) bt.icY0 = bt.ic.y; if (bt.ic && id !== 'battle') bt.ic.y = bt.icY0 - (sel ? 2 : 0); bt.lab.setTint(hex(sel ? COL.emberHi : id === 'battle' ? '#2a1306' : COL.text)); bt.ic.setAlpha(on ? 1 : 0.3); bt.setVisible(on); // 未解锁的导航项隐藏
     });
     this.updateAuto();
   }
@@ -190,7 +191,7 @@ class MobileUI extends UI {
   refresh(anim) {
     hideTip();
     if (this.winC) { this.winC.destroy(); this.winC = null; }
-    if (!this.winId) return;
+    if (!this.winId) { this.decoId = null; return; }
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
     const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
@@ -199,7 +200,7 @@ class MobileUI extends UI {
     const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[id] || 'f_win';
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
-    this['win_' + id](c, w, h);
+    this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
     const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', notice: '旧系统整理' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: COL.emberHi, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮

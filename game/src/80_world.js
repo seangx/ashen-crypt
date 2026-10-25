@@ -154,6 +154,13 @@ class World extends Phaser.Scene {
       } else { drawCamp(this.roomTex.getContext(), open); this.roomTex.refresh(); this.clearChunks(); }
       this.roomL = key;
     }
+    if (!this.campFx) { // 营地氛围：火星上飘、薄雾横移（只建一次，进任务时隐藏）
+      const em = this.add.particles(0, 0, 'g_ember', { x: { min: 40, max: W - 40 }, y: { min: H * 0.55, max: H - 10 }, lifespan: { min: 2200, max: 4200 }, speedY: { min: -26, max: -10 }, speedX: { min: -6, max: 6 }, alpha: { start: 0.9, end: 0 }, scale: { start: 1, end: 0.4 }, frequency: 120 }).setDepth(8);
+      const fog = [0, 1, 2].map(i => { const f = this.add.image(-80 + i * 200, H * (0.45 + i * 0.15), 'g_fog').setScale(5, 3).setDepth(8.5).setAlpha(0.8); this.tweens.add({ targets: f, x: f.x + 140, duration: 14000 + i * 3000, yoyo: true, repeat: -1, ease: 'Sine.inOut' }); return f; });
+      const em2 = this.add.particles(0, 0, 'g_ember', { x: { min: 232, max: 248 }, y: { min: 194, max: 200 }, lifespan: { min: 900, max: 1800 }, speedY: { min: -40, max: -18 }, speedX: { min: -10, max: 10 }, alpha: { start: 1, end: 0 }, scale: { start: 1.4, end: 0.3 }, frequency: 70 }).setDepth(8);
+      this.campFx = [em, em2, ...fog];
+    }
+    if (this.campFxOn !== !RUN) { this.campFxOn = !RUN; this.campFx.forEach(o => o.setVisible(!RUN)); this.campFx[0].emitting = this.campFx[1].emitting = !RUN; }
     this.roomImg.setVisible(!RUN); this.floorTS.forEach(im => im.setVisible(!!RUN)); this.vig.setVisible(!!RUN).setPosition(this.cx, this.cy); if (MOBILE) this.vig.setScale(1 / (this.vk || 1)); // 跟相机走（缩放相机下 scrollFactor 0 会错位） this.glows.forEach(gl => gl.setVisible(!RUN));
     const pano = MOBILE && this.vk !== 1, cx = pano ? Math.round(CAM.x) : this.cx, cy = pano ? Math.round(CAM.y) : this.cy, decoL = RUN ? this.syncChunks(L, cx, cy, pano ? VW : W, pano ? VH : H) : []; // 视野附近的蜡烛、火盆（世界坐标）
     if (RUN) { const fx0 = Math.floor(cx / FLOOR_TW) * FLOOR_TW, fy0 = Math.floor(cy / FLOOR_TH) * FLOOR_TH; this.floorTS.forEach((im, k) => im.setPosition(fx0 + (k % 3) * FLOOR_TW, fy0 + (k / 3 | 0) * FLOOR_TH)); }

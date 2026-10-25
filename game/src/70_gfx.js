@@ -110,6 +110,15 @@ function chromeTextures(add) {
   add('orb_hi', cvs(64, 64, x => { for (let a = 3.6; a < 4.5; a += 0.05) px(x, 'rgba(255,255,255,.55)', Math.round(OC + Math.cos(a) * (ORr - 6)), Math.round(OY + Math.sin(a) * (ORr - 6))); for (let a = 3.4; a < 4.7; a += 0.04) px(x, 'rgba(255,255,255,.12)', Math.round(OC + Math.cos(a) * (ORr - 8)), Math.round(OY + Math.sin(a) * (ORr - 8))); }));
   // 石台底栏：可横向平铺
   add('dock', cvs(32, 30, x => { for (let j = 2; j < 30; j++) for (let i = 0; i < 32; i++) px(x, R() < 0.5 ? '#231c2c' : '#262030', i, j); px(x, CH.ink, 0, 0, 32, 2); px(x, CH.ironH, 0, 2, 32, 1); px(x, CH.br, 0, 6, 32, 1); px(x, CH.ink, 0, 29, 32, 1); for (let i = 2; i < 32; i += 8) px(x, '#1a1422', i, 12 + (i % 3) * 4, 3, 1); }));
+  // UI 打磨：窗框四角的金饰（带红宝石）、窗内暗角渐变、点按闪光、稀有物品流光
+  add('o_corner', cvs(14, 14, x => { const P = (c, a, b, ww = 1, hh = 1) => px(x, c, a, b, ww, hh);
+    P(CH.ink, 0, 0, 10, 4); P(CH.ink, 0, 0, 4, 10); P('#7a4a14', 1, 1, 8, 2); P('#7a4a14', 1, 1, 2, 8); P('#e0b050', 1, 1, 7, 1); P('#e0b050', 1, 1, 1, 7); P('#ffe08a', 1, 1, 2, 1);
+    P(CH.ink, 3, 3, 7, 7); P('#5a3008', 4, 4, 5, 5); P('#c0303a', 5, 5, 3, 3); P('#ff7a6a', 5, 5, 1, 1); P('#e0b050', 4, 4, 5, 1); P('#e0b050', 4, 4, 1, 5);
+    P(CH.ink, 10, 1, 3, 2); P('#e0b050', 10, 1, 2, 1); P(CH.ink, 1, 10, 2, 3); P('#e0b050', 1, 10, 1, 2); }));
+  add('g_vig', cvs(8, 64, x => { for (let j = 0; j < 64; j++) { const d = Math.min(j, 63 - j); const a = d < 10 ? (10 - d) / 10 * 0.45 : 0; x.fillStyle = `rgba(8,5,12,${a.toFixed(3)})`; x.fillRect(0, j, 8, 1); } }));
+  add('g_glint', cvs(16, 32, x => { for (let j = 0; j < 32; j++) for (let i = 0; i < 16; i++) { const d = Math.abs(i - 8 + (j - 16) * 0.5); if (d < 3) { x.fillStyle = `rgba(255,255,255,${((3 - d) / 3 * 0.5).toFixed(2)})`; x.fillRect(i, j, 1, 1); } } }));
+  add('g_ember', cvs(3, 3, x => { px(x, '#ffb45e', 1, 0, 1, 3); px(x, '#ffb45e', 0, 1, 3, 1); px(x, '#fff0b0', 1, 1, 1, 1); }));
+  add('g_fog', cvs(64, 24, x => { for (let j = 0; j < 24; j++) for (let i = 0; i < 64; i++) { const dx = (i - 32) / 32, dy = (j - 12) / 12, d = dx * dx + dy * dy; if (d < 1) { x.fillStyle = `rgba(150,130,180,${((1 - d) * 0.22).toFixed(3)})`; x.fillRect(i, j, 1, 1); } } }));
 }
 const ORB = { cx: 32, cy: 33, r: 24 };
 /* ---------- 旋风：龙卷风和旋风斩 ---------- */
@@ -218,6 +227,13 @@ function nine(sc, x, y, w, h, key, sl = 4) { return sc.add.nineslice(x, y, key, 
 function img(sc, x, y, key, parent) { const i = sc.add.image(Math.round(x), Math.round(y), key).setOrigin(0); if (parent) parent.add(i); return i; }
 function rect(sc, x, y, w, h, col, a = 1, parent) { const r = sc.add.rectangle(x, y, w, h, hex(col), a).setOrigin(0); if (parent) parent.add(r); return r; }
 
+/* 窗口装饰（桌面和手机共用）：暗角、四角金饰、首次打开的淡入上浮 */
+function decoWin(sc, c, w, h, fresh) {
+  c.addAt(sc.add.image(3, 3, 'g_vig').setOrigin(0).setDisplaySize(w - 6, h - 6), 2);
+  for (const [x, y, fx, fy] of [[-3, -3, false, false], [w + 3, -3, true, false], [-3, h + 3, false, true], [w + 3, h + 3, true, true]]) c.add(sc.add.image(x, y, 'o_corner').setOrigin(fx ? 1 : 0, fy ? 1 : 0).setFlip(fx, fy));
+  if (fresh && G.fx !== false) { const y0 = c.y; c.setAlpha(0).y = y0 + 6; sc.tweens.add({ targets: c, alpha: 1, y: y0, duration: 140, ease: 'Quad.out' }); }
+}
+function tapFlash(sc, c, w, h) { const f = sc.add.rectangle(0, 0, w, h, 0xfff0c0, 0.35).setOrigin(0); c.add(f); sc.tweens.add({ targets: f, alpha: 0, duration: 180, onComplete: () => f.destroy() }); }
 function mkBtn(sc, parent, x, y, w, h, label, onClick, o = {}) {
   const c = sc.add.container(x, y); if (parent) parent.add(c);
   const style = o.style || 'n';
@@ -236,9 +252,10 @@ function mkBtn(sc, parent, x, y, w, h, label, onClick, o = {}) {
   c.lab = lab;
   c.setDisabled(c.disabled);
   zone.on('pointerover', () => { if (!c.disabled) bgh.setVisible(true); if (o.tip) showTip(typeof o.tip === 'function' ? o.tip() : o.tip); });
-  zone.on('pointerout', () => { bgh.setVisible(false); c.y = y; if (o.tip) hideTip(); });
-  zone.on('pointerdown', () => { if (!c.disabled) c.y = y + 1; });
-  zone.on('pointerup', () => { c.y = y; if (c.disabled) { if (o.whyDisabled) toast(o.whyDisabled); return; } sfx('click'); onClick && onClick(); });
+  zone.on('pointerout', () => { bgh.setVisible(false); prs.setVisible(false); c.y = y; if (o.tip) hideTip(); });
+  const prs = sc.add.rectangle(1, 1, w - 2, h - 2, 0x000000, 0.28).setOrigin(0).setVisible(false); c.addAt(prs, 3);
+  zone.on('pointerdown', () => { if (!c.disabled) { c.y = y + 1; prs.setVisible(true); } });
+  zone.on('pointerup', () => { c.y = y; prs.setVisible(false); if (c.disabled) { if (o.whyDisabled) toast(o.whyDisabled); return; } tapFlash(sc, c, w, h); sfx('click'); onClick && onClick(); });
   return c;
 }
 function mkCheck(sc, parent, x, y, label, on, onToggle, o = {}) {
@@ -261,6 +278,11 @@ function mkCell(sc, parent, x, y, it, o = {}) {
   if (it) {
     const isMod = it.kind === 'mod';
     if (!isMod) c.add(nine(sc, 1, 1, s - 2, s - 2, 'f_glow', 3).setTint(hex(icol(it))).setAlpha(it.rar ? 1 : 0.45));
+    if (!isMod && it.rar >= 1) c.add(nine(sc, 0, 0, s, s, 'f_rar', 2).setTint(hex(icol(it))).setAlpha(it.rar >= 2 ? 1 : 0.7)); // 稀有度描边
+    if (!isMod && (it.rar >= 2 || it.u) && G.fx !== false && s >= 18) { // 传奇 / 暗金：流光扫过（共享一张贴图，遮罩在格子内）
+      const gl = sc.add.image(4, s / 2, 'g_glint').setScale(s / 40).setBlendMode('ADD').setAlpha(0); c.add(gl);
+      sc.tweens.add({ targets: gl, x: s - 4, duration: 700, delay: 300 + ((x * 7 + y * 13) % 1600), repeat: -1, repeatDelay: 2800, onUpdate: tw => gl.setAlpha(Math.sin(tw.progress * Math.PI)) });
+    }
     const key = isMod ? 'mod_' + it.mid : 'i_' + iconOf(it); const tw = sc.textures.get(key).getSourceImage().width, th = sc.textures.get(key).getSourceImage().height;
     img(sc, Math.round((s - tw) / 2), Math.round((s - th) / 2), key, c);
     if (it.kind === 'gem') { const gr = sc.add.graphics(); gr.lineStyle(1, hex(COL.cyan), 0.85); gr.strokeCircle(s / 2, s / 2, s / 2 - 2); c.add(gr); T(sc, 1, s - 8, String(it.lvl), { size: 'num', color: COL.cyan, parent: c }); } // 技能石：圆形宝石框 + 等级
