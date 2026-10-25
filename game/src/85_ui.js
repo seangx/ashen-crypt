@@ -339,7 +339,13 @@ class UI extends Phaser.Scene {
   feed(msg, color = COL.text, icon) { if (!G.fx) return; this.feeds.unshift({ msg, color, icon, t: G.time }); this.feeds = this.feeds.slice(0, 5); this.renderFeed(); }
   feedItem(it) { this.feed(itemName(it), icol(it), 'i_' + iconOf(it)); }
   renderFeed() { this.feedC.removeAll(true); this.feeds.forEach((f, i) => { const y = H - 84 - i * 15, c = this.add.container(0, 0); this.feedC.add(c); c.feed = f; if (f.icon && this.textures.exists(f.icon)) { const s = this.textures.get(f.icon).getSourceImage(); img(this, W - 6 - 14 + Math.round((14 - s.width) / 2), y + Math.round((14 - s.height) / 2), f.icon, c); } T(this, W - 24, y + 2, f.msg, { color: f.color, align: 'right', parent: c }); }); }
-  banner(text, color = COL.boss) { if (!G.fx) return; this.bannerT.setText(text).setTint(hex(color)).setAlpha(1); this.tweens.killTweensOf(this.bannerT); this.tweens.add({ targets: this.bannerT, alpha: 0, delay: 1400, duration: 500 }); }
+  banner(text, color = COL.boss) {
+    if (!G.fx) return; const t = this.bannerT; t.setText(text).setTint(hex(color)).setAlpha(1).setScale((t.baseS ??= t.scale) * 1.35);
+    if (!this.bannerBand) { const b = this.add.container(0, 0).setDepth(t.depth - 0.1); b.add(this.add.rectangle(0, -14, W, 28, 0x0c0810, 0.7).setOrigin(0)); b.add(this.add.rectangle(0, -14, W, 1, 0xe0b050, 0.9).setOrigin(0)); b.add(this.add.rectangle(0, 13, W, 1, 0xe0b050, 0.9).setOrigin(0)); this.bannerBand = b; }
+    const bb = this.bannerBand; bb.y = t.y + (t.originY === 0 ? t.height / 2 : 0); bb.setAlpha(1).setScale(1, 0.2);
+    this.tweens.killTweensOf([t, bb]); this.tweens.add({ targets: t, scale: t.baseS, duration: 220, ease: 'Back.out' }); this.tweens.add({ targets: bb, scaleY: 1, duration: 160, ease: 'Quad.out' });
+    this.tweens.add({ targets: [t, bb], alpha: 0, delay: 1400, duration: 500 });
+  }
   /* --- 窗口 --- */
   // 开始 / 暂停自动循环
   toggleLoop() {
@@ -441,7 +447,7 @@ class UI extends Phaser.Scene {
   refresh(anim) {
     hideTip();
     if (this.winC) { this.winC.destroy(); this.winC = null; }
-    if (!this.winId) return;
+    if (!this.winId) { this.decoId = null; return; }
     if (!this.dimR) { this.dimR = rect(this, 0, TOP_H, W, BOT_Y - TOP_H, COL.ink, 0.6).setDepth(90).setInteractive(); this.dimR.on('pointerup', () => { if (this.winId !== 'summary' && this.winId !== 'prep') this.closeWin(); }); }
     const [w, h] = { summary: [372, 176], depart: [300, 134], notice: [340, 190], prep: [372, 170], bulk: [372, 200] }[this.winId] || [470, 210];
     const x = Math.round((W - w) / 2), y = TOP_H + Math.round((BOT_Y - TOP_H - h) / 2);
@@ -449,7 +455,7 @@ class UI extends Phaser.Scene {
     const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[this.winId] || 'f_win'; // 装备皮革、铁砧石板、其余铁框
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0)); // 九宫格拉伸会把噪点拉成色块，底纹单独平铺
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
-    this['win_' + this.winId](c, w, h);
+    this['win_' + this.winId](c, w, h); decoWin(this, c, w, h, this.decoId !== this.winId); this.decoId = this.winId;
     const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', bulk: '批量拆解', notice: (S.notice || {}).t || '告示' }[this.winId];
     if (title) {
       const pw = textW(title) + 44; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: COL.emberHi, align: 'center', parent: c });
