@@ -59,5 +59,6 @@ function starterKit() {
   S.equip.wl = w;
   if (K.engine) S.equip.engine = newItem('engine', K.engine, 1, 0, 0);
   if (K.shield) S.equip.shield = newItem('shield', K.shield, 1, 0, 0);
+  { const OH = DATA.mechanics.offhand, tg = itemTags(w), b = (OH.starterByTag.find(([t]) => tg.includes(t)) || [0, OH.fallback])[1]; S.equip.wr = newItem('off', b, 1, 0, 0); } // 新档：按主手标签送一件普通副手
   if (K.hub) { const h = newItem('hub', K.hub, 1, 0, 0); h.sock = Math.max(1, h.sock); h.mods = Array(h.sock).fill(null); S.equip.hub = h; }
 }
