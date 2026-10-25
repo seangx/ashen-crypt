@@ -1,0 +1,579 @@
+{
+ "_说明": "技能石（spec-skill-gems）。src：来源旧武器底子（形态参数、标签、攻速、射程、范围、伤害曲线都读它；第一个是默认变体，dropVars 是掉落时随机的变体）。伤害 = 来源底子按主手品质的伤害 × mul(等级，1→20 线性) × (1 + 品质%) × 对口；出手频率 = 来源底子攻速 × spd。fr：并进来的形态符文（fx 按技能石等级）。mul 第一版：形态技能石 [1,1]（形态 fx 本身随等级成长），普通技能石 [1,1.25]。由 tools/gen_gems.js 生成。",
+ "list": [
+  {
+   "id": "GemWhirl",
+   "n": "旋风斩",
+   "ic": "w_bladering",
+   "form": "orbit",
+   "src": [
+    "TurbineBlades"
+   ],
+   "tags": [
+    "Hit",
+    "Melee",
+    "Attack",
+    "AttackSpeed",
+    "AoE",
+    "Range"
+   ],
+   "mul": [
+    1,
+    1
+   ],
+   "spd": 1,
+   "req": 6,
+   "w": 600,
+   "ai": "melee",
+   "fr": "Whirl",
+   "fx": {
+    "whirl": 1,
+    "spinMore": [
+     "lp",
+     1.06,
+     1.12,
+     3
+    ],
+    "meleeGuard": 1,
+    "armorOnHit": [
+     "lp",
+     1,
+     6,
+     2
+    ]
+   }
+  },
+  {
+   "id": "GemStab",
+   "n": "突刺",
+   "ic": "w_spike",
+   "form": "stab",
+   "src": [
+    "Spikes",
+    "Thorns"
+   ],
+   "tags": [
+    "Hit",
+    "Melee",
+    "Attack",
+    "AttackSpeed",
+    "Range"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "melee",
+   "dropVars": [
+    "Spikes"
+   ]
+  },
+  {
+   "id": "GemRam",
+   "n": "冲撞",
+   "ic": "w_maul",
+   "form": "ram",
+   "src": [
+    "Hullbreaker"
+   ],
+   "tags": [
+    "Hit",
+    "Melee"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "melee"
+  },
+  {
+   "id": "GemBolt",
+   "n": "骨矢",
+   "ic": "w_crossbow",
+   "form": "proj",
+   "src": [
+    "Cannon",
+    "Railgun"
+   ],
+   "tags": [
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "ranged"
+  },
+  {
+   "id": "GemTaser",
+   "n": "雷符",
+   "ic": "w_stormseal",
+   "form": "proj",
+   "src": [
+    "Taser"
+   ],
+   "tags": [
+    "Projectile",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "ranged"
+  },
+  {
+   "id": "GemSpark",
+   "n": "游雷",
+   "ic": "w_wisp",
+   "form": "proj",
+   "src": [
+    "Zapper"
+   ],
+   "tags": [
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "mul": [0.9, 0.9],
+   "spd": 1,
+   "req": 6,
+   "w": 600,
+   "ai": "ranged",
+   "fr": "Spark",
+   "fx": {
+    "spark": 1,
+    "sparkN": [
+     "step",
+     3,
+     5
+    ],
+    "chain": [
+     "step",
+     1,
+     8
+    ],
+    "sparkMul": ["lp", 1.45, 2, 2],
+    "ail": {
+     "ele": 0.15
+    }
+   }
+  },
+  {
+   "id": "GemSickle",
+   "n": "飞镰",
+   "ic": "w_sickle",
+   "form": "proj",
+   "src": [
+    "Shuriken",
+    "PlasmaCutter"
+   ],
+   "tags": [
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "ranged"
+  },
+  {
+   "id": "GemFirepot",
+   "n": "火油罐",
+   "ic": "w_firepot",
+   "form": "proj",
+   "src": [
+    "Rocket",
+    "FlameSlinger"
+   ],
+   "tags": [
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "AoE",
+    "Hit",
+    "Range"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "ranged"
+  },
+  {
+   "id": "GemScatter",
+   "n": "散射",
+   "ic": "w_scatter",
+   "form": "proj",
+   "src": [
+    "Blastgun",
+    "PlasmaBlaster"
+   ],
+   "tags": [
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "ranged"
+  },
+  {
+   "id": "GemPlague",
+   "n": "疫星",
+   "ic": "w_orrery",
+   "form": "proj",
+   "src": [
+    "Orbitron",
+    "SporeBlaster"
+   ],
+   "tags": [
+    "Projectile",
+    "ProjectileCanReturn",
+    "ProjectileCanPierce",
+    "ProjectileCanChain",
+    "ProjectileCanSplit",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "DoT"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "ranged"
+  },
+  {
+   "id": "GemBeam",
+   "n": "圣光束",
+   "ic": "w_lightrod",
+   "form": "beam",
+   "src": [
+    "Laser"
+   ],
+   "tags": [
+    "Attack",
+    "Projectile",
+    "ProjectileCanChain",
+    "DoT",
+    "Range"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "ranged"
+  },
+  {
+   "id": "GemFlame",
+   "n": "喷火",
+   "ic": "w_flameskull",
+   "form": "cone",
+   "src": [
+    "FlameThrower"
+   ],
+   "tags": [
+    "Attack",
+    "AoE",
+    "Range",
+    "DoT"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "melee"
+  },
+  {
+   "id": "GemMiasma",
+   "n": "瘟疫光环",
+   "ic": "w_censer",
+   "form": "aura",
+   "src": [
+    "PlutoniumBar"
+   ],
+   "tags": [
+    "AoE",
+    "DoT",
+    "Range",
+    "Field"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "melee"
+  },
+  {
+   "id": "GemNova",
+   "n": "新星",
+   "ic": "w_bell",
+   "form": "nova",
+   "src": [
+    "PlasmaNova"
+   ],
+   "tags": [
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "melee"
+  },
+  {
+   "id": "GemFrostNova",
+   "n": "霜环",
+   "ic": "w_frostbell",
+   "form": "nova",
+   "src": [
+    "FrostBell"
+   ],
+   "tags": [
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Range",
+    "Nova"
+   ],
+   "mul": [1.3, 1.3],
+   "spd": 1,
+   "req": 6,
+   "w": 600,
+   "ai": "melee",
+   "fr": "FrostNova",
+   "fx": {
+    "frostNova": 1,
+    "novaMul": [
+     "lp",
+     1.3,
+     1.8,
+     2
+    ],
+    "chillStacks": 2
+   }
+  },
+  {
+   "id": "GemMeteor",
+   "n": "陨火",
+   "ic": "w_starrod",
+   "form": "meteor",
+   "src": [
+    "StarfallRod"
+   ],
+   "tags": [
+    "Hit",
+    "Attack",
+    "AttackSpeed",
+    "AoE",
+    "Delayed",
+    "Range"
+   ],
+   "mul": [1.2, 1.2],
+   "spd": 1,
+   "req": 6,
+   "w": 600,
+   "ai": "ranged",
+   "fr": "Meteor",
+   "fx": {
+    "meteor": 1,
+    "meteorMul": [
+     "lp",
+     1.4,
+     2,
+     2
+    ],
+    "delay": 1,
+    "ground": {
+     "dur": 3,
+     "tick": 0.5,
+     "pct": 0.12
+    }
+   }
+  },
+  {
+   "id": "GemFrostOrb",
+   "n": "寒魄球",
+   "ic": "w_frostorb",
+   "form": "orb",
+   "src": [
+    "FrostOrb"
+   ],
+   "tags": [
+    "Hit",
+    "Attack",
+    "AttackSpeed",
+    "Projectile",
+    "ProjectileCanChain",
+    "Spawn",
+    "AoE",
+    "Range"
+   ],
+   "mul": [1.15, 1.15],
+   "spd": 1,
+   "req": 6,
+   "w": 600,
+   "ai": "ranged",
+   "fr": "FrostOrbRune",
+   "fx": {
+    "frostOrb": 1,
+    "shardMul": [
+     "lp",
+     0.2,
+     0.32,
+     2
+    ]
+   }
+  },
+  {
+   "id": "GemTrap",
+   "n": "陷阱",
+   "ic": "w_trap_exp",
+   "form": "mine",
+   "src": [
+    "BlastMine",
+    "StormMine",
+    "WasteMine",
+    "PlasmaMine",
+    "ShrapnelMine"
+   ],
+   "tags": [
+    "AoE",
+    "Attack",
+    "AttackSpeed",
+    "Hit",
+    "Mine",
+    "Delayed"
+   ],
+   "mul": [
+    1,
+    1.25
+   ],
+   "spd": 1,
+   "req": 1,
+   "w": 600,
+   "ai": "ranged",
+   "dropVars": [
+    "BlastMine",
+    "StormMine",
+    "WasteMine"
+   ]
+  },
+  {
+   "id": "GemShield",
+   "n": "圣盾掷",
+   "ic": "a_boneward",
+   "form": "shieldThrow",
+   "src": [],
+   "tags": [
+    "Shield",
+    "Projectile",
+    "ProjectileCanChain",
+    "ProjectileCanPierce",
+    "Attack",
+    "AttackSpeed",
+    "Hit"
+   ],
+   "mul": [1, 1],
+   "spd": 1,
+   "req": 6,
+   "w": 600,
+   "ai": "ranged",
+   "fr": "ShieldThrow",
+   "fx": {
+    "shieldThrow": 1,
+    "throwK": ["lp", 0.45, 0.8, 2],
+    "chain": [
+     "step",
+     3,
+     6
+    ],
+    "chainStepInc": 10,
+    "ail": {
+     "pla": 0.2
+    }
+   }
+  }
+ ]
+}

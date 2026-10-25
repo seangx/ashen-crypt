@@ -5,9 +5,9 @@ const AFF_LIMIT = [LOOT.affixCount.limit.normal, LOOT.affixCount.limit.magic, LO
 
 const baseOf = it => it.fb ? it.fb : it.kind === 'weapon' ? WEAPONS[it.b] : ARMORS[it.kind][it.b];
 const iconOf = it => it.kind === 'map' ? 'a_map' : baseOf(it).ic;
-const slotsFor = it => it.kind === 'weapon' ? ['wl'] : it.kind === 'off' ? ['wr'] : it.kind === 'chip' ? [] : [it.kind];
-const itemTags = it => it.fb ? it.fb.tags : it.kind === 'weapon' ? WEAPONS[it.b].tags : it.kind === 'engine' ? (ARMORS.engine[it.b].tags || ['Engine']) : (ARMORS[it.kind] && ARMORS[it.kind][it.b] && ARMORS[it.kind][it.b].tags) || [KIND_TAG[it.kind]]; // 圣徽盾带自己的标签
-const canRollOn = (a, it) => !a.off && (a.on.includes(it.kind) || (it.b === 'EmpoweredChip' && a.on.includes('chipE'))) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
+const slotsFor = it => it.kind === 'gem' ? ['gem'] : it.kind === 'weapon' ? ['wl'] : it.kind === 'off' ? ['wr'] : it.kind === 'chip' ? [] : [it.kind];
+const itemTags = it => it.fb ? it.fb.tags : it.kind === 'gem' ? gemTags(it) : it.kind === 'weapon' ? WEAPONS[it.b].tags : it.kind === 'engine' ? (ARMORS.engine[it.b].tags || ['Engine']) : (ARMORS[it.kind] && ARMORS[it.kind][it.b] && ARMORS[it.kind][it.b].tags) || [KIND_TAG[it.kind]]; // 圣徽盾带自己的标签
+const canRollOn = (a, it) => !a.off && a.on.includes(it.kind) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
 const offTagOk = (it, tag) => { const t = (ARMORS.off[it.b] || {}).tags || []; return t.includes('any') || t.includes(tag); }; // 副手：箭袋只出投射物类，法源 / 图腾 / 提灯什么都能出 // tag 只限制武器
 const KIND_TAG = { shield: 'Shield', core: 'Core', engine: 'Engine', hub: 'Nexus', chip: 'Chip' };
 function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : baseOf(it).n; }
@@ -23,8 +23,7 @@ function rollQuality(ilvl) {
 function weaponBase(b, q) { return [Math.round(qv(b.min, q) * b.I), Math.round(qv(b.max, q) * b.I)]; }
 const engineBase = weaponBase;
 function rollSockets(kind, b) {
-  const sw = ARMORS[kind] && ARMORS[kind][b] && ARMORS[kind][b].sockW; if (sw) return wpick(sw.map((w, i) => i + 1), n => sw[n - 1]); // 圣徽盾：1–2 槽
-  if (kind === 'hub') return wpick(USOCKET_W.map((w, i) => i + 1), n => USOCKET_W[n - 1]);
+    if (kind === 'hub') return wpick(USOCKET_W.map((w, i) => i + 1), n => USOCKET_W[n - 1]);
   if (SOCKET_KINDS[kind]) return wpick(SOCKET_W.map((w, i) => i + 1), n => SOCKET_W[n - 1]);
   return 0;
 }
@@ -91,8 +90,8 @@ const modWhere = m => MOD_BY[m.mid].field ? '法阵' : '武器、头冠或遁靴
 /* 掉落：底材按原作掉落权重在全部部位里抽（要求物品等级达到底材需求） */
 function allBases() {
   const out = [];
-  for (const k in WEAPONS) out.push(['weapon', k, WEAPONS[k]]);
-  for (const kind in ARMORS) for (const k in ARMORS[kind]) out.push([kind, k, ARMORS[kind][k]]);
+  for (const k in WEAPONS) if (!WEAPONS[k].retired) out.push(['weapon', k, WEAPONS[k]]); // 停止掉落的底子只为老存档保留
+  for (const kind in ARMORS) if (kind !== 'gem' && kind !== 'chip') for (const k in ARMORS[kind]) out.push([kind, k, ARMORS[kind][k]]);
   return out;
 }
 // 独特装备：保底词条取指定档位（第 N 高档；loot.json 的 uniqueFixedTier 决定从词条族最高档还是从物品等级允许的最高档往下数），专属规则在范围里掷
@@ -131,17 +130,50 @@ function rollModDrop(ilvl) {
   return newMod(d.id, xp);
 }
 
+/* 技能石（spec-skill-gems）：{ kind:'gem', b:技能石 id, var:来源底子, lvl, xp, q, sock, mods } */
+const gemVar = g => g.var || GEM_BY[g.b].src[0];
+const gemTags = g => { const G = GEM_BY[g.b], v = G.src.length ? gemVar(g) : null; return v && WEAPONS[v] ? WEAPONS[v].tags.filter(t => t !== 'Weapon') : G.tags; };
+const gemMul = (G, L) => G.mul[0] + (G.mul[1] - G.mul[0]) * (clamp(L, 1, MOD_MAX) - 1) / 19;
+function newGem(id, o = {}) {
+  const G = GEM_BY[id], xp = o.xp || 0;
+  const g = { id: S.nextId++, kind: 'gem', b: id, var: o.var || (G.src.length ? (G.dropVars ? pick(G.dropVars) : G.src[0]) : null), ilvl: 1, q: o.q ?? 0, rar: 0, affs: [], xp, lvl: o.lvl || modLevelOf(xp), sock: o.sock || 1, mods: [] };
+  if (o.lvl && !o.xp) g.xp = g.lvl > 1 ? MOD_XP[g.lvl - 2] : 0;
+  g.mods = Array(g.sock).fill(null); return g;
+}
+function rollGemDrop(ilvl) {
+  const G = wpick(GEMS.filter(g => g.req <= ilvl && g.w > 0), g => g.w);
+  const R = LOOT.runeDrop, cap = R.cap * Math.pow(R.capGrowth, ilvl);
+  const xp = clamp(Math.round(Math.pow(rnd(), R.expBase + R.expPerIlvl * ilvl) * cap), 0, MOD_XP[MOD_XP.length - 1]);
+  const sw = GEMC.sockW, sock = wpick(sw.map((w, i) => i + 1), n => sw[n - 1]);
+  return newGem(G.id, { xp, q: ri(GEMC.dropQ[0], GEMC.dropQ[1]), sock });
+}
+// 技能石当前的形态符文（虚拟，等级 = 技能石等级）
+const gemFormRune = g => { const G = GEM_BY[g.b]; return G.fr ? { id: -1, kind: 'mod', mid: G.fr, lvl: g.lvl, xp: g.xp, virt: 1 } : null; };
+// 技能的虚拟武器：底子 = 来源旧武器（形态参数、标签、射程），伤害按主手品质 × mul × (1+品质%) × 对口，攻速 = 来源攻速 × 主手 spd
+function gemBase(g, wl) {
+  const G = GEM_BY[g.b], src = WEAPONS[gemVar(g)], wb = WEAPONS[wl.b], q = wl.q;
+  const cat = GEMC.cats[wb.cat], tags = gemTags(g);
+  const aff = cat && cat.tags.some(t => tags.includes(t)) ? GEMC.affinity : 1;
+  const f = gemMul(G, g.lvl) * (1 + (g.q || 0) / 100) * aff / GEMC.affinity * (GEMC.pow[wl.b] ?? 1); // 对口时 ×1，不对口 ÷1.2（数据里的旧伤害已经是对口强度）
+  return { ...src, key: G.id, n: G.n, tags: [...tags, 'Weapon'], I: src.I * f, gI: f, aps: src.aps == null ? src.aps : qv(src.aps, q) * (GEMC.spd[wl.b] ?? 1), crit: wb.crit, aff: aff > 1, gem: G.id };
+}
+function skillItem(eq) { // 技能格里的技能石 → 虚拟武器；圣盾掷返回 null（走 shieldWeapon）
+  let g = eq.gem && eq.gem.kind === 'gem' ? eq.gem : null;
+  if (g && GEM_BY[g.b].form === 'shieldThrow' && eq.shield) return null;
+  if (!g || GEM_BY[g.b].form === 'shieldThrow') g = { kind: 'gem', b: 'GemBolt', var: 'Cannon', lvl: 1, q: 0, mods: [], sock: 0, affs: [], fake: 1 }; // 没装技能石 / 圣盾掷没盾：骨矢 1 级，无辅助
+  const wl = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : { kind: 'weapon', b: GEMC.unarmed, q: 0, ilvl: 1, affs: [], rar: 0, id: -1 };
+  return { ...wl, fb: gemBase(g, wl), src: g, gem: g };
+}
+
 function removeItem(it) {
   S.stash = S.stash.filter(x => x !== it);
   for (const k in S.equip) if (S.equip[k] === it) S.equip[k] = null;
-  for (const k in S.chips) if (S.chips[k] === it) delete S.chips[k];
   if (it.mods) for (const m of it.mods) if (m) S.mods.push(m);
   refreshStats();
 }
 const STASH_CAP = LOOT.stashCap;
 function addItem(it) { S.stash.push(it); it.isNew = true; }
 function equipItem(it, slot) {
-  if (it.kind === 'chip') return equipChip(it);
   slot = it.kind === 'weapon' ? 'wl' : it.kind === 'off' ? 'wr' : it.kind; // 武器只进主手，副手只进副手槽
   const cur = S.equip[slot];
   S.stash = S.stash.filter(x => x !== it);

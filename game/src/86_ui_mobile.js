@@ -165,7 +165,7 @@ class MobileUI extends UI {
       if (id === 'gear') { const k = S.stash.filter(x => x.isNew).length; badge = k ? String(k) : ''; }
       if (id === 'mods' && S.mods.some(m => m.isNew)) badge = '!';
       if (id === 'tree' && treePoints() > 0) badge = String(treePoints());
-      set(bt.badge, on ? badge : ''); bt.hl.setFillStyle(0xffd36a, id === cur && id !== 'battle' ? 0.14 : 0); bt.ic.setAlpha(on ? 1 : 0.3);
+      set(bt.badge, on ? badge : ''); bt.hl.setFillStyle(0xffd36a, id === cur && id !== 'battle' ? 0.14 : 0); bt.ic.setAlpha(on ? 1 : 0.3); bt.setVisible(on); // 未解锁的导航项隐藏
     });
     this.updateAuto();
   }
@@ -192,7 +192,7 @@ class MobileUI extends UI {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) return;
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
-    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'atlas', 'help', 'prep', 'bulk'].includes(id);
+    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
     const y = native ? MTOP + 8 : Math.round(clamp((H - NAV_H - h) / 2, MTOP + 12, H)), c = this.add.container(this.panMax ? 4 - this.pan : Math.round((W - w) / 2), y).setDepth(100); this.winC = c; c.w = w;
@@ -200,7 +200,7 @@ class MobileUI extends UI {
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + id](c, w, h);
-    const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', atlas: '墓图', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解' }[id];
+    const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', notice: '旧系统整理' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: COL.emberHi, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });
@@ -230,9 +230,9 @@ class MobileUI extends UI {
     TW(this, 12, y, '只有一个操作：移动。武器自动攻击最近的敌人，没有冲刺和主动技能。', w - 24, { size: 8, color: COL.faint, parent: c });
   }
   equipSlots(c, ox, oy, onClick, selFn) {
-    const pos = { core: [32, 0], wl: [0, 32], wr: [64, 32], hub: [0, 64], engine: [32, 64], shield: [64, 64] };
-    const ghost = { wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
-    for (const s of SLOTS) { const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); }
+    const pos = { gem: [0, 0], core: [32, 0], wl: [0, 32], wr: [64, 32], hub: [0, 64], engine: [32, 64], shield: [64, 64] };
+    const ghost = { gem: 'i_star', wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
+    for (const s of SLOTS) { if ((s.id === 'wr' && !unlocked('wr')) || (s.id === 'gem' && !unlocked('gems') && !S.equip.gem)) continue; const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); }
   }
   /* 装备：竖屏原生（身上 + 属性 → 背包 → 选中物品的详情抽屉） */
   win_gear(c, w, h) {
@@ -244,12 +244,14 @@ class MobileUI extends UI {
       .forEach(([a, b, col], i) => { T(this, 112, 8 + i * 11, a, { size: 8, color: COL.dim, parent: c }); T(this, w - 10, 8 + i * 11, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); });
     T(this, 112, 76, '抗性', { size: 8, color: COL.dim, parent: c });
     ELEM.forEach((e, i) => T(this, 134 + i * 20, 76, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
-    T(this, 12, 100, `背包 ${S.stash.length}/${STASH_CAP}`, { size: 8, color: COL.dim, parent: c });
-    mkBtn(this, c, w - 150, 92, 50, 26, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
-    mkBtn(this, c, w - 96, 92, 86, 26, '批量拆解', () => this.openBulk(), { size: 8, style: 'n' });
+    T(this, 12, 100, `背包 ${S.stash.length}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
+    mkBtn(this, c, w - 90, 92, 38, 26, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
+    if (unlocked('salvage')) mkBtn(this, c, w - 50, 92, 40, 26, '批量', () => this.openBulk(), { size: 8, style: 'n' });
+    const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
+    if (!unlocked('gems') && !nGem) stashTab = 0; else [['装备', 0], [`技能 ${nGem}`, 1]].forEach(([n, t], i) => mkBtn(this, c, 40 + i * 42, 92, 40, 26, n, () => { stashTab = t; this.refresh(); }, { size: 8, style: stashTab === t ? 's' : 'n' }));
     const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2);
     for (let i = 0; i < STASH_CAP; i++) {
-      const it = S.stash[i]; const x = x0 + (i % cols) * st, y = 122 + (i / cols | 0) * st;
+      const it = (stashTab === 1 || unlocked('gems') || S.stash.some(x => x.kind === 'gem') ? view : S.stash)[i]; const x = x0 + (i % cols) * st, y = 122 + (i / cols | 0) * st;
       mkCell(this, c, x, y, it, { size: cs, sel: it && it.id === selId, upg: true, acts: v => this.itemActs(v) });
     }
     this.gearY = 122 + Math.ceil(STASH_CAP / cols) * st + 4;
@@ -265,7 +267,7 @@ class MobileUI extends UI {
     rect(this, 4, -4, w - 8, this.paneH, '#17111f', 0.97, p); rect(this, 4, -4, w - 8, 1, '#5a4a6a', 1, p);
     if (f.where === 'stash') {
       if (it.kind === 'off') B(0, '装副手', () => { equipItem(it, 'wr'); save(); this.refresh(); }, { style: 'w', disabled: !unlocked('wr') });
-      else B(0, it.kind === 'weapon' ? '装主手' : '装备', () => { equipItem(it); save(); this.refresh(); }, { style: 'w' });
+      else B(0, it.kind === 'weapon' ? '装主手' : it.kind === 'gem' ? '装技能' : '装备', () => { equipItem(it); save(); this.refresh(); }, { style: 'w' });
       B(2, '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { style: 'n' });
     } else {
       B(0, '卸下', () => { unequip(f.slot); save(); this.refresh(); });
@@ -276,7 +278,7 @@ class MobileUI extends UI {
   }
   /* 符文：竖屏原生（部位页签 → 槽位和武器数据 → 符文库存） */
   win_mods(c, w, h) {
-    const host = S.equip[modWeapon], hosts = ['wl', 'core', 'engine', 'hub'], bw = Math.floor((w - 20) / 4); this.sockR = [];
+    const host = S.equip[modWeapon], hosts = ['gem', 'core', 'engine', 'hub'], bw = Math.floor((w - 20) / 4); this.sockR = [];
     hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 6, bw - 2, 28, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
     const isHub = modWeapon === 'hub'; let y = 40;
     if (!host) { T(this, 10, y + 4, '这个位置没有装备。', { size: 8, color: COL.faint, parent: c }); y += 20; }
@@ -293,7 +295,7 @@ class MobileUI extends UI {
         mkCell(this, c, x, y, m, { size: 30, host, direct: feedOn, actL: '取下', onHover: v => { if (v) showTip(modTip(v, host)); }, onOut: hideTip, onClick: v => { if (this.drag && this.drag.moved) return; if (v && feedOn && feedSrc && feedSrc !== v) return this.doFeed(v); if (v) { host.mods[i] = null; S.mods.unshift(v); refreshStats(); save(); this.refresh(); } } });
       }
       if (host.sock) y += 38;
-      const Wi = modWeapon === 'wl' ? STATS.weapons[0] : modWeapon === 'wr' ? STATS.weapons[1] : modWeapon === 'engine' ? STATS.engine : null;
+      const Wi = modWeapon === 'gem' ? STATS.shieldW || STATS.weapons[0] : modWeapon === 'engine' ? STATS.engine : null;
       if (Wi) [Wi.form === 'engine' ? `冲刺伤害 ${fmt(Wi.avg)}` : `秒伤 ${fmt(Wi.dps)} · 每秒 ${r1(Wi.aps)} 次 · 暴击 ${pct(Math.min(1, Wi.crit))} ×${Wi.critMult.toFixed(2)}`,
         ELEM.filter(e => Wi.max[e] > 0).map(e => `${ELEM_N[e]} ${fmt(Wi.min[e])}–${fmt(Wi.max[e])}`).join('  '),
         [Wi.pierce && '无限穿透', Wi.chain && `${Wi.form === 'proj' ? '弹射' : '连锁'} ${Wi.chain}`, Wi.split && `分裂 ${Wi.split}`, Wi.ret && '回旋', Wi.extra && `额外攻击 ${Wi.extra}`].filter(Boolean).join('  ') || '没有弹道加成',
@@ -385,16 +387,15 @@ class MobileUI extends UI {
     const title = abd ? '提前返回' : lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '时间到' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
     const g = r.gain;
     const note = lad && win && r.lad.tierUp.length ? [`晋升${LADDER_TIERS[r.lad.tierUp[r.lad.tierUp.length - 1]].n}：送每种铸符各 ${LD.tiers.firstGlyphs} 张`, COL.emberHi]
-      : g.boon ? [`${BOSS_BY[g.boon.b].n}的祝福：${BOONS[g.boon.b][g.boon.i].n}（${treeText(...Object.entries(BOONS[g.boon.b][g.boon.i].add)[0])}）`, COL.emberHi]
       : abd ? [lad ? '提前离开天梯：这一层不算通过，没有损失' : '提前返回：东西全部带走，没打完的这一层不算通过', COL.emberHi]
       : emg ? [`护甲跌到 ${SOUL.returnHpNow}% 以下，带着全部东西撤回`, COL.emberHi]
       : back ? [`最后一层最低血量 ${Math.round(r.descent.minHp * 100)}%，打完守关 Boss 撤回，东西全部带走`, COL.emberHi]
       : lad ? [win ? `跳 ${r.lad.jump} 层，已解锁到第 ${S.ladder.unlocked} 层` : '天梯失败没有损失', COL.dim]
       : r.descent.floors ? [`打通到第 ${r.descent.from + r.descent.floors - 1} 层 · 最深纪录第 ${S.maxDepth - 1} 层`, COL.good] : null;
     const floors = lad ? `${r.L}` : r.descent.from === r.base ? `${r.base}` : `${r.descent.from}–${r.base}`;
-    const cols = [['i_ladder', floors, r.map ? `墓图 ${r.map.tier} 阶` : '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
-    const kept = g.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it) || Object.values(S.chips).includes(it));
-    const extra = [...g.mods.map(m => ['mod_' + m.mid, '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n]), ...(g.maps.length ? [['i_a_map', '×' + g.maps.length]] : [])];
+    const cols = [['i_ladder', floors, '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
+    const kept = g.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it));
+    const extra = [...g.mods.map(m => ['mod_' + m.mid, '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n])];
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
     let y = 20;
     if (note) { const t = TW(this, 12, y, note[0], w - 24, { size: 8, color: note[1], parent: c }); y += t.h + 8; }
@@ -420,15 +421,14 @@ class MobileUI extends UI {
   }
   /* 地窖入口：竖屏原生 */
   win_depart(c, w, h) {
-    const m = armedMap(); let y = 18;
+    let y = 18;
     T(this, w / 2, y, `下一趟从第 ${descentStart()} 层出发`, { align: 'center', color: COL.emberHi, parent: c }); y += 18;
     TW(this, 12, y, `最深纪录：第 ${S.maxDepth - 1} 层通关 · ${S.auto.lock ? '锁层：从选定的层出发' : `从最深层往回退 ${SOUL.startBack} 层热身`}`, w - 24, { size: 8, color: COL.dim, parent: c }); y += 28;
     mkBtn(this, c, 12, y, 40, 30, '<', () => { if (S.depth > 1) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { disabled: S.depth <= 1 });
     T(this, w / 2, y + 15, `难度 ${S.depth}`, { align: 'center', valign: 'middle', parent: c });
     mkBtn(this, c, w - 52, y, 40, 30, '>', () => { if (S.depth < S.maxDepth) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { disabled: S.depth >= S.maxDepth }); y += 38;
     mkBtn(this, c, 12, y, w - 24, 30, S.auto.lock ? '锁层：开（点击改为推层）' : '推层：开（点击改为锁层）', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; save(); this.refresh(); }, { size: 8 }); y += 40;
-    if (m) TW(this, 12, y, `会用掉墓图台上的${mapName(m)}（怪物等级 +${m.tier}）`, w - 24, { size: 8, color: RCOL[m.rar], parent: c });
-    else if (unlocked('ladder')) T(this, 12, y, '天梯从天梯石碑出发（营地面板或导航「天梯」）', { size: 8, color: COL.faint, parent: c });
+    if (unlocked('ladder')) T(this, 12, y, '天梯从天梯石碑出发（营地面板或导航「天梯」）', { size: 8, color: COL.faint, parent: c });
     mkBtn(this, c, 12, h - 76, w - 24, 30, '出发', () => { this.closeWin(); startRun(); }, { style: 'w', disabled: !!RUN });
     mkBtn(this, c, 12, h - 42, w - 24, 30, S.auto.loop ? '停止自动刷' : '自动刷（一趟接一趟）', () => { this.closeWin(); this.toggleLoop(); }, { size: 8 });
   }
@@ -453,64 +453,6 @@ class MobileUI extends UI {
       rect(this, 5, 7, 8, 8, '#120c18', 1, b); if (on) rect(this, 6, 8, 6, 6, COL.ember, 1, b);
     });
     if (pages > 1) { mkBtn(this, c, 12, h - 36, 50, 28, '<', () => { this.salvPage = (this.salvPage + pages - 1) % pages; this.refresh(); }); T(this, w / 2, h - 22, `${this.salvPage + 1} / ${pages}`, { size: 8, color: COL.dim, align: 'center', valign: 'middle', parent: c }); mkBtn(this, c, w - 62, h - 36, 50, 28, '>', () => { this.salvPage = (this.salvPage + 1) % pages; this.refresh(); }); }
-  }
-  /* 墓图：竖屏原生（墓图 / 命盘 / 祝福） */
-  win_atlas(c, w, h) {
-    const bw = Math.floor((w - 24) / 3);
-    ['墓图', '命盘', '祝福'].forEach((n, i) => mkBtn(this, c, 12 + i * bw, 8, bw - 2, 26, n + (i === 1 && marblePoints() ? ` ${marblePoints()}` : ''), () => { atlasTab = i; this.refresh(); }, { size: 8, style: atlasTab === i ? 's' : 'n' }));
-    this['atlasM_' + atlasTab](c, w, h);
-  }
-  atlasM_0(c, w, h) {
-    const sel = S.maps.find(m => m.id === atlasSel) || null, armed = armedMap(); let y = 42;
-    mkCell(this, c, 12, y, armed, { size: 30, sel: armed && armed === sel, ghost: 'i_a_map', direct: true, onClick: m => { if (m) { atlasSel = m.id; this.refresh(); } } });
-    TW(this, 46, y + 2, armed ? `墓图台：${mapName(armed)}（下次任务消耗）` : '墓图台空着：按普通难度出发', w - 58, { size: 8, color: armed ? RCOL[armed.rar] : COL.faint, parent: c }); y += 36;
-    T(this, 12, y, `墓图 ${S.maps.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
-    const list = [...S.maps].sort((a, b) => b.tier - a.tier || b.rar - a.rar), st = TOUCH;
-    for (let i = 0; i < MCOLS * 4; i++) { const m = list[i]; mkCell(this, c, 9 + (i % MCOLS) * st, y + (i / MCOLS | 0) * st, m, { size: st, sel: m && (m.id === atlasSel || m.id === S.mapArmed), direct: true, onClick: m => { if (!m) return; m.isNew = false; atlasSel = m.id; this.refresh(); } }); }
-    y += 4 * st + 8; rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 8;
-    if (!sel) { TW(this, 12, y, '点一张墓图查看。墓图从怪物和 Boss 身上掉落，阶级越高怪越强、掉落越多。', w - 24, { size: 8, color: COL.faint, parent: c }); return; }
-    img(this, 12, y, 'i_a_map', c); T(this, 30, y + 1, mapName(sel), { color: RCOL[sel.rar], parent: c }); y += 18;
-    for (const l of mapTip(sel).slice(1)) { const t = TW(this, 12, y, l.t, w - 24, { size: 8, color: l.c || '#b8afc4', parent: c }); y += t.h; }
-    const on = sel.id === S.mapArmed, hw = Math.floor((w - 28) / 2);
-    mkBtn(this, c, 12, h - 40, hw, 28, on ? '从墓图台取下' : '放上墓图台', () => { S.mapArmed = on ? null : sel.id; sel.isNew = false; save(); this.refresh(); }, { size: 8, style: on ? 'n' : 'w' });
-    mkBtn(this, c, 16 + hw, h - 40, hw, 28, '丢弃', () => this.ask('丢弃这张墓图？', () => { S.maps = S.maps.filter(m => m !== sel); if (S.mapArmed === sel.id) S.mapArmed = null; save(); this.refresh(); }, '丢弃', '不能撤销。'), { size: 8, style: 'n' });
-  }
-  atlasM_1(c, w, h) {
-    const pts = marblePoints(); let y = 42;
-    T(this, 12, y, `命盘点 ${pts}`, { color: pts ? COL.emberHi : COL.dim, parent: c });
-    mkBtn(this, c, w - 84, y - 4, 72, 24, '全部重置', () => { if (!S.marble.length) return; this.ask('重置全部弹珠石盘？', () => { S.marble = []; save(); this.refresh(); }, '重置'); }, { size: 8, style: 'n' }); y += 22;
-    const t = TW(this, 12, y, '每解锁一层难度、每完成两张墓图得 1 点。只能点亮上方相邻钉子已点亮的钉子。长按钉子看效果。', w - 24, { size: 8, color: COL.faint, parent: c }); y += t.h + 10;
-    const g = this.add.graphics(); c.add(g);
-    const cx = Math.round(w / 2), top = y + 6, dx = 26, dy = 24, P = nd => [cx + (nd.c - nd.r / 2) * dx, top + nd.r * dy];
-    let maxY = top;
-    for (const id in MARBLE.nodes) { const nd = MARBLE.nodes[id]; const [x, y1] = P(nd); maxY = Math.max(maxY, y1); for (const d of nd.down) { const [x2, y2] = P(MARBLE.nodes[d]); const lit = marbleOn(id) && marbleOn(d); g.lineStyle(1, hex(lit ? COL.emberHi : marbleOn(id) || marbleOn(d) ? '#6a5a7e' : '#33293f'), 1).lineBetween(x, y1, x2, y2); } }
-    for (const id in MARBLE.nodes) {
-      const nd = MARBLE.nodes[id]; const [x, y1] = P(nd); const got = marbleOn(id), can = marbleCanAlloc(id);
-      const r = nd.kind === 'k' ? 6 : nd.kind === 'n' ? 5 : nd.kind === 'start' ? 6 : 4, col = nd.kind === 'k' ? COL.emberHi : nd.kind === 'n' ? COL.cyan : '#e9d9a8';
-      g.fillStyle(0x120c18, 1).fillCircle(x, y1, r + 1); g.fillStyle(hex(got ? col : can ? '#4b3e60' : '#231b2e'), 1).fillCircle(x, y1, r);
-      if (can) g.lineStyle(1, hex(COL.emberHi), 0.8).strokeCircle(x, y1, r + 2);
-      const z = this.add.zone(x - 12, y1 - 11, 24, 22).setOrigin(0).setInteractive(); c.add(z);
-      const lines = [{ t: nd.kind === 'start' ? '弹珠起点' : nd.n || (nd.kind === 'n' ? '召唤' : '钉子'), c: col }, ...marbleLines(nd).map(t => ({ t, s: 8 }))];
-      z.on('pointerup', () => { sfx('click'); const R = () => { save(); this.refresh(); };
-        this.showLines(lines, can ? [{ l: '点亮', style: 'w', fn: () => { S.marble.push(id); sfx('craft'); R(); } }] : S.marble.includes(id) && marbleCanRefund(id) ? [{ l: '退还', fn: () => { S.marble = S.marble.filter(x => x !== id); R(); } }] : []); });
-    }
-    g.fillStyle(0xdfe6ee, 1).fillCircle(cx, top - 12, 3);
-    y = maxY + 16; const L = lootFx(null);
-    const rows = Object.keys(MARBLE_TEXT).filter(k => !k.startsWith('call:') && L[k]).map(k => MARBLE_TEXT[k](L[k])).concat(Object.entries(L.call).map(([k, v]) => MARBLE_TEXT['call:' + k](v)));
-    for (const s of rows) { if (y > h - 14) break; T(this, 12, y, s, { size: 8, color: '#e9d9a8', parent: c }); y += 10; }
-  }
-  atlasM_2(c, w, h) {
-    let y = 42; const t = TW(this, 12, y, '四个 Boss 按任务等级轮流出现。每个 Boss 击败 1、5、15 次后，各得到一种永久祝福。', w - 24, { size: 8, color: COL.faint, parent: c }); y += t.h + 6;
-    BOSSES.forEach(B => {
-      const k = S.bossKills[B.id] || 0; rect(this, 12, y, w - 24, 92, '#1a1422', 1, c);
-      img(this, 14, y + 2, 'm_boss_' + B.id + '_0', c).setScale(0.75);
-      T(this, 40, y + 4, B.n, { size: 8, color: ELEM_C[B.el], parent: c }); T(this, w - 18, y + 4, `击败 ${k} 次`, { size: 8, color: COL.dim, align: 'right', parent: c });
-      BOONS[B.id].forEach((bn, j) => { const got = boonGot(B.id, j), by = y + 22 + j * 23;
-        rect(this, 40, by, w - 58, 21, got ? '#3a2a12' : '#231b2e', 1, c);
-        T(this, 44, by + 1, `${bn.n}${got ? '' : `（${BOON_AT[j]} 次）`}`, { size: 8, color: got ? COL.emberHi : COL.faint, parent: c });
-        T(this, 44, by + 11, Object.entries(bn.add).map(([kk, v]) => treeText(kk, v)).join('，'), { size: 8, color: got ? '#e9d9a8' : '#5d5170', parent: c }); });
-      y += 96;
-    });
   }
   /* 手册：竖屏原生 */
   win_help(c, w, h) {
@@ -561,7 +503,7 @@ class MobileUI extends UI {
   }
   /* 菜单：底部导航放不下的页面 */
   win_more(c, w, h) {
-    const items = [['atlas', '墓图', 'i_a_map'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['depart', '地窖入口 · 选层', 'torch']];
+    const items = [['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['depart', '地窖入口 · 选层', 'torch']];
     items.forEach(([id, n, ic], i) => {
       const y = 20 + i * 40, open = !MENU.some(m => m.id === id) || unlocked(id);
       mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, iconX: 10, labelX: 34, disabled: !open || (RUN && id === 'depart') });
@@ -573,8 +515,8 @@ class MobileUI extends UI {
   updateCamp() {
     if (!this.campC) this.buildCamp();
     const show = !RUN && !this.winId; this.campC.setVisible(show); if (!show) return;
-    const F = [['depart', '地窖入口', 'torch'], ['atlas', '墓图台', 'i_a_map'], ['ladder', '天梯石碑', 'i_ladder'], ['salvage', '分解祭坛', 'shard'], ['gear', '储物箱', 'i_w_crossbow'], ['help', '手册', 'i_book']];
-    const ok = id => !MENU.some(m => m.id === id) || unlocked(id), key = F.map(f => +ok(f[0])).join('') + descentStart();
+    const F = [['depart', '地窖入口', 'torch'], ['ladder', '天梯石碑', 'i_ladder'], ['salvage', '分解祭坛', 'shard'], ['gear', '储物箱', 'i_w_crossbow'], ['help', '手册', 'i_book']];
+    const ok = id => (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'salvage' || unlocked('salvage')); F.splice(0, F.length, ...F.filter(f => ok(f[0]))); const key = F.map(f => +ok(f[0])).join('') + descentStart();
     if (key === this.campKey) return; this.campKey = key;
     const c = this.campC; c.removeAll(true); const bw = Math.floor((W - 16) / 3);
     c.add(nine(this, 4, 0, W - 8, 92, 'f_win', 6));
@@ -621,7 +563,7 @@ class MobileUI extends UI {
     const f = findItem(it.id), A = [], R = () => { save(); this.refresh(); }; it.isNew = false; if (!f) return A;
     if (f.where === 'stash') {
       if (it.kind === 'off') { if (unlocked('wr')) A.push({ l: '装副手', style: 'w', fn: () => { equipItem(it, 'wr'); R(); } }); }
-      else if (slotsFor(it)[0]) A.push({ l: it.kind === 'weapon' ? '装主手' : '装备', style: 'w', fn: () => { equipItem(it); R(); } });
+      else if (slotsFor(it)[0]) A.push({ l: it.kind === 'weapon' ? '装主手' : it.kind === 'gem' ? '装技能' : '装备', style: 'w', fn: () => { equipItem(it); R(); } });
       A.push({ l: '拆解', fn: () => this.ask(`拆解 ${itemName(it)}？`, () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); R(); }, '拆解', '会变成词条碎片，不能撤销。') });
     } else {
       A.push({ l: '卸下', fn: () => { unequip(f.slot); R(); } });
@@ -659,7 +601,6 @@ class MobileUI extends UI {
   closePopup() { if (this.popC) { this.popC.destroy(); this.popC = null; } }
   showDetail(it, host, acts = []) {
     if (it.kind === 'mod') return this.showLines(modTip(it, host), acts);
-    if (it.kind === 'map') return this.showLines(mapTip(it), acts);
     this.popup((p, w) => mkCard(this, p, 0, 0, it, w, { compare: !!slotsFor(it)[0] }).h, acts);
   }
   showLines(lines, acts = [], closeL) {

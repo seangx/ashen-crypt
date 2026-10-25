@@ -16,7 +16,7 @@ const path = require('path'), fs = require('fs');
 let pw; try { pw = require('playwright'); } catch (e) { pw = require('/opt/node22/lib/node_modules/playwright'); }
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const ROOT = path.resolve(__dirname, '..');
-const opt = { runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', 'auto'), tree: arg('tree', 'none'), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), json: arg('json', null), maxT: +arg('maxT', 3600), minutes: +arg('minutes', 0), ladderArg: arg('ladder', ''), craft: arg('craft', 'none'), build: arg('build', 'none'), lock: process.argv.includes('--lock') };
+const opt = { unlocks: arg('unlocks', 'off'), runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', 'auto'), tree: arg('tree', 'none'), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), json: arg('json', null), maxT: +arg('maxT', 3600), minutes: +arg('minutes', 0), ladderArg: arg('ladder', ''), craft: arg('craft', 'none'), build: arg('build', 'none'), lock: process.argv.includes('--lock') };
 // 天梯：every:K = 每 K 趟推关排一次；every:10m = 每 10 分钟游戏时间排一次（每次最多连打 ladderCap 局）。--build whirl/random 默认 every:10m
 { const la = opt.ladderArg || (['whirl', 'random', 'spark', 'nova', 'meteor', 'orb', 'shield'].includes(opt.build) ? 'every:10m' : ''), v = (la.split(':')[1] || '');
   opt.ladder = /m$/.test(v) ? 0 : +v || 0; opt.ladderMin = /m$/.test(v) ? parseFloat(v) : 0; opt.ladderCap = +arg('ladderCap', 3); }
@@ -63,11 +63,12 @@ if (seedsArg) {
   await p.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 20000 });
   const out = await p.evaluate(opt => {
     const A = window.__ash; A.G.fx = false; A.setPrepOff(true); window.__reseed(opt.seed * 7919 + 1);
+    if (opt.unlocks !== 'on') A.setUnlockAll('ev'); window.__unl = []; const unlSeen = { ...(A.S.seenUnlocks || {}) }; // --unlocks on：按 spec-unlocks 逐步开放，记下每个系统几分钟开的
     const S = A.S; const rows = [];
     if (A.G.ui.closeWin) A.G.ui.closeWin();
     const WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, B = opt.build;
     // 成型流派（whirl / spark）共用一套“锁左手底材、按优先级插符文和做装、先走到大型天赋”的逻辑，BP 是它们各自的配置段
-    const MB = A.DATA.mechanics, ARCH = !!(MB[B] && MB[B].treeKey), BP = ARCH ? MB[B] : WH, BASE = BP.base || 'TurbineBlades', BS = BP.slot || 'wl'; // BS：流派底子放在哪个部位（圣盾掷是盾） // 成型流派：mechanics.json 里有 treeKey 的段（whirl / spark / nova …）
+    const MB = A.DATA.mechanics, ARCH = !!(MB[B] && MB[B].treeKey), BP = ARCH ? MB[B] : WH, BASE = BP.base || 'TurbineBlades', BS = 'gem', BGEM = BP.gem || 'GemWhirl', BCAT = BP.cat || null; // 技能石（spec-skill-gems）：流派 = 技能石 + runeOrder；主手按类别对口挑 // BS：流派底子放在哪个部位（圣盾掷是盾） // 成型流派：mechanics.json 里有 treeKey 的段（whirl / spark / nova …）
     const spinDps = n => n.weapons.reduce((s, w) => s + (w ? w.dps * (w.spinMax || 1) : 0), 0) + (n.shieldW ? n.shieldW.dps * (n.shieldW.spinMax || 1) : 0); // 旋转满层的秒伤
     const ehpOf = n => { const w = n.weapons.find(x => x && x.whirl); const dr = 1 - (1 - (w ? Math.min(WH.drCap, WH.drPerStack * w.stackMax) / 100 : 0)) * (1 - (n.weapons.some(x => x && x.meleeGuard) ? A.DATA.mechanics.defense.meleeGuardLess : 0)); return A.defEhp(n, A.S.depth, Math.min(0.6, dr)); } // 有效生命：(生命 + 护盾 + 护盾回复×5) ÷ (1 − 护甲减伤 − 流派减伤) // 减伤合计在分数里最多算 60%; // 旋转满层减伤算进有效生命
     const score = () => spinDps(A.STATS) + ehpOf(A.STATS);
@@ -77,7 +78,7 @@ if (seedsArg) {
     const swapIn = (it, slot) => { const cur = S.equip[slot]; A.equipItem(it, slot); if (cur && cur.mods) { for (const m of cur.mods) if (m) S.mods.push(m); cur.mods = cur.mods.map(() => null); } A.refreshStats(); };
     const placeRunes = () => {
       // 旋风斩：左手的符文按 runeOrder 重排（同名取等级高的）
-      if (ARCH && S.equip[BS] && S.equip[BS].sock) {
+      if (ARCH && S.equip[BS] && S.equip[BS].sock && S.equip[BS].b === BGEM) {
         const w = S.equip[BS], pool = [...w.mods.filter(Boolean), ...S.mods], rank = m => { const i = BP.runeOrder.indexOf(m.mid); return (i < 0 ? 99 : i) * 100 - m.lvl; };
         const pickd = []; for (const m of pool.sort((a, b) => rank(a) - rank(b))) { if (pickd.length >= w.sock) break; if (A.modActive(m, w) && !pickd.some(x => x.mid === m.mid)) pickd.push(m); }
         w.mods = Array(w.sock).fill(null).map((_, i) => pickd[i] || null); S.mods = pool.filter(m => !pickd.includes(m)); A.refreshStats();
@@ -85,11 +86,11 @@ if (seedsArg) {
       // 符文：先插武器 / 头冠 / 遁靴（生效才插），剩下的塞进法阵
       if (opt.gear === 'auto') for (const m of [...S.mods]) {
         let placed = false;
-        for (const s of ['wl', 'core', 'engine', 'hub']) { const w = S.equip[s]; if (!w || !w.sock) continue; const k = w.mods.indexOf(null); if (k < 0) continue; if (s === 'hub' || A.modActive(m, w)) { w.mods[k] = m; placed = true; break; } }
+        for (const s of ['gem', 'core', 'engine', 'hub']) { const w = S.equip[s]; if (!w || !w.sock) continue; const k = w.mods.indexOf(null); if (k < 0) continue; if (s === 'hub' || A.modActive(m, w)) { w.mods[k] = m; placed = true; break; } }
         if (placed) S.mods = S.mods.filter(x => x !== m);
       }
     };
-    const fits = (it, s) => !ARCH || (BS === 'shield' ? it.kind !== 'shield' || it.b === BASE || !(S.equip.shield && S.equip.shield.b === BASE) : it.kind !== 'weapon' || (s === 'wl') === (it.b === BASE));
+    const fits = (it, s) => !ARCH || it.kind !== 'weapon' || !BCAT || A.WEAPONS[it.b].cat === BCAT;
     // 选做装动作：默认按“秒伤 × 有效生命”贪心；whirl 按词条族优先级；random 随机
     const pickAct = (it, s, ev, mid) => {
       const acts = [];
@@ -117,14 +118,19 @@ if (seedsArg) {
       const res = A.AUTO.last ? A.AUTO.last.result : '?';
       const soulE = t > 0 ? A.player.soulEmpty : 0; // 这局魂火见底的秒数
       A.G.ui.closeWin();
+      for (const k of Object.keys(S.seenUnlocks || {})) if (!unlSeen[k]) { unlSeen[k] = 1; window.__unl.push(`${k}@${(simT / 60).toFixed(1)}分`); }
       // 换装：分数（秒伤 + 护甲 + 灵障）变高就换
       if (opt.gear === 'auto') for (const it of [...S.stash]) {
         if (it.kind === 'chip') continue;
         let slot = it.kind === 'weapon' ? 'wl' : it.kind === 'off' ? 'wr' : it.kind; // 只有主手武器；副手另算
-        if (ARCH && BS === 'shield' && it.kind === 'shield' && it.b === BASE && !(S.equip.shield && S.equip.shield.b === BASE)) { swapIn(it, 'shield'); continue; }
-        if (ARCH && BS === 'wl' && it.kind === 'weapon') { if (it.b !== BASE) continue; if (!(S.equip.wl && S.equip.wl.b === BASE)) { swapIn(it, 'wl'); continue; } }
+        if (it.kind === 'gem') { const cur = S.equip.gem, gs = g => g ? g.lvl + g.sock * 4 + g.q / 5 : -1; // 技能石：流派只换同一颗（等级 + 槽数更好）；random 按分数
+          if (ARCH) { if (it.b === BGEM && (!cur || cur.b !== BGEM || gs(it) > gs(cur))) swapIn(it, 'gem'); }
+          else if (!cur || evS({ ...S.equip, gem: withMods(it, cur) }) > evS(S.equip)) swapIn(it, 'gem');
+          continue; }
+        if (ARCH && it.kind === 'weapon' && !fits(it, 'wl')) continue;
+        if (ARCH && BCAT && it.kind === 'weapon' && S.equip.wl && !fits(S.equip.wl, 'wl')) { swapIn(it, 'wl'); continue; }
         const cur = S.equip[slot]; if (!cur) { A.equipItem(it, slot); continue; }
-        if (it.kind === 'weapon') { if (evS({ ...S.equip, [slot]: withMods(it, cur) }) > evS(S.equip)) swapIn(it, slot); continue; }
+        if (it.kind === 'weapon') { if (evS({ ...S.equip, [slot]: it }) > evS(S.equip)) swapIn(it, slot); continue; }
         const before = score(); A.equipItem(it, slot); if (score() < before) A.equipItem(cur, slot);
       }
       placeRunes();
@@ -161,10 +167,10 @@ if (seedsArg) {
           for (const s of slots) {
             const kind = s === 'wl' ? 'weapon' : s === 'wr' ? 'off' : s;
             const cands = S.stash.filter(x => x.kind === kind && fits(x, s) && A.craftable(x) && x.fp > 0).sort((a, b) => (b.ilvl + b.q * 5) - (a.ilvl + a.q * 5)).slice(0, 3);
-            for (const it of cands) { craftOn(it, s); const cur = ev(S.equip); if (ev({ ...S.equip, [s]: kind === 'weapon' ? withMods(it, S.equip[s]) : it }) > cur) { kind === 'weapon' ? swapIn(it, s) : A.equipItem(it, s); crafts.swap = (crafts.swap || 0) + 1; } }
+            for (const it of cands) { craftOn(it, s); const cur = ev(S.equip); if (ev({ ...S.equip, [s]: it }) > cur) { kind === 'weapon' ? swapIn(it, s) : A.equipItem(it, s); crafts.swap = (crafts.swap || 0) + 1; } }
             A.refreshStats();
           }
-          for (const it of [...S.stash]) if (it.kind !== 'chip' && !it.u) { A.salvage(it); crafts.shatter++; }
+          for (const it of [...S.stash]) if (it.kind !== 'chip' && it.kind !== 'gem' && !it.u) { A.salvage(it); crafts.shatter++; }
           for (const s of slots) {
             for (let guard = 0; guard < 40; guard++) {
               const it = S.equip[s]; if (!it || !A.craftable(it) || !(it.fp > 0)) break;
@@ -185,11 +191,12 @@ if (seedsArg) {
       if (ladDue && mode !== 'ladder' && A.unlocked('ladder') && !A.LAD.pending) { S.ladder.chain = true; A.LAD.pending = S.ladder.unlocked; ladLeft = opt.ladderMin ? opt.ladderCap : 1e9; ladNextT = simT + opt.ladderMin * 60; }
       const lr = A.AUTO.last;
       rows.push({ gd: lr.gd || null, soulE, mode, dmg: lr.dmg || { whirl: 0, devil: 0 }, slamHits: lr.slamHits || 0, slamDash: lr.slamDash || 0, mins: lr.descent && lr.descent.mins || [], fl: lr.descent ? lr.descent.floors : 0, got: { items: lr.gain.items.length, shards: lr.gain.shards }, salv: lr.salv || { n: 0, shards: 0 }, lost: lr.lost || { items: 0, mods: 0, shards: 0 }, lad: mode === 'ladder' ? { t: Math.round(lr.t), jump: lr.lad ? lr.lad.jump : 0, unlocked: S.ladder.unlocked, best: S.ladder.best } : null, run: r + 1, L, depth, next: S.depth, back: S.auto.back, res, t: Math.round(t), min: Math.round(simT / 60), kills: S.stats.kills, lv: S.level, maxDepth: S.maxDepth, dps: Math.round(spinDps(A.STATS)), wf: B === 'nova' ? (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'FrostNova') ? '霜' : '') + (S.tree.includes(BP.treeKey) ? '碎' : '') + ' sh' + ((lr.dmg && lr.dmg.shards) || 0) + ' fz' + ((lr.dmg && lr.dmg.fz) || 0) : B === 'spark' ? (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Spark') ? '雷' : '') + (S.tree.includes(SPK.treeKey) ? '织' : '') + (Object.values(S.equip).some(it => it && it.u === SPK.uniqueId) ? '冠' : '') : (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Whirl') ? '旋' : '') + (S.tree.includes(WH.treeKey) ? '心' : '') + (Object.values(S.equip).some(it => it && it.u === 'StormEye') ? '眼' : ''), armor: A.STATS.armor, deflect: A.STATS.deflect, minHp: Math.round(minArmor * 100),
-        eq: ['wl', 'wr', 'shield', 'core', 'engine', 'hub'].map(k => S.equip[k] ? `${S.equip[k].b}/q${S.equip[k].q}/r${S.equip[k].rar}` : '-').join(' '),
+        eq: ['gem', 'wl', 'wr', 'shield', 'core', 'engine', 'hub'].map(k => S.equip[k] ? `${S.equip[k].b}/q${S.equip[k].q}/r${S.equip[k].rar}${k === 'gem' ? '/L' + S.equip[k].lvl + '/s' + S.equip[k].sock : ''}` : '-').join(' '),
         shards: Object.values(S.shards).reduce((a, b) => a + b, 0), glyphs: Object.values(S.glyphs).reduce((a, b) => a + b, 0), crafts: { ...crafts }, mods: S.mods.length + Object.values(S.equip).reduce((n, it) => n + (it && it.mods ? it.mods.filter(Boolean).length : 0), 0) });
     }
     return rows;
   }, opt);
+  if (opt.unlocks === 'on') console.log('解锁顺序：' + ((await p.evaluate(() => window.__unl)) || []).join(' '));
   const RES_N = { lampout: '灯灭', retreat: '撤回', emergency: '紧急撤回', dead: '阵亡', win: '到底', timeout: '超时' };
   const lastC = out.length ? out[out.length - 1].crafts : null;
   for (const r of out) if (r.mode === 'ladder') console.log(`#${String(r.run).padStart(3)} ${String(r.min).padStart(4)}分 天梯${String(r.L).padStart(3)}层 ${r.res.padEnd(7)} ${String(r.lad.t).padStart(3)}s ${r.res === 'win' ? '跳+' + r.lad.jump : '    '} 解锁到${String(r.lad.unlocked).padStart(3)} 最高${String(r.lad.best).padStart(3)} 等级${String(r.lv).padStart(3)} 秒伤${String(r.dps).padStart(8)} 护甲${String(r.armor).padStart(7)} 最低血${String(r.minHp).padStart(4)}% 魂空${String(Math.round(r.soulE / Math.max(1, r.t) * 100)).padStart(3)}%`); else console.log(`#${String(r.run).padStart(3)} ${String(r.min).padStart(4)}分 第${String(r.depth).padStart(3)}层起 过${String(r.fl).padStart(3)}层 ${(RES_N[r.res] || r.res).padEnd(2, '　')} 下次${String(r.next).padStart(3)}${r.back ? '退' : ' '} ${String(r.t).padStart(4)}s 等级${String(r.lv).padStart(3)} 秒伤${String(r.dps).padStart(8)} 护甲${String(r.armor).padStart(7)} 灵障${String(r.deflect).padStart(6)} 最低血${String(r.minHp).padStart(4)}% 魂空${String(Math.round(r.soulE / Math.max(1, r.t) * 100)).padStart(3)}% 碎片${String(r.shards).padStart(4)} 铸符${String(r.glyphs).padStart(3)} 符文${String(r.mods).padStart(3)} ${(r.wf || '').padEnd(3, '　')}| ${r.eq}`);

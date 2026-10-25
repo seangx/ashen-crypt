@@ -34,9 +34,7 @@ function startRun(L) {
   if (LAD.pending) { const N = LAD.pending; LAD.pending = 0; return startLadder(N); }
   if (L == null) L = descentStart();
   refreshStats();
-  const map = S.mapArmed && S.maps.find(m => m.id === S.mapArmed);
-  if (map) { S.maps = S.maps.filter(m => m !== map); S.mapArmed = null; }
-  LX = lootFx(map); const mob = LX.mob;
+  LX = lootFx(null); const mob = LX.mob, map = null; // 推层不再有词缀（墓图已下线）
   RUN = { dmg: { whirl: 0, devil: 0, spark: 0, fork: 0 }, mode: 'push', L: L + LX.lvl, base: L, map, mob, bossD: bossFor(L + LX.lvl), kills: 0, prog: 0, dens: 1, eliteMul: 1, need: Math.round(killNeed(L) * (1 + (mob.need || 0) / 100)), boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, next: 0, result: null, descent: { from: L, floors: 0, prevMax: S.maxDepth, minHp: 1 }, gain: { items: [], shards: 0, shardK: {}, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
   arenaReset();
 }
@@ -231,51 +229,52 @@ function kill(m) {
   const shardDrop = () => { const k = rollShard(L); dropThing(m, { kind: 'shard', k }); if (rnd() * 100 < LX.twin) dropThing(m, { kind: 'shard', k }); };
   if (rnd() < DROP.item * mult * (1 + LX.iiq / 100)) RUN.cache = (RUN.cache || 0) + 1; // 战斗中不掉装备：记进这一层的 Boss 宝箱，打掉 Boss 一次掉出来
   if (rnd() < DROP.shard * mult * (1 + LX.dice / 100)) shardDrop();
-  if (rnd() < DROP.mod * mult * (1 + LX.runes / 100)) dropThing(m, { kind: 'mod', mod: rollModDrop(L) });
-  if (rnd() < DROP.map * mult * (1 + LX.mapDrop / 100)) dropThing(m, { kind: 'map', map: rollMapDrop(L) });
+  if (rnd() < DROP.mod * mult * (1 + LX.runes / 100)) dropRune(m, L);
   if (m.boss) player.life = Math.min(STATS.life, player.life + STATS.life * MECH.bossKillLife / 100); // 打掉守关 Boss 回一截生命
   if (m.boss && RUN.mode === 'ladder') ladderWin(m);
   else if (m.boss) {
     const BL = PROG.bossLoot; RUN.prepFrom = RUN.gain ? RUN.gain.items.length : 0; // 整备面板列出的宝箱装备从这里开始
-    const n = Math.round(BL.items * (1 + LX.iiq / 100)) + (rnd() * 100 < LX.chest ? ATLAS.marble.chestItems : 0);
+    const n = Math.round(BL.items * (1 + LX.iiq / 100));
     for (let i = 0; i < n; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir, true) }, 1);
     const c = Math.round((RUN.cache || 0) * BL.cacheMul); RUN.cache = 0; // 这一层攒下的装备（倍数补偿撤回 / 灯灭时没打到 Boss 的那部分）
     for (let i = 0; i < c; i++) dropThing(m, { kind: 'item', item: rollItem(L, LX.iir) }, 1);
     fx({ t: 'chest', x: m.x, y: m.y, n: n + c });
     for (let i = 0; i < BL.shards; i++) shardDrop();
-    for (let i = 0; i < BL.runes; i++) dropThing(m, { kind: 'mod', mod: rollModDrop(L + BL.runeIlvlBonus) });
-    if (rnd() < DROP.mapBoss * (1 + LX.mapDrop / 100)) dropThing(m, { kind: 'map', map: rollMapDrop(L) });
+    for (let i = 0; i < BL.runes; i++) dropRune(m, L + BL.runeIlvlBonus);
     S.stats.bosses++; RUN.descent.floors++; (RUN.descent.mins = RUN.descent.mins || []).push([RUN.base, Math.round(RUN.descent.minHp * 100), RUN.base >= RUN.descent.prevMax - 1]); // 每层最低血量（模拟用）
     if (RUN.base >= S.maxDepth && RUN.base < PROG.run.maxDepth) S.maxDepth = RUN.base + 1;
     if (RUN.base >= PROG.run.maxDepth) { RUN.result = 'win'; RUN.ending = 1.6; }
     else if (RUN.base >= RUN.descent.prevMax - 1 && RUN.descent.minHp * 100 < (meleeW() && SOUL.returnHpMelee != null ? SOUL.returnHpMelee : SOUL.returnHp)) { RUN.result = 'retreat'; RUN.ending = 1.6; } // 最深层附近打得太险：见好就收
     else RUN.next = SOUL.nextFloorDelay; // 没到底就接着往下走
-    const bid = RUN.bossD.id; const k = S.bossKills[bid] = (S.bossKills[bid] || 0) + 1; const bi = BOON_AT.indexOf(k);
-    if (bi >= 0) RUN.gain.boon = { b: bid, i: bi };
-    if (bi >= 0) refreshStats();
-    if (G.ui) G.ui.banner(bi >= 0 ? `获得祝福：${BOONS[bid][bi].n}` : RUN.result === 'retreat' ? `险胜 · 撤回 · 宝箱 ${n + c} 件` : `第 ${RUN.base} 层通过 · 宝箱 ${n + c} 件`);
+    unlockEvent('bossChest'); checkUnlocks(); for (const it of takeGuarantees(L)) dropThing(m, { kind: 'item', item: it }, 1); // 渐进式披露：第一只宝箱保底副手，第 3 层保底新技能石
+    const bid = RUN.bossD.id; S.bossKills[bid] = (S.bossKills[bid] || 0) + 1; // 只记次数（祝福已下线）
+    if (G.ui) G.ui.banner(RUN.result === 'retreat' ? `险胜 · 撤回 · 宝箱 ${n + c} 件` : `第 ${RUN.base} 层通过 · 宝箱 ${n + c} 件`);
   }
 }
+// 符文掉落判定：gems.dropShare 的几率换成技能石（spec-skill-gems §3.4）
+function dropRune(m, L, burst) { if (rnd() < GEMC.dropShare && unlocked('gems')) dropThing(m, { kind: 'item', item: rollGemDrop(L) }, burst); else dropThing(m, { kind: 'mod', mod: rollModDrop(L) }, burst); }
 function dropThing(m, o, burst) { const a = burst ? rf(0, Math.PI * 2) : 0, sp = burst ? rf(40, 90) : 0; drops.push({ ...o, x: m.x + rf(-6, 6), y: m.y + rf(-4, 4), z: 6, vz: burst ? rf(90, 130) : rf(50, 80), vx: burst ? Math.cos(a) * sp : rf(-30, 30), vy: burst ? Math.sin(a) * sp * .6 : rf(-14, 14), age: 0 }); if ((o.kind === 'item' && o.item.rar >= 2) || o.kind === 'glyph') sfx('rare'); }
 function collect(dp) {
   const g = RUN && RUN.gain;
   if (dp.kind === 'item') { addItem(dp.item); g && g.items.push(dp.item); if (G.ui) G.ui.feedItem(dp.item); }
-  else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
-  else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
-  else if (dp.kind === 'map') { S.maps.push(dp.map); g && g.maps.push(dp.map); if (G.ui) G.ui.feed(mapName(dp.map), RCOL[dp.map.rar], 'i_a_map'); }
-  else if (dp.kind === 'mod') { S.mods.push(dp.mod); g && g.mods.push(dp.mod); if (G.ui) G.ui.feed(MOD_BY[dp.mod.mid].n, COL.cyan, 'mod_' + dp.mod.mid); }
+  else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; unlockEvent('gainShard'); if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
+  else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; unlockEvent('gainGlyph'); if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
+
+  else if (dp.kind === 'mod') { S.mods.push(dp.mod); unlockEvent('pickRune'); g && g.mods.push(dp.mod); if (G.ui) G.ui.feed(MOD_BY[dp.mod.mid].n, COL.cyan, 'mod_' + dp.mod.mid); }
   fx({ t: 'pick', x: dp.x, y: dp.y, kind: dp.kind });
   sfx(dp.kind === 'shard' || dp.kind === 'glyph' ? 'die' : 'pick');
 }
 function gainXp(x) {
   S.xp += x; if (RUN) RUN.gain.xp += x;
-  while (S.xp >= xpNeed(S.level)) { S.xp -= xpNeed(S.level); S.level++; if (RUN) RUN.gain.lv++; const before = STATS.life; refreshStats(); player.life += STATS.life - before; // 升级：生命上限变高，多出来的直接补上
+  while (S.xp >= xpNeed(S.level)) { S.xp -= xpNeed(S.level); S.level++; checkUnlocks(); if (RUN) RUN.gain.lv++; const before = STATS.life; refreshStats(); player.life += STATS.life - before; // 升级：生命上限变高，多出来的直接补上
   fx({ t: 'text', x: player.x, y: player.y - 18, s: '升级 · 天赋点 +1', c: COL.xp }); sfx('level'); }
 }
 // 法阵的升级槽：插在里面的符文吃击杀经验（累计门槛）
 function modXp(x) {
-  const hub = S.equip.hub; if (!hub) return;
   let up = false;
+  const g = S.equip.gem; // 装备中的技能石吃击杀经验
+  if (g && g.kind === 'gem' && g.lvl < MOD_MAX) { g.xp += x; const L = modLevelOf(g.xp); if (L > g.lvl) { g.lvl = L; up = true; if (G.ui) G.ui.feed(`${GEM_BY[g.b].n} ${g.lvl} 级`, COL.cyan, 'i_' + iconOf(g)); } }
+  const hub = S.equip.hub; if (!hub) { if (up) refreshStats(); return; }
   for (const m of hub.mods) {
     if (!m || m.lvl >= MOD_MAX) continue;
     m.xp += x; const L = modLevelOf(m.xp);
@@ -929,13 +928,13 @@ function abandonRun(cleared) {
   if (G.ui) G.ui.banner('提前返回', COL.emberHi); return true;
 }
 function finishRun() {
-  const r = RUN; RUN = null; mobs = []; projs = []; drops = []; zones = [];
+  const r = RUN; RUN = null; mobs = []; projs = []; drops = []; zones = []; checkUnlocks();
   S.stats.missions++;
   const baseL = r.base;
   if (r.result === 'win' && r.map) S.stats.maps++;
   if (r.mode !== 'ladder' && r.descent.floors && !S.auto.lock) S.depth = S.maxDepth; // 最深层在每层通过时已经更新
   if (r.mode !== 'ladder' && r.result === 'dead') deathLoss(r);
-  if (salvRules().on && unlocked('craft')) r.salv = autoSalvage(r.gain.items); // 分解祭坛：带回的装备按规则拆成碎片
+  if (salvRules().on && unlocked('salvage')) r.salv = autoSalvage(r.gain.items); // 分解祭坛：带回的装备按规则拆成碎片
   LX = lootFx(null);
   autoAfterRun(r);
   refreshStats(); resetPlayer(); save();

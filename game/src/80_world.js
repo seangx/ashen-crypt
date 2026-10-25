@@ -234,7 +234,7 @@ class World extends Phaser.Scene {
     lights.push({ x: player.x + player.face * 4, y: player.y - 6, r2: (110 * fl) ** 2, i: .38, c: 0x7fd0e0 }); // 提灯亡魂身上的青色魂光
     if (!RUN) { const gt = FAC_BY.gate; lights.push({ x: gt.x - 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: gt.x + 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: 240, y: 178, r2: (80 * fl) ** 2, i: .75, c: 0xffa050 });
       const FC = { altar: 0xc08aff, runes: 0x57e0d0, stele: 0xffd36a };
-      for (const id of ['altar', 'runes', 'stele', 'chest', 'anvil', 'statue', 'atlas']) if (open[id]) lights.push({ x: FAC_BY[id].x, y: FAC_BY[id].y - 12, r2: id === 'altar' ? 900 : 620, i: .35, c: FC[id] || 0xd0a070 }); }
+      for (const id of ['altar', 'runes', 'stele', 'chest', 'anvil', 'statue']) if (open[id]) lights.push({ x: FAC_BY[id].x, y: FAC_BY[id].y - 12, r2: id === 'altar' ? 900 : 620, i: .35, c: FC[id] || 0xd0a070 }); }
     for (const m of mobs) if ((m.burn > 1 || m.boss) && lights.length < 18) lights.push({ x: m.x, y: m.y - 6, r2: m.boss ? 1600 : 420, i: .4, c: m.boss ? 0xc23a5a : 0xff7a3a });
     for (const r of this.rings) if (r.fill && lights.length < 22) lights.push({ x: r.x, y: r.y, r2: (r.r * 1.5) ** 2, i: .6, c: hex(ELEM_C[r.el] || '#ffd36a') });
     for (const dp of drops) if (dp.kind === 'item' && dp.item.rar >= 1 && lights.length < 24) lights.push({ x: dp.x, y: dp.y - 8, r2: 520, i: .45, c: hex(icol(dp.item)) });

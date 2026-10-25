@@ -146,3 +146,26 @@ function feedRune(src, dst) {
   refreshStats();
   return add;
 }
+
+/* 技能石（spec-skill-gems §3.4）：打磨（花碎片 +1% 品质）、开孔符（+1 槽）、重复技能石喂养（经验 ×2，喂养解锁后） */
+const shardTotal = () => Object.values(S.shards).reduce((a, b) => a + b, 0);
+const canPolish = g => g && g.kind === 'gem' && (g.q || 0) < GEMC.qMax && shardTotal() >= GEMC.polishCost;
+function gemPolish(g) {
+  if (!canPolish(g)) return null;
+  for (let i = 0; i < GEMC.polishCost; i++) { const ks = Object.keys(S.shards).filter(k => S.shards[k] > 0), k = pick(ks); if (--S.shards[k] <= 0) delete S.shards[k]; }
+  g.q = (g.q || 0) + 1; refreshStats(); save();
+  return `打磨完成：品质 ${g.q}%`;
+}
+const canSocket = g => g && g.kind === 'gem' && g.sock < GEMC.maxSock && (S.glyphs.socket || 0) > 0;
+function gemSocket(g) {
+  if (!canSocket(g)) return null;
+  S.glyphs.socket--; g.sock++; g.mods.push(null); refreshStats(); save();
+  return `开孔完成：${g.sock} 个符文槽`;
+}
+function feedGem(src, dst) {
+  if (!src || !dst || src === dst || src.b !== dst.b) return 0;
+  const add = Math.floor(src.xp * 2) || MOD_XP[0];
+  dst.xp = Math.min(MOD_XP[MOD_XP.length - 1], dst.xp + add); dst.lvl = modLevelOf(dst.xp);
+  removeItem(src); refreshStats();
+  return add;
+}

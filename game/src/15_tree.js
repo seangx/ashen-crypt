@@ -35,6 +35,7 @@ const keyText = K => [...Object.entries(K.flag || {}).map(([k, v]) => ruleText(k
 
 // 生成节点和连线：世界坐标以起点为原点，天赋窗口里可以拖动和缩放
 const TREE = { nodes: {}, edges: [] };
+const SOCK_ADD = { melee: { 'inc:melee': 8 }, area: { areaInc: 8 }, proj: { 'inc:proj': 8 }, dot: { dotInc: 8 }, guard: { armorInc: 8 }, lamp: { energyInc: 8 } };
 (function buildTree() {
   const SC = 1.45;
   const pos = (a, r) => [Math.round(Math.cos(a) * r * SC), Math.round(Math.sin(a) * r * SC)];
@@ -77,7 +78,7 @@ const TREE = { nodes: {}, edges: [] };
       const ids = [`${pre}${i}a`, `sk${sk}`, `${pre}${i}b`];
       [[-dOff, r], [0, r + 4], [dOff, r]].forEach(([o, rr], k) => {
         const [x, y] = pos(a + o, rr);
-        if (k === 1) node(ids[1], { kind: 'sock', b: -1, x, y, n: '印记槽', add: {}, c: '#57e0d0' });
+        if (k === 1) node(ids[1], { kind: 's', b: -1, x, y, add: SOCK_ADD[B.id] || {}, c: '#57e0d0' }); // 原印记槽：改成小节点，给这一区标签提高 8%（id 不变）
         else node(ids[k], { kind: 's', b: -1, x, y, add, c: '#b8afc4' });
       });
       link(from, ids[0]); link(ids[0], ids[1]); link(ids[1], ids[2]); link(ids[2], to);
@@ -98,17 +99,7 @@ function treeCanRefund(id) {
   while (q.length) { const c = q.pop(); for (const n of TREE.nodes[c].nb) if (left.has(n) && !seen.has(n)) { seen.add(n); q.push(n); } }
   return seen.size - 1 === left.size;
 }
-// 印记：插在已点亮的印记槽里
-const chipIn = id => S.chips && S.chips[id];
-function equipChip(it) {
-  const free = Object.keys(TREE.nodes).filter(id => TREE.nodes[id].kind === 'sock' && S.tree.includes(id) && !chipIn(id));
-  if (!free.length) { toast('先在天赋树上点亮一个空的印记槽'); return false; }
-  S.chips[free[0]] = it; S.stash = S.stash.filter(x => x !== it); it.isNew = false; refreshStats(); return true;
-}
-function unequipChip(id) { const it = chipIn(id); if (!it) return; delete S.chips[id]; S.stash.unshift(it); refreshStats(); }
-const chipSock = it => Object.keys(S.chips || {}).find(k => S.chips[k] === it);
-// 退掉天赋时把插着的印记还回仓库
-function treeKeep(ids) { for (const k of Object.keys(S.chips)) if (!ids.includes(k)) { S.stash.unshift(S.chips[k]); delete S.chips[k]; } S.tree = ids; }
+function treeKeep(ids) { S.tree = ids; } // 印记已下线（spec-legacy-cleanup §2）
 function treeLines(nd) {
   const out = [];
   for (const k in nd.add || {}) out.push(treeText(k, nd.add[k]));
@@ -119,8 +110,8 @@ function treeStats(ids = S.tree, eq = S.equip) {
   const add = {}, more = {}, flag = {};
   const A = (k, v) => add[k] = (add[k] || 0) + v, M = (k, v) => more[k] = (more[k] ?? 1) * v;
   const uniqueRules = it => { const u = UNIQUE_BY[it.u]; if (!u) return; u.rules.forEach(([k], i) => { const v = it.uv[i];
-    if (['massInc', 'energyInc', 'timeInc', 'rangeInc', 'dodge', 'velocity', 'dashMax'].includes(k)) A(k, v);
-    else if (k === 'massAdd') A('mass', v); else if (k === 'resAll') A('res:all', v);
+    if (['energyInc', 'rangeInc', 'dodge', 'velocity', 'dashMax', 'armorInc', 'shieldRegenPct'].includes(k)) A(k, v);
+    else if (k === 'energyAdd') A('energy', v); else if (k === 'aspdLessAll') M('aspd', 1 - v / 100); else if (k === 'resAll') A('res:all', v);
     else if (k === 'critLess') M('crit', 1 - v / 100); else if (k === 'armorLess') M('armor', 1 - v / 100); else if (k === 'shockMul') flag.shockMul = (flag.shockMul || 1) * (1 + v / 100);
     else if (k === 'dodgeCap') flag.dodgeCap = (flag.dodgeCap || 0) + v;
     else if (k === 'spinDecay') flag.spinDecay = (flag.spinDecay || 1) * (1 - v / 100);
@@ -148,12 +139,8 @@ function treeStats(ids = S.tree, eq = S.equip) {
     else if (k === 'shieldRegenMore') M('deflRate', 1 + v / 100); else if (k === 'speedMore') M('speed', 1 + v / 100); else if (k === 'projMore') M('dmg:proj', 1 + v / 100); else if (k === 'lifeMore') M('life', 1 + v / 100);
     else if (k === 'chillLess') flag.chillMul = (flag.chillMul || 1) * (1 - v / 100);
     else flag[k] = (1 + (flag[k] || 0) / 100) * (1 + v / 100) * 100 - 100; } }; // fullShieldMore / frozenMore / delayMore / dmgMore / burnMore：按 % 存，叠加时相乘
-  for (const id of ids) { const it = chipIn(id); if (!it) continue;
-    for (const x of it.affs) { const a = AFF_BY[x.k]; if (!a || !a.tk) continue; const v = Array.isArray(x.v) ? x.v[0] : x.v; if (a.tm === 'm') M(a.tk, 1 + v / 100); else A(a.tk, v); }
-    uniqueRules(it); }
   for (const k in eq) if (eq[k] && eq[k].u) uniqueRules(eq[k]);
   for (const k in eq) if (eq[k] && eq[k].oath) oathRules(eq[k]);
-  for (const b of boonAdds()) for (const k in b) A(k, b[k]);
   for (const id of ids) {
     const nd = TREE.nodes[id]; if (!nd) continue;
     for (const k in nd.add || {}) add[k] = (add[k] || 0) + nd.add[k];
@@ -207,14 +194,6 @@ function treeNodeGfx(g, nd, X, Y, r, got, dim) {
     if (got) { pxDisc(g, X, Y, r + 2, 0x9fc8ff, 0.18); }
     g.fillStyle(got ? 0xffffff : 0x5a6496, got ? 1 : 0.75 * dim).fillRect(X - r, Y, r * 2 + 1, 1).fillRect(X, Y - r, 1, r * 2 + 1);
     g.fillStyle(got ? 0xdff0ff : 0x9aa4d8, got ? 1 : 0.8 * dim).fillRect(X, Y, 1, 1);
-    return;
-  }
-  if (nd.kind === 'sock') {
-    const ch = chipIn(nd.id);
-    if (got) pxDisc(g, X, Y, r + 3, 0x57e0d0, 0.15);
-    g.fillStyle(0x07101a, 1); for (let d = -r - 1; d <= r + 1; d++) { const w = r + 1 - Math.abs(d); g.fillRect(X - w, Y + d, w * 2 + 1, 1); }
-    g.fillStyle(0x57e0d0, got ? 1 : 0.5 * dim); for (let d = -r; d <= r; d++) { const w = r - Math.abs(d); g.fillRect(X - w, Y + d, 1, 1); g.fillRect(X + w, Y + d, 1, 1); }
-    if (ch) { g.fillStyle(hex(ch.rar === 3 ? '#ff9a3c' : ch.b === 'EmpoweredChip' ? COL.emberHi : '#dfe6ee'), 1); for (let d = -r + 2; d <= r - 2; d++) { const w = r - 2 - Math.abs(d); g.fillRect(X - w, Y + d, w * 2 + 1, 1); } }
     return;
   }
   const leg = nd.kind === 'k' || nd.kind === 'start';

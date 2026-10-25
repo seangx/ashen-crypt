@@ -309,10 +309,11 @@
   "_cache": "怪物不掉装备，按原掉率记进本层宝箱；Boss 死时宝箱掉出 cache×cacheMul 件（补偿没打到 Boss 就结束的那部分）"
  },
  "starter": {
-  "_说明": "新角色的装备：武器底材、它的符文槽数和插好的符文、遁靴、盾、法阵",
+  "_说明": "新角色的装备：武器底材、技能石（spec-skill-gems：骨矢 1 级、gemSockets 槽）和插好的符文、遁靴、盾、法阵",
   "weapon": "Cannon",
-  "weaponSockets": 2,
-  "weaponRunes": [
+  "gem": "GemBolt",
+  "gemSockets": 1,
+  "gemRunes": [
    "Pierce"
   ],
   "engine": "Thruster",
@@ -320,46 +321,19 @@
   "hub": "QuartzNexus"
  },
  "unlocks": {
-  "_说明": "系统在什么时候开放：depth = 已通关的最深层数达到它；level = 角色等级达到它；ladder = 天梯最高层达到它。0 表示一开始就有。没写的系统一直开放。craft 铁砧（加词条、升一档、拆解）；craftAdv 铁砧的洗数值和移除；feed 符文喂养；fuse 传奇熔铸",
-  "gear": {
-   "depth": 0,
-   "level": 0
-  },
-  "mods": {
-   "depth": 0,
-   "level": 0
-  },
-  "craft": {
-   "depth": 5,
-   "level": 0
-  },
-  "craftAdv": {
-   "depth": 15,
-   "level": 0
-  },
-  "feed": {
-   "ladder": 20
-  },
-  "fuse": {
-   "ladder": 40
-  },
-  "tree": {
-   "depth": 0,
-   "level": 0
-  },
-  "atlas": {
-   "depth": 0,
-   "level": 0
-  },
-  "wr": {
-   "depth": 0,
-   "level": 0,
-   "_说明": "副手（支援）"
-  },
-  "ladder": {
-   "depth": 10,
-   "level": 0,
-   "_说明": "天梯"
-  }
+  "_说明": "渐进式披露（spec-unlocks）。depth = 已通关最深层；level = 角色等级；ladder = 天梯最高层；event = 还要发生过这件事（bossChest 打开 Boss 宝箱、pickRune 捡到辅助符文、gainShard 得到碎片、gainGlyph 得到铸符）。条件都满足才开。guarantee：解锁时在 Boss 宝箱里保底一件（off 副手、gem 新技能石）。hint：解锁横幅。没写的系统一直开放",
+  "wr": {"event": "bossChest", "guarantee": "off", "hint": "副手：强化你的技能"},
+  "gems": {"depth": 3, "guarantee": "gem", "hint": "新的技能石：在装备里替换技能"},
+  "mods": {"event": "pickRune", "hint": "辅助符文：插在技能石的孔里"},
+  "tree": {"depth": 5, "level": 5, "hint": "天赋：每级 1 点"},
+  "craft": {"event": "gainShard", "depth": 3, "hint": "铁砧：用碎片给装备加词条"},
+  "salvage": {"depth": 8, "hint": "分解祭坛：回营地时自动拆掉不要的装备"},
+  "ladder": {"depth": 10, "hint": "天梯：限时 240 秒，只给宝箱"},
+  "craftAdv": {"depth": 15, "hint": "铁砧：可以洗数值、移除词条"},
+  "glyph": {"event": "gainGlyph", "hint": "铸符：天梯带回的稀有工具"},
+  "feed": {"ladder": 20, "hint": "喂养：把符文和技能石喂给同类"},
+  "oath": {"ladder": 30, "hint": "誓约：一条强词条，配一条代价"},
+  "fuse": {"ladder": 40, "hint": "熔铸：独特 + 稀有 = 传奇"},
+  "gear": {}
  }
 }

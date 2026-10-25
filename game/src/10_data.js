@@ -37,16 +37,17 @@ const rarName = it => it.leg ? '传奇' : it.ex ? '溢彩' + RAR[it.rar].n : RAR
 
 // 装备槽
 const SLOTS = [
+  { id: 'gem', n: '技能', kind: 'gem' }, // 技能格（spec-skill-gems）
   { id: 'wl', n: '主手', kind: 'weapon' }, { id: 'wr', n: '副手', kind: 'off' }, // 只有主手武器带技能；副手只强化主手技能
   { id: 'shield', n: '盾牌', kind: 'shield' }, { id: 'core', n: '头冠', kind: 'core' },
   { id: 'engine', n: '遁靴', kind: 'engine' }, { id: 'hub', n: '法阵', kind: 'hub' },
 ];
-const KIND_N = { weapon: '武器', off: '副手', shield: '盾牌', core: '头冠', engine: '遁靴', hub: '法阵', chip: '印记' };
+const KIND_N = { gem: '技能石', weapon: '武器', off: '副手', shield: '盾牌', core: '头冠', engine: '遁靴', hub: '法阵', chip: '印记' };
 
 // 模组槽 / 升级槽数量的随机权重（原作配置：武器、头冠（原作：核心）、遁靴有模组槽；法阵有升级槽）
 const SOCKET_W = LOOT.sockets.weapon;
 const USOCKET_W = LOOT.sockets.hub;
-const SOCKET_KINDS = { weapon: 1, core: 1, engine: 1 };
+const SOCKET_KINDS = { core: 1, engine: 1 }; // 武器不再有符文槽（辅助符文插在技能石上）
 
 // 标签（原作同名机制）
 const TAG_N = {
@@ -63,7 +64,15 @@ const WEAPONS = {};
 for (const k in WEAPON_SKIN) WEAPONS[k] = { key: k, ...ASTRO.weapons[k], ...WEAPON_SKIN[k], tags: ASTRO.weapons[k].tags.filter(t => t !== 'Weapon').concat('Weapon') };
 // 遁靴（原作：引擎，冲刺即技能；本身也带武器标签）
 const ENGINE_SKIN = DATA.items.engines;
-const ARMORS = { shield: {}, core: {}, engine: {}, hub: {}, off: {} };
+const ARMORS = { shield: {}, core: {}, engine: {}, hub: {}, off: {}, gem: {} };
+/* 技能石（spec-skill-gems，data/gems.json）：主手只给数值，技能来自技能格里的技能石 */
+const GEMC = DATA.mechanics.gems;
+const GEMS = DATA.gems.list, GEM_BY = Object.fromEntries(GEMS.map(g => [g.id, g]));
+for (const g of GEMS) ARMORS.gem[g.id] = { key: g.id, n: g.n, ic: g.ic, tags: g.tags, w: 0, gem: g };
+const WEAPON_CAT = {}; for (const c in GEMC.cats) for (const k of GEMC.cats[c].bases) WEAPON_CAT[k] = c;
+for (const k in WEAPONS) { WEAPONS[k].cat = WEAPON_CAT[k]; if (GEMC.retired.includes(k)) WEAPONS[k].retired = 1; }
+const GEM_OF_BASE = {}; for (const g of GEMS) for (const k of g.src) GEM_OF_BASE[k] = g.id;
+const FORM_GEM = Object.fromEntries(GEMS.filter(g => g.fr).map(g => [g.fr, g.id])); // 形态符文 → 技能石
 for (const k in ENGINE_SKIN) ARMORS.engine[k] = { key: k, ...ASTRO.engines[k], ...ENGINE_SKIN[k] };
 const SHIELD_SKIN = DATA.items.shield, CORE_SKIN = DATA.items.core, HUB_SKIN = DATA.items.hub; // 头冠（原作：核心）
 for (const [kind, skin, src] of [['shield', SHIELD_SKIN, ASTRO.shield], ['core', CORE_SKIN, ASTRO.core], ['hub', HUB_SKIN, ASTRO.nexus]])
@@ -131,6 +140,7 @@ for (const [k, a] of Object.entries({ ...DATA.mechanics.soul.affixes, ...DATA.me
 if (DATA.mechanics.offhand.weaponAffixes) for (const a of AFF) if (!a.local && a.on && a.on.includes('weapon') && !a.on.includes('off')) a.on = [...a.on, 'off'];
 // 不再掉落的词条（权重全 0 的空词条、等新流派的词条）：铁砧 / 重铸也不出
 for (const a of AFF) if (a.tiers.every(t => !t[1])) a.off = true;
+for (const a of AFF) if (a.on && a.on.length && a.on.every(o => o === 'chip' || o === 'chipE')) a.off = true; // 印记词条：印记已下线
 const AFF_BY = Object.fromEntries(AFF.map(a => [a.k, a]));
 // 原作的数值掷骰：value = lo + round((r-1)/254 * (hi-lo))，r 为 1..255 的字节
 const rollRange = (lo, hi) => lo + Math.round((ri(1, 255) - 1) / 254 * (hi - lo));
@@ -156,7 +166,7 @@ function specAt(s, L) {
   const o = {}; for (const k in s) o[k] = specAt(s[k], L); return o;
 }
 // fit：weapon / engine / tag:标签，全部满足才能插
-const fitOf = conds => it => conds.every(c => c === 'weapon' ? it.kind === 'weapon' : c === 'engine' ? it.kind === 'engine' : itemTags(it).includes(c.slice(4)));
+const fitOf = conds => it => conds.every(c => c === 'weapon' ? it.kind === 'weapon' || it.kind === 'gem' : c === 'engine' ? it.kind === 'engine' : itemTags(it).includes(c.slice(4)));
 const WH = DATA.mechanics.whirl; // 旋风斩流派的数值
 const SP = DATA.mechanics.spark; // 游雷（电球）流派的数值
 const SHT = DATA.mechanics.shield; // 圣盾掷（飞盾圣骑）流派的数值
@@ -220,7 +230,7 @@ const MOD_D = {
 };
 const MODS = DATA.runes.list.map(r => ({ id: r.id, n: r.n, field: r.field, req: r.req, w: r.w, fit: r.field ? undefined : fitOf(r.fit),
   fx: L => { const f = specAt(r.fx, L); if (f.thermalGain != null) f.gain = { exp: f.thermalGain / 4, pla: f.thermalGain / 4, ele: f.thermalGain / 4, cold: f.thermalGain / 4 }; return f; }, d: MOD_D[r.id] }));
-for (const m of MODS) { const a = ASTRO.mods[m.id]; m.req = a ? a.req : (m.req || 1); m.w = a ? a.w : (m.w || 450); }
+for (const m of MODS) { const a = ASTRO.mods[m.id]; m.req = a ? a.req : (m.req || 1); m.w = a ? a.w : (m.w ?? 450); if (FORM_GEM[m.id]) m.w = 0; } // 形态符文并进技能石，不再掉落
 const MOD_BY = Object.fromEntries(MODS.map(m => [m.id, m]));
 const MOD_MAX = LOOT.runeDrop.maxLevel;
 const MOD_XP = ASTRO.modXp; // 累计经验门槛（原作配置）
@@ -253,7 +263,7 @@ const PLAYER = PROG.player;
 const xpNeed = L => Math.round(PROG.xp.base * Math.pow(PROG.xp.growth, L - 1));
 // 系统解锁：已通关的最深层数、角色等级、天梯最高层都达到要求才开放
 const unlockOf = id => PROG.unlocks[id];
-const unlocked = id => { const u = unlockOf(id); return !u || (S.maxDepth - 1 >= (u.depth || 0) && S.level >= (u.level || 0) && (S.ladder ? S.ladder.best : 0) >= (u.ladder || 0)); };
+const unlocked = id => { const u = unlockOf(id); if (!u || UNLOCK_ALL) return true; return S.maxDepth - 1 >= (u.depth || 0) && S.level >= (u.level || 0) && (S.ladder ? S.ladder.best : 0) >= (u.ladder || 0) && (!u.event || UNLOCK_EV || !!(S.events && S.events[u.event])); };
 const unlockText = id => { const u = unlockOf(id); const p = []; if (u && u.depth) p.push(`通关第 ${u.depth} 层`); if (u && u.level) p.push(`角色 ${u.level} 级`); if (u && u.ladder) p.push(`天梯通过第 ${u.ladder} 层`); return p.join('、') + '后开放'; };
 
 const THEMES = [
