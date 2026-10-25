@@ -8,18 +8,18 @@ const FIX = { x0: 10, x1: 470, y0: 62, y1: 226 }; // 营地（固定房间）的
 // 无限场地：相机跟着角色走。CAM = 视野左上角的世界坐标；F = 当前视野里的“场边”（左右各留 10，上面让开顶栏，下面让开底栏），弹射就在这里反弹
 const CAM = { x: 0, y: 0 };
 const F = { x0: 10, x1: 470, y0: 62, y1: 226 };
-const VIEW_CY = (TOP_H + BOT_Y) / 2; // 视野里战斗区的竖直中心（屏幕坐标）
-function updView() { F.x0 = CAM.x + 10; F.x1 = CAM.x + VW - 10; F.y0 = CAM.y + TOP_H + 8; F.y1 = CAM.y + BOT_Y - 8; }
-function camSnap() { if (RUN) { CAM.x = player.x - VW / 2; CAM.y = player.y - VIEW_CY; } else { CAM.x = 0; CAM.y = 0; } updView(); }
-function camStep(dt) { if (!RUN) return camSnap(); const k = 1 - Math.exp(-dt * 8); CAM.x += (player.x - VW / 2 - CAM.x) * k; CAM.y += (player.y - VIEW_CY - CAM.y) * k; updView(); }
+const VIEW_CY = (AT + AB) / 2; // 视野里战斗区的竖直中心（屏幕坐标）
+function updView() { F.x0 = CAM.x + 10; F.x1 = CAM.x + AW - 10; F.y0 = CAM.y + AT + 8; F.y1 = CAM.y + AB - 8; }
+function camSnap() { if (RUN) { CAM.x = player.x - AW / 2; CAM.y = player.y - VIEW_CY; } else { CAM.x = 0; CAM.y = 0; } updView(); }
+function camStep(dt) { if (!RUN) return camSnap(); const k = 1 - Math.exp(-dt * 8); CAM.x += (player.x - AW / 2 - CAM.x) * k; CAM.y += (player.y - VIEW_CY - CAM.y) * k; updView(); }
 // 视野外一圈上的随机点（刷怪用）：视野往外扩 m 像素的矩形边上；给了方向 a 就取那个方向上的点
 function ringPoint(m = 18, a) {
-  const cx = CAM.x + VW / 2, cy = CAM.y + VIEW_CY, hw = VW / 2 + m, hh = (BOT_Y - TOP_H) / 2 + m;
+  const cx = CAM.x + AW / 2, cy = CAM.y + VIEW_CY, hw = AW / 2 + m, hh = (AB - AT) / 2 + m;
   if (a == null) a = rnd() * Math.PI * 2;
   const c = Math.cos(a), s = Math.sin(a), k = Math.min(hw / Math.max(1e-6, Math.abs(c)), hh / Math.max(1e-6, Math.abs(s)));
   return { x: cx + c * k, y: cy + s * k };
 }
-const offView = (o, m) => o.x < CAM.x - m || o.x > CAM.x + VW + m || o.y < CAM.y + TOP_H - m || o.y > CAM.y + BOT_Y + m;
+const offView = (o, m) => o.x < CAM.x - m || o.x > CAM.x + AW + m || o.y < CAM.y + AT - m || o.y > CAM.y + AB + m;
 const player = { x: 240, y: 150, vx: 0, vy: 0, life: 1, shield: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: [0, 0], orbitA: 0, guardT: 0, spin: [{ n: 0, g: 0, idle: 9 }, { n: 0, g: 0, idle: 9 }], swing: [0, 0], devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
 const fx = o => { if (G.fx) fxq.push(o); };
 const MINE_MAX = MECH.mineMax;
@@ -888,7 +888,7 @@ function stepProjs(dt) {
       }
       if (p.back && !p.dead) { const dx = player.x - p.x, dy = player.y - 6 - p.y, d = Math.hypot(dx, dy); if (d < 6) p.dead = true; else { p.vx = dx / d * p.W.spd; p.vy = dy / d * p.W.spd; } }
     }
-    if (p.x < CAM.x - 20 || p.x > CAM.x + VW + 20 || p.y < CAM.y - 10 || p.y > CAM.y + VH + 10) p.dead = true; // 飞出屏幕就消失
+    if (p.x < CAM.x - 20 || p.x > CAM.x + AW + 20 || p.y < CAM.y - 10 || p.y > CAM.y + AVH + 10) p.dead = true; // 飞出屏幕就消失
   }
   projs = projs.filter(p => !p.dead);
 }

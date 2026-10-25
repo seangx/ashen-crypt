@@ -15,7 +15,8 @@ function autoTouch(dist) {
 function autoBox() {
   if (!RUN) return { ...FIX, cx: 240, cy: 144 };
   const A = AUTO.anchor || (AUTO.anchor = { x: player.x, y: player.y - 6 });
-  return { x0: A.x - 230, x1: A.x + 230, y0: A.y - 82, y1: A.y + 82, cx: A.x, cy: A.y };
+  const hx = AW / 2 - 10, hy = (AB - AT) / 2 - 27; // 桌面 230 × 82
+  return { x0: A.x - hx, x1: A.x + hx, y0: A.y - hy, y1: A.y + hy, cx: A.x, cy: A.y };
 }
 function autoAnchorStep(dt) {
   if (!RUN) { AUTO.anchor = null; return; }

@@ -84,7 +84,8 @@ class World extends Phaser.Scene {
     if (G.time >= (this.stopUntil || 0)) logic(dt); // 顿帧：世界停几十毫秒，画面照常
     if (!RUN) camSnap();
     if (MOBILE && this.mobileView()) {} else {
-    this.cx = Math.round(CAM.x + VW / 2 - W / 2); this.cy = Math.round(CAM.y + VIEW_CY - SCR_CY); this.cameras.main.centerOn(this.cx + W / 2, this.cy + H / 2); // 相机跟着角色，按整像素对齐
+    const vw = RUN ? AW : VW, vcy = RUN ? VIEW_CY : (TOP_H + BOT_Y) / 2; // 营地是固定的 480×270 房间
+    this.cx = Math.round(CAM.x + vw / 2 - W / 2); this.cy = Math.round(CAM.y + vcy - SCR_CY); this.cameras.main.centerOn(this.cx + W / 2, this.cy + H / 2); // 相机跟着角色，按整像素对齐
     }
 
     this.consume();
@@ -92,7 +93,7 @@ class World extends Phaser.Scene {
   }
   // 手机「全景」：把整条 480 宽的战斗视野缩放进竖屏（上下留黑边）；「跟随」= 270 宽的跟随视野。只改相机，不碰玩法
   mobileView() {
-    const pano = S.settings.view === 'pano', k = pano ? W / VW : 1;
+    const pano = false, k = 1; // 手机场地就是竖屏战斗区，不再需要「全景」
     if (this.vk !== k) { this.vk = k; this.cameras.main.setZoom(Z * k); }
     if (!pano) return false;
     this.cx = Math.round(CAM.x); this.cy = Math.round(CAM.y + VIEW_CY - SCR_CY / k); this.cameras.main.centerOn(this.cx + VW / 2, this.cy + H / k / 2);

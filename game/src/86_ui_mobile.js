@@ -30,23 +30,45 @@ class MobileUI extends UI {
     const bc = this.add.container(W / 2 - 100, 22); top.add(bc); this.bossC = bc;
     this.bossT = T(this, 100, -1, '', { size: 8, align: 'center', parent: bc });
     bc.add(img(this, 0, 9, 'bonebar')); this.bossG = this.add.graphics(); bc.add(this.bossG); this.bossG.y = -1;
-    // 操作区：石台底纹铺满
-    const pan = this.add.container(0, MBOT).setDepth(10); this.panC = pan;
-    pan.add(this.add.tileSprite(0, 0, W, H - MBOT - NAV_H, 'dock').setOrigin(0));
-    this.xpG = this.add.graphics(); pan.add(this.xpG);
-    const orb = (x, key) => { const c = this.add.container(x, H - NAV_H - 66).setDepth(11); c.add(img(this, 0, 0, key)); const g = this.add.graphics(); c.add(g); c.add(img(this, 0, 0, 'orb_hi')); c.g = g; c.key = ''; return c; };
+    // 战斗区一直铺到导航上沿；底部只剩两个血球压在角上，经验条贴着导航
+    this.xpG = this.add.graphics().setDepth(11); this.xpG.y = MBOT - 3;
+    const orb = (x, key) => { const c = this.add.container(x, H - NAV_H - 67).setDepth(11); c.add(img(this, 0, 0, key)); const g = this.add.graphics(); c.add(g); c.add(img(this, 0, 0, 'orb_hi')); c.g = g; c.key = ''; return c; };
     this.hpOrb = orb(1, 'orb_hp'); this.hpT = T(this, 32, 27, '', { align: 'center', parent: this.hpOrb }); this.defT = T(this, 32, 40, '', { size: 8, color: '#bfe0ff', align: 'center', parent: this.hpOrb });
-    this.gdT = T(this, 4, MBOT - 12, '', { size: 8, color: '#e8dcc0' }).setDepth(12);
+    this.gdT = T(this, 4, MBOT - 82, '', { size: 8, color: '#e8dcc0' }).setDepth(12);
     this.soulOrb = orb(W - 65, 'orb_soul'); this.soulT = T(this, 32, 27, '', { color: '#e6dcff', align: 'center', parent: this.soulOrb }); this.burnT = T(this, 32, 40, '', { size: 8, color: '#b9a2ff', align: 'center', parent: this.soulOrb });
-    this.spinC = this.add.container(4, MBOT + 8).setDepth(11); img(this, 0, 0, 'mod_Whirl', this.spinC); this.spinT = T(this, 13, 1, '', { parent: this.spinC });
-    // 中间一列按钮：自动 | 推层 / 继续 / 返回 | 菜单
-    const bx = 68, bw = 65, fw = 134;
-    this.aiBtn = mkBtn(this, pan, bx, 4, bw, 28, '自动', () => { S.auto.ai = !S.auto.ai; if (S.auto.ai) AUTO.manualT = -1e9; save(); });
-    this.lockBtn = mkBtn(this, pan, bx + bw + 4, 4, bw, 28, '推层', () => { S.auto.lock = !S.auto.lock; save(); });
-    this.mainBtn = mkBtn(this, pan, bx, 35, fw, 28, '开始', () => { ac(); this.toggleLoop(); }, { style: 'w' });
-    this.retBtn = mkBtn(this, pan, bx, 66, bw, 28, '返回', () => { ac(); if (!RUN || RUN.ending) return; this.ask('提前返回营地？', () => { if (RUN && !RUN.ending) abandonRun(); }, '返回营地', '东西全部带走，没打完的这一层不算通过。'); });
-    this.moreBtn = mkBtn(this, pan, bx + bw + 4, 66, bw, 28, '菜单', () => this.toggleWin('more'));
-    this.lvT = T(this, W / 2, 96, '', { size: 8, color: COL.xp, align: 'center', parent: pan });
+    this.spinC = this.add.container(4, MBOT - 96).setDepth(11); img(this, 0, 0, 'mod_Whirl', this.spinC); this.spinT = T(this, 13, 1, '', { parent: this.spinC });
+    this.buildSide();
+  }
+  /* --- 右下（灵魂球上方）的齿轮按钮：战斗里的所有操作（继续/暂停、自动、推层、菜单、返回）都收进它展开的面板；左边和下面留给摇杆 --- */
+  buildSide() {
+    const S0 = 34, bx = W - S0 - 4, by = H - NAV_H - 67 - S0 - 8; // 右手拇指够得到：灵魂球正上方
+    const btn = this.add.container(bx, by).setDepth(58); this.sideBtn = btn;
+    btn.add(nine(this, 0, 0, S0, S0, 'f_btn', 4)); const g = this.add.graphics(); btn.add(g); this.sideG = g;
+    const z = this.add.zone(-4, -4, S0 + 8, S0 + 8).setOrigin(0).setInteractive(); btn.add(z);
+    z.on('pointerdown', () => btn.setScale(0.94)); z.on('pointerout', () => btn.setScale(1));
+    z.on('pointerup', () => { btn.setScale(1); sfx('click'); this.setSide(!this.sideOpen); });
+    // 面板外点一下就收起（同时挡住这一下，不会顺手拉出摇杆）
+    this.sideBack = this.add.zone(0, 0, W, H - NAV_H).setOrigin(0).setDepth(56).setInteractive().setVisible(false);
+    this.sideBack.on('pointerdown', () => this.setSide(false));
+    const pw = 120, ph = 6 + 14 + 4 * 34 + 4, p = this.add.container(bx - pw - 4, by + S0 - ph).setDepth(57).setVisible(false); this.sideC = p;
+    p.add(nine(this, 0, 0, pw, ph, 'f_win', 8));
+    this.lvT = T(this, pw / 2, 6, '', { size: 8, color: COL.xp, align: 'center', parent: p });
+    const hw = (pw - 16) / 2; let y = 22;
+    this.mainBtn = mkBtn(this, p, 6, y, pw - 12, 30, '开始', () => { ac(); this.toggleLoop(); }, { style: 'w' }); y += 34;
+    this.aiBtn = mkBtn(this, p, 6, y, hw, 30, '自动', () => { S.auto.ai = !S.auto.ai; if (S.auto.ai) AUTO.manualT = -1e9; save(); }, { size: 8 });
+    this.lockBtn = mkBtn(this, p, 10 + hw, y, hw, 30, '推层', () => { S.auto.lock = !S.auto.lock; save(); }, { size: 8 }); y += 34;
+    this.moreBtn = mkBtn(this, p, 6, y, pw - 12, 30, '菜单', () => { this.setSide(false); this.toggleWin('more'); }); y += 34;
+    this.retBtn = mkBtn(this, p, 6, y, pw - 12, 30, '提前返回', () => { ac(); if (!RUN || RUN.ending) return; this.setSide(false); this.ask('提前返回营地？', () => { if (RUN && !RUN.ending) abandonRun(); }, '返回营地', '东西全部带走，没打完的这一层不算通过。'); }, { style: 'r' });
+    this.sideOpen = false; this.drawSideIcon();
+  }
+  setSide(on) { this.sideOpen = !!on; this.sideC.setVisible(this.sideOpen); this.sideBack.setVisible(this.sideOpen); this.drawSideIcon(); }
+  // 像素齿轮；展开时换成 ×
+  drawSideIcon() {
+    const g = this.sideG, c = 17; g.clear();
+    if (this.sideOpen) { g.fillStyle(0xffd36a, 1); for (let i = -6; i <= 6; i++) { g.fillRect(c + i - 1, c + i - 1, 3, 3); g.fillRect(c + i - 1, c - i - 1, 3, 3); } return; }
+    g.fillStyle(0xe9e0c9, 1); g.fillRect(c - 6, c - 6, 12, 12); g.fillRect(c - 2, c - 10, 4, 20); g.fillRect(c - 10, c - 2, 20, 4);
+    [[-8, -8], [5, -8], [-8, 5], [5, 5]].forEach(([dx, dy]) => g.fillRect(c + dx, c + dy, 3, 3));
+    g.fillStyle(0x2a2236, 1); g.fillRect(c - 3, c - 3, 6, 6); g.fillStyle(0xffd36a, 1); g.fillRect(c - 6, c - 6, 12, 2);
   }
   /* --- 底部导航：7 格，中间「战斗」凸起 --- */
   buildNav() {
@@ -132,7 +154,8 @@ class MobileUI extends UI {
     set(this.lvT, `等级 ${S.level} · 秒伤 ${fmt(P.dps)}`);
     // 按钮
     this.mainBtn.setLabel(S.auto.loop ? '暂停' : RUN ? '继续' : '开始');
-    this.retBtn.setDisabled(!RUN || !!RUN.ending); if (!this.retBtn.disabled) this.retBtn.lab.setTint(hex(COL.emberHi));
+    this.retBtn.setDisabled(!RUN || !!RUN.ending);
+    const sv = !this.winId && !this.loadC; this.sideBtn.setVisible(sv); if (!sv && this.sideOpen) this.setSide(false);
     this.aiBtn.setLabel(S.auto.ai ? '自动' : '手动'); this.aiBtn.lab.setTint(hex(S.auto.ai ? COL.good : COL.dim));
     this.lockBtn.setLabel(S.auto.lock ? '锁层' : '推层'); this.lockBtn.lab.setTint(hex(S.auto.lock ? COL.emberHi : COL.text));
     // 导航：当前页高亮、角标、未解锁变暗
@@ -198,7 +221,6 @@ class MobileUI extends UI {
     const row = (y, name, sub, val, fn) => { c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, name, { parent: c }); T(this, 16, y + 21, sub, { size: 8, color: COL.dim, parent: c }); if (val != null) mkBtn(this, c, w - 70, y + 7, 54, 22, val, () => { fn(); save(); this.refresh(); }, { style: 'w' }); };
     let y = 20;
     row(y, '移动方式', '浮动摇杆：左下按哪出哪；松手几秒后交还自动', S.auto.ai ? '自动' : '手动', () => { S.auto.ai = !S.auto.ai; if (S.auto.ai) AUTO.manualT = -1e9; }); y += 42;
-    row(y, '视野', S.settings.view === 'pano' ? '全景：整条战斗区缩进屏幕，上下留黑边' : '跟随：跟着角色看中间一段，场外敌人看箭头', S.settings.view === 'pano' ? '全景' : '跟随', () => { S.settings.view = S.settings.view === 'pano' ? 'follow' : 'pano'; }); y += 42;
     row(y, '音效', '攻击、拾取、界面音效', S.settings.sound ? '开' : '关', () => { S.settings.sound = !S.settings.sound; ac(); }); y += 42;
     row(y, '特效', '飘字、拾取记录、横幅和震屏', G.fx ? '开' : '关', () => { G.fx = !G.fx; }); y += 42;
     row(y, '推层', S.auto.lock ? `锁定在难度 ${S.depth}` : '打赢就去最深层，连输退一层', S.auto.lock ? '锁层' : '推层', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; }); y += 42;
@@ -654,7 +676,7 @@ class MobileUI extends UI {
   update(_, delta) {
     if (this.prevRun && !RUN && !this.loadC) this.runLoad('返回营地', '战利品已带回', null, true);
     this.prevRun = !!RUN;
-    this.updateHud(); this.updateCamp(); this.drawLetterbox();
+    this.updateHud(); this.updateCamp();
     this.dimR && this.dimR.setVisible(!!this.winId); this.drawStick(Math.min(0.05, (delta || 16) / 1000));
     if (this.tipC) this.placeTip();
     this.feedC.list.forEach(t => { const age = G.time - t.feed.t; t.setAlpha(age > 8 ? Math.max(0, 1 - (age - 8) / 2) : 1); });
