@@ -193,7 +193,7 @@ class MobileUI extends UI {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) { this.decoId = null; return; }
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
-    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk'].includes(id);
+    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
     const y = native ? MTOP + 8 : Math.round(clamp((H - NAV_H - h) / 2, MTOP + 12, H)), c = this.add.container(this.panMax ? 4 - this.pan : Math.round((W - w) / 2), y).setDepth(100); this.winC = c; c.w = w;
@@ -201,7 +201,7 @@ class MobileUI extends UI {
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
-    const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', notice: '旧系统整理' }[id];
+    const title = { gear: '装备', mods: '符文', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '拆解符文 / 技能石', notice: '旧系统整理' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: COL.emberHi, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });
@@ -247,9 +247,10 @@ class MobileUI extends UI {
     ELEM.forEach((e, i) => T(this, 134 + i * 20, 76, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
     T(this, 12, 100, `背包 ${S.stash.length}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
     mkBtn(this, c, w - 90, 92, 38, 26, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
-    if (unlocked('salvage')) mkBtn(this, c, w - 50, 92, 40, 26, '批量', () => this.openBulk(), { size: 8, style: 'n' });
+    if (unlocked('salvage')) mkBtn(this, c, w - 50, 92, 40, 26, '批量', () => stashTab === 1 ? this.openRBulk() : this.openBulk(), { size: 8, style: 'n' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
     if (!unlocked('gems') && !nGem) stashTab = 0; else [['装备', 0], [`技能 ${nGem}`, 1]].forEach(([n, t], i) => mkBtn(this, c, 40 + i * 42, 92, 40, 26, n, () => { stashTab = t; this.refresh(); }, { size: 8, style: stashTab === t ? 's' : 'n' }));
+    if (stashTab === 1) return this.gemPane(c, w, h, 122); // 技能石页：堆叠 + 筛选（87_gemrune_mobile.js）
     const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2);
     for (let i = 0; i < STASH_CAP; i++) {
       const it = (stashTab === 1 || unlocked('gems') || S.stash.some(x => x.kind === 'gem') ? view : S.stash)[i]; const x = x0 + (i % cols) * st, y = 122 + (i / cols | 0) * st;
