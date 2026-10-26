@@ -70,7 +70,7 @@ const GEMC = DATA.mechanics.gems;
 const GEMS = DATA.gems.list, GEM_BY = Object.fromEntries(GEMS.map(g => [g.id, g]));
 for (const g of GEMS) ARMORS.gem[g.id] = { key: g.id, n: g.n, ic: g.ic, tags: g.tags, w: 0, gem: g };
 const WEAPON_CAT = {}; for (const c in GEMC.cats) for (const k of GEMC.cats[c].bases) WEAPON_CAT[k] = c;
-for (const k in WEAPONS) { WEAPONS[k].cat = WEAPON_CAT[k]; if (GEMC.retired.includes(k)) WEAPONS[k].retired = 1; }
+for (const k in WEAPONS) { WEAPONS[k].cat = WEAPONS[k].cat || WEAPON_CAT[k]; if (GEMC.retired.includes(k)) WEAPONS[k].retired = 1; }
 const GEM_OF_BASE = {}; for (const g of GEMS) for (const k of g.src) GEM_OF_BASE[k] = g.id;
 const FORM_GEM = Object.fromEntries(GEMS.filter(g => g.fr).map(g => [g.fr, g.id])); // 形态符文 → 技能石
 for (const k in ENGINE_SKIN) ARMORS.engine[k] = { key: k, ...ASTRO.engines[k], ...ENGINE_SKIN[k] };
@@ -209,6 +209,7 @@ const MOD_D = {
   Rigor: f => `暴击率提高 ${f.critInc}%`,
   Lethal: f => `暴击伤害提高 ${f.critDmg}%`,
   ArmorOnHit: f => `命中时回复 ${f.armorOnHit} 点生命`,
+  Thorns: f => `受击时对周围的敌人造成一次技能伤害的 ${f.thorns}%（荆棘）`,
   Melee: f => `近战伤害提高 ${f.meleeInc}%，近战命中后承受伤害总降 ${Math.round(MECH.meleeGuardLess * 100)}%`,
   Whirl: f => `回旋骨刃连续砍中时每秒 +${WH.gainPerSec} 层旋势（基础上限 ${WH.maxStacks} 层，${WH.decay} 秒没砍中清零）。有旋势时角色原地转起来，边转边走（移速 ×${WH.spinMoveMul}）：每层伤害总增 ${Math.round((f.spinMore - 1) * 1000) / 10}%（乘算），判定半径 +${WH.rngPer}%，承受伤害降低 ${WH.drPerStack}%（最多 ${WH.drCap}%）。转的时候每秒消耗 ${WH.soulPerSec} 灯火，每砍中一个敌人回 ${WH.soulPerHit}（一次最多按 ${WH.soulHitCap} 个算），灯火空了不再涨层。命中后 ${MECH.meleeGuardTime} 秒内承受伤害总降 ${Math.round(MECH.meleeGuardLess * 100)}%${f.armorOnHit ? `，每砍中一个敌人回复 ${Math.round(f.armorOnHit * 10) / 10} 点生命` : ''}`,
   Crush: f => `近战伤害总增 ${Math.round((f.meleeMore - 1) * 100)}%，${Math.round(f.doubleChance * 100)}% 几率造成双倍伤害`,
@@ -264,6 +265,8 @@ const xpNeed = L => Math.round(PROG.xp.base * Math.pow(PROG.xp.growth, L - 1));
 // 系统解锁：已通关的最深层数、角色等级、天梯最高层都达到要求才开放
 const unlockOf = id => PROG.unlocks[id];
 const unlocked = id => { const u = unlockOf(id); if (!u || UNLOCK_ALL) return true; return S.maxDepth - 1 >= (u.depth || 0) && S.level >= (u.level || 0) && (S.ladder ? S.ladder.best : 0) >= (u.ladder || 0) && (!u.event || UNLOCK_EV || !!(S.events && S.events[u.event])); };
+// spec-unlocks §3.6：说明文字里 {u:系统id|文字}，系统没解锁时显示“？？？（以后会知道）”
+const ulk = s => String(s).replace(/\{u:(\w+)\|([^}]*)\}/g, (_, id, t) => unlocked(id) ? t : '？？？（以后会知道）');
 const unlockText = id => { const u = unlockOf(id); const p = []; if (u && u.depth) p.push(`通关第 ${u.depth} 层`); if (u && u.level) p.push(`角色 ${u.level} 级`); if (u && u.ladder) p.push(`天梯通过第 ${u.ladder} 层`); return p.join('、') + '后开放'; };
 
 const THEMES = [

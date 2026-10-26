@@ -31,5 +31,5 @@ const RULE_TEXT = {
   chainCrown: () => ruleText('chainCrown'), projCrown: () => ruleText('projCrown'), durCrown: () => ruleText('durCrown'), velCrown: () => ruleText('velCrown'), meleeCrown: () => ruleText('meleeCrown'), multicrit: () => ruleText('multicrit'), dashMax: v => `冲刺槽 +${v}`, finale: () => ruleText('finale'), splitEnd: () => ruleText('splitEnd'),
 };
 for (const k of ELEM) RULE_TEXT['ail:' + k] = v => `${AIL[k].n}几率 +${v}%`;
-const ruleLines = it => { const u = UNIQUE_BY[it.u]; return u ? u.rules.map(([k], i) => RULE_TEXT[k](it.uv[i])) : []; };
+const ruleLines = it => { const u = UNIQUE_BY[it.u]; return u ? [...u.rules.map(([k], i) => RULE_TEXT[k](it.uv[i])), ...(u.when ? [`以上规则只在【${TAG_N[u.when] || u.when}】技能上生效`] : [])] : []; };
 const uval = (it, k) => { const u = it && UNIQUE_BY[it.u]; if (!u) return 0; let s = 0; u.rules.forEach(([kk], i) => { if (kk === k) s += it.uv[i]; }); return s; };
