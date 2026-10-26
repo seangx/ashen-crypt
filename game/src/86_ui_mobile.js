@@ -233,7 +233,7 @@ class MobileUI extends UI {
   equipSlots(c, ox, oy, onClick, selFn) {
     const pos = { gem: [0, 0], core: [32, 0], wl: [0, 32], wr: [64, 32], hub: [0, 64], engine: [32, 64], shield: [64, 64] };
     const ghost = { gem: 'i_star', wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
-    for (const s of SLOTS) { if ((s.id === 'wr' && !unlocked('wr')) || (s.id === 'gem' && !unlocked('gems') && !S.equip.gem)) continue; const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); }
+    for (const s of SLOTS) { if ((s.id === 'wr' && !unlocked('wr')) || (s.id === 'gem' && !unlocked('gems') && !S.equip.gem)) continue; const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); if (s.id === 'gem' && needShield()) { const r = this.add.rectangle(ox + x, oy + y, TOUCH, TOUCH).setOrigin(0).setStrokeStyle(2, 0xd04040); c.add(r); T(this, ox + x + 2, oy + y + 1, '需要盾牌', { size: 8, color: COL.bad, parent: c }); } } // 技能格：圣盾掷没装盾
   }
   /* 装备：竖屏原生（身上 + 属性 → 背包 → 选中物品的详情抽屉） */
   win_gear(c, w, h) {

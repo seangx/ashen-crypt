@@ -56,7 +56,7 @@ const ICO = (() => {
     area: { ids: ['AreaOfEffect', 'Debris', 'Aftershock', 'Knockback', 'Crush'], c: '#ff9a3c', shape: 'round' },
     elem: { ids: ['Shock', 'Blind', 'Radiation', 'Kinetic', 'Thermal', 'Plasma', 'Electric', 'Inferno', 'Agony'], c: '#c98cff', shape: 'hex' },
     skill: { ids: ['Whirl', 'ShieldThrow', 'FrostOrbRune', 'Meteor', 'FrostNova', 'Spark'], c: '#7fe3f0', shape: 'tri' },
-    melee: { ids: ['AdditionalAttacks', 'AttackSpeed', 'Range', 'SteamHammer', 'Rigor', 'Lethal', 'ArmorOnHit', 'Melee', 'Purity', 'DeathThreshold', 'Overcharge', 'DashOnHit', 'Agility'], c: '#ff6b6b', shape: 'shield' },
+    melee: { ids: ['AdditionalAttacks', 'AttackSpeed', 'Range', 'SteamHammer', 'Rigor', 'Lethal', 'ArmorOnHit', 'Melee', 'Thorns', 'Purity', 'DeathThreshold', 'Overcharge', 'DashOnHit', 'Agility'], c: '#ff6b6b', shape: 'shield' },
   };
   const ELEM_C = { Shock: '#ffe066', Electric: '#ffe066', Inferno: '#ff7a3c', Thermal: '#ffae5a', Plasma: '#f2c46a', Radiation: '#9be05a', Agony: '#ff6b9a', Blind: '#b0a8c8', Kinetic: '#c9c1b4', FrostOrbRune: '#7fe3f0', FrostNova: '#a8f0ff', Meteor: '#ff9a3c', Spark: '#ffe066', ShieldThrow: '#f2c46a', Whirl: '#c9c1b4' };
   const famOf = id => { for (const k in FAM) if (FAM[k].ids.includes(id)) return k; return MOD_BY[id] && MOD_BY[id].field ? 'field' : 'melee'; };
