@@ -157,6 +157,8 @@ function gemBase(g, wl) {
   const f = gemMul(G, g.lvl) * (1 + (g.q || 0) / 100) * aff / GEMC.affinity * (GEMC.pow[wl.b] ?? 1); // 对口时 ×1，不对口 ÷1.2（数据里的旧伤害已经是对口强度）
   return { ...src, key: G.id, n: G.n, tags: [...tags, 'Weapon'], I: src.I * f, gI: f, aps: src.aps == null ? src.aps : qv(src.aps, q) * (GEMC.spd[wl.b] ?? 1), crit: wb.crit, aff: aff > 1, gem: G.id };
 }
+// 技能格“需要盾牌”：装着圣盾掷但没有盾（此时技能改成骨矢 1 级）
+const needShield = (eq = S.equip) => !!(eq.gem && eq.gem.kind === 'gem' && GEM_BY[eq.gem.b].form === 'shieldThrow' && !eq.shield);
 function skillItem(eq) { // 技能格里的技能石 → 虚拟武器；圣盾掷返回 null（走 shieldWeapon）
   let g = eq.gem && eq.gem.kind === 'gem' ? eq.gem : null;
   if (g && GEM_BY[g.b].form === 'shieldThrow' && eq.shield) return null;

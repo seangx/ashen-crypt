@@ -69,7 +69,8 @@ function autoTarget() {
 // 近战模式：找怪最密的地方，从怪堆里来回穿过（穿到另一边 pass 像素再折返），这样风暴之眼能沿路留龙卷风；护甲低时后撤（风筝模式），回复后再冲
 const MELEE_FORMS = ['orbit', 'ram', 'reflect'];
 // 环绕武器要有旋身符文或旋风之心才按近战走，否则照常风筝；撞城、荆棘类一直近战
-const meleeW = () => STATS.weapons.find(w => w && ((MELEE_FORMS.includes(w.form) && (w.form !== 'orbit' || w.whirl || STATS.flag.whirlHeart)) || (w.form === 'nova' && w.frostNova && AU.nova.melee))); // 霜环：近战打法（auto.json nova）
+const gemAi = w => w.b && w.b.gem && GEM_BY[w.b.gem] ? GEM_BY[w.b.gem].ai : null; // spec-skill-gems §4：近战 / 远程读技能石的 ai
+const meleeW = () => STATS.weapons.find(w => w && w.form !== 'nova' && gemAi(w) ? gemAi(w) === 'melee' : w && ((MELEE_FORMS.includes(w.form) && (w.form !== 'orbit' || w.whirl || STATS.flag.whirlHeart)) || (w.form === 'nova' && w.frostNova && AU.nova.melee))); // 霜环：近战打法（auto.json nova）
 function meleeTarget(W) {
   const K = AU.melee, f = player.life / STATS.life;
   if (f < K.retreat) AUTO.retreat = true; else if (f >= K.back) AUTO.retreat = false;

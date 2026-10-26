@@ -37,7 +37,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   for (let i = 0; i <= 10; i++) rect(sc, i * 5, cy + 2, 4, 3, i <= it.q ? COL.ember : '#2f2740', 1, c);
   T(sc, 58, cy, `品质：${QN[it.q]}`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
   rect(sc, 0, cy + 1, w, 1, '#3a3049', 1, c); cy += 4;
-  const ln = (t, col = '#b8afc4') => { const r = TW(sc, 0, cy, t, w, { size: 8, color: col, parent: c }); cy += r.h; };
+  const ln = (t, col = '#b8afc4') => { const r = TW(sc, 0, cy, ulk(t), w, { size: 8, color: col, parent: c }); cy += r.h; };
   for (const [t, col] of baseLines(it)) ln(t, col);
   if (it.kind === 'weapon' && IMPL[it.b]) ln(`隐性：${IMPL[it.b].t}`, '#c9b98a'); // 底子的隐性倾向
   if (it.sock) {
@@ -66,8 +66,8 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   });
   if (it.oath) ln(oathText(it.oath), '#c0392b'); // 誓约：暗红，在词条最下面
   if (it.u) { rect(sc, 0, cy + 1, w, 1, '#5a3a14', 1, c); cy += 4; for (const r of ruleLines(it)) ln(r, '#ff9a3c'); }
-  if (it.rar < 3 && it.kind !== 'map' && it.kind !== 'gem') { T(sc, 0, cy + 1, `词条 ${it.affs.length}/${AFF_MAX} · 锻造潜力 ${it.fp || 0}`, { size: 8, color: it.fp > 0 ? COL.faint : COL.bad, parent: c }); cy += 11; }
-  if (it.u) { T(sc, 0, cy + 1, it.leg ? '传奇：已熔铸' : `传奇潜力 ${it.lp || 0}`, { size: 8, color: it.leg ? LEG_C : COL.faint, parent: c }); cy += 11; }
+  if (it.rar < 3 && it.kind !== 'map' && it.kind !== 'gem') { T(sc, 0, cy + 1, ulk(`词条 ${it.affs.length}/${AFF_MAX}{u:craft| · 锻造潜力 ${it.fp || 0}}`), { size: 8, color: it.fp > 0 ? COL.faint : COL.bad, parent: c }); cy += 11; }
+  if (it.u) { T(sc, 0, cy + 1, ulk(it.leg ? '传奇：已熔铸' : `传奇潜力 {u:fuse|${it.lp || 0}}`), { size: 8, color: it.leg ? LEG_C : COL.faint, parent: c }); cy += 11; }
   if (o.compare) for (const ln of compareLines(it)) { const t = TW(sc, 0, cy + 1, ln.t, w, { size: 8, color: ln.c, parent: c }); cy += t.h; }
   return { c, h: cy };
 }
@@ -80,6 +80,7 @@ function gemLines(g) { // 技能石：形态、倍率、标签、并进来的形
   out.push([FORM_N[G.form] || '', COL.dim]);
   if (src) { const sk = skillItem({ ...S.equip, gem: g }), [mn, mx] = sk ? weaponBase(sk.fb, sk.q) : [0, 0]; out.push([`伤害 = 主手 × ${r2(gemMul(G, g.lvl) * (1 + (g.q || 0) / 100))}（等级、品质）`, '#e9d9a8']); if (sk) out.push([`用现在的主手：${ELEM_N[src.el]}伤害 ${fmt(mn)}–${fmt(mx)}${src.cont ? ' / 秒' : ''}${sk.fb.aff ? '（对口 ×' + GEMC.affinity + '）' : '（不对口）'}`, ELEM_C[src.el]]); if (G.src.length > 1) out.push([`变体：${src.n}`, COL.dim]); }
   else out.push([`伤害 = 盾的护甲 × 系数（需要装备盾牌）`, '#e9d9a8']);
+  if (S.equip.gem === g && needShield()) out.push(['需要盾牌：没装盾，现在改用骨矢 1 级', COL.bad]);
   if (G.fr) { const fx = MOD_BY[G.fr].fx(clamp(g.lvl, 1, LOOT.runeDrop.levelCap)); out.push([MOD_BY[G.fr].d(fx), '#9fd8ff']); }
   out.push(['标签：' + gemTags(g).filter(t => TAG_N[t] && t !== 'Weapon').map(t => TAG_N[t]).join(' '), COL.faint]);
   if (g.lvl < MOD_MAX) out.push([`经验 ${fmt(g.xp)} / ${fmt(MOD_XP[g.lvl - 1])}（装备时吃击杀经验）`, COL.faint]);

@@ -70,26 +70,30 @@ async function run(build, IL) {
     const pools = { wl: ['weapon', A.WEAPONS], wr: ['off', A.ARMORS.off], shield: ['shield', A.ARMORS.shield], core: ['core', A.ARMORS.core], engine: ['engine', A.ARMORS.engine], hub: ['hub', A.ARMORS.hub] };
     const make = (kind, b) => { const it = A.newItem(kind, b, IL, Q, 0); return it; };
     const RL = Math.max(1, Math.min(20, Math.round(IL / 5))), xpAt = L => L <= 1 ? 0 : A.DATA.astro.modXp[L - 2];
-    const runesFor = (it, order) => { if (!it.sock) return; it.sock = it.kind === 'shield' ? 2 : Math.max(it.sock, 4); it.mods = Array(it.sock).fill(null); const cands = (order || A.DATA.runes.list.map(r => r.id)).map(id => A.newMod(id, xpAt(RL))).filter(m => A.modActive(m, it)); let k = 0; for (const m of (order ? cands : cands.sort(() => rnd() - 0.5))) { if (k >= it.sock) break; it.mods[k++] = m; } };
+    const FG = Object.fromEntries(A.GEMS.filter(g => g.fr).map(g => [g.fr, 1]));
+    const runesFor = (it, order) => { if (it.kind !== 'gem') return; it.sock = Math.max(it.sock, 4); order = order && order.filter(id => !FG[id]); it.mods = Array(it.sock).fill(null); const cands = (order || A.DATA.runes.list.map(r => r.id)).map(id => A.newMod(id, xpAt(RL))).filter(m => !FG[m.mid] && A.modActive(m, it)); let k = 0; for (const m of (order ? cands : cands.sort(() => rnd() - 0.5))) { if (k >= it.sock) break; it.mods[k++] = m; } };
+    // 技能石（spec-skill-gems）：流派 = 技能石 + runeOrder 里的辅助符文；random 随机一颗。等级 = 符文等级，品质 10%，4 孔
+    const GID = ARCH ? BP.gem : build === 'random' ? pick(A.GEMS.filter(g => g.w > 0 && g.form !== 'shieldThrow')).id : null;
+    if (GID) { S.equip.gem = A.newGem(GID, { lvl: RL, q: 10, sock: 4 }); runesFor(S.equip.gem, ARCH ? BP.runeOrder : null); }
+    const CATB = ARCH && BP.cat ? A.DATA.mechanics.gems.cats[BP.cat].bases : null; // 主手按类别对口挑（bis 遍历同类别的底子）
     for (let pass = 0; pass < 2; pass++) for (const s of ['wl', 'wr', 'shield', 'core', 'engine', 'hub']) {
       const [kind, pool] = pools[s];
       let bases = Object.keys(pool).filter(b => (pool[b].req || 1) <= IL);
-      const BS = BP.slot || 'wl'; if (ARCH && s === BS) bases = [BP.base || 'TurbineBlades'];
+      const BS = BP.slot || 'wl'; if (ARCH && s === 'wl' && CATB) bases = bases.filter(b => CATB.includes(b) && !A.WEAPONS[b].retired); else if (ARCH && s === BS) bases = [BP.base || 'TurbineBlades'];
       let best = null;
       const UQ = CORE || (build === 'whirl' ? 'StormEye' : BP.uniqueId); if (ARCH && s === 'core' && IL >= 20 && CORE !== 'none' && UQ) { best = { it: A.newUnique(UQ, IL) }; }
       else if (build === 'random') { const it = fill(make(kind, pick(bases)), s); best = { it }; }
-      else for (const b of bases) { let it; try { it = make(kind, b); } catch (e) { continue; } fill(it, s); if (s === 'wl' || (ARCH && s === BS)) runesFor(it, ARCH && s === BS ? BP.runeOrder : null); const v = ev({ ...S.equip, [s]: it }); if (!best || v > best.v) best = { v, it }; }
-      if ((best.it.kind === 'weapon' || (ARCH && s === BS)) && !(best.it.mods || []).some(Boolean)) runesFor(best.it, ARCH && s === BS ? BP.runeOrder : null);
+      else for (const b of bases) { let it; try { it = make(kind, b); } catch (e) { continue; } fill(it, s); const v = ev({ ...S.equip, [s]: it }); if (!best || v > best.v) best = { v, it }; }
       S.equip[s] = best.it;
     }
     // --uniq 1：换上第 5 步给这个流派的新独特（spec-bd-gear §5）
     const U5 = { shield: ['MartyrShield', 'EchoCrown'], orb: ['WinterHeart', 'ShardCrown', 'CoffinShield'], meteor: ['DoomCrown', 'ScorchedCircle'], nova: ['EverwinterCircle', 'CoffinShield', 'ShardCrown'], whirl: ['VortexTreads'], spark: ['EchoCrown'] };
-    if (UQ5 && IL >= 20) for (const id of U5[build] || []) { const it = A.newUnique(id, IL); const s = it.kind === 'weapon' ? (BP.slot || 'wl') : it.kind; if (s === (BP.slot || 'wl')) runesFor(it, BP.runeOrder); S.equip[s] = it; }
+    if (UQ5 && IL >= 20) for (const id of U5[build] || []) { const it = A.newUnique(id, IL); const s = it.kind === 'weapon' ? (BP.slot || 'wl') : it.kind; S.equip[s] = it; }
     A.refreshStats();
     const st = A.STATS;
     const info = { dps: Math.round(spinDps(st)), ehp: Math.round(ehpOf(st)), panel: Math.round(st.dps), stack: (st.weapons.find(x => x && x.whirl) || {}).stackMax || 0, sparkN: (st.weapons.find(x => x && x.spark) || {}).sparkN || 0, res: Math.round(Object.values(st.res).reduce((a, b) => a + b, 0) / 5),
-      eq: ['wl', 'wr', 'shield', 'core', 'engine', 'hub'].map(k => S.equip[k] ? (S.equip[k].u || S.equip[k].b) : '-').join(' '),
-      runes: ((S.equip[BP.slot || 'wl'] || {}).mods || []).filter(Boolean).map(m => m.mid).join(','), heart: S.tree.includes(BP.treeKey) ? (A.TREE.nodes[BP.treeKey] || {}).n || BP.treeKey : '' };
+      eq: ['gem', 'wl', 'wr', 'shield', 'core', 'engine', 'hub'].map(k => S.equip[k] ? (S.equip[k].u || S.equip[k].b) : '-').join(' '),
+      runes: (S.equip.gem ? [S.equip.gem.b] : []).concat(((S.equip.gem || {}).mods || []).filter(Boolean).map(m => m.mid)).join(','), _r: ((S.equip[BP.slot || 'wl'] || {}).mods || []).filter(Boolean).map(m => m.mid).join(','), heart: S.tree.includes(BP.treeKey) ? (A.TREE.nodes[BP.treeKey] || {}).n || BP.treeKey : '' };
     // 天梯连打
     S.auto.ai = true; S.auto.loop = false; A.mouse.on = false;
     const dt = 1 / 30; let N = 1, best = 0, tries = 0, last = '';
