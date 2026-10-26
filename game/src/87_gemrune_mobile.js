@@ -2,7 +2,7 @@
    技能石 / 符文交互（只进手机包）：堆叠、筛选排序、详情对比、选择器、一键镶嵌、批量拆解
    设计见 design/spec-gem-rune-ux.md；不改存档结构，堆叠只是显示分组
    ========================================================= */
-let runeF = 'all', runeSort = 'lvl', runePage = 0, gemF = 'all', gemSort = 'lvl';
+let gemSeg = 'skill', runeF = 'all', runeSort = 'lvl', runePage = 0, gemF = 'all', gemSort = 'lvl';
 const RUNE_SOFT = 150, LV_BANDS = ['1–5', '6–10', '11–15', '16+'];
 const runeKey = m => m.mid + '|' + m.lvl;
 const gemKey = g => (g.mods || []).some(Boolean) ? 'u' + g.id : [g.b, g.lvl, g.q || 0, g.sock].join('|');
@@ -42,10 +42,10 @@ Object.assign(MobileUI.prototype, {
     if (anyNew) rect(this, x + 2, y + 2, 4, 4, COL.ember, 1, c);
   },
   /* 符文页 */
-  win_mods(c, w, h) {
+  winSupport(c, w, h, oy = 0) {
     const host = S.equip[modWeapon], hosts = ['gem', 'core', 'engine', 'hub'].filter(s => s !== 'gem' || unlocked('gems') || S.equip.gem), bw = Math.floor((w - 20) / hosts.length); this.sockR = [];
-    hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 6, bw - 2, 28, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; runePage = 0; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
-    let y = 40;
+    hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 6 + oy, bw - 2, 28, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; runePage = 0; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
+    let y = 40 + oy;
     if (!host) { T(this, 10, y + 4, '这个位置没有装备。', { size: 8, color: COL.faint, parent: c }); y += 20; }
     else {
       mkCell(this, c, 10, y, host, { size: TOUCH, direct: true, onClick: () => {} });
@@ -69,10 +69,10 @@ Object.assign(MobileUI.prototype, {
     }
     rect(this, 10, y, w - 20, 1, '#33293f', 1, c); y += 5;
     const over = S.mods.length > RUNE_SOFT;
-    T(this, 10, y + 8, `符文库存 ${S.mods.length}${over ? ` · 超过 ${RUNE_SOFT}，建议拆一些` : ''}`, { size: 8, color: over ? COL.bad : COL.dim, parent: c });
+    T(this, 10, y + 8, `辅助宝石库存 ${S.mods.length}${over ? ` · 超过 ${RUNE_SOFT}，建议拆一些` : ''}`, { size: 8, color: over ? COL.bad : COL.dim, parent: c });
     const fw = unlocked('feed') ? 52 : 0;
     if (fw) mkBtn(this, c, w - 10 - 56 - fw, y, fw, 26, feedOn ? '喂养开' : '喂养', () => { feedOn = !feedOn; feedSrc = null; this.refresh(); }, { size: 8, style: feedOn ? 's' : 'n' });
-    mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk(), { size: 8, style: over ? 'w' : 'n' }); y += 30;
+    mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk('r'), { size: 8, style: over ? 'w' : 'n' }); y += 30;
     this.chipRow(c, 10, y, w - 20, [['all', '全部'], ['fit', '适用'], ['new', '新'], ['field', '力场'], ['sort', runeSort === 'lvl' ? '等级↓' : '名称']], runeF, v => { if (v === 'sort') runeSort = runeSort === 'lvl' ? 'name' : 'lvl'; else runeF = v; runePage = 0; this.refresh(); }); y += 30;
     const F = { all: () => true, fit: m => host && modActive(m, host), new: m => m.isNew, field: m => MOD_BY[m.mid].field }[runeF] || (() => true);
     const stacks = stackBy(S.mods.filter(F), runeKey).sort(runeSort === 'lvl' ? (a, b) => b[0].lvl - a[0].lvl || MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) : (a, b) => MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) || b[0].lvl - a[0].lvl);
@@ -141,22 +141,43 @@ Object.assign(MobileUI.prototype, {
       this.badge(c, x, yy, st, sk.length, sk.some(g => g.isNew));
     });
     const ty = y + Math.max(1, Math.ceil(Math.min(stacks.length, cols * 8) / cols)) * st + 6;
-    TW(this, 12, ty, `技能石 ${all.length} 颗（占背包格）。同底材、同等级、同品质、同槽数的叠在一起；点开看详情和与身上那颗的对比。「批量」可按等级拆符文和技能石。`, w - 24, { size: 8, color: COL.faint, parent: c });
+    TW(this, 12, ty, `技能宝石占背包格。同底材、同等级、同品质、同槽数的叠在一起；点开看详情、对比和装备。`, w - 24, { size: 8, color: COL.faint, parent: c });
   },
-  /* 批量拆解：符文 + 技能石（只动库存 / 背包里的） */
-  openRBulk() { this.rb = { r: [true, false, false, false], g: [false, false, false, false] }; this.openWin('rbulk'); },
+  /* 宝石页：技能宝石 / 辅助宝石 两段，各自的列表、筛选、镶嵌 / 装备、批量拆解 */
+  win_mods(c, w, h) {
+    if (!unlocked('gems') && !S.equip.gem && !S.stash.some(g => g.kind === 'gem')) gemSeg = 'support';
+    const nG = S.stash.filter(g => g.kind === 'gem').length, hw = Math.floor((w - 22) / 2);
+    [['skill', `技能宝石 ${nG}`, 'i_sg_GemNova'], ['support', `辅助宝石 ${S.mods.length}`, 'mod_Chain']].forEach(([k, n, ic], i) =>
+      mkBtn(this, c, 10 + i * (hw + 2), 6, hw, 30, n, () => { gemSeg = k; runePage = 0; this.refresh(); }, { size: 8, icon: ic, style: gemSeg === k ? 's' : 'n' }));
+    rect(this, 10, 40, w - 20, 1, '#33293f', 1, c);
+    if (gemSeg === 'support') return this.winSupport(c, w, h, 40);
+    this.sockR = [];
+    // 技能宝石：身上这颗 + 背包里的
+    const g = S.equip.gem; let y = 48;
+    T(this, 10, y, '当前技能', { size: 8, color: COL.dim, parent: c }); y += 13;
+    if (g) {
+      mkCell(this, c, 10, y, g, { size: TOUCH, acts: v => this.itemActs(v) });
+      T(this, 46, y + 1, itemName(g), { color: icol(g), parent: c });
+      T(this, 46, y + 16, `${g.lvl} 级 · 品质 ${g.q || 0}% · 辅助槽 ${(g.mods || []).filter(Boolean).length}/${g.sock}`, { size: 8, color: COL.dim, parent: c });
+      if (g.sock) mkBtn(this, c, w - 76, y + 2, 66, 28, '配辅助 ›', () => { gemSeg = 'support'; modWeapon = 'gem'; this.refresh(); }, { size: 8, style: 'w' });
+    } else T(this, 46, y + 8, '没有装备技能宝石：点下面的宝石装上。', { size: 8, color: COL.dim, parent: c });
+    y += 38;
+    T(this, 10, y + 8, `背包里的技能宝石 ${nG}`, { size: 8, color: COL.dim, parent: c });
+    if (unlocked('salvage')) mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk('g'), { size: 8 });
+    this.gemPane(c, w, h, y + 30);
+  },
+  /* 批量拆解：一次只拆一类（辅助宝石 'r' / 技能宝石 'g'），只动库存 / 背包里的 */
+  openRBulk(mode = 'r') { this.rb = { mode, r: [true, false, false, false], g: [true, false, false, false] }; this.openWin('rbulk'); },
   win_rbulk(c, w, h) {
-    const rb = this.rb || (this.rb = { r: [true, false, false, false], g: [false, false, false, false] }); let y = 14;
-    const sec = (title, key, list) => {
-      T(this, 12, y, title, { size: 8, color: COL.emberHi, parent: c }); y += 14;
-      const bw = Math.floor((w - 24 - 6) / 4);
-      LV_BANDS.forEach((n, i) => { const k = list.filter(x => bandOf(x.lvl) === i).length; mkBtn(this, c, 12 + i * (bw + 2), y, bw, 30, `${n}级 ×${k}`, () => { rb[key][i] = !rb[key][i]; this.refresh(); }, { size: 8, style: rb[key][i] ? 's' : 'n' }); });
-      y += 38;
-    };
-    sec('符文（库存里未镶嵌的）', 'r', S.mods); sec('技能石（背包里的，不含身上那颗）', 'g', S.stash.filter(g => g.kind === 'gem'));
-    const R = rbRunes(rb.r), Gm = rbGems(rb.g), n = R.reduce((a, m) => a + runeYield(m), 0) + Gm.reduce((a, g) => a + gemYield(g), 0);
-    TW(this, 12, y, `将拆解：符文 ${R.length} 枚、技能石 ${Gm.length} 颗\n预计得到 ${n} 个随机词条碎片${Gm.some(g => (g.mods || []).some(Boolean)) ? '\n技能石上插着的符文会退回库存' : ''}`, w - 24, { size: 8, color: COL.text, parent: c }); y += 44;
-    TW(this, 12, y, '身上的技能石和槽里的符文永远不会被拆。', w - 24, { size: 8, color: COL.faint, parent: c });
-    mkBtn(this, c, 12, h - 44, w - 24, 30, '拆解', () => this.ask(`拆解 ${R.length} 枚符文、${Gm.length} 颗技能石？`, () => { let k = 0; R.forEach(m => { k += salvageRune(m); }); Gm.forEach(g => { k += salvageGem(g); }); save(); toast(`得到 ${k} 个词条碎片`, '#d9cfb8'); sfx('craft'); this.refresh(); }, '拆解', '不能撤销。'), { style: 'r', disabled: !R.length && !Gm.length });
+    const rb = this.rb || (this.rb = { mode: 'r', r: [true, false, false, false], g: [true, false, false, false] }), isR = rb.mode !== 'g', key = isR ? 'r' : 'g'; let y = 14;
+    const list = isR ? S.mods : S.stash.filter(g => g.kind === 'gem');
+    T(this, 12, y, isR ? '辅助宝石（库存里未镶嵌的）' : '技能宝石（背包里的，不含身上那颗）', { size: 8, color: COL.emberHi, parent: c }); y += 14;
+    const bw = Math.floor((w - 24 - 6) / 4);
+    LV_BANDS.forEach((n, i) => { const k = list.filter(x => bandOf(x.lvl) === i).length; mkBtn(this, c, 12 + i * (bw + 2), y, bw, 30, `${n}级 ×${k}`, () => { rb[key][i] = !rb[key][i]; this.refresh(); }, { size: 8, style: rb[key][i] ? 's' : 'n' }); });
+    y += 40;
+    const sel = isR ? rbRunes(rb.r) : rbGems(rb.g), n = sel.reduce((a, x) => a + (isR ? runeYield(x) : gemYield(x)), 0);
+    TW(this, 12, y, `将拆解：${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}\n预计得到 ${n} 个随机词条碎片${!isR && sel.some(g => (g.mods || []).some(Boolean)) ? '\n技能宝石上插着的辅助宝石会退回库存' : ''}`, w - 24, { size: 8, color: COL.text, parent: c }); y += 44;
+    TW(this, 12, y, '身上的技能宝石和槽里的辅助宝石永远不会被拆。', w - 24, { size: 8, color: COL.dim, parent: c });
+    mkBtn(this, c, 12, h - 44, w - 24, 30, '拆解', () => this.ask(`拆解 ${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}？`, () => { let k = 0; sel.forEach(x => { k += isR ? salvageRune(x) : salvageGem(x); }); save(); toast(`得到 ${k} 个词条碎片`, '#d9cfb8'); sfx('craft'); this.refresh(); }, '拆解', '不能撤销。'), { style: 'r', disabled: !sel.length });
   },
 });
