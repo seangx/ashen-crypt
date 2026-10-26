@@ -1,0 +1,32 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=style.css><style>
+.cells{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 12px}
+.cell{height:176px;display:flex;flex-direction:column;border:2px solid #4a3d55;background:#1b1622}
+.cell .t{height:76px;border-bottom:2px dashed #4a3d55;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#231c2b}
+.cell .g{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.cell .t img{width:28px;height:28px}.cell .g img{width:40px;height:40px}
+.tier i{display:inline-block;width:5px;height:5px;background:#f2c46a;margin:0 1px}.tier i.o{background:#4a3d55}
+.lock{opacity:.55;border-style:dashed}.lock .t,.lock .g{color:#9a8fa6;font-size:11px;text-align:center}
+.lbl{font-size:10px;letter-spacing:1px}
+</style><body>
+<div class=top>装备 · 技能盘</div>
+<div style="display:flex;gap:6px;padding:8px 12px"><span class="tag">装备</span><span class="tag" style="border-color:#c8913a;color:#f2c46a">技能盘 4/6</span><span class=tag>属性石</span><span class=tag>触发器 23/60</span></div>
+<div class=panel style="margin:4px 12px 10px;padding:10px;display:flex;gap:10px;align-items:center">
+ <img src="ico/i_w_bladering.png" style="width:44px;height:44px">
+ <div style="flex:1"><div><b class=yel>回旋骨刃</b> <span class=dim>· 近战普攻（前方弧形挥砍）</span></div>
+ <div style="margin-top:3px">伤害 <b>142</b> · 攻速 <b>1.85/秒</b> · 暴击 <b>9%</b></div>
+ <div class=dim style="font-size:11px;margin-top:2px">普攻喂：攻击时 / 暴击时 / 击杀时</div></div></div>
+<div style="padding:0 14px 6px;display:flex;justify-content:space-between" class=dim><span>上：触发器　下：技能石</span><span>共鸣 动能×2 +6%</span></div>
+<div class=cells>
+ <div class="cell r-r"><div class=t><img src="ico/i_sword.png"><b class=yel>攻击时</b><span class=tier><i></i><i></i><i></i><i></i><i class=o></i> <span class=lbl>T4</span></span></div>
+  <div class=g><img src="ico/GemWhirl.png"><b>旋风斩</b><span class=dim style="font-size:11px">Lv14 <span class=dots><i style="background:#c9c1b4"></i><i style="background:#ff9a3c"></i><i style="background:#7fe3f0"></i></span></span><span class=gold style="font-size:10px">◆契合 +20%</span></div></div>
+ <div class="cell r-m"><div class=t><img src="ico/i_a_shadowstep.png"><b class=blue>冲刺时</b><span class=tier><i></i><i></i><i></i><i class=o></i><i class=o></i> <span class=lbl>T3</span></span></div>
+  <div class=g><img src="ico/GemRam.png"><b>冲撞</b><span class=dim style="font-size:11px">Lv9 <span class=dots><i style="background:#c9c1b4"></i><i style="background:#4a3d55"></i></span></span><span class=gold style="font-size:10px">◆契合 +20%</span></div></div>
+ <div class="cell r-u"><div class=t><img src="ico/skull.png"><b class=uniq>尸山</b><span class=dim style="font-size:10px">击杀时 · 独特</span></div>
+  <div class=g><img src="ico/GemFirepot.png"><b>火油罐</b><span class=dim style="font-size:11px">Lv12 <span class=dots><i style="background:#ff9a3c"></i><i style="background:#ff9a3c"></i><i style="background:#c98cff"></i></span></span><span class=gold style="font-size:10px">◆契合 +20%</span></div></div>
+ <div class="cell r-n"><div class=t><img src="ico/i_a_boneward.png"><b>受击时</b><span class=tier><i></i><i></i><i class=o></i><i class=o></i><i class=o></i> <span class=lbl>T2</span></span></div>
+  <div class=g><img src="ico/GemFrostNova.png"><b>霜环</b><span class=dim style="font-size:11px">Lv7 <span class=dots><i style="background:#7fe3f0"></i></span></span><span class=dim style="font-size:10px">耗灯火 6/次</span></div></div>
+ <div class="cell lock"><div class=t>🔒<br>第 5 格</div><div class=g>天梯 35 层解锁</div></div>
+ <div class="cell lock"><div class=t>🔒<br>第 6 格</div><div class=g>天赋树终点<br>「第六格」</div></div>
+</div>
+<div class=dim style="padding:10px 14px;font-size:11px;line-height:1.6">点上半 → 触发器详情 / 更换　点下半 → 技能石与辅助符文<br>边框颜色 = 触发器稀有度（白 普通 · 蓝 魔法 · 黄 稀有 · 金 独特）</div>
+<div class=nav><div>装备</div><div>天赋</div><div>铁砧</div><div class=on>⚔ 战斗</div><div>天梯</div><div>设置</div></div>
