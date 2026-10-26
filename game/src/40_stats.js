@@ -98,10 +98,11 @@ function computeStats(eq = S.equip) {
   P.engineKind = eb ? eb.dash : null;
   P.off = offSupport(eq.wr); // 副手没有技能：只把支援效果交给主手
   P.twin = eq.wl && eq.wl.u === 'TheTwin' && eq.wr ? 2 : 0; // 双生圣焰铳：拿着副手时生效
-  P.gem = eq.gem && eq.gem.kind === 'gem' ? eq.gem : null; const sk = skillItem(eq); // 技能石（spec-skill-gems）：主手只给数值
+  P.gem = null; const sk = skillItem({ ...eq, gem: basicGem(eq) }); // 触发器改版：没有主攻石，普攻按主手类别 // 技能石（spec-skill-gems）：主手只给数值
   P.weapons = [sk ? weaponStats(sk, P) : null, null];
   P.armorHeld = P.armor; P.shieldW = sk ? null : shieldWeapon(eq.shield, P, P.gem); // 圣盾掷：盾变成一把虚拟武器
   P.dps = P.weapons.reduce((s, w) => s + (w ? w.dps : 0), 0) + (P.shieldW ? P.shieldW.dps : 0);
+  if (P.weapons[0]) P.weapons[0].basic = 1; trigStats(P, eq);
   return P;
 }
 

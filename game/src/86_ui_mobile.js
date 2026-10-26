@@ -193,7 +193,7 @@ class MobileUI extends UI {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) { this.decoId = null; return; }
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
-    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk'].includes(id);
+    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk', 'trig', 'tbag'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
     const y = native ? MTOP + 8 : Math.round(clamp((H - NAV_H - h) / 2, MTOP + 12, H)), c = this.add.container(this.panMax ? 4 - this.pan : Math.round((W - w) / 2), y).setDepth(100); this.winC = c; c.w = w;
@@ -201,7 +201,7 @@ class MobileUI extends UI {
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
-    const title = { gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
+    const title = { trig: '触发器', tbag: '换触发器', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: COL.emberHi, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });
@@ -505,7 +505,7 @@ class MobileUI extends UI {
   }
   /* 菜单：底部导航放不下的页面 */
   win_more(c, w, h) {
-    const items = [['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['depart', '地窖入口 · 选层', 'torch']];
+    const items = [['ladder', '天梯', 'i_ladder'], ['settings', '设置', null], ['mods', '装备孔 · 属性石', 'mod_Chain'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['depart', '地窖入口 · 选层', 'torch']];
     items.forEach(([id, n, ic], i) => {
       const y = 20 + i * 40, open = !MENU.some(m => m.id === id) || unlocked(id);
       mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, iconX: 10, labelX: 34, disabled: !open || (RUN && id === 'depart') });

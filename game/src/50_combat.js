@@ -20,7 +20,7 @@ function ringPoint(m = 18, a) {
   return { x: cx + c * k, y: cy + s * k };
 }
 const offView = (o, m) => o.x < CAM.x - m || o.x > CAM.x + AW + m || o.y < CAM.y + AT - m || o.y > CAM.y + AB + m;
-const player = { x: 240, y: 150, vx: 0, vy: 0, life: 1, shield: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: [0, 0], orbitA: 0, guardT: 0, spin: [{ n: 0, g: 0, idle: 9 }, { n: 0, g: 0, idle: 9 }], swing: [0, 0], devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
+const player = { x: 240, y: 150, vx: 0, vy: 0, life: 1, shield: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: Array(14).fill(0), orbitA: 0, guardT: 0, spin: Array.from({ length: 14 }, () => ({ n: 0, g: 0, idle: 9 })), swing: Array(14).fill(0), devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
 const fx = o => { if (G.fx) fxq.push(o); };
 const MINE_MAX = MECH.mineMax;
 const RL = DATA.rules, PAT = PROG.bossPatterns, ELITE = PROG.elite;
@@ -55,8 +55,8 @@ function deathLoss(r) {
 }
 function arenaReset() {
   mobs = []; projs = []; drops = []; zones = []; meteors = [];
-  player.x = 240; player.y = 150; player.vx = player.vy = 0; player.chill = 0; player.chillT = 0; player.wcd = [0, 0]; camSnap(); if (typeof AUTO !== 'undefined') AUTO.anchor = null;
-  player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.swing = [0, 0]; player.devilT = 0; player.soul = STATS.soulMax; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
+  player.x = 240; player.y = 150; player.vx = player.vy = 0; player.chill = 0; player.chillT = 0; player.wcd = Array(14).fill(0); trigReset(); camSnap(); if (typeof AUTO !== 'undefined') AUTO.anchor = null;
+  player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.swing = Array(14).fill(0); player.devilT = 0; player.soul = STATS.soulMax; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
   resetPlayer();
   sfx('start');
 }
@@ -125,6 +125,7 @@ function rollCrit(W) {
 function hitMob(m, W, o = {}) {
   if (m.dead) return 0;
   const cm = W.cont ? 1 : rollCrit(W); const crit = cm > 1;
+  if (W.basic) trigEvent('attack', W); if (crit) trigEvent('crit', W);
   let mul = (o.mul || 1) * cm;
   if (m.boss) mul *= W.bossMore;
   if (W.perDashInc) mul *= 1 + W.perDashInc * Math.floor(player.dash);
@@ -210,7 +211,7 @@ function shatter(m) {
 }
 function kill(m) {
   if (m.dead) return;
-  m.dead = true; S.stats.kills++;
+  m.dead = true; S.stats.kills++; trigEvent('kill');
   fx({ t: 'die', x: m.x, y: m.y, boss: m.boss, elite: m.elite, type: m.type });
   sfx(m.boss ? 'bossdie' : 'kill');
   if (!RUN) return;
@@ -252,7 +253,7 @@ function kill(m) {
   }
 }
 // 符文掉落判定：gems.dropShare 的几率换成技能石（spec-skill-gems §3.4）
-function dropRune(m, L, burst) { if (rnd() < GEMC.dropShare && unlocked('gems')) dropThing(m, { kind: 'item', item: rollGemDrop(L) }, burst); else dropThing(m, { kind: 'mod', mod: rollModDrop(L) }, burst); }
+function dropRune(m, L, burst) { if (rnd() < TRG.dropShare) return dropThing(m, { kind: 'trig', trig: rollTrigDrop(L) }, burst); if (rnd() < GEMC.dropShare && unlocked('gems')) dropThing(m, { kind: 'item', item: rollGemDrop(L) }, burst); else dropThing(m, { kind: 'mod', mod: rollModDrop(L) }, burst); }
 function dropThing(m, o, burst) { const a = burst ? rf(0, Math.PI * 2) : 0, sp = burst ? rf(40, 90) : 0; drops.push({ ...o, x: m.x + rf(-6, 6), y: m.y + rf(-4, 4), z: 6, vz: burst ? rf(90, 130) : rf(50, 80), vx: burst ? Math.cos(a) * sp : rf(-30, 30), vy: burst ? Math.sin(a) * sp * .6 : rf(-14, 14), age: 0 }); if ((o.kind === 'item' && o.item.rar >= 2) || o.kind === 'glyph') sfx('rare'); }
 function collect(dp) {
   const g = RUN && RUN.gain;
@@ -260,6 +261,7 @@ function collect(dp) {
   else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; unlockEvent('gainShard'); if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
   else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; unlockEvent('gainGlyph'); if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
 
+  else if (dp.kind === 'trig') { S.trigBag.unshift(dp.trig); if (G.ui) G.ui.feed('触发器 · ' + trigName(dp.trig), COL.emberHi); }
   else if (dp.kind === 'mod') { S.mods.push(dp.mod); unlockEvent('pickRune'); g && g.mods.push(dp.mod); if (G.ui) G.ui.feed(MOD_BY[dp.mod.mid].n, COL.cyan, 'mod_' + dp.mod.mid); }
   fx({ t: 'pick', x: dp.x, y: dp.y, kind: dp.kind });
   sfx(dp.kind === 'shard' || dp.kind === 'glyph' ? 'die' : 'pick');
@@ -272,8 +274,7 @@ function gainXp(x) {
 // 法阵的升级槽：插在里面的符文吃击杀经验（累计门槛）
 function modXp(x) {
   let up = false;
-  const g = S.equip.gem; // 装备中的技能石吃击杀经验
-  if (g && g.kind === 'gem' && g.lvl < MOD_MAX) { g.xp += x; const L = modLevelOf(g.xp); if (L > g.lvl) { g.lvl = L; up = true; if (G.ui) G.ui.feed(`${GEM_BY[g.b].n} ${g.lvl} 级`, COL.cyan, 'i_' + iconOf(g)); } }
+  up = trigGemXp(x); // 触发器里的技能石吃击杀经验
   const hub = S.equip.hub; if (!hub) { if (up) refreshStats(); return; }
   for (const m of hub.mods) {
     if (!m || m.lvl >= MOD_MAX) continue;
@@ -327,11 +328,11 @@ function shieldOnHit() {
 function hurtPlayer(d, el, ck = 1) {
   if (!RUN || RUN.ending || player.dashT > 0 || player.hurtT > 0) return;
   if (rnd() * 100 < STATS.dodge) {
-    fx({ t: 'text', x: player.x, y: player.y - 16, s: '闪避', c: COL.dim });
+    fx({ t: 'text', x: player.x, y: player.y - 16, s: '闪避', c: COL.dim }); trigEvent('dodge');
     if (STATS.flag.dodgeSpikes) for (const m of mobs) if (!m.dead && dist2(m, player) < RL.dodgeSpikes.r ** 2) { damage(m, mitigate(m, 'kin', STATS.shield * (RL.dodgeSpikes.shieldPct ?? RL.dodgeSpikes.armorPct) / 100), 'kin', false); fx({ t: 'spike', x: m.x, y: m.y, el: 'kin' }); }
     return;
   }
-  const FL = STATS.flag;
+  const FL = STATS.flag; trigEvent('struck');
   d *= ck * genericTaken(); /* 控场、贴身、远离：流派减伤这一格，各自相乘 */
   if (FL.still && isStill()) d *= 1 - RL.still.takenLess / 100;
   if (FL.rotFlesh) { const R = RL.rotFlesh; let n = 0; for (const x of mobs) if (!x.dead && x.rad.length && dist2(x, player) < R.r * R.r) n++; d *= 1 - Math.min(R.max, n * R.per) / 100; }
@@ -370,7 +371,7 @@ function tryDash(to = mouse, byAuto = false) {
     if (RUN) engineBlast(E, player.x, player.y, Math.min(E.aoeR || 48, 70));
     return;
   }
-  const T = PLAYER.dashTime; player.dashT = T; const DD = PLAYER.dashDist * (STATS.flag.whirlHeart ? WH.dashMul : 1); player.dvx = dx / dl * DD / T; player.dvy = dy / dl * DD / T; // 旋风之心：短距离突进
+  trigEvent('dash'); const T = PLAYER.dashTime; player.dashT = T; const DD = PLAYER.dashDist * (STATS.flag.whirlHeart ? WH.dashMul : 1); player.dvx = dx / dl * DD / T; player.dvy = dy / dl * DD / T; // 旋风之心：短距离突进
   if (!RUN || !E) return;
   if (kind === 'trail') player.trail = 1;
   if (kind === 'nova') engineBlast(E, player.x, player.y, E.aoeR || 80);
@@ -670,7 +671,7 @@ function logic(dt) {
     player.wcd[i] -= dt * pChillK();
     if (player.wcd[i] <= 0) { if (fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
   });
-  stepProjs(dt);
+  trigStep(dt); stepProjs(dt);
   if (STATS.shieldW) stepShieldThrow(STATS.shieldW, dt); else if (STATS.armorHeld != null) STATS.armor = STATS.armorHeld;
   stepZones(dt); stepMeteors(dt);
   if (player.chillT > 0) { player.chillT -= dt; if (player.chillT <= 0) player.chill = 0; }

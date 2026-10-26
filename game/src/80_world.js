@@ -380,7 +380,7 @@ class World extends Phaser.Scene {
     let o = this.spr.get(dp);
     if (!o) { o = { img: this.add.image(0, 0, 'px').setOrigin(0.5, 1), sh: this.add.image(0, 0, 'shadow').setDepth(9).setScale(0.6, 1) }; this.spr.set(dp, o); }
     o.seen = this.frame;
-    const key = dp.kind === 'shard' ? 'shard' : dp.kind === 'glyph' ? 'glyph_' + dp.id : dp.kind === 'mod' ? 'mod_' + dp.mod.mid : dp.kind === 'map' ? 'i_a_map' : 'i_' + iconOf(dp.item);
+    const key = dp.kind === 'shard' ? 'shard' : dp.kind === 'glyph' ? 'glyph_' + dp.id : dp.kind === 'mod' ? 'mod_' + dp.mod.mid : dp.kind === 'trig' ? 'i_star' : dp.kind === 'map' ? 'i_a_map' : 'i_' + iconOf(dp.item);
     if (o.key !== key) { o.img.setTexture(key); o.key = key; }
     const bob = dp.z === 0 ? Math.round(Math.sin(t * 4 + dp.x) * .8) : 0;
     o.img.setPosition(Math.round(dp.x), Math.round(dp.y - dp.z) + bob).setDepth(dp.kind === 'item' ? 57 : ySort(dp.y));
