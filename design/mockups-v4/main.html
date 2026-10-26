@@ -25,6 +25,16 @@
 .dimg{opacity:.35}
 .pw{text-align:center;margin-top:16px;font-size:30px}
 .tip{position:absolute;left:24px;right:24px;top:400px;padding:10px;font-size:15px;text-align:center}
+
+.nav2{position:absolute;left:6px;right:6px;bottom:6px;height:72px;background:linear-gradient(#4a5694,#2d3566);border:4px solid #1a1426;border-radius:22px;box-shadow:0 5px 0 #1a1426,inset 0 3px 0 #ffffff40;display:flex;justify-content:space-around;align-items:center;padding:0 4px}
+.tb{width:64px;text-align:center;position:relative;font-size:12px;color:#aab3dc}
+.tb svg{width:38px;height:38px;display:block;margin:0 auto 1px;filter:saturate(.35) brightness(.85)}
+.tb.on{width:78px;height:86px;margin-top:-30px;background:linear-gradient(#ffe066,#ffb31a);border:4px solid #1a1426;border-radius:18px;box-shadow:0 5px 0 #1a1426,inset 0 3px 0 #fff8,inset 0 -6px 0 #c46a00;color:#fff;font-size:15px;padding-top:6px}
+.tb.on svg{width:52px;height:52px;filter:none}
+.dot{position:absolute;top:-4px;right:6px;width:18px;height:18px;border-radius:50%;background:#ff3b3b;border:3px solid #1a1426;font-size:10px;line-height:12px;color:#fff}
+.tb.on .dot{right:-6px;top:-8px}
+.tb.lk svg{opacity:.35}.tb .lki{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:20px}
+.inv{bottom:84px!important}
 </style>
 <div class=hdr><div class="ribbon o">触发器</div></div>
 <div class=bar>
@@ -43,8 +53,10 @@
  <div class=tabs><div class="btn yel o">全部</div><div class="btn gry o">技能</div><div class="btn gry o">辅助</div><div class="btn blu o" style=margin-left:auto>触发器 3</div></div>
  <div class=gg id=gg></div>
 </div>
-<div class=nav><div>装备</div><div>天赋</div><div class=on>触发器</div><div>天梯</div><div>设置</div></div>
 <script>
+const NAV=sel=>`<div class=nav2><div class="tb o"><svg viewBox="0 0 48 48"><path d="M8 6h32l-3 22c-1 8-8 14-13 16-5-2-12-8-13-16z" fill="#6fc8ff" stroke="#1a1426" stroke-width="4" stroke-linejoin="round"/><path d="M24 12v26" stroke="#fff" stroke-width="4"/></svg>装备<span class="dot o">!</span></div><div class="tb  o"><svg viewBox="0 0 48 48"><path d="M6 14h30c0 6 6 8 8 8v4H34v6h6v8H10v-8h6v-6c-6 0-10-6-10-12z" fill="#b9bfd6" stroke="#1a1426" stroke-width="4" stroke-linejoin="round"/></svg>铁砧</div><div class="tb on o"><svg viewBox="0 0 48 48"><path d="M27 3 9 27h13l-4 18 21-26H26z" fill="#fff36a" stroke="#1a1426" stroke-width="4" stroke-linejoin="round"/></svg>触发器</div><div class="tb o"><svg viewBox="0 0 48 48"><path d="M24 4l6 13 14 2-10 10 3 14-13-7-13 7 3-14L4 19l14-2z" fill="#e08cff" stroke="#1a1426" stroke-width="4" stroke-linejoin="round"/></svg>天赋<span class="dot o">!</span></div><div class="tb lk o"><svg viewBox="0 0 48 48"><path d="M14 4v40M34 4v40M14 12h20M14 22h20M14 32h20" stroke="#1a1426" stroke-width="9" stroke-linecap="round"/><path d="M14 4v40M34 4v40M14 12h20M14 22h20M14 32h20" stroke="#ffa64a" stroke-width="4" stroke-linecap="round"/></svg>Lv20<span class=lki>🔒</span></div></div>`;
+document.body.insertAdjacentHTML('beforeend',NAV());
+
 const sel=location.search.includes('sel'), cmp=location.search.includes('cmp');
 const K=(c,g,x='')=>`<div class="k ${c} ${x}"><img class=px src=assets/${g}.png></div>`;
 const L=o=>`<div class="ln ${o?'on':''}"></div>`;
@@ -61,6 +73,8 @@ if(cmp){document.body.insertAdjacentHTML('beforeend',`<div style="position:absol
  <div><div class="slot q-u glow" style="width:96px;height:96px;display:flex;align-items:center;justify-content:center;margin:auto"><img src=assets/t_crit.png width=64></div><div class="o y" style=margin-top:8px>暴击时</div><div style=font-size:22px class=o>⚪⚪⚪⚪⚪</div></div>
 </div>
 <div class="o g" style="font-size:34px;margin:12px 0">▲ +18%</div>
-<div style="display:flex;gap:12px;justify-content:center"><div class="btn gry o">分解</div><div class="btn grn o" style=padding:0 34px>替换</div></div>
+<div style="display:flex;gap:12px;justify-content:center"><div class="btn gry o">分解</div><div class="btn grn o" style="padding:0 34px">替换</div></div>
 <div class="dim" style="margin-top:10px;font-size:12px">宝石自动搬过去</div></div>`)}
+if(location.search.includes('nav')){document.body.innerHTML='<div style="padding:30px 0;text-align:center" class="o y">选中 / 未选中 / 红点 / 锁定</div>'+['on','',''].map((x,i)=>'<div style="position:relative;height:150px">'+NAV().replace('tb gear',x)+'</div>').join('');
+const bars=document.querySelectorAll('.nav2');bars[1].querySelectorAll('.tb')[2].classList.remove('on');bars[1].querySelectorAll('.tb')[0].classList.add('on');bars[2].querySelectorAll('.tb')[2].classList.remove('on');bars[2].querySelectorAll('.tb')[3].classList.add('on');}
 </script>
