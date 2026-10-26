@@ -1,33 +1,265 @@
 {
-  "_说明": "触发器（design/spec-trigger-slots.md）。conds：条件 → 名字、短名、基础触发率 rate(0–1)、内置冷却 cd(秒)、est 估算每秒事件数（只用于面板秒伤）。sockW：稀有度 0 普通 / 1 魔法 / 2 稀有 → [最少孔, 权重…]。split：一个触发器两颗技能石时每颗的伤害倍率。fit：技能石推荐条件 = 本触发器时的倍率。slotLv：角色等级开第 2、3 栏。maxSlots：总上限。capPerSec：全局每秒最多触发次数（防循环）。dropShare：符文/技能石掉落时改掉触发器的占比。",
-  "conds": {
-    "attack": { "n": "攻击时", "s": "攻", "rate": 0.2, "cd": 0.6, "est": 1.0, "c": "#ff8a5a" },
-    "crit": { "n": "暴击时", "s": "暴", "rate": 1, "cd": 1.2, "est": 0.6, "c": "#ffd23a" },
-    "kill": { "n": "击杀时", "s": "杀", "rate": 1, "cd": 0.8, "est": 0.9, "c": "#ff5a6a" },
-    "struck": { "n": "受击时", "s": "伤", "rate": 0.25, "cd": 1.0, "est": 0.25, "c": "#9a7aff" },
-    "dodge": { "n": "闪避时", "s": "闪", "rate": 1, "cd": 1.5, "est": 0.2, "c": "#6fe0ff" },
-    "dash": { "n": "冲刺时", "s": "冲", "rate": 1, "cd": 0.5, "est": 0.3, "c": "#6fc8ff" },
-    "low": { "n": "低血时", "s": "危", "rate": 1, "cd": 3, "est": 0.1, "c": "#e8433a", "thr": 0.35 },
-    "timer": { "n": "每 4 秒", "s": "时", "rate": 1, "cd": 4, "est": 0.25, "c": "#8ef05a" },
-    "elite": { "n": "遇精英时", "s": "精", "rate": 1, "cd": 6, "est": 0.1, "c": "#e08cff", "r": 64 },
-    "always": { "n": "常驻", "s": "常", "rate": 1, "cd": 0, "est": 0, "c": "#ffffff" }
+ "_说明": "触发器（design/spec-trigger-slots.md）。conds：条件 → 名字、短名、基础触发率 rate(0–1)、内置冷却 cd(秒)、est 估算每秒事件数（只用于面板秒伤）。sockW：稀有度 0 普通 / 1 魔法 / 2 稀有 → [最少孔, 权重…]。split：一个触发器两颗技能石时每颗的伤害倍率。fit：技能石推荐条件 = 本触发器时的倍率。slotLv：角色等级开第 2、3 栏。maxSlots：总上限。capPerSec：全局每秒最多触发次数（防循环）。dropShare：符文/技能石掉落时改掉触发器的占比。",
+ "conds": {
+  "attack": {
+   "n": "攻击时",
+   "s": "攻",
+   "rate": 0.2,
+   "cd": 0.6,
+   "est": 1.0,
+   "c": "#ff8a5a"
   },
-  "condW": { "attack": 30, "crit": 14, "kill": 18, "struck": 8, "dodge": 5, "dash": 7, "low": 3, "timer": 10, "elite": 4, "always": 3 },
-  "rarW": [60, 30, 10],
-  "sockW": [[1, 70, 30], [2, 60, 40], [2, 30, 50, 20]],
-  "maxSock": 5,
-  "legacyMax": 6,
-  "maxSkills": 2,
-  "split": 0.7,
-  "fit": 1.2,
-  "fitCond": { "GemWhirl": "attack", "GemStab": "attack", "GemBolt": "attack", "GemScatter": "attack", "GemSickle": "attack", "GemFirepot": "kill", "GemPlague": "kill", "GemNova": "struck", "GemFrostNova": "struck", "GemMeteor": "crit", "GemFrostOrb": "crit", "GemTrap": "dash", "GemRam": "dash", "GemBeam": "timer", "GemFlame": "timer", "GemTaser": "crit", "GemSpark": "always", "GemMiasma": "always" },
-  "alwaysOnly": ["GemMiasma", "GemSpark"],
-  "slotLv": [15, 35],
-  "maxSlots": 4,
-  "capPerSec": 12,
-  "dropShare": 0.12,
-  "basic": { "melee": ["GemStab", "Spikes"], "bow": ["GemBolt", "Cannon"], "gun": ["GemScatter", "Blastgun"], "caster": ["GemNova", "PlasmaNova"] },
-  "rateAff": [3, 15],
-  "cdAff": [4, 20],
-  "dmgAff": [8, 40]
+  "crit": {
+   "n": "暴击时",
+   "s": "暴",
+   "rate": 1,
+   "cd": 1.2,
+   "est": 0.6,
+   "c": "#ffd23a"
+  },
+  "kill": {
+   "n": "击杀时",
+   "s": "杀",
+   "rate": 1,
+   "cd": 0.8,
+   "est": 0.9,
+   "c": "#ff5a6a"
+  },
+  "struck": {
+   "n": "受击时",
+   "s": "伤",
+   "rate": 0.25,
+   "cd": 1.0,
+   "est": 0.25,
+   "c": "#9a7aff"
+  },
+  "dodge": {
+   "n": "闪避时",
+   "s": "闪",
+   "rate": 1,
+   "cd": 1.5,
+   "est": 0.2,
+   "c": "#6fe0ff"
+  },
+  "dash": {
+   "n": "冲刺时",
+   "s": "冲",
+   "rate": 1,
+   "cd": 0.5,
+   "est": 0.3,
+   "c": "#6fc8ff"
+  },
+  "low": {
+   "n": "低血时",
+   "s": "危",
+   "rate": 1,
+   "cd": 3,
+   "est": 0.1,
+   "c": "#e8433a",
+   "thr": 0.35
+  },
+  "timer": {
+   "n": "每 4 秒",
+   "s": "时",
+   "rate": 1,
+   "cd": 4,
+   "est": 0.25,
+   "c": "#8ef05a"
+  },
+  "elite": {
+   "n": "遇精英时",
+   "s": "精",
+   "rate": 1,
+   "cd": 6,
+   "est": 0.1,
+   "c": "#e08cff",
+   "r": 64
+  },
+  "always": {
+   "n": "常驻",
+   "s": "常",
+   "rate": 1,
+   "cd": 0,
+   "est": 0,
+   "c": "#ffffff"
+  }
+ },
+ "condW": {
+  "attack": 30,
+  "crit": 14,
+  "kill": 18,
+  "struck": 8,
+  "dodge": 5,
+  "dash": 7,
+  "low": 3,
+  "timer": 10,
+  "elite": 4,
+  "always": 3
+ },
+ "rarW": [
+  60,
+  30,
+  10
+ ],
+ "sockW": [
+  [
+   1,
+   70,
+   30
+  ],
+  [
+   2,
+   60,
+   40
+  ],
+  [
+   2,
+   30,
+   50,
+   20
+  ]
+ ],
+ "maxSock": 5,
+ "legacyMax": 6,
+ "maxSkills": 2,
+ "split": 0.7,
+ "fit": 1.2,
+ "fitCond": {
+  "GemWhirl": "attack",
+  "GemStab": "attack",
+  "GemBolt": "attack",
+  "GemScatter": "attack",
+  "GemSickle": "attack",
+  "GemFirepot": "kill",
+  "GemPlague": "kill",
+  "GemNova": "struck",
+  "GemFrostNova": "struck",
+  "GemMeteor": "crit",
+  "GemFrostOrb": "crit",
+  "GemTrap": "dash",
+  "GemRam": "dash",
+  "GemBeam": "timer",
+  "GemFlame": "timer",
+  "GemTaser": "crit",
+  "GemSpark": "always",
+  "GemMiasma": "always"
+ },
+ "alwaysOnly": [
+  "GemMiasma",
+  "GemSpark"
+ ],
+ "slotLv": [
+  15,
+  35
+ ],
+ "maxSlots": 4,
+ "capPerSec": 12,
+ "dropShare": 0.12,
+ "basic": {
+  "melee": [
+   "GemStab",
+   "Spikes"
+  ],
+  "bow": [
+   "GemBolt",
+   "Cannon"
+  ],
+  "gun": [
+   "GemScatter",
+   "Blastgun"
+  ],
+  "caster": [
+   "GemNova",
+   "PlasmaNova"
+  ]
+ },
+ "rateAff": [
+  3,
+  15
+ ],
+ "cdAff": [
+  4,
+  20
+ ],
+ "dmgAff": [
+  8,
+  40
+ ],
+ "uniques": [
+  {
+   "k": "echoBell",
+   "n": "回响之钟",
+   "c": "attack",
+   "sock": 5,
+   "affs": {
+    "rate": 20
+   },
+   "fx": {
+    "maxSkills": 3
+   },
+   "d": "可插 3 颗技能石"
+  },
+  {
+   "k": "bloodOath",
+   "n": "血誓",
+   "c": "low",
+   "sock": 4,
+   "affs": {
+    "dmg": 80,
+    "cd": 40
+   },
+   "fx": {},
+   "d": "低血时伤害 +80%"
+  },
+  {
+   "k": "stormEye",
+   "n": "风暴之眼",
+   "c": "timer",
+   "sock": 4,
+   "affs": {
+    "cd": 35
+   },
+   "fx": {
+    "split": 1
+   },
+   "d": "两颗技能石不分流"
+  },
+  {
+   "k": "headHunter",
+   "n": "猎头者",
+   "c": "kill",
+   "sock": 4,
+   "affs": {
+    "dmg": 30,
+    "cd": 25
+   },
+   "fx": {
+    "split": 0.9
+   },
+   "d": "分流只 −10%"
+  },
+  {
+   "k": "mirrorVeil",
+   "n": "镜之帷",
+   "c": "dodge",
+   "sock": 5,
+   "affs": {
+    "cd": 50,
+    "dmg": 40
+   },
+   "fx": {},
+   "d": "闪避冷却减半"
+  }
+ ],
+ "uniqueChance": 0.03,
+ "uniqueIlvl": 20,
+ "sockCap": [
+  3,
+  4,
+  5
+ ],
+ "affRoll": [
+  0.8,
+  1
+ ]
 }

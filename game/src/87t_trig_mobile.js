@@ -54,7 +54,7 @@ Object.assign(MobileUI.prototype, {
       if (sel) { g.fillStyle(DK, 1).fillRoundedRect(1, -12, w - 2, NAV_H + 6, 9); g.fillStyle(id === 'battle' ? 0xff9a3a : CY, 1).fillRoundedRect(3, -10, w - 6, NAV_H + 1, 7); g.fillStyle(0xffffff, 0.45).fillRoundedRect(5, -8, w - 10, 7, 4); g.fillStyle(0xc46a00, 0.6).fillRect(5, NAV_H - 14, w - 10, 4); }
       else if (id === 'battle') { g.fillStyle(DK, 1).fillRoundedRect(3, -6, w - 6, NAV_H, 9); g.fillStyle(0xd07a2a, 1).fillRoundedRect(5, -4, w - 10, NAV_H - 5, 7); }
       const lift = sel ? -8 : id === 'battle' ? -4 : 0; b.ic.y = (b.icY0 ??= b.ic.y) + lift; b.lab.y = 29 + lift + (sel ? 2 : 0);
-      b.ic.setScale?.(1); b.ic.setAlpha(on ? (sel || id === 'battle' ? 1 : 0.6) : 0.45); b.lab.setTint(hex(sel ? '#ffffff' : on ? '#c8d0f0' : '#7e86a6'));
+      b.ic.setScale?.(1); b.ic.setAlpha(on ? (sel || id === 'battle' ? 1 : 0.6) : 0.45); b.lab.setTint(hex(sel ? '#ffffff' : on ? '#c8d0f0' : '#aab2d6'));
       b.lock.setVisible(!on); if (!on) b.lab.setText(unlockText(id).match(/\d+/) ? '锁' + unlockText(id).match(/\d+/)[0] : b.m.n); else b.lab.setText(b.m.n);
       let badge = '';
       if (id === 'gear') { const k = S.stash.filter(x => x.isNew && x.kind !== 'gem').length; badge = k ? String(Math.min(9, k)) : ''; }
@@ -96,6 +96,7 @@ Object.assign(MobileUI.prototype, {
       const ib = this.add.container(w - 30, y + 4); c.add(ib); bub(this, ib, 0, 0, 16, 16, 0x6fc8ff, { r: 8 }); T_(this, ib, 8, 3, 'i', { size: 8 });
       zoneOn(this, c, w - 36, y, 28, 26, () => this.ask('触发器规则', () => {}, '知道了', `${TCOND[T0.c].n}：触发率 ${Math.round((t ? t.rate : 1) * 100)}%，冷却 ${(t ? t.cd : 0).toFixed(1)} 秒。\n每个触发器最多 2 颗技能石，两颗时各 −30%（分流）。\n辅助石作用于同一触发器里标签合适的技能石（金色连线 = 生效）。\n技能石推荐条件和触发器一致时 +20%。\n常驻只能插瘟疫光环、游雷。`));
       mkBtn(this, c, w - 74, y + 4, 40, 18, '换', () => { tbagSel = null; this.openWin('tbag'); }, { size: 8 });
+      if (trigCanAddSock(T0)) mkBtn(this, c, w - 124, y + 4, 46, 18, `开孔${S.glyphs && S.glyphs.socket || 0}`, () => { const r = trigAddSock(T0); toast(r); this.refresh(); }, { size: 8, disabled: !(S.glyphs && S.glyphs.socket > 0) });
       const ss = 30, lk = 6, k0 = T0.sock, rw = k0 * ss + (k0 - 1) * lk, sx = Math.round((w - rw) / 2), sy = y + 34, skills = T0.socks.filter(isSkill);
       const lg = this.add.graphics(); c.add(lg);
       for (let k = 0; k < k0; k++) {
@@ -148,7 +149,7 @@ Object.assign(MobileUI.prototype, {
     const s = 40, cols = Math.floor((w - 12) / (s + 6)), gx = Math.round((w - cols * (s + 6)) / 2);
     bag.slice(0, cols * 3).forEach((T0, i) => { const x = gx + (i % cols) * (s + 6), yy = y + Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
     if (!bag.length) T_(this, c, w / 2, y + 20, '还没有别的触发器 · 打怪会掉', { size: 8, color: '#b9c2ea' });
-    y += 3 * (s + 14) + 6;
+    y += Math.max(1, Math.ceil(Math.min(bag.length, cols * 3) / cols)) * (s + 14) + 10;
     const N = tbagSel && bag.includes(tbagSel) ? tbagSel : null; if (!N) { mkBtn(this, c, w / 2 - 40, h - 40, 80, 28, '返回', () => this.openWin('trig'), {}); if (cur) mkBtn(this, c, 8, h - 40, 70, 28, '卸下', () => { unequipTrig(trigSel); this.openWin('trig'); }, { size: 8 }); return; }
     // 对比：临时把当前的宝石按顺序搬进新触发器算秒伤
     const before = STATS.dps, keep = S.trigs[trigSel]; const tmp = { ...N, socks: Array(N.sock).fill(null) };
@@ -159,11 +160,12 @@ Object.assign(MobileUI.prototype, {
     trigTile(this, c, w - 80, y + 14, 50, N); T_(this, c, w - 55, y + 68, `${TRIG_RAR_N[N.rar]} · ${N.sock} 孔`, { size: 8 });
     const d = before ? (after - before) / before : 0; T_(this, c, w / 2, y + 86, (d >= 0 ? '▲ +' : '▼ ') + Math.round(d * 100) + '%', { size: 12, scale: 1.4, color: d >= 0 ? '#7cf05a' : '#ff6a5a' });
     const af = Object.entries(N.affs || {}).map(([k, v]) => ({ rate: `触发 +${v}%`, cd: `冷却 −${v}%`, dmg: `伤害 +${v}%` }[k])).join('  '); T_(this, c, w / 2, y + 108, TCOND[N.c].n + (af ? ' · ' + af : ''), { size: 8, color: '#9fe08a' });
-    T_(this, c, w / 2, y + 124, '替换时宝石自动搬过去', { size: 8, color: '#b9c2ea' });
+    T_(this, c, w / 2, y + 124, N.u && TRIG_U[N.u] ? '独特：' + TRIG_U[N.u].d : '替换时宝石自动搬过去', { size: 8, color: '#b9c2ea' });
     y += 160;
     mkBtn(this, c, 10, y, 70, 30, '分解', () => { const n = salvageTrig(N); toast(`分解：碎片 +${n}`); tbagSel = null; this.refresh(); }, { style: 'r' });
     mkBtn(this, c, 88, y, w - 98, 30, '替换', () => { equipTrig(trigSel, N); tbagSel = null; this.openWin('trig'); }, { style: 'w' });
     mkBtn(this, c, w / 2 - 40, h - 36, 80, 26, '返回', () => this.openWin('trig'), { size: 8 });
+    if (cur) mkBtn(this, c, 8, h - 36, 60, 26, '卸下', () => { unequipTrig(trigSel); this.openWin('trig'); }, { size: 8 });
   },
 });
 // 刷新钩子：导航和战斗触发器小条每帧更新

@@ -7,7 +7,15 @@ const TRG = DATA.triggers, TCOND = TRG.conds;
 const TRIG_BASE = 2, TRIG_PER = 3; // 被触发技能在 player.wcd / spin / swing 里的下标：2 + 栏位 × 3 + 第几颗
 const isSkill = x => x && x.kind === 'gem';
 const isSupport = x => x && x.kind === 'mod';
-const trigName = T => (T.legacy ? '遗留·' : '') + TCOND[T.c].n;
+const TRIG_U = Object.fromEntries((TRG.uniques || []).map(u => [u.k, u]));
+const trigName = T => T.u && TRIG_U[T.u] ? TRIG_U[T.u].n : (T.legacy ? '遗留·' : '') + TCOND[T.c].n;
+const trigMaxSkills = T => (T.u && TRIG_U[T.u] && TRIG_U[T.u].fx.maxSkills) || TRG.maxSkills;
+const trigSplit = T => (T.u && TRIG_U[T.u] && TRIG_U[T.u].fx.split) || TRG.split;
+function newUniqueTrig(k, ilvl) { const u = TRIG_U[k]; const T = newTrig(u.c, { rar: 3, sock: u.sock, ilvl, affs: { ...u.affs }, isNew: true }); T.u = k; return T; }
+/* 开孔符：+1 孔，上限 = 稀有度上限 +1（普通 3 / 魔法 4 / 稀有 5）；独特、遗留不能开 */
+const trigSockCap = T => TRG.sockCap[Math.min(T.rar, 2)];
+function trigCanAddSock(T) { return T && !T.u && !T.legacy && T.rar < 3 && T.sock < trigSockCap(T); }
+function trigAddSock(T) { if (!trigCanAddSock(T)) return '这个触发器不能再开孔'; if (!(S.glyphs && S.glyphs.socket > 0)) return '没有开孔符（天梯宝箱掉）'; S.glyphs.socket--; T.sock++; T.socks.push(null); refreshStats(); save(); return `开孔成功：${T.sock} 孔`; }
 const TRIG_RAR_N = ['普通', '魔法', '稀有', '独特'];
 function newTrig(c, o = {}) {
   const rar = o.rar ?? 0, sw = TRG.sockW[Math.min(rar, TRG.sockW.length - 1)];
@@ -16,8 +24,9 @@ function newTrig(c, o = {}) {
   return T;
 }
 function rollTrigDrop(ilvl) {
+  if (ilvl >= TRG.uniqueIlvl && rnd() < TRG.uniqueChance) return newUniqueTrig(pick(Object.keys(TRIG_U)), ilvl);
   const c = wpick(Object.keys(TRG.condW), k => TRG.condW[k]), rar = wpick([0, 1, 2], i => TRG.rarW[i]);
-  const affs = {}, tf = clamp(ilvl / 80, 0, 1), roll = a => Math.round(a[0] + (a[1] - a[0]) * tf * rf(0.6, 1));
+  const affs = {}, tf = clamp(ilvl / 80, 0, 1), roll = a => Math.round(a[0] + (a[1] - a[0]) * tf * rf(TRG.affRoll[0], TRG.affRoll[1]));
   const pool = ['rate', 'cd', 'dmg'].filter(k => !(k === 'rate' && TCOND[c].rate >= 1)); const nA = rar === 0 ? 0 : rar === 1 ? ri(1, 2) : 3;
   for (let i = 0; i < nA && pool.length; i++) { const k = pool.splice(ri(0, pool.length - 1), 1)[0]; affs[k] = roll(TRG[k + 'Aff']); }
   return newTrig(c, { rar, ilvl, affs, isNew: true });
@@ -33,7 +42,7 @@ function trigCanSock(T, k, x) {
   if (isSkill(x)) {
     if (T.c === 'always' && !TRG.alwaysOnly.includes(x.b)) return false;
     if (GEM_BY[x.b].form === 'shieldThrow') return false;
-    const n = T.socks.filter((s, i) => i !== k && isSkill(s)).length; return n < TRG.maxSkills;
+    const n = T.socks.filter((s, i) => i !== k && isSkill(s)).length; return n < trigMaxSkills(T);
   }
   return isSupport(x) && !MOD_BY[x.mid].field;
 }
@@ -69,7 +78,7 @@ function trigStats(P, eq) {
     if (!T) return; const on = i < n, skills = T.socks.filter(isSkill), sups = T.socks.filter(isSupport);
     const ws = []; if (on) skills.slice(0, T.c === 'always' ? 9 : 9).forEach((g, j) => {
       const g2 = { ...g, mods: sups.filter(m => supportFits(m, g)), sock: sups.length }, sk = skillItem({ ...eq, gem: g2 }); if (!sk) return;
-      const W = weaponStats(sk, P); let mul = (1 + (T.affs.dmg || 0) / 100) * (1 + (T.q || 0) / 100) * (skills.length > 1 ? TRG.split : 1) * (TRG.fitCond[g.b] === T.c ? TRG.fit : 1);
+      const W = weaponStats(sk, P); let mul = (1 + (T.affs.dmg || 0) / 100) * (1 + (T.q || 0) / 100) * (skills.length > 1 ? trigSplit(T) : 1) * (TRG.fitCond[g.b] === T.c ? TRG.fit : 1);
       for (const o of [W.min, W.max]) if (o) for (const e in o) o[e] *= mul;
       if (W.auraDps) W.auraDps *= mul; W.dps *= mul; W.trigSlot = i + 1; W.trigMul = mul; W.wi = TRIG_BASE + i * TRIG_PER + j; ws.push(W);
     });

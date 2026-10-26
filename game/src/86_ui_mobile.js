@@ -26,7 +26,7 @@ class MobileUI extends UI {
     const top = this.add.container(0, 0).setDepth(10); this.topC = top;
     top.add(rect(this, 0, 0, W, MTOP, COL.ink, 0.82)); top.add(this.add.tileSprite(0, 0, W, MTOP, 'n_stone').setOrigin(0).setAlpha(0.45)); top.add(this.add.image(0, 0, 'g_vig').setOrigin(0).setDisplaySize(W, MTOP * 2).setAlpha(0.8)); top.add(rect(this, 0, MTOP - 2, W, 1, '#5a3a14', 1)); top.add(rect(this, 0, MTOP - 1, W, 1, '#c8913a', 1));
     this.ribbon = this.add.nineslice(0, 1, 'ribbon', null, 120, 22, 14, 14, 0, 0).setOrigin(0); top.add(this.ribbon);
-    this.depthT = T(this, W / 2, 6, '', { align: 'center', color: COL.emberHi, parent: top });
+    this.depthT = T(this, W / 2, 6, '', { align: 'center', color: '#2a1306', shadow: false, parent: top });
     const bc = this.add.container(W / 2 - 100, 22); top.add(bc); this.bossC = bc;
     this.bossT = T(this, 100, -1, '', { size: 8, align: 'center', parent: bc });
     bc.add(img(this, 0, 9, 'bonebar')); this.bossG = this.add.graphics(); bc.add(this.bossG); this.bossG.y = -1;
@@ -202,7 +202,7 @@ class MobileUI extends UI {
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
     const title = { trig: '触发器', tbag: '换触发器', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
-    if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: COL.emberHi, align: 'center', parent: c }); }
+    if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: '#2a1306', shadow: false, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });
       mkBtn(this, c, this.pan, hy, 26, 16, '<', () => { this.pan = Math.max(0, this.pan - 120); this.refresh(); }, { size: 8, disabled: this.pan <= 0 });
