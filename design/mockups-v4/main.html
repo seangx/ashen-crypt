@@ -1,0 +1,66 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=style.css>
+<style>
+.bar{display:flex;gap:10px;justify-content:center;padding:4px 12px}
+.ts{width:80px;height:92px;border-radius:16px;display:flex;align-items:center;justify-content:center;position:relative}
+.ts img{width:52px}.ts.sel{outline:4px solid #fff;outline-offset:2px;transform:translateY(-4px)}
+.ts .n{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);font-size:12px;white-space:nowrap}
+.lock{background:linear-gradient(#6a7090,#4a4f6a);flex-direction:column;font-size:15px}
+.big{margin:22px 12px 0;padding:14px 12px 18px}
+.ti{display:flex;align-items:center;gap:10px;font-size:20px}.ti img{width:44px}
+.info{margin-left:auto;width:30px;height:30px;border-radius:50%;border:3px solid #1a1426;background:#6fc8ff;display:flex;align-items:center;justify-content:center;font-size:17px}
+.socks{display:flex;justify-content:center;align-items:center;margin-top:18px;position:relative}
+.k{width:66px;height:66px;display:flex;align-items:center;justify-content:center;border:4px solid #1a1426;box-shadow:0 5px 0 #1a1426,inset 0 3px 0 #fff7}
+.k img{width:46px}.sk{border-radius:16px;background:linear-gradient(#ffb36a,#f06a2a)}
+.sp{border-radius:50%;background:linear-gradient(#8fd8ff,#3a8ae8)}
+.em{border-radius:50%;background:#2c3460;border-style:dashed;color:#7f8ac0;font-size:30px;box-shadow:inset 0 3px 0 #0006}
+.ln{width:14px;height:8px;background:#1a1426}
+.ln.on{background:#ffe36a;box-shadow:0 0 10px 3px #ffd23a}
+.glow{box-shadow:0 0 14px 5px #ffe36a,0 5px 0 #1a1426}
+.off{filter:grayscale(1) brightness(.7)}
+.hint{position:absolute;inset:-6px;border-radius:50%;border:4px solid #7cf05a;box-shadow:0 0 16px 4px #7cf05a;animation:none}
+.inv{position:absolute;left:0;right:0;bottom:74px;padding:10px 10px 14px;background:linear-gradient(#3b4677,#2a3158);border-top:3px solid #1a1426}
+.tabs{display:flex;gap:8px;margin-bottom:10px}.tabs .btn{height:36px;font-size:14px;padding:0 14px}
+.gg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.gg .k{width:62px;height:62px}
+.pick{outline:4px solid #fff;outline-offset:3px;transform:translateY(-6px)}
+.dimg{opacity:.35}
+.pw{text-align:center;margin-top:16px;font-size:30px}
+.tip{position:absolute;left:24px;right:24px;top:400px;padding:10px;font-size:15px;text-align:center}
+</style>
+<div class=hdr><div class="ribbon o">触发器</div></div>
+<div class=bar>
+ <div class="ts slot q-r sel"><img src=assets/t_attack.png><span class="n o">攻击时</span></div>
+ <div class="ts slot q-u"><img src=assets/t_kill.png><span class="n o">击杀时</span></div>
+ <div class="ts slot lock"><div style=font-size:28px>🔒</div><span class=o>Lv15</span></div>
+ <div class="ts slot lock"><div style=font-size:28px>🔒</div><span class=o>Lv35</span></div>
+</div>
+<div class="card big">
+ <div class=ti><img src=assets/t_attack.png><span class=o>攻击时</span><span class=stars>★★★★</span><div class="info o">i</div></div>
+ <div class=socks id=socks></div>
+ <div class="pw o y" id=pw>⚔ 1240</div>
+</div>
+<div id=extra></div>
+<div class=inv>
+ <div class=tabs><div class="btn yel o">全部</div><div class="btn gry o">技能</div><div class="btn gry o">辅助</div><div class="btn blu o" style=margin-left:auto>触发器 3</div></div>
+ <div class=gg id=gg></div>
+</div>
+<div class=nav><div>装备</div><div>天赋</div><div class=on>触发器</div><div>天梯</div><div>设置</div></div>
+<script>
+const sel=location.search.includes('sel'), cmp=location.search.includes('cmp');
+const K=(c,g,x='')=>`<div class="k ${c} ${x}"><img class=px src=assets/${g}.png></div>`;
+const L=o=>`<div class="ln ${o?'on':''}"></div>`;
+socks.innerHTML=K('sk','GemWhirl','glow')+L(1)+K('sp','r_AreaOfEffect','glow')+L(1)+K('sp','r_AttackSpeed','glow')+L(0)+(sel?'<div style=position:relative>'+K('em','x').replace(/<img[^>]*>/,'＋')+'<div class=hint></div></div>':K('em','x').replace(/<img[^>]*>/,'＋'));
+const inv=[['sp','r_Aftershock'],['sp','r_Pierce'],['sk','GemMeteor'],['sp','r_Chain'],['sk','GemFrostOrb'],['sp','r_Melee'],['sp','r_Split'],['sk','GemFirepot'],['sp','r_Thermal'],['sp','r_Boomerang']];
+gg.innerHTML=inv.map((a,i)=>K(a[0],a[1],sel&&i==0?'pick glow':(sel&&a[1]=='r_Pierce'?'dimg':''))).join('');
+if(sel)extra.innerHTML='<div class="card tip o">点亮的孔 = 可放入　再点宝石 = 自动放入</div>';
+if(cmp){document.body.insertAdjacentHTML('beforeend',`<div style="position:absolute;inset:0;background:#000a"></div>
+<div class=card style="position:absolute;left:20px;right:20px;top:170px;padding:16px;text-align:center">
+<div class="ribbon o" style="display:inline-block;margin-top:-34px">获得触发器！</div>
+<div style="display:flex;justify-content:space-around;margin-top:14px">
+ <div><div class="slot q-r" style="width:96px;height:96px;display:flex;align-items:center;justify-content:center;margin:auto"><img src=assets/t_attack.png width=64></div><div class="o" style=margin-top:8px>当前</div><div style=font-size:22px class=o>⚪⚪⚪⚪</div></div>
+ <div style="font-size:30px;align-self:center" class=o>➜</div>
+ <div><div class="slot q-u glow" style="width:96px;height:96px;display:flex;align-items:center;justify-content:center;margin:auto"><img src=assets/t_crit.png width=64></div><div class="o y" style=margin-top:8px>暴击时</div><div style=font-size:22px class=o>⚪⚪⚪⚪⚪</div></div>
+</div>
+<div class="o g" style="font-size:34px;margin:12px 0">▲ +18%</div>
+<div style="display:flex;gap:12px;justify-content:center"><div class="btn gry o">分解</div><div class="btn grn o" style=padding:0 34px>替换</div></div>
+<div class="dim" style="margin-top:10px;font-size:12px">宝石自动搬过去</div></div>`)}
+</script>
