@@ -346,6 +346,7 @@ function hurtPlayer(d, el, ck = 1) {
   if (d > 0 && FL.absorb) player.shield = Math.min(STATS.shield, player.shield + d * RL.absorb.pct / 100); // 圣盾：扣到生命的一部分转成护盾
   if (d > 0) { player.life -= d; player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); hurtFeedback(d); }
   // 荆棘甲：受击时伤害周围
+  for (const W of STATS.weapons) if (W && W.thorns > 0) { const r = MECH.thornsR || 56; fx({ t: 'ring', x: player.x, y: player.y - 4, r, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (r + m.size) ** 2) hitMob(m, W, { mul: W.thorns / 100 }); } // 荆棘符文
   for (const W of STATS.weapons) if (W && W.form === 'reflect') { fx({ t: 'ring', x: player.x, y: player.y - 4, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); }
   if (player.life <= 0) { player.life = 0; RUN.result = 'dead'; RUN.ending = 1.6; S.stats.deaths++; sfx('out'); if (G.ui) G.ui.banner('灯火熄灭'); }
   return true;

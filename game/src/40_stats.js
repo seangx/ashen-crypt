@@ -127,8 +127,8 @@ function weaponStats(it, P, isEngine) {
   const W = { it, b, key: b.key, form: isEngine ? 'engine' : b.form, el: b.el, tags, cont: !!b.cont, min: {}, max: {}, ail: {}, runes: [],
     pierce: qv(b.pierce || 0, q), chain: qv(b.chain || 0, q), split: qv(b.split || 0, q), ret: b.ret || 0, extra: qv(b.extra || 0, q), extraChance: 0,
     pierceMore: 1, chainInc: 0, splitInc: 0, knock: b.knock || 0, more: 1, dotMore: 1, debrisMore: 1, blindMore: 1, radMore: 1, doubleChance: 0,
-    armorOnHit: 0, dashOnHit: 0, cull: 0, perDashInc: 0, bossMore: b.bossMore ? 1 + qv(b.bossMore, q) / 10 : 1 };
-  const TA = P.tree.add, TM = P.tree.more, U = k => uval(it, k);
+    armorOnHit: 0, thorns: 0, dashOnHit: 0, cull: 0, perDashInc: 0, bossMore: b.bossMore ? 1 + qv(b.bossMore, q) / 10 : 1 };
+  const TA = P.tree.add, TM = P.tree.more, UW = (UNIQUE_BY[it.u] || {}).when, U = k => UW && !has(UW) ? 0 : uval(it, k); // when：技能石有这个标签，独特规则才生效
   const IM = it.kind === 'weapon' && !it.th && (!it.fb || it.gem) && IMPL[it.b] ? IMPL[it.b].fx : {}; // 底子的隐性倾向
   W.chain += IM.chain || 0; W.pierce += IM.pierce || 0; if (IM.knock) W.knock = 1; W.pierceMore *= IM.pierceMore || 1; W.bossMore *= 1 + (IM.bossInc || 0) / 100; W.impSpawn = IM.spawn || 0;
   for (const e of ELEM) W.ail[e] = (b['ail_' + e] || 0) + (TA['ail:' + e] || 0) + U('ail:' + e) / 100 + ((IM.ail || {})[e] || 0);
@@ -187,6 +187,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.areaInc && has('AoE')) inc += fx.areaInc;
     if (fx.meleeInc) inc += fx.meleeInc;
     if (fx.meleeGuard) W.meleeGuard = 1;
+    if (fx.thorns) W.thorns += fx.thorns; // 荆棘符文（原荆棘甲的反伤，数值 ×0.5）
     if (fx.spark && b.wander) { W.spark = 1; W.sparkN = fx.sparkN; W.sparkMul = fx.sparkMul; } // 游雷符文：只对会乱窜的投射物（雷灵）生效
     if (fx.shieldThrow && b.form === 'shieldThrow') { W.shieldThrow = 1; W.chainStep += (fx.chainStepInc || 0) / 100; } // 圣盾掷符文
     if (fx.frostOrb && b.form === 'orb') { W.frostOrb = 1; W.shardMul = fx.shardMul; } // 寒魄符文：寒魄宝珠
