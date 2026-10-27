@@ -60,6 +60,12 @@ const UNIT = DATA.mechanics.offense.unit;
 
 /* 武器：数值来自 ASTRO.weapons（原作配置），名字、图标和攻击形态在 data/items.json */
 const WEAPON_SKIN = DATA.items.weapons;
+// 攻速压缩（mechanics.apsCurve）：高攻速武器降到 ~1.5–2.5 次/秒，每击伤害按比例放大，秒伤不变
+{ const AC = DATA.mechanics.apsCurve, f = v => v <= AC.knee ? v : Math.round((AC.knee + (v - AC.knee) * AC.keep) * 100) / 100;
+  for (const k in ASTRO.weapons) { const w = ASTRO.weapons[k]; if (w.aps == null || w._apsC) continue; w._apsC = 1;
+    const old = w.aps, nu = Array.isArray(old) ? old.map(f) : f(old), r = i => { const o = Array.isArray(old) ? old[Math.min(i, old.length - 1)] : old, n = Array.isArray(nu) ? nu[Math.min(i, nu.length - 1)] : nu; return o / n; };
+    for (const key of ['min', 'max']) if (Array.isArray(w[key])) w[key] = w[key].map((v, i) => Math.round(v * r(i))); else if (typeof w[key] === 'number') w[key] = Math.round(w[key] * r(0));
+    w.aps = nu; } }
 const WEAPONS = {};
 for (const k in WEAPON_SKIN) WEAPONS[k] = { key: k, ...ASTRO.weapons[k], ...WEAPON_SKIN[k], tags: ASTRO.weapons[k].tags.filter(t => t !== 'Weapon').concat('Weapon') };
 // 遁靴（原作：引擎，冲刺即技能；本身也带武器标签）

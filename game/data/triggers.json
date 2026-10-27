@@ -215,7 +215,7 @@
  "capPerSec": 12,
  "perCastCap": 40,
  "store": 1,
- "lampFloor": 0.1, "skillCostMul": 1.5, "_skillCostMul说明": "所有技能石灯火消耗统一乘这个数（宝石之间的相对平衡不变），让灯火成为施放的真实约束",
+ "lampFloor": 0.1, "skillCostMul": 1.5, "castCostMul": 2.0, "_castCostMul说明": "武器攻速压缩后出手 / 命中类触发次数约降到 1/2.75（又因为过量伤害浪费变少，只补到 2 倍），非常驻（非 always）技能每次消耗再乘这个数，灯火消耗速度和上一版持平", "_skillCostMul说明": "所有技能石灯火消耗统一乘这个数（宝石之间的相对平衡不变），让灯火成为施放的真实约束",
  "sustain": 2,
  "dropShare": 0.12,
  "basic": {
