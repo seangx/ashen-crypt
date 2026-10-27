@@ -177,8 +177,9 @@ Object.assign(MobileUI.prototype, {
     T_(this, c, w / 2, 14, `第 ${p.floor} 层里程碑 · 还有 ${S.reelsPending.length} 次`, { size: 8, color: '#b9c2ea' });
     if (p.jack) T_(this, c, w / 2, 28, '三连！三件全给', { size: 12, color: '#ffd23a' });
     const cw = Math.floor((w - 24) / 3), ch = 190, y0 = 46;
+    p.opts.forEach((it, k) => bub(this, c, 8 + k * (cw + 4), y0, cw, ch, 0x4f5d9a, { r: 9, ring: 0xffa31a }));
     p.opts.forEach((it, k) => {
-      const x = 8 + k * (cw + 4), tw = it.kind === 'trig'; bub(this, c, x, y0, cw, ch, 0x4f5d9a, { r: 9, ring: 0xffa31a });
+      const x = 8 + k * (cw + 4), tw = it.kind === 'trig';
       if (tw) trigTile(this, c, x + cw / 2 - 20, y0 + 8, 40, it); else mkCell(this, c, x + cw / 2 - 18, y0 + 8, it, { size: 36, direct: true, onClick: () => {} });
       const nm = tw ? trigName(it) : itemName(it), kind = tw ? '魂龛' : KIND_N[it.kind] || it.kind;
       T_(this, c, x + cw / 2, y0 + 54, nm, { size: 8, color: '#ffa31a' }); T_(this, c, x + cw / 2, y0 + 66, kind + ' · ' + it.ilvl + ' 级', { size: 8, color: '#e0e4f0' });
