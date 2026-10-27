@@ -1,0 +1,48 @@
+
+.bar{display:flex;gap:10px;justify-content:center;padding:4px 12px}
+.ts{width:80px;height:92px;border-radius:16px;display:flex;align-items:center;justify-content:center;position:relative}
+.ts img{width:52px}.ts.sel{outline:4px solid #fff;outline-offset:2px;transform:translateY(-4px)}
+.ts .n{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);font-size:12px;white-space:nowrap}
+.lock{background:linear-gradient(#6a7090,#4a4f6a);flex-direction:column;font-size:15px}
+.big{margin:22px 12px 0;padding:14px 12px 18px}
+.ti{display:flex;align-items:center;gap:10px;font-size:20px}.ti img{width:44px}
+.info{margin-left:auto;width:30px;height:30px;border-radius:50%;border:3px solid #1a1426;background:#6fc8ff;display:flex;align-items:center;justify-content:center;font-size:17px}
+.socks{display:flex;justify-content:center;align-items:center;margin-top:18px;position:relative}
+.k{width:66px;height:66px;display:flex;align-items:center;justify-content:center;border:4px solid #1a1426;box-shadow:0 5px 0 #1a1426,inset 0 3px 0 #fff7}
+.k img{width:46px}.sk{border-radius:16px;background:linear-gradient(#ffb36a,#f06a2a)}
+.sp{border-radius:50%;background:linear-gradient(#8fd8ff,#3a8ae8)}
+.em{border-radius:50%;background:#2c3460;border-style:dashed;color:#7f8ac0;font-size:30px;box-shadow:inset 0 3px 0 #0006}
+.ln{width:14px;height:8px;background:#1a1426}
+.ln.on{background:#ffe36a;box-shadow:0 0 10px 3px #ffd23a}
+.glow{box-shadow:0 0 14px 5px #ffe36a,0 5px 0 #1a1426}
+.off{filter:grayscale(1) brightness(.7)}
+.hint{position:absolute;inset:-6px;border-radius:50%;border:4px solid #7cf05a;box-shadow:0 0 16px 4px #7cf05a;animation:none}
+.inv{position:absolute;left:0;right:0;bottom:74px;padding:10px 10px 14px;background:linear-gradient(#3b4677,#2a3158);border-top:3px solid #1a1426}
+.tabs{display:flex;gap:8px;margin-bottom:10px}.tabs .btn{height:36px;font-size:14px;padding:0 14px}
+.gg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.gg .k{width:62px;height:62px}
+.pick{outline:4px solid #fff;outline-offset:3px;transform:translateY(-6px)}
+.dimg{opacity:.35}
+.pw{text-align:center;margin-top:16px;font-size:30px}
+.tip{position:absolute;left:24px;right:24px;top:400px;padding:10px;font-size:15px;text-align:center}
+
+.nav2{position:absolute;left:6px;right:6px;bottom:6px;height:72px;background:linear-gradient(#4a5694,#2d3566);border:4px solid #1a1426;border-radius:22px;box-shadow:0 5px 0 #1a1426,inset 0 3px 0 #ffffff40;display:flex;justify-content:space-around;align-items:center;padding:0 4px}
+.tb{width:64px;text-align:center;position:relative;font-size:12px;color:#aab3dc}
+.tb svg{width:38px;height:38px;display:block;margin:0 auto 1px;filter:saturate(.35) brightness(.85)}
+.tb.on{width:78px;height:86px;margin-top:-30px;background:linear-gradient(#ffe066,#ffb31a);border:4px solid #1a1426;border-radius:18px;box-shadow:0 5px 0 #1a1426,inset 0 3px 0 #fff8,inset 0 -6px 0 #c46a00;color:#fff;font-size:15px;padding-top:6px}
+.tb.on svg{width:52px;height:52px;filter:none}
+.dot{position:absolute;top:-4px;right:6px;width:18px;height:18px;border-radius:50%;background:#ff3b3b;border:3px solid #1a1426;font-size:10px;line-height:12px;color:#fff}
+.tb.on .dot{right:-6px;top:-8px}
+.tb.lk svg{opacity:.35}.tb .lki{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:20px}
+.inv{bottom:84px!important}
+
+.pg{position:absolute;top:58px;left:0;right:0;bottom:84px;padding:6px 12px;overflow:hidden}
+.row{display:flex;gap:10px;align-items:center}
+.cap{font-size:15px;margin:10px 2px 6px}
+.it{width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:14px}.it img{width:46px}
+.bigbtn{height:70px;font-size:28px;border-radius:20px;width:100%}
+.res{position:absolute;top:12px;right:10px;font-size:13px;display:flex;gap:8px}.res span{background:#1a1426aa;border-radius:10px;padding:2px 8px}
+.bar2{height:16px;border:3px solid #1a1426;border-radius:9px;background:#2c3460;overflow:hidden}.bar2 i{display:block;height:100%}
+.node{width:50px;height:50px;border-radius:50%;border:4px solid #1a1426;display:flex;align-items:center;justify-content:center;position:absolute;box-shadow:0 4px 0 #1a1426}
+.node img{width:30px}
+.tog{width:56px;height:30px;border-radius:15px;border:3px solid #1a1426;background:#7cf05a;position:relative}.tog:after{content:"";position:absolute;right:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #1a1426}
+.tog.off{background:#7e86a6}.tog.off:after{right:auto;left:2px}

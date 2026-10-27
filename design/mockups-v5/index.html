@@ -1,0 +1,67 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=style.css><link rel=stylesheet href=v5.css>
+<body><script>
+const P=new URLSearchParams(location.search).get('p')||'home';
+const IC={gear:'<path d="M8 6h32l-3 22c-1 8-8 14-13 16-5-2-12-8-13-16z" fill="#6fc8ff" stroke="#1a1426" stroke-width="4" stroke-linejoin="round"/><path d="M24 12v26" stroke="#fff" stroke-width="4"/>',
+trig:'<path d="M27 3 9 27h13l-4 18 21-26H26z" fill="#fff36a" stroke="#1a1426" stroke-width="4" stroke-linejoin="round"/>',
+fight:'<path d="M8 40 36 8l6 0 0 6-28 32zM40 40 12 8H6v6l28 32z" fill="#ff8a7a" stroke="#1a1426" stroke-width="4" stroke-linejoin="round"/>',
+tree:'<path d="M24 4l6 13 14 2-10 10 3 14-13-7-13 7 3-14L4 19l14-2z" fill="#e08cff" stroke="#1a1426" stroke-width="4" stroke-linejoin="round"/>',
+anvil:'<path d="M6 14h30c0 6 6 8 8 8v4H34v6h6v8H10v-8h6v-6c-6 0-10-6-10-12z" fill="#b9bfd6" stroke="#1a1426" stroke-width="4" stroke-linejoin="round"/>'};
+const TABS=[['gear','装备'],['trig','触发器'],['fight','战斗'],['tree','天赋'],['anvil','铁砧']];
+const sel={home:'fight',ladder:'fight',prep:'fight',gear:'gear',trig:'trig',tree:'tree',anvil:'anvil'}[P];
+const nav=()=>'<div class=nav2>'+TABS.map(([k,n])=>`<div class="tb ${k==sel?'on':''} o"><svg viewBox="0 0 48 48">${IC[k]}</svg>${n}${k=='tree'?'<span class="dot o">3</span>':''}${k=='gear'?'<span class="dot o">!</span>':''}</div>`).join('')+'</div>';
+const hdr=t=>`<div class=hdr><div class="ribbon o">${t}</div><div class="info o" style="position:absolute;left:12px;width:34px;height:34px;border-radius:50%;border:3px solid #1a1426;background:#b9bfd6;display:flex;align-items:center;justify-content:center">⚙</div><div class=res><span class="o p">◆ 1,240</span><span class="o y">✦ 86</span></div></div>`;
+const K=(c,g,x='')=>`<div class="k ${c} ${x}"><img class=px src=assets/${g}.png></div>`;
+const T=(q,ic,n,x='')=>`<div class="ts slot ${q} ${x}"><img src=assets/${ic}.png><span class="n o">${n}</span></div>`;
+const LK=l=>`<div class="ts slot lock"><div style=font-size:28px>🔒</div><span class=o>${l}</span></div>`;
+let h='';
+const pages={
+home:()=>hdr('第 27 层')+`<div class=pg style=text-align:center>
+<div class="card" style="padding:16px;margin-top:10px"><div class="o" style=font-size:15px>地窖深处</div>
+<div style="font-size:64px;margin:10px 0">💀</div><div class="o y" style=font-size:26px>第 27 层</div>
+<div class=row style="justify-content:center;margin-top:10px"><div class="btn gry o" style=width:52px>◀</div><div class="o dim" style="width:120px">最深 31 层</div><div class="btn gry o" style=width:52px>▶</div></div></div>
+<div class="row" style="margin-top:16px"><div class="card" style="flex:1;padding:10px"><div class=o>战力</div><div class="o y" style=font-size:24px>⚔ 3,480</div></div>
+<div class="card" style="flex:1;padding:10px"><div class=o>触发器</div><div class=row style="justify-content:center;margin-top:4px"><img src=assets/t_attack.png width=30><img src=assets/t_kill.png width=30><span class=dim>🔒</span><span class=dim>🔒</span></div></div></div>
+<div class="row" style="margin-top:14px"><div class="btn blu o" style="flex:1;height:58px;font-size:18px">🪜 天梯</div><div class="btn gry o" style="flex:1;height:58px;font-size:18px">🤖 自动刷 开</div></div>
+<div class="btn yel o bigbtn" style="margin-top:22px">开 战！</div></div>`,
+gear:()=>hdr('装备')+`<div class=pg><div class=card style="padding:12px;position:relative;height:300px">
+${[['i_w_bladering','q-r',14,40,3],['i_a_crystalcrown','q-u',150,8,2],['i_w_bladering','q-m',286,40,1],['i_a_crystalcrown','q-m',14,140,1],['i_w_bladering','q-n',286,140,0],['i_a_crystalcrown','q-r',14,230,2],['i_w_bladering','q-m',286,230,1]].map(([g,q,x,y,n])=>`<div style="position:absolute;left:${x}px;top:${y}px;text-align:center"><div class="slot it ${q}"><img src=assets/${g}.png></div><div style="display:flex;gap:2px;justify-content:center;margin-top:4px">${Array.from({length:n},(_,i)=>`<span style="width:14px;height:14px;border-radius:50%;border:2px solid #1a1426;background:${['#ff4a4a','#6fd0ff','#7cf05a'][i%3]}"></span>`).join('')}</div></div>`).join('')}
+<div style="position:absolute;left:120px;top:120px;width:120px;height:150px;text-align:center"><div style=font-size:80px>🧙</div><div class="o y" style=font-size:18px>Lv 22</div></div></div>
+<div class="row" style=margin-top:10px><div class="card" style="flex:1;padding:8px;text-align:center"><img src=assets/s_life.png width=26><div class=o>1,820</div></div><div class="card" style="flex:1;padding:8px;text-align:center"><img src=assets/s_dmg.png width=26><div class=o>+64%</div></div><div class="card" style="flex:1;padding:8px;text-align:center"><img src=assets/s_crit.png width=26><div class=o>18%</div></div><div class="card" style="flex:1;padding:8px;text-align:center"><img src=assets/s_arm.png width=26><div class=o>420</div></div></div>
+<div class=cap><span class=o>背包 23</span></div><div class=gg>${['q-r','q-m','q-n','q-u','q-m','q-n','q-m','q-r','q-n','q-m'].map((q,i)=>`<div class="slot it ${q}" style="width:62px;height:62px"><img src=assets/${i%2?'i_w_bladering':'i_a_crystalcrown'}.png width=40></div>`).join('')}</div></div>`,
+trig:()=>hdr('触发器')+`<div class=pg style="padding:4px 0"><div class=bar>${T('q-r sel','t_attack','攻击时')+T('q-u','t_kill','击杀时')+LK('Lv15')+LK('Lv35')}</div>
+<div class="card big" style="margin-top:22px"><div class=ti><img src=assets/t_attack.png><span class=o>攻击时</span><span class=stars>★★★★</span><div class="info o">i</div></div>
+<div class=socks>${K('sk','GemWhirl','glow')}<div class="ln on"></div>${K('sp','r_AreaOfEffect','glow')}<div class="ln on"></div>${K('sp','r_AttackSpeed','glow')}<div class=ln></div><div class="k em">＋</div></div><div class="pw o y" style=font-size:26px>⚔ 1240</div></div>
+<div class="inv" style="bottom:0!important;position:absolute"><div class=tabs><div class="btn yel o">全部</div><div class="btn gry o">技能</div><div class="btn gry o">辅助</div><div class="btn blu o" style=margin-left:auto>触发器 3</div></div>
+<div class=gg>${[['sp','r_Aftershock'],['sp','r_Pierce'],['sk','GemMeteor'],['sp','r_Chain'],['sk','GemFrostOrb'],['sp','r_Melee'],['sp','r_Split'],['sk','GemFirepot'],['sp','r_Thermal'],['sp','r_Boomerang']].map(a=>K(a[0],a[1])).join('')}</div></div></div>`,
+tree:()=>hdr('天赋')+`<div class=pg><div class="card" style="height:520px;position:relative;overflow:hidden">
+<svg style="position:absolute;inset:0" width=366 height=520><g stroke="#1a1426" stroke-width=10>${[[183,440,183,340],[183,340,90,260],[183,340,276,260],[90,260,90,160],[276,260,276,160],[183,340,183,200],[183,200,183,90]].map(a=>`<line x1=${a[0]} y1=${a[1]} x2=${a[2]} y2=${a[3]}/>`).join('')}</g><g stroke="#ffd23a" stroke-width=4>${[[183,440,183,340],[183,340,90,260],[90,260,90,160]].map(a=>`<line x1=${a[0]} y1=${a[1]} x2=${a[2]} y2=${a[3]}/>`).join('')}</g></svg>
+${[[183,440,'s_life','#ffd23a'],[183,340,'s_dmg','#ffd23a'],[90,260,'s_crit','#ffd23a'],[90,160,'s_spd','#ffd23a'],[276,260,'s_arm','#5a6aa8'],[276,160,'s_dodge','#3a4170'],[183,200,'s_soul','#5a6aa8'],[183,90,'s_find','#3a4170']].map(([x,y,i,c])=>`<div class=node style="left:${x-25}px;top:${y-25}px;background:${c}"><img src=assets/${i}.png></div>`).join('')}
+<div class="badge o" style="left:110px;top:150px;background:#1a1426;font-size:13px;padding:4px 8px">+8% 攻速</div></div>
+<div class=row style=margin-top:10px><div class="o y" style=font-size:18px>剩余 3 点</div><div class="btn gry o" style=margin-left:auto>重置</div></div></div>`,
+anvil:()=>hdr('铁砧')+`<div class=pg><div class=row style="justify-content:center;gap:8px"><div class="btn yel o">强化</div><div class="btn gry o">加词条</div><div class="btn gry o">分解</div></div>
+<div class=card style="padding:14px;margin-top:14px;text-align:center"><div class="slot it q-r" style="width:96px;height:96px;margin:auto"><img src=assets/i_w_bladering.png width=70></div><div class="o p" style="font-size:18px;margin-top:8px">裂魂之刃 T3</div>
+<div class=inner style="margin-top:10px;padding:8px;text-align:left;font-size:14px"><div class=o>⚔ 伤害 +32% <span class=g>➜ +40%</span></div><div class=o>⚡ 攻速 +12% <span class=g>➜ +15%</span></div><div class="o dim">🔒 暴击 +6%</div></div>
+<div class=row style="justify-content:center;margin-top:12px;font-size:16px"><span class="o p">◆ 120</span><span class="o y">✦ 4</span></div>
+<div class="btn grn o" style="width:200px;height:58px;font-size:22px;margin-top:12px">T3 ➜ T4</div></div>
+<div class="card" style="padding:10px;margin-top:14px"><div class=o>分解祭坛：回营地自动分解</div><div class="row" style="margin-top:8px;gap:6px">${['q-n','q-m','q-r'].map((q,i)=>`<div class="slot it ${q}" style="width:48px;height:48px;font-size:20px">${i<2?'✓':''}</div>`).join('')}<div class="btn red o" style="margin-left:auto">批量分解 12</div></div></div></div>`,
+ladder:()=>hdr('天梯')+`<div class=pg><div class=card style="padding:14px;text-align:center"><div class="o">最高</div><div class="o y" style=font-size:40px>第 48 层</div><div class="o dim">已解锁到 50 层</div></div>
+${[52,51,50,49,48].map((n,i)=>`<div class="card row" style="margin-top:10px;padding:8px 12px;${i<2?'filter:grayscale(1) brightness(.7)':''}"><div class="o" style="font-size:22px;width:70px">${n}</div><div class=o style=flex:1>${i<2?'🔒':['⭐⭐ 精英+','⭐ 怪更多','✅ 1:42'][i-2]}</div>${i==2?'<div class="btn yel o" style=height:40px>挑战</div>':''}</div>`).join('')}
+<div class="btn blu o" style="margin-top:14px;width:100%">◀ 返回战斗</div></div>`,
+prep:()=>`<div style="position:absolute;inset:0;background:url(assets/bg.jpg) center/cover;filter:blur(2px) brightness(.5)"></div>`+hdr('整备')+`<div class=pg>
+<div class=card style="padding:12px;text-align:center"><div class="o y" style=font-size:22px>第 27 层 · 暂停</div><div class=row style="justify-content:center;margin-top:8px"><span class=o>❤ 1,280/1,820</span><span class="o p">◆ +86</span><span class=o>📦 4</span></div></div>
+<div class=cap><span class=o>触发器（可直接换宝石）</span></div>
+<div class=card style="padding:10px">${[['t_attack','GemWhirl',['r_AreaOfEffect','r_AttackSpeed']],['t_kill','GemFirepot',['r_Thermal']]].map(([t,g,s])=>`<div class=row style="margin:6px 0"><img src=assets/${t}.png width=36>${K('sk',g)}${s.map(x=>K('sp',x)).join('')}</div>`).join('')}</div>
+<div class=cap><span class=o>本层拾取</span></div><div class=row>${['q-r','q-m','q-u','q-n'].map((q,i)=>`<div class="slot it ${q}"><img src=assets/${i%2?'i_w_bladering':'t_crit'}.png></div>`).join('')}</div>
+<div class=row style="margin-top:22px"><div class="btn red o" style="flex:1;height:58px;font-size:20px">撤退</div><div class="btn grn o" style="flex:2;height:58px;font-size:22px">继续 ▶</div></div></div>`,
+hud:()=>`<div style="position:absolute;inset:0;background:url(assets/bg.jpg) center/cover"></div>
+<div style="position:absolute;top:10px;left:10px;right:10px" class=row><div class="btn gry o" style="width:46px;height:46px;padding:0">⏸</div><div style=flex:1><div class=bar2><i style="width:70%;background:linear-gradient(#ff8a7a,#e8433a)"></i></div><div class=bar2 style="margin-top:4px;height:12px"><i style="width:45%;background:linear-gradient(#e08cff,#9a3fe0)"></i></div></div><div class="o y" style=font-size:18px>27层</div></div>
+<div style="position:absolute;top:70px;left:10px;right:10px"><div class=bar2 style=height:10px><i style="width:60%;background:#ffd23a"></i></div><div class="o dim" style="font-size:11px;text-align:center">Boss 进度</div></div>
+<div style="position:absolute;top:350px;left:170px;font-size:48px">🧙</div><div style="position:absolute;top:280px;left:80px;font-size:36px">👹</div><div style="position:absolute;top:420px;left:260px;font-size:36px">👹</div><div class="o y" style="position:absolute;top:320px;left:110px;font-size:22px">1,284!</div>
+<div style="position:absolute;bottom:110px;left:40px;width:120px;height:120px;border-radius:50%;border:4px solid #fff5;background:#fff1"><div style="position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:#fff6;border:3px solid #1a1426"></div></div>
+<div style="position:absolute;bottom:24px;left:10px;right:10px;display:flex;gap:8px;justify-content:center">${['t_attack','t_kill'].map((t,i)=>`<div class="slot it ${i?'q-u':'q-r'}" style="position:relative"><img src=assets/${t}.png><div style="position:absolute;inset:0;border-radius:11px;background:conic-gradient(#0008 ${i?'40%':'0%'},transparent 0)"></div></div>`).join('')}${LK('Lv15').replace('ts slot','slot it')}${LK('Lv35').replace('ts slot','slot it')}</div>
+<div class="btn red o" style="position:absolute;bottom:130px;right:24px;width:80px;height:80px;border-radius:50%;font-size:16px">冲刺</div>`,
+settings:()=>hdr('设置')+`<div class=pg>${[['音乐',1],['音效',1],['震动',0],['伤害数字',1],['自动刷',1]].map(([n,o])=>`<div class="card row" style="padding:10px 14px;margin-bottom:10px"><div class=o style="flex:1;font-size:17px">${n}</div><div class="tog ${o?'':'off'}"></div></div>`).join('')}
+<div class=cap><span class=o>手册</span></div><div class=row style=flex-wrap:wrap>${['触发器','装备','天梯','营地','已解锁'].map(n=>`<div class="btn blu o" style="height:44px">📖 ${n}</div>`).join('')}</div>
+<div class=row style="margin-top:20px"><div class="btn gry o" style=flex:1>导出存档</div><div class="btn red o" style=flex:1>重置</div></div></div>`};
+document.body.innerHTML=pages[P]()+(P=='hud'?'':nav());
+</script>
