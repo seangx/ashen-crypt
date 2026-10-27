@@ -2,6 +2,8 @@
 
 Claude Doc（用户读这份）：https://claude.ai/artifact/LjtfZ8po26HcYFhxPvnbeQ ；本文件是同步副本。
 设计线程 · 基于 main 93951f6（2026-10-25 20:04 拉取）。
+
+> **已被 design/system-v2.md 取代（2026-10-27）。**
 用户 12:03：“整体过一遍游戏系统”；12:05：“拉一下新代码再看”。
 
 ## 一句话
