@@ -910,7 +910,7 @@
    ]
   },
   "affixes": {
-      "trigSlot": { "text": "触发器栏位 +#", "stat": "trigSlotAff", "type": "S", "on": ["core", "hub"], "grp": "TrigSlot", "tiers": [[[1, 1], 300, 30, 999]] },
+      "trigSlot": { "text": "魂龛位 +#", "stat": "trigSlotAff", "type": "S", "on": ["weapon", "hub"], "grp": "TrigSlot", "tiers": [[[1, 1], 60, 40, 999]] },
    "CtrlWeaken": {"text": "受控敌人对你的伤害降低 #%", "stat": "ctrlWeaken", "type": "S", "on": ["hub"], "grp": "CtrlWeaken", "tiers": [[[5, 8], 1000, 8, 999], [[9, 13], 600, 30, 999], [[14, 20], 250, 60, 999]]},
    "CloseCap": {"text": "贴身减伤上限 +#%", "stat": "closeCap", "type": "S", "on": ["core"], "grp": "CloseCap", "tiers": [[[5, 8], 1000, 10, 999], [[9, 14], 500, 40, 999]]},
    "FarDR": {"text": "身边没有敌人时受到的伤害降低 #%", "stat": "farDR", "type": "S", "on": ["engine"], "grp": "FarDR", "tiers": [[[6, 10], 1000, 6, 999], [[11, 16], 600, 25, 999], [[17, 24], 250, 55, 999]]},

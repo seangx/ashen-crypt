@@ -1,99 +1,151 @@
 {
- "_说明": "触发器（design/spec-trigger-slots.md）。conds：条件 → 名字、短名、基础触发率 rate(0–1)、内置冷却 cd(秒)、est 估算每秒事件数（只用于面板秒伤）。sockW：稀有度 0 普通 / 1 魔法 / 2 稀有 → [最少孔, 权重…]。split：一个触发器两颗技能石时每颗的伤害倍率。fit：技能石推荐条件 = 本触发器时的倍率。slotLv：角色等级开第 2、3 栏。maxSlots：总上限。capPerSec：全局每秒最多触发次数（防循环）。dropShare：符文/技能石掉落时改掉触发器的占比。",
+ "_说明": "魂龛（design/system-v2 §4–5、spec-trigger-slots、lamp-v2 §5、uniques-audit §8）。conds：kind cast=【出手】/ resp=【响应】；mode charge 充能 / each 每次 / timer 时间 / state 状态 / always 常驻。cap 充能容量；per 每次事件加分；gap 每次型最短间隔；N 时间型间隔（按阶 T1–T5）；every 状态型间隔；thr 低血阈值；r 遇精英半径。skill：技能石 → proc 触发系数（每命中一个敌人）、cost [1 级, 满级] 每次灯火消耗（常驻是每秒）。supCost：辅助石消耗倍率（缺省 defCost）。affs：魂龛词条 [T1, T5]。",
  "conds": {
-  "attack": {
-   "n": "攻击时",
-   "s": "攻",
-   "rate": 0.2,
-   "cd": 0.6,
-   "est": 1.0,
-   "c": "#ff8a5a"
+  "cast": {
+   "n": "出手时",
+   "s": "出",
+   "kind": "cast",
+   "mode": "each",
+   "c": "#ff8a5a",
+   "d": "每次出手都放（主攻技能）"
+  },
+  "hit": {
+   "n": "命中时",
+   "s": "命",
+   "kind": "cast",
+   "mode": "charge",
+   "cap": 100,
+   "c": "#ffb04a",
+   "d": "出手技能命中充能，满了下一次出手放"
   },
   "crit": {
    "n": "暴击时",
    "s": "暴",
-   "rate": 1,
-   "cd": 1.2,
-   "est": 0.6,
-   "c": "#ffd23a"
+   "kind": "cast",
+   "mode": "charge",
+   "cap": 100,
+   "per": 30,
+   "c": "#ffd23a",
+   "d": "出手技能每次暴击 +30"
+  },
+  "ember": {
+   "n": "残灯时",
+   "s": "残",
+   "kind": "cast",
+   "mode": "charge",
+   "cap": 100,
+   "c": "#ff6a3a",
+   "d": "残灯时命中充能 ×2"
   },
   "kill": {
    "n": "击杀时",
    "s": "杀",
-   "rate": 1,
-   "cd": 0.8,
-   "est": 0.9,
-   "c": "#ff5a6a"
+   "kind": "resp",
+   "mode": "charge",
+   "cap": 100,
+   "per": [
+    10,
+    50,
+    100
+   ],
+   "c": "#ff5a6a",
+   "d": "普通 +10 / 精英 +50 / 首领 +100"
   },
   "struck": {
    "n": "受击时",
    "s": "伤",
-   "rate": 0.25,
-   "cd": 1.0,
-   "est": 0.25,
-   "c": "#9a7aff"
+   "kind": "resp",
+   "mode": "charge",
+   "cap": 100,
+   "per": 3,
+   "c": "#9a7aff",
+   "d": "每损失 1% 生命 +3"
   },
-  "dodge": {
-   "n": "闪避时",
-   "s": "闪",
-   "rate": 1,
-   "cd": 1.5,
-   "est": 0.2,
-   "c": "#6fe0ff"
+  "block": {
+   "n": "格挡时",
+   "s": "挡",
+   "kind": "resp",
+   "mode": "each",
+   "gap": 1,
+   "c": "#7ab0ff",
+   "d": "每次格挡都放（需要盾）"
   },
   "dash": {
    "n": "冲刺时",
    "s": "冲",
-   "rate": 1,
-   "cd": 0.5,
-   "est": 0.3,
-   "c": "#6fc8ff"
+   "kind": "resp",
+   "mode": "each",
+   "gap": 0.3,
+   "c": "#5ad0ff",
+   "d": "每次冲刺都放"
+  },
+  "timer": {
+   "n": "每 N 秒",
+   "s": "时",
+   "kind": "resp",
+   "mode": "timer",
+   "N": [
+    4,
+    4,
+    3.5,
+    3.5,
+    3
+   ],
+   "c": "#8ad06a",
+   "d": "按时间放"
+  },
+  "bright": {
+   "n": "明灯时",
+   "s": "明",
+   "kind": "resp",
+   "mode": "charge",
+   "cap": 100,
+   "per": 33,
+   "c": "#ffe9a0",
+   "d": "明灯时每秒充 33"
   },
   "low": {
    "n": "低血时",
    "s": "危",
-   "rate": 1,
-   "cd": 3,
-   "est": 0.1,
-   "c": "#e8433a",
-   "thr": 0.35
-  },
-  "timer": {
-   "n": "每 4 秒",
-   "s": "时",
-   "rate": 1,
-   "cd": 4,
-   "est": 0.25,
-   "c": "#8ef05a"
+   "kind": "resp",
+   "mode": "state",
+   "thr": 0.35,
+   "every": 3,
+   "c": "#e04a4a",
+   "d": "生命 < 35% 时每 3 秒"
   },
   "elite": {
    "n": "遇精英时",
    "s": "精",
-   "rate": 1,
-   "cd": 6,
-   "est": 0.1,
-   "c": "#e08cff",
-   "r": 64
+   "kind": "resp",
+   "mode": "state",
+   "r": 128,
+   "every": 6,
+   "c": "#c07aff",
+   "d": "精英 / 首领在附近时每 6 秒"
   },
   "always": {
    "n": "常驻",
-   "s": "常",
-   "rate": 1,
-   "cd": 0,
-   "est": 0,
-   "c": "#ffffff"
+   "s": "驻",
+   "kind": "resp",
+   "mode": "always",
+   "c": "#5ae0a0",
+   "d": "一直在：光环、游雷、旋风斩"
   }
  },
  "condW": {
-  "attack": 30,
-  "crit": 14,
-  "kill": 18,
+  "cast": 10,
+  "hit": 14,
+  "crit": 10,
+  "ember": 5,
+  "kill": 12,
   "struck": 8,
-  "dodge": 5,
-  "dash": 7,
-  "low": 3,
+  "block": 5,
+  "dash": 8,
   "timer": 10,
-  "elite": 4,
+  "bright": 5,
+  "low": 5,
+  "elite": 5,
   "always": 3
  },
  "rarW": [
@@ -103,50 +155,57 @@
  ],
  "sockW": [
   [
-   1,
-   70,
-   30
-  ],
-  [
    2,
    60,
-   40
+   30,
+   10
   ],
   [
    2,
    30,
-   50,
+   40,
+   30
+  ],
+  [
+   3,
+   40,
+   40,
    20
   ]
  ],
- "maxSock": 5,
- "legacyMax": 6,
+ "sockCap": [
+  3,
+  4,
+  5
+ ],
  "maxSkills": 2,
  "split": 0.7,
  "fit": 1.2,
  "fitCond": {
-  "GemWhirl": "attack",
-  "GemStab": "attack",
-  "GemBolt": "attack",
-  "GemScatter": "attack",
-  "GemSickle": "attack",
-  "GemFirepot": "kill",
+  "GemStab": "cast",
+  "GemBolt": "cast",
+  "GemSickle": "cast",
+  "GemScatter": "crit",
+  "GemTaser": "crit",
+  "GemWhirl": "always",
+  "GemRam": "dash",
+  "GemSpark": "always",
+  "GemFrostOrb": "timer",
   "GemPlague": "kill",
+  "GemFirepot": "kill",
+  "GemShield": "block",
   "GemNova": "struck",
   "GemFrostNova": "struck",
-  "GemMeteor": "crit",
-  "GemFrostOrb": "crit",
+  "GemMeteor": "hit",
   "GemTrap": "dash",
-  "GemRam": "dash",
-  "GemBeam": "timer",
-  "GemFlame": "timer",
-  "GemTaser": "crit",
-  "GemSpark": "always",
+  "GemFlame": "elite",
+  "GemBeam": "elite",
   "GemMiasma": "always"
  },
  "alwaysOnly": [
   "GemMiasma",
-  "GemSpark"
+  "GemSpark",
+  "GemWhirl"
  ],
  "slotLv": [
   15,
@@ -154,6 +213,10 @@
  ],
  "maxSlots": 4,
  "capPerSec": 12,
+ "perCastCap": 40,
+ "store": 1,
+ "lampFloor": 0.1,
+ "sustain": 2,
  "dropShare": 0.12,
  "basic": {
   "melee": [
@@ -173,93 +236,422 @@
    "PlasmaNova"
   ]
  },
- "rateAff": [
-  3,
-  15
- ],
- "cdAff": [
-  4,
-  20
- ],
- "dmgAff": [
-  8,
-  40
+ "basicMul": 0.84,
+ "basicProcK": 24,
+ "skill": {
+  "GemStab": {
+   "proc": 25,
+   "cost": [
+    0.3,
+    0.5
+   ]
+  },
+  "GemWhirl": {
+   "proc": 2,
+   "cost": [
+    0.6,
+    1.0
+   ],
+   "trigCost": 3
+  },
+  "GemRam": {
+   "proc": 12,
+   "cost": [
+    2,
+    3
+   ]
+  },
+  "GemBolt": {
+   "proc": 25,
+   "cost": [
+    0.3,
+    0.5
+   ]
+  },
+  "GemSickle": {
+   "proc": 12,
+   "cost": [
+    0.4,
+    0.6
+   ]
+  },
+  "GemScatter": {
+   "proc": 12,
+   "cost": [
+    0.5,
+    0.8
+   ]
+  },
+  "GemTaser": {
+   "proc": 25,
+   "cost": [
+    2,
+    3
+   ]
+  },
+  "GemSpark": {
+   "proc": 5,
+   "cost": [
+    0.8,
+    1.2
+   ],
+   "trigCost": 3
+  },
+  "GemFrostOrb": {
+   "proc": 25,
+   "cost": [
+    4,
+    6
+   ]
+  },
+  "GemPlague": {
+   "proc": 12,
+   "cost": [
+    2,
+    3
+   ]
+  },
+  "GemFirepot": {
+   "proc": 5,
+   "cost": [
+    3,
+    4
+   ]
+  },
+  "GemShield": {
+   "proc": 12,
+   "cost": [
+    3,
+    4
+   ]
+  },
+  "GemNova": {
+   "proc": 5,
+   "cost": [
+    3,
+    4
+   ]
+  },
+  "GemFrostNova": {
+   "proc": 5,
+   "cost": [
+    4,
+    5
+   ]
+  },
+  "GemMeteor": {
+   "proc": 5,
+   "cost": [
+    6,
+    8
+   ]
+  },
+  "GemTrap": {
+   "proc": 5,
+   "cost": [
+    3,
+    4
+   ]
+  },
+  "GemFlame": {
+   "proc": 2,
+   "cost": [
+    4,
+    5
+   ],
+   "castCost": 0.4
+  },
+  "GemBeam": {
+   "proc": 2,
+   "cost": [
+    4,
+    5
+   ],
+   "castCost": 0.4
+  },
+  "GemMiasma": {
+   "proc": 0,
+   "cost": [
+    0.5,
+    0.8
+   ]
+  }
+ },
+ "defCost": 1.2,
+ "supCost": {
+  "Pierce": 1.2,
+  "Chain": 1.3,
+  "Split": 1.4,
+  "Boomerang": 1.2,
+  "RapidProjectiles": 1.3,
+  "Persist": 1.2,
+  "Velocity": 1.1,
+  "Comet": 1.2,
+  "AreaOfEffect": 1.2,
+  "AdditionalAttacks": 1.5,
+  "AttackSpeed": 1.2,
+  "Range": 1.1,
+  "Knockback": 1.1,
+  "Aftershock": 1.3,
+  "Agony": 1.3
+ },
+ "affs": {
+  "gain": {
+   "n": "充能获取 +{v}%",
+   "r": [
+    5,
+    30
+   ]
+  },
+  "cap": {
+   "n": "容量 −{v}%",
+   "r": [
+    4,
+    20
+   ]
+  },
+  "gap": {
+   "n": "间隔 −{v}s",
+   "r": [
+    0.1,
+    0.5
+   ],
+   "dec": 1
+  },
+  "dmg": {
+   "n": "技能伤害 +{v}%",
+   "r": [
+    8,
+    40
+   ]
+  },
+  "aoe": {
+   "n": "范围 +{v}%",
+   "r": [
+    5,
+    20
+   ]
+  },
+  "extra": {
+   "n": "额外施放 {v}%",
+   "r": [
+    3,
+    12
+   ]
+  },
+  "crit": {
+   "n": "技能暴击 +{v}%",
+   "r": [
+    3,
+    12
+   ]
+  },
+  "lampOn": {
+   "n": "触发回灯火 +{v}",
+   "r": [
+    0.2,
+    1
+   ],
+   "dec": 1
+  },
+  "lowThr": {
+   "n": "低血阈值 +{v}%",
+   "r": [
+    3,
+    10
+   ]
+  },
+  "costLess": {
+   "n": "技能消耗 −{v}%",
+   "r": [
+    4,
+    25
+   ]
+  },
+  "supLv": {
+   "n": "辅助石 +1 级",
+   "r": [
+    1,
+    1
+   ],
+   "rare": 1
+  },
+  "burnLamp": {
+   "n": "燃灯：每次多耗 {v} 灯火，伤害 +{w}%",
+   "r": [
+    1,
+    3
+   ],
+   "w": [
+    40,
+    120
+   ],
+   "rare": 1,
+   "dec": 1
+  }
+ },
+ "affCap": {
+  "cap": 50,
+  "extra": 25,
+  "timerMin": 1.5
+ },
+ "tierIlvl": [
+  1,
+  10,
+  25,
+  40,
+  60
  ],
  "uniques": [
   {
-   "k": "echoBell",
-   "n": "回响之钟",
-   "c": "attack",
-   "sock": 5,
-   "affs": {
-    "rate": 20
-   },
+   "k": "echo",
+   "n": "回声",
+   "c": "timer",
+   "sock": 1,
+   "N": 4,
    "fx": {
-    "maxSkills": 3
+    "echo": 1
    },
-   "d": "可插 3 颗技能石"
+   "d": "放出时，右边一个魂龛也立刻放一次（不清它的充能）"
   },
   {
-   "k": "bloodOath",
+   "k": "hunter",
+   "n": "猎首",
+   "c": "elite",
+   "sock": 3,
+   "fx": {
+    "eliteKill": 1
+   },
+   "d": "击杀精英时立刻再放一次"
+  },
+  {
+   "k": "blood",
    "n": "血誓",
    "c": "low",
-   "sock": 4,
-   "affs": {
-    "dmg": 80,
-    "cd": 40
-   },
-   "fx": {},
-   "d": "低血时伤害 +80%"
-  },
-  {
-   "k": "stormEye",
-   "n": "风暴之眼",
-   "c": "timer",
-   "sock": 4,
-   "affs": {
-    "cd": 35
-   },
+   "sock": 3,
    "fx": {
-    "split": 1
+    "thr": 0.5,
+    "lifeCost": 0.05,
+    "dmg": 80
    },
-   "d": "两颗技能石不分流"
+   "d": "阈值 50%；不耗灯火，改耗 5% 当前生命；技能伤害 +80%"
   },
   {
-   "k": "headHunter",
-   "n": "猎头者",
+   "k": "thunder",
+   "n": "雷鸣之心",
+   "c": "crit",
+   "sock": 3,
+   "fx": {
+    "alwaysCrit": 1,
+    "capMul": 1.5
+   },
+   "d": "必定暴击；容量 +50%"
+  },
+  {
+   "k": "corpse",
+   "n": "尸山",
    "c": "kill",
    "sock": 4,
-   "affs": {
-    "dmg": 30,
-    "cd": 25
-   },
    "fx": {
-    "split": 0.9
+    "stack": 3,
+    "stackMax": 20,
+    "stackT": 5
    },
-   "d": "分流只 −10%"
+   "d": "每次放出伤害 +3%，最多 20 层，5 秒没放清零"
   },
   {
-   "k": "mirrorVeil",
-   "n": "镜之帷",
-   "c": "dodge",
-   "sock": 5,
-   "affs": {
-    "cd": 50,
-    "dmg": 40
+   "k": "boomer",
+   "n": "回旋之刃",
+   "c": "hit",
+   "sock": 3,
+   "fx": {
+    "fixed": 34,
+    "dmg": 30
    },
-   "fx": {},
-   "d": "闪避冷却减半"
+   "d": "每次出手固定 +34 充能（3 次必放）；技能伤害 +30%"
+  },
+  {
+   "k": "unmoved",
+   "n": "不动",
+   "c": "struck",
+   "sock": 4,
+   "fx": {
+    "stillMul": 2
+   },
+   "d": "站立 1 秒以上充能 ×2"
+  },
+  {
+   "k": "after",
+   "n": "残影",
+   "c": "dash",
+   "sock": 3,
+   "fx": {
+    "again": 1
+   },
+   "d": "1 秒后再放一次"
+  },
+  {
+   "k": "night",
+   "n": "永夜灯",
+   "c": "always",
+   "sock": 4,
+   "fx": {
+    "aoe": 40,
+    "burn": 10,
+    "emberAoe": 40
+   },
+   "d": "常驻范围 +40%；灯火燃烧 +10%；残灯时范围再 +40%"
+  },
+  {
+   "k": "twins",
+   "n": "双子",
+   "c": "block",
+   "sock": 5,
+   "fx": {
+    "maxSkills": 3,
+    "split": 0.85
+   },
+   "d": "可以插 3 颗技能石，分流只 −15%"
+  },
+  {
+   "k": "rotate",
+   "n": "轮转",
+   "c": "cast",
+   "sock": 4,
+   "fx": {
+    "rotate": 1,
+    "split": 1
+   },
+   "d": "插 2 颗技能石轮流放，不分流"
+  },
+  {
+   "k": "overflow",
+   "n": "满溢",
+   "c": "hit",
+   "sock": 4,
+   "fx": {
+    "store": 3
+   },
+   "d": "溢出的充能全部保留，最多存 3 次，下一次出手起每次放一个"
   }
  ],
  "uniqueChance": 0.03,
  "uniqueIlvl": 20,
- "sockCap": [
-  3,
-  4,
-  5
- ],
- "affRoll": [
-  0.8,
-  1
- ]
+ "lampStates": {
+  "bright": {
+   "min": 0.7,
+   "n": "明灯",
+   "shieldRegen": 30,
+   "pickup": 50
+  },
+  "ember": {
+   "max": 0.3,
+   "n": "残灯",
+   "more": 25,
+   "crit": 5,
+   "taken": 20,
+   "lightMin": 50,
+   "lightMax": 180
+  }
+ }
 }

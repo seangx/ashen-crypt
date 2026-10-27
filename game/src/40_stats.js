@@ -49,7 +49,7 @@ function computeStats(eq = S.equip) {
   // 原来的灵障并进护盾；天赋/独特里“护甲总降”的代价改成护盾总降
   P.armorOut = P.armor; // 盾扔出去时没有格挡
   if (FL.martyrArmor && eq.shield) P.armorOut = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) - qv(baseOf(eq.shield).armor || 0, eq.shield.q) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100))); // 殉道者之盾：盾在飞时不算盾的护甲
-  const blk = (A.block || 0) + (TA.block || 0); if (eq.shield && blk) P.armor = Math.round(P.armor * (1 + blk / 100)); // 格挡：盾在手上时护甲提高
+  const blk = (A.block || 0) + (TA.block || 0); P.blk = blk; if (eq.shield && blk) P.armor = Math.round(P.armor * (1 + blk / 100)); // 格挡：盾在手上时护甲提高
   P.shield = Math.round((PLAYER.shield + (base.deflect || 0) + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
   P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0) + (TA.shieldRegenPct || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
   P.life = Math.max(1, Math.round((PLAYER.life + PLAYER.lifePerLevel * ((S.level || 1) - 1) + (A.life || 0) + (TA.life || 0)) * (1 + ((A.lifeInc || 0) + (TA.lifeInc || 0)) / 100) * (TM.life ?? 1))); // 天赋代价可以是生命总降

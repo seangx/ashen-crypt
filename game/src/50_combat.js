@@ -115,7 +115,7 @@ const fatigue = m => m.boss ? Math.pow(MECH.fatigueStep, m.fat) : 1;
 function mitigate(m, e, d) { return d * (1 - ((m.res[e] || 0) - shockRes(m, e) - (m.shredT > 0 ? m.shred[e] || 0 : 0) - (STATS.flag.corrode && m.rad.length ? RL.corrode.res : 0) - ((STATS.raw && STATS.raw['pen:' + e]) || 0)) / 100) * fatigue(m); }
 // 暴击率超过 100% 时可以多重暴击，每多一重几率 ×0.8
 function rollCrit(W) {
-  let c = W.crit, mult = 1;
+  let c = W.crit + lampCritAdd(), mult = 1;
   const decay = STATS.flag.multicrit ? 1 : MECH.multicritDecay;
   const roll = () => rnd();
   while (c > 0 && roll() < c && mult < 1e6) { mult *= W.critMult; c = (c - 1) * decay; }
@@ -125,8 +125,8 @@ function rollCrit(W) {
 function hitMob(m, W, o = {}) {
   if (m.dead) return 0;
   const cm = W.cont ? 1 : rollCrit(W); const crit = cm > 1;
-  if (W.basic) trigEvent('attack', W); if (crit) trigEvent('crit', W);
-  let mul = (o.mul || 1) * cm;
+  trigHit(W, crit);
+  let mul = (o.mul || 1) * cm * lampMore();
   if (m.boss) mul *= W.bossMore;
   if (W.perDashInc) mul *= 1 + W.perDashInc * Math.floor(player.dash);
   if (W.doubleChance && rnd() < W.doubleChance) mul *= 2;
@@ -211,7 +211,7 @@ function shatter(m) {
 }
 function kill(m) {
   if (m.dead) return;
-  m.dead = true; S.stats.kills++; trigEvent('kill');
+  m.dead = true; S.stats.kills++; trigKill(m);
   fx({ t: 'die', x: m.x, y: m.y, boss: m.boss, elite: m.elite, type: m.type });
   sfx(m.boss ? 'bossdie' : 'kill');
   if (!RUN) return;
@@ -244,6 +244,7 @@ function kill(m) {
     for (let i = 0; i < BL.runes; i++) dropRune(m, L + BL.runeIlvlBonus);
     S.stats.bosses++; RUN.descent.floors++; (RUN.descent.mins = RUN.descent.mins || []).push([RUN.base, Math.round(RUN.descent.minHp * 100), RUN.base >= RUN.descent.prevMax - 1]); // 每层最低血量（模拟用）
     if (RUN.base >= S.maxDepth && RUN.base < PROG.run.maxDepth) S.maxDepth = RUN.base + 1;
+    if (RUN.mode !== 'ladder' && RUN.base >= (S.maxDepth || 1) - 1) reelMilestone(RUN.base); // 骸骨轮盘：新纪录的 5 的倍数层
     if (RUN.base >= PROG.run.maxDepth) { RUN.result = 'win'; RUN.ending = 1.6; }
     else if (RUN.base >= RUN.descent.prevMax - 1 && RUN.descent.minHp * 100 < (meleeW() && SOUL.returnHpMelee != null ? SOUL.returnHpMelee : SOUL.returnHp)) { RUN.result = 'retreat'; RUN.ending = 1.6; } // 最深层附近打得太险：见好就收
     else RUN.next = SOUL.nextFloorDelay; // 没到底就接着往下走
@@ -261,7 +262,7 @@ function collect(dp) {
   else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; unlockEvent('gainShard'); if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
   else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; unlockEvent('gainGlyph'); if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
 
-  else if (dp.kind === 'trig') { S.trigBag.unshift(dp.trig); if (G.ui) G.ui.feed('触发器 · ' + trigName(dp.trig), COL.emberHi); }
+  else if (dp.kind === 'trig') { S.trigBag.unshift(dp.trig); unlockEvent('gotTrig'); if (G.ui) G.ui.feed('魂龛 · ' + trigName(dp.trig), COL.emberHi); }
   else if (dp.kind === 'mod') { S.mods.push(dp.mod); unlockEvent('pickRune'); g && g.mods.push(dp.mod); if (G.ui) G.ui.feed(MOD_BY[dp.mod.mid].n, COL.cyan, 'mod_' + dp.mod.mid); }
   fx({ t: 'pick', x: dp.x, y: dp.y, kind: dp.kind });
   sfx(dp.kind === 'shard' || dp.kind === 'glyph' ? 'die' : 'pick');
@@ -328,12 +329,13 @@ function shieldOnHit() {
 function hurtPlayer(d, el, ck = 1) {
   if (!RUN || RUN.ending || player.dashT > 0 || player.hurtT > 0) return;
   if (rnd() * 100 < STATS.dodge) {
-    fx({ t: 'text', x: player.x, y: player.y - 16, s: '闪避', c: COL.dim }); trigEvent('dodge');
+    fx({ t: 'text', x: player.x, y: player.y - 16, s: '闪避', c: COL.dim });
     if (STATS.flag.dodgeSpikes) for (const m of mobs) if (!m.dead && dist2(m, player) < RL.dodgeSpikes.r ** 2) { damage(m, mitigate(m, 'kin', STATS.shield * (RL.dodgeSpikes.shieldPct ?? RL.dodgeSpikes.armorPct) / 100), 'kin', false); fx({ t: 'spike', x: m.x, y: m.y, el: 'kin' }); }
     return;
   }
-  const FL = STATS.flag; trigEvent('struck');
-  d *= ck * genericTaken(); /* 控场、贴身、远离：流派减伤这一格，各自相乘 */
+  const FL = STATS.flag;
+  d *= ck * genericTaken() * lampTaken();
+  if (STATS.blockCh && rnd() < STATS.blockCh) { d *= 0.5; fx({ t: 'text', x: player.x, y: player.y - 16, s: '格挡', c: '#7ab0ff' }); trigEach('block'); } // 格挡（defense-v3 §3.6 简化：挡住减半） /* 控场、贴身、远离：流派减伤这一格，各自相乘 */
   if (FL.still && isStill()) d *= 1 - RL.still.takenLess / 100;
   if (FL.rotFlesh) { const R = RL.rotFlesh; let n = 0; for (const x of mobs) if (!x.dead && x.rad.length && dist2(x, player) < R.r * R.r) n++; d *= 1 - Math.min(R.max, n * R.per) / 100; }
   const tk = FL.takenKin || 0;
@@ -345,7 +347,7 @@ function hurtPlayer(d, el, ck = 1) {
   if (RUN.gd) RUN.gd[player.closeN > 0 ? 'hitC' : 'hitF'] += d / STATS.life; /* 模拟统计：贴身 / 不贴身时的承伤（按生命上限的比例） */
   if (player.shield > 0) { const a = Math.min(player.shield, d); player.shield -= a; d -= a; fx({ t: 'shield', x: player.x, y: player.y }); }
   if (d > 0 && FL.absorb) player.shield = Math.min(STATS.shield, player.shield + d * RL.absorb.pct / 100); // 圣盾：扣到生命的一部分转成护盾
-  if (d > 0) { player.life -= d; player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); hurtFeedback(d); }
+  if (d > 0) { player.life -= d; trigStruck(d); player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); hurtFeedback(d); }
   // 荆棘甲：受击时伤害周围
   for (const W of STATS.weapons) if (W && W.thorns > 0) { const r = MECH.thornsR || 56; fx({ t: 'ring', x: player.x, y: player.y - 4, r, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (r + m.size) ** 2) hitMob(m, W, { mul: W.thorns / 100 }); } // 荆棘符文
   for (const W of STATS.weapons) if (W && W.form === 'reflect') { fx({ t: 'ring', x: player.x, y: player.y - 4, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); }
@@ -371,7 +373,7 @@ function tryDash(to = mouse, byAuto = false) {
     if (RUN) engineBlast(E, player.x, player.y, Math.min(E.aoeR || 48, 70));
     return;
   }
-  trigEvent('dash'); const T = PLAYER.dashTime; player.dashT = T; const DD = PLAYER.dashDist * (STATS.flag.whirlHeart ? WH.dashMul : 1); player.dvx = dx / dl * DD / T; player.dvy = dy / dl * DD / T; // 旋风之心：短距离突进
+  trigEach('dash'); const T = PLAYER.dashTime; player.dashT = T; const DD = PLAYER.dashDist * (STATS.flag.whirlHeart ? WH.dashMul : 1); player.dvx = dx / dl * DD / T; player.dvy = dy / dl * DD / T; // 旋风之心：短距离突进
   if (!RUN || !E) return;
   if (kind === 'trail') player.trail = 1;
   if (kind === 'nova') engineBlast(E, player.x, player.y, E.aoeR || 80);
@@ -582,7 +584,7 @@ function logic(dt) {
   if (player.fbT > 0) player.fbT -= dt;
   if (RUN) { closeStep(); if (RUN.gd) { RUN.gd.t += dt - 1 / 60; if (player.closeN > 0) RUN.gd.closeT += dt - 1 / 60; } }
   if (player.guardT > 0) player.guardT -= dt;
-  player.shield = Math.min(P.shield, player.shield + P.shieldRegen * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
+  player.shield = Math.min(P.shield, player.shield + P.shieldRegen * lampShieldRegen() * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
   player.swing = player.swing.map(v => Math.max(0, v - dt));
   player.orbitA += dt * 5 * (1 + 0.12 * Math.max(player.spin[0].n, player.spin[1].n)); // 旋转层数越高转得越快
   if (!RUN) { player.life = P.life; player.shield = P.shield; player.soul = P.soulMax; return; }
@@ -669,7 +671,7 @@ function logic(dt) {
       else if (st.n < W.stackMax && player.soul > 0 && (st.g += dt * WH.gainPerSec) >= 1) { st.g -= 1; st.n++; } // 魂火空了不再涨层
     }
     player.wcd[i] -= dt * pChillK();
-    if (player.wcd[i] <= 0) { if (fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
+    if (player.wcd[i] <= 0) { if (W.basic ? castAttack(W, i) : fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
   });
   trigStep(dt); stepProjs(dt);
   if (STATS.shieldW) stepShieldThrow(STATS.shieldW, dt); else if (STATS.armorHeld != null) STATS.armor = STATS.armorHeld;

@@ -238,7 +238,7 @@ class World extends Phaser.Scene {
     const fl = 1 + Math.sin(t * 9) * .04 + Math.sin(t * 23) * .03;
     const WARM = 0xff9a4a, lights = SC.map(s => ({ x: s.x, y: s.y + 6, r2: (64 * fl) ** 2, i: .75, c: WARM }));
     for (const d of decoL) if (lights.length < 8) lights.push({ x: d.x, y: d.y + 2, r2: ((d.s === 2 ? 70 : 34) * fl) ** 2, i: d.s === 2 ? .75 : .5, c: WARM });
-    lights.push({ x: player.x + player.face * 4, y: player.y - 6, r2: (110 * fl) ** 2, i: .38, c: 0x7fd0e0 }); // 提灯亡魂身上的青色魂光
+    lights.push({ x: player.x + player.face * 4, y: player.y - 6, r2: (lampLightR() * fl) ** 2, i: RUN ? .55 : .38, c: 0x7fd0e0 }); // 提灯亡魂身上的青色魂光；下行时光照半径跟着灯火走（lamp-v2 §3）
     if (!RUN) { const gt = FAC_BY.gate; lights.push({ x: gt.x - 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: gt.x + 36, y: gt.y - 14, r2: (46 * fl) ** 2, i: .6, c: WARM }, { x: 240, y: 178, r2: (80 * fl) ** 2, i: .75, c: 0xffa050 });
       const FC = { altar: 0xc08aff, runes: 0x57e0d0, stele: 0xffd36a };
       for (const id of ['altar', 'runes', 'stele', 'chest', 'anvil', 'statue']) if (open[id]) lights.push({ x: FAC_BY[id].x, y: FAC_BY[id].y - 12, r2: id === 'altar' ? 900 : 620, i: .35, c: FC[id] || 0xd0a070 }); }

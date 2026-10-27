@@ -182,5 +182,6 @@
   "_说明": "独特装备保底词条的档位：max = 按词条族的最高档往下数（不看物品等级）；ilvl = 从当前物品等级允许的最高档往下数",
   "mode": "ilvl"
  },
- "stashCap": 60
+ "stashCap": 60,
+ "reels": { "_说明": "骸骨轮盘（unique-reels.md §7）：主线最高层每 every 层一次独特三选一", "every": 5, "choices": 3, "ownedMul": 0.5, "skipShards": 15, "rerollGlyph": "hope", "jackpot": 0.02 }
 }

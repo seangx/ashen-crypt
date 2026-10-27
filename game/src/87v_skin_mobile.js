@@ -33,7 +33,7 @@ MobileUI.prototype.updateCamp = function () {
   const show = !RUN && !this.winId; this.campC.setVisible(show); if (!show) return;
   const F = [['ladder', '天梯', 'i_ladder'], ['salvage', '分解', 'shard'], ['help', '手册', 'i_book']];
   const ok = id => !MENU.some(m => m.id === id) || unlocked(id);
-  const key = [F.map(f => +ok(f[0])).join(''), S.depth, S.maxDepth, S.auto.lock, S.auto.loop, Math.round(STATS.dps || 0)].join('|');
+  const key = [F.map(f => +ok(f[0])).join(''), S.depth, S.maxDepth, S.auto.lock, S.auto.loop, Math.round(STATS.dps || 0), (S.reelsPending || []).length].join('|');
   if (key === this.campKey) return; this.campKey = key;
   const c = this.campC; c.removeAll(true); const pw = W - 16;
   bub(this, c, 8, 4, pw, 132, 0x46538a, { r: 10 });
@@ -43,6 +43,7 @@ MobileUI.prototype.updateCamp = function () {
   mkBtn(this, c, W - 50, 26, 30, 26, '>', () => { if (S.depth < S.maxDepth) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.campKey = ''; }, { disabled: S.depth >= S.maxDepth });
   T(this, W / 2, 56, `最深 ${S.maxDepth - 1} 层 · 战力 ${fmt(Math.round(STATS.dps || 0))}`, { size: 8, color: '#ffffff', align: 'center', parent: c });
   mkBtn(this, c, 16, 70, pw - 16, 32, '开 战 !', () => startRun(), { style: 'w' });
+  const rp = (S.reelsPending || []).length; if (rp) mkBtn(this, c, W - 74, 8, 60, 18, `轮盘 ×${rp}`, () => this.openWin('reels'), { size: 8, style: 'w' }); // 未开的骸骨轮盘
   mkBtn(this, c, 16, 106, (pw - 20) / 2, 24, S.auto.loop ? '停止自动' : '自动刷', () => { this.toggleLoop(); this.campKey = ''; }, { size: 8 });
   const bw = Math.floor((pw - 20) / 2 / F.length);
   F.forEach(([id, n, ic], i) => mkBtn(this, c, 20 + (pw - 20) / 2 + i * bw, 106, bw - 2, 24, n, () => { if (!ok(id)) return toast(`${n}：${unlockText(id)}`); this.openWin(id); }, { size: 8, disabled: !ok(id) }));

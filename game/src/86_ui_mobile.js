@@ -134,7 +134,7 @@ class MobileUI extends UI {
     const set = (t, s) => { if (t.text !== s) t.setText(s); };
     set(this.hpT, String(Math.ceil(player.life))); set(this.defT, P.shield ? '+' + Math.ceil(player.shield) : '');
     const n = player.closeN || 0; set(this.gdT, !RUN || this.winId ? '' : n > 0 ? `贴 −${Math.round(Math.min(P.closeCap, n * P.closePer))}%` : player.farOK && P.farDR > 0 ? `远 −${P.farDR}%` : '');
-    set(this.soulT, Math.round(sf * 100) + '%'); set(this.burnT, !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul)}/秒`);
+    set(this.soulT, (RUN && TRIGS_RT.lampState !== 'dim' ? LST[TRIGS_RT.lampState].n.slice(0, 1) : '') + Math.round(sf * 100) + '%'); // 灯态：明 / 残（lamp-v2 §4） set(this.burnT, !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul)}/秒`);
     const wi = P.weapons.findIndex(w => w && w.whirl); const sn = wi >= 0 ? player.spin[wi].n : 0; this.spinC.setVisible(sn > 0); if (sn > 0) set(this.spinT, String(sn));
     // 顶栏
     const L = RUN ? RUN.L : S.depth;
@@ -193,7 +193,7 @@ class MobileUI extends UI {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) { this.decoId = null; return; }
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
-    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk', 'trig', 'tbag'].includes(id);
+    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk', 'trig', 'tbag', 'reels'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
     const y = native ? MTOP + 8 : Math.round(clamp((H - NAV_H - h) / 2, MTOP + 12, H)), c = this.add.container(this.panMax ? 4 - this.pan : Math.round((W - w) / 2), y).setDepth(100); this.winC = c; c.w = w;
@@ -201,7 +201,7 @@ class MobileUI extends UI {
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
-    const title = { trig: '触发器', tbag: '换触发器', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
+    const title = { trig: '魂龛', tbag: '换魂龛', reels: '骸骨轮盘', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: '#2a1306', shadow: false, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });

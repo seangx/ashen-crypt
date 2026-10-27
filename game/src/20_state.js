@@ -21,7 +21,7 @@ function load(data) {
   let raw = data && data.save;
   if (!raw) try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { }
   S = freshState();
-  if (raw) try { const o = JSON.parse(raw); if (o.v === 4) S = Object.assign(S, o); } catch (e) { }
+  if (raw) try { const o = JSON.parse(raw); if (o.v === 4 && (o.gemV || 0) >= 3) S = Object.assign(S, o); else if (o.v === 4) { S.wiped = 1; const tell = () => G.ui ? toast('地窖已重塑，旧的旅程已封存', COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); } } catch (e) { } // 魂龛改版不兼容老存档（system-v2 §11）：直接清档
   S.shards ??= {}; S.glyphs = { ...freshState().glyphs, ...(S.glyphs || {}) };
   // 新做装系统之前的存档：丢掉骰子和魂萃词条，装备补上锻造潜力，独特装备补上传奇潜力
   if (!S.craftV) {
@@ -54,7 +54,7 @@ function load(data) {
     S.offV = 1; }
   S.equip.gem ??= null;
   if (!S.gemV) { migrateGems(); S.gemV = 1; }
-  if (S.gemV < 2) migrateTrigs(); S.trigs ??= [null, null, null, null]; S.trigBag ??= [];
+  if ((S.gemV || 0) < 3) starterTrigs(); S.trigs ??= [null, null, null, null]; S.trigBag ??= [];
   if (!S.legacyV) migrateLegacy(); delete S.chips;
 }
 // 遗留系统清理（spec-legacy-cleanup §4）：墓图、命盘、印记、体魄 / 时砂、铁骨 / 流沙力场。东西不凭空消失：退成碎片或换部位
@@ -128,5 +128,5 @@ function starterKit() {
   if (K.shield) S.equip.shield = newItem('shield', K.shield, 1, 0, 0);
   if (PROG.unlocks.wr && PROG.unlocks.wr.event && !UNLOCK_ALL) { /* 渐进式披露：副手由第一只 Boss 宝箱保底给 */ } else { const OH = DATA.mechanics.offhand, tg = itemTags(g), b = (OH.starterByTag.find(([t]) => tg.includes(t)) || [0, OH.fallback])[1]; S.equip.wr = newItem('off', b, 1, 0, 0); } // 新档：按主手标签送一件普通副手
   if (K.hub) { const h = newItem('hub', K.hub, 1, 0, 0); h.sock = Math.max(1, h.sock); h.mods = Array(h.sock).fill(null); S.equip.hub = h; }
-  migrateTrigs(true); // 触发器：起始骨矢 + 符文放进一个 2 孔“攻击时”
+  starterTrigs(); // 魂龛：一个普通“命中时”2 孔 + 一颗按主手类别的技能石
 }
