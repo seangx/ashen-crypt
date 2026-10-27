@@ -100,8 +100,8 @@ class MobileUI extends UI {
     this.input.on('pointerdown', (p, over) => {
       if (this.winId || this.stickP != null || (over && over.length)) return;
       const x = p.worldX, y = p.worldY; // 逻辑像素（相机已经按 Z 缩放）
-      if (y < MTOP || y > H - NAV_H) return; // 整个战斗区：顶栏以下、导航以上（按钮、HUD 控件由 over 排除）
-      this.stickP = p.id; this.stickO = { x: clamp(x, STICK_R + 4, W - STICK_R - 4), y: clamp(y, MTOP + STICK_R + 4, H - NAV_H - STICK_R - 4) }; this.stickK = { x, y }; this.stickA = 1; STICK.on = true; STICK.x = STICK.y = 0; this.stickMove({ worldX: x, worldY: y }); ac(); // 圈不出屏，中心尽量贴着手指
+      if (y < MTOP || y > H - this.botH()) return; // 整个战斗区：顶栏以下、导航以上（按钮、HUD 控件由 over 排除）
+      this.stickP = p.id; this.stickO = { x: clamp(x, STICK_R + 4, W - STICK_R - 4), y: clamp(y, MTOP + STICK_R + 4, H - this.botH() - STICK_R - 4) }; this.stickK = { x, y }; this.stickA = 1; STICK.on = true; STICK.x = STICK.y = 0; this.stickMove({ worldX: x, worldY: y }); ac(); // 圈不出屏，中心尽量贴着手指
     });
     this.stickMove = p => {
       let dx = p.worldX - this.stickO.x, dy = p.worldY - this.stickO.y; const l = Math.hypot(dx, dy); if (l > STICK_R) { dx *= STICK_R / l; dy *= STICK_R / l; }
@@ -116,7 +116,7 @@ class MobileUI extends UI {
   drawStick(dt) {
     const g = this.stickG; g.clear();
     if (this.stickP == null && this.stickA > 0) this.stickA = Math.max(0, this.stickA - dt * 3);
-    if (this.stickA <= 0 || !this.stickO) { if (RUN && !this.winId) { const hx = W / 2, hy = H - NAV_H - STICK_R - 16; g.lineStyle(1, 0xc8913a, 0.18).strokeCircle(hx, hy, STICK_R); g.fillStyle(0xe9e0c9, 0.18).fillRect(hx - 4, hy - 4, 8, 8); } return; } // 闲置：底部一个淡淡的提示圈
+    if (this.stickA <= 0 || !this.stickO) { if (RUN && !this.winId) { const hx = W / 2, hy = H - this.botH() - STICK_R - 16; g.lineStyle(1, 0xc8913a, 0.18).strokeCircle(hx, hy, STICK_R); g.fillStyle(0xe9e0c9, 0.18).fillRect(hx - 4, hy - 4, 8, 8); } return; } // 闲置：底部一个淡淡的提示圈
     const a = this.stickA, o = this.stickO, k = this.stickK;
     g.fillStyle(0x0d0a12, 0.45 * a).fillCircle(o.x, o.y, STICK_R + 2);
     g.lineStyle(2, 0xc8913a, 0.9 * a).strokeCircle(o.x, o.y, STICK_R);
@@ -618,7 +618,7 @@ class MobileUI extends UI {
     if (!this.lbG) this.lbG = this.add.graphics().setDepth(9);
     const g = this.lbG; g.clear(); if (S.settings.view !== 'pano') return;
     const k = W / VW, t = Math.round(SCR_CY - VIEW_CY * k), b = Math.round(t + VH * k);
-    g.fillStyle(0x07050a, 1); if (t > MTOP) g.fillRect(0, MTOP, W, t - MTOP); if (b < MBOT) g.fillRect(0, b, W, MBOT - b);
+    g.fillStyle(0x07050a, 1); if (t > MTOP) g.fillRect(0, MTOP, W, t - MTOP); { const mb = H - this.botH(); if (b < mb) g.fillRect(0, b, W, mb - b); }
     g.fillStyle(0x6a5433, 1); g.fillRect(0, t - 1, W, 1); g.fillRect(0, b, W, 1);
   }
   update(_, delta) {
