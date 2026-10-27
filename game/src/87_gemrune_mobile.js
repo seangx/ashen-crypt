@@ -70,8 +70,8 @@ Object.assign(MobileUI.prototype, {
     rect(this, 10, y, w - 20, 1, '#33293f', 1, c); y += 5;
     const over = S.mods.length > RUNE_SOFT;
     T(this, 10, y + 8, `辅助宝石库存 ${S.mods.length}${over ? ` · 超过 ${RUNE_SOFT}，建议拆一些` : ''}`, { size: 8, color: over ? COL.bad : COL.dim, parent: c });
-    const fw = unlocked('feed') ? 52 : 0;
-    if (fw) mkBtn(this, c, w - 10 - 56 - fw, y, fw, 26, feedOn ? '喂养开' : '喂养', () => { feedOn = !feedOn; feedSrc = null; this.refresh(); }, { size: 8, style: feedOn ? 's' : 'n' });
+    const fw = 52, fok = unlocked('feed');
+    mkBtn(this, c, w - 10 - 56 - fw, y, fw, 26, feedOn ? '喂养开' : '喂养', () => { feedOn = !feedOn; feedSrc = null; this.refresh(); }, { size: 8, style: feedOn ? 's' : 'n', disabled: !fok, locked: !fok, whyDisabled: `喂养：${unlockText('feed')}` });
     mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk('r'), { size: 8, style: over ? 'w' : 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' }); y += 30;
     this.chipRow(c, 10, y, w - 20, [['all', '全部'], ['fit', '适用'], ['new', '新'], ['field', '力场'], ['sort', runeSort === 'lvl' ? '等级↓' : '名称']], runeF, v => { if (v === 'sort') runeSort = runeSort === 'lvl' ? 'name' : 'lvl'; else runeF = v; runePage = 0; this.refresh(); }); y += 30;
     const F = { all: () => true, fit: m => host && modActive(m, host), new: m => m.isNew, field: m => MOD_BY[m.mid].field }[runeF] || (() => true);
@@ -107,7 +107,7 @@ Object.assign(MobileUI.prototype, {
         A.push({ l: rep ? '替换' : '镶嵌', style: 'w', fn: () => { socketRune(host, k, m); this.refresh(); } });
       }
     }
-    if (feedOn === false && unlocked('feed') && sk.length > 1) A.push({ l: '喂给同类', fn: () => { feedSrc = sk[1]; this.doFeed(m); } });
+    if (feedOn === false && sk.length > 1) A.push({ l: '喂给同类', disabled: !unlocked('feed'), why: `喂养：${unlockText('feed')}`, fn: () => { feedSrc = sk[1]; this.doFeed(m); } });
     A.push({ l: '拆解 1 枚', fn: () => this.ask(`拆解 1 枚 ${d.n}（${m.lvl} 级）？`, () => { const n = salvageRune(sk[sk.length - 1]); toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); save(); this.refresh(); }, '拆解', `得到 ${runeYield(m)} 个随机词条碎片，不能撤销。`) });
     sk.forEach(x => { x.isNew = false; });
     this.showLines(L, A);

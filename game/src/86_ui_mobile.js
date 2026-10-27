@@ -166,7 +166,7 @@ class MobileUI extends UI {
       if (id === 'gear') { const k = S.stash.filter(x => x.isNew).length; badge = k ? String(k) : ''; }
       if (id === 'mods' && (S.mods.some(m => m.isNew) || S.stash.some(g => g.kind === 'gem' && g.isNew))) badge = '!';
       if (id === 'tree' && treePoints() > 0) badge = String(treePoints());
-      set(bt.badge, on ? badge : ''); const sel = id === cur && id !== 'battle'; bt.hl.setFillStyle(0xffd36a, sel ? 0.14 : 0); if (bt.ul) bt.ul.setFillStyle(0xffd36a, sel ? 1 : 0); if (bt.ic && bt.icY0 === undefined) bt.icY0 = bt.ic.y; if (bt.ic && id !== 'battle') bt.ic.y = bt.icY0 - (sel ? 2 : 0); bt.lab.setTint(hex(sel ? COL.emberHi : id === 'battle' ? '#2a1306' : COL.text)); bt.ic.setAlpha(on ? 1 : 0.3); bt.setVisible(on); // 未解锁的导航项隐藏
+      set(bt.badge, on ? badge : ''); const sel = id === cur && id !== 'battle'; bt.hl.setFillStyle(0xffd36a, sel ? 0.14 : 0); if (bt.ul) bt.ul.setFillStyle(0xffd36a, sel ? 1 : 0); if (bt.ic && bt.icY0 === undefined) bt.icY0 = bt.ic.y; if (bt.ic && id !== 'battle') bt.ic.y = bt.icY0 - (sel ? 2 : 0); bt.lab.setTint(hex(sel ? COL.emberHi : id === 'battle' ? '#2a1306' : COL.text)); bt.ic.setAlpha(on ? 1 : 0.3); bt.setVisible(true); // 未解锁的导航项也显示（灰 + 锁，点了提示解锁条件；Sean：锁住的东西不能藏）
     });
     this.updateAuto();
   }
@@ -235,7 +235,7 @@ class MobileUI extends UI {
   equipSlots(c, ox, oy, onClick, selFn) {
     const pos = { gem: [0, 0], core: [32, 0], wl: [0, 32], wr: [64, 32], hub: [0, 64], engine: [32, 64], shield: [64, 64] };
     const ghost = { gem: 'i_star', wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
-    for (const s of SLOTS) { if ((s.id === 'wr' && !unlocked('wr')) || s.id === 'gem') continue; const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); if (s.id === 'gem' && needShield()) { const r = this.add.rectangle(ox + x, oy + y, TOUCH, TOUCH).setOrigin(0).setStrokeStyle(2, 0xd04040); c.add(r); T(this, ox + x + 2, oy + y + 1, '需要盾牌', { size: 8, color: COL.bad, parent: c }); } } // 技能格：圣盾掷没装盾
+    for (const s of SLOTS) { if (s.id === 'gem') continue; if (s.id === 'wr' && !unlocked('wr')) { lockedCell(this, c, ox + pos.wr[0], oy + pos.wr[1], TOUCH, ghost.wr, `副手：${unlockText('wr')}`); continue; } const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); if (s.id === 'gem' && needShield()) { const r = this.add.rectangle(ox + x, oy + y, TOUCH, TOUCH).setOrigin(0).setStrokeStyle(2, 0xd04040); c.add(r); T(this, ox + x + 2, oy + y + 1, '需要盾牌', { size: 8, color: COL.bad, parent: c }); } } // 技能格：圣盾掷没装盾
   }
   /* 装备：竖屏原生（身上 + 属性 → 背包 → 选中物品的详情抽屉） */
   win_gear(c, w, h) {
@@ -251,7 +251,7 @@ class MobileUI extends UI {
     mkBtn(this, c, w - 90, 92, 38, 26, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
     mkBtn(this, c, w - 50, 92, 40, 26, '批量', () => this.openBulk(), { size: 8, style: 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
-    stashTab = 0; if (unlocked('gems') || nGem) mkBtn(this, c, 40, 92, 84, 26, `技能宝石 ${nGem} ›`, () => { trigSel = 0; this.openWin('trig'); }, { size: 8, icon: 'i_sg_GemNova' }); // 技能宝石移到「宝石」页
+    stashTab = 0; { const gok = unlocked('gems') || nGem; mkBtn(this, c, 40, 92, 84, 26, `技能宝石 ${nGem} ›`, () => { trigSel = 0; this.openWin('trig'); }, { size: 8, icon: 'i_sg_GemNova', disabled: !gok, locked: !gok, whyDisabled: `技能宝石：${unlockText('gems')}` }); } // 技能宝石移到「宝石」页
     if (stashTab === 1) return this.gemPane(c, w, h, 122); // 技能石页：堆叠 + 筛选（87_gemrune_mobile.js）
     const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2);
     for (let i = 0; i < STASH_CAP; i++) {
@@ -326,7 +326,7 @@ class MobileUI extends UI {
   }
   /* 铁砧：竖屏原生（物品格 → 词条卡 → 操作 → 加词条） */
   win_craft(c, w, h) {
-    [['铁砧', true], ['熔铸', unlocked('fuse')]].forEach(([n, ok], i) => mkBtn(this, c, 10 + i * 52, 4, 48, 28, n, () => { craftTab = i; this.refresh(); }, { size: 8, style: craftTab === i ? 's' : 'n', disabled: !ok }));
+    [['铁砧', true], ['熔铸', unlocked('fuse')]].forEach(([n, ok], i) => mkBtn(this, c, 10 + i * 52, 4, 48, 28, n, () => { craftTab = i; this.refresh(); }, { size: 8, style: craftTab === i ? 's' : 'n', disabled: !ok, locked: !ok, whyDisabled: `${n}：${unlockText('fuse')}` }));
     if (craftTab === 1 && unlocked('fuse')) return this.fusePaneM(c, w, h);
     const all = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash];
     let it = all.find(x => x.id === craftId); if (!it) { it = all.find(craftable) || all[0]; craftId = it && it.id; craftAff = -1; }
@@ -511,7 +511,7 @@ class MobileUI extends UI {
     const items = [['ladder', '天梯', 'i_ladder'], ['settings', '设置', null], ['mods', '辅助宝石', 'mod_Chain'], ['stones', '属性石 · 镶嵌与合成', 'shard'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['depart', '地窖入口 · 选层', 'torch']];
     items.forEach(([id, n, ic], i) => {
       const y = 20 + i * 40, open = !MENU.some(m => m.id === id) || unlocked(id);
-      mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, iconX: 10, labelX: 34, disabled: !open || (RUN && id === 'depart') });
+      mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, iconX: 10, labelX: 34, disabled: !open || (RUN && id === 'depart'), locked: !open, whyDisabled: open ? '任务进行中' : `${n}：${unlockText(id)}` });
     });
     T(this, w / 2, 20 + items.length * 40 + 6, RUN ? '任务进行中 · 装备、天赋等修改立即生效' : '营地', { size: 8, color: COL.dim, align: 'center', parent: c });
   }
@@ -521,12 +521,12 @@ class MobileUI extends UI {
     if (!this.campC) this.buildCamp();
     const show = !RUN && !this.winId; this.campC.setVisible(show); if (!show) return;
     const F = [['depart', '地窖入口', 'torch'], ['ladder', '天梯石碑', 'i_ladder'], ['salvage', '分解祭坛', 'shard'], ['gear', '储物箱', 'i_w_crossbow'], ['help', '手册', 'i_book']];
-    const ok = id => (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'salvage' || unlocked('salvage')); F.splice(0, F.length, ...F.filter(f => ok(f[0]))); const key = F.map(f => +ok(f[0])).join('') + descentStart();
+    const ok = id => (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'salvage' || unlocked('salvage')); const key = F.map(f => +ok(f[0])).join('') + descentStart();
     if (key === this.campKey) return; this.campKey = key;
     const c = this.campC; c.removeAll(true); const bw = Math.floor((W - 16) / 3);
     c.add(nine(this, 4, 0, W - 8, 92, 'f_win', 6));
     T(this, W / 2, 5, `营地 · 下一趟第 ${descentStart()} 层`, { size: 8, color: COL.emberHi, align: 'center', parent: c });
-    F.forEach(([id, n, ic], i) => mkBtn(this, c, 8 + (i % 3) * bw, 18 + (i / 3 | 0) * 34, bw - 2, 30, n, () => { if (!ok(id)) return toast(`${n}：${unlockText(id)}`); this.openWin(id); }, { size: 8, icon: ic, iconX: 3, labelX: 21, disabled: !ok(id) }));
+    F.forEach(([id, n, ic], i) => mkBtn(this, c, 8 + (i % 3) * bw, 18 + (i / 3 | 0) * 34, bw - 2, 30, n, () => { if (!ok(id)) return toast(`${n}：${unlockText(id)}`); this.openWin(id); }, { size: 8, icon: ic, iconX: 3, labelX: 21, disabled: !ok(id), locked: !ok(id), whyDisabled: `${n}：${unlockText(id)}` }));
   }
   /* --- 触屏细节：双指缩放天赋图、符文拖进槽、长按看详情 --- */
   buildTouch() {
@@ -559,7 +559,7 @@ class MobileUI extends UI {
     const bg = nine(this, 12, py, pw, ph, 'o_frame', 8).setInteractive(); c.add(this.add.tileSprite(15, py + 3, pw - 6, ph - 6, 'n_win').setOrigin(0)); c.add(bg);
     in_.y = py + 10; c.add(in_);
     const all = [...acts, { l: closeL }], n = all.length, bw = Math.floor((pw - 16 - (n - 1) * 4) / n);
-    all.forEach((a, i) => mkBtn(this, c, 20 + i * (bw + 4), py + ph - 38, bw, 30, a.l, () => { this.closePopup(); if (a.fn) a.fn(); }, { size: 8, style: a.style || 'n', disabled: !!a.disabled }));
+    all.forEach((a, i) => mkBtn(this, c, 20 + i * (bw + 4), py + ph - 38, bw, 30, a.l, () => { this.closePopup(); if (a.fn) a.fn(); }, { size: 8, style: a.style || 'n', disabled: !!a.disabled, locked: !!a.why && !!a.disabled, whyDisabled: a.why }));
   }
   // 手机确认弹窗：确认 / 取消（点外面也算取消）
   ask(title, fn, ok = '确认', body = '') { this.showLines([{ t: title, c: COL.emberHi }, body && { t: body, s: 8, c: COL.dim }], [{ l: ok, fn, style: 'r' }], '取消'); }
@@ -567,7 +567,7 @@ class MobileUI extends UI {
   itemActs(it) {
     const f = findItem(it.id), A = [], R = () => { save(); this.refresh(); }; it.isNew = false; if (!f) return A;
     if (f.where === 'stash') {
-      if (it.kind === 'off') { if (unlocked('wr')) A.push({ l: '装副手', style: 'w', fn: () => { equipItem(it, 'wr'); R(); } }); }
+      if (it.kind === 'off') A.push({ l: '装副手', style: 'w', fn: () => { equipItem(it, 'wr'); R(); }, disabled: !unlocked('wr'), why: `副手：${unlockText('wr')}` });
       else if (it.kind === 'gem') A.push({ l: '去魂龛', style: 'w', fn: () => this.openWin('trig') });
       else if (slotsFor(it)[0]) A.push({ l: it.kind === 'weapon' ? '装主手' : '装备', style: 'w', fn: () => { equipItem(it); R(); } });
       A.push({ l: '拆解', fn: () => this.ask(`拆解 ${itemName(it)}？`, () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); R(); }, '拆解', '会变成词条碎片，不能撤销。') });
@@ -576,7 +576,7 @@ class MobileUI extends UI {
       if (stoneSockN(it) > 0) A.push({ l: '属性石', fn: () => this.openWin('stones') });
       if (it.sock || ['core', 'engine', 'hub'].includes(f.slot)) A.push({ l: '辅助宝石', fn: () => { modWeapon = f.slot; gemSeg = 'support'; this.openWin('mods'); } });
     }
-    if (unlocked('craft')) A.push({ l: '铁砧', fn: () => { craftId = it.id; craftAff = -1; craftTab = 0; this.openWin('craft'); } });
+    A.push({ l: '铁砧', disabled: !unlocked('craft'), why: `铁砧：${unlockText('craft')}`, fn: () => { craftId = it.id; craftAff = -1; craftTab = 0; this.openWin('craft'); } });
     return A;
   }
   /* 进出战斗的过场：像素方块盖住画面 → 卸掉营地界面、开打（或回营地）→ 方块散开 */

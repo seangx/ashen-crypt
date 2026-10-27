@@ -11,7 +11,7 @@ const GUI_SKIN = (() => {
 // 暗色地穴配色（乘到白色件上：黑描边保持黑，白 → 这个颜色，灰阴影 → 更暗）
 const GUI_PAL = { panel: 0x34284a, panelLt: 0x9a80c0, slot: 0x1c1526, title: 0x7a3e16, n: 0x5b4776, nH: 0x7a62a0, w: 0xff9a3d, wH: 0xffc06a, r: 0xb8402f, rH: 0xe0604a, s: 0x4a3d58, d: 0x2c2733, swOn: 0xff9a3d, swOff: 0x3a3244, bone: 0xe9e0c9 };
 // 九宫格切边（图集像素：左 右 上 下）
-const GUI_INS = { btn: [19, 19, 18, 22], btn_lt: [16, 16, 16, 16], panel: [20, 20, 18, 24], panel_lt: [18, 18, 14, 4], slot: [10, 10, 10, 12], card: [20, 20, 20, 24] };
+const GUI_INS = { btn: [19, 19, 18, 22], btn_lt: [16, 16, 16, 16], panel: [20, 20, 18, 24], panel_lt: [18, 18, 14, 4], slot: [10, 10, 10, 12], card: [20, 20, 20, 24], tab: [9, 9, 9, 3] };
 const GUI_IMG = (() => { const i = new Image(); i.src = GUI_ATLAS.png; return i; })();
 function guiAtlasAdd(sc) {
   const go = () => { if (sc.textures.exists('gui')) return; const t = sc.textures.addAtlas('gui', GUI_IMG, { frames: Object.entries(GUI_ATLAS.frames).map(([filename, f]) => ({ filename, ...f })) }); t.setFilter(Phaser.Textures.FilterMode.LINEAR); };
@@ -30,6 +30,7 @@ function gNine(sc, x, y, w, h, frame, tint, parent) {
 // 按钮：沿用 mkBtn 的全部逻辑（点击区、禁用、提示），只把底图换掉
 { const _mk = mkBtn; mkBtn = function (sc, parent, x, y, w, h, label, onClick, o = {}) {
   const c = _mk(sc, parent, x, y, w, h, label, onClick, o);
+  if (o.locked) lockBadge(sc, c, w - 7, 1); // 未解锁：照样显示（灰），角上一把锁，点了提示解锁条件（whyDisabled）
   if (!sc.guiNow || !guiReady(sc)) return c;
   const st = o.style || 'n', base = GUI_PAL[st] ?? GUI_PAL.n, hi = GUI_PAL[st + 'H'] ?? GUI_PAL.nH;
   for (const k of c.list.slice(0, 3)) k.setAlpha(0); // 原来的像素底图（bg / 悬停 / 禁用）
@@ -45,6 +46,19 @@ function gNine(sc, x, y, w, h, frame, tint, parent) {
   if (st === 'w') c.lab.setTint(0x2a1306);
   return c;
 }; }
+// 小锁角标：有皮肤图集用图标，没有就用字
+function lockBadge(sc, c, x, y) {
+  if (guiReady(sc)) { const i = sc.add.image(x, y + 4, 'gui', 'nav_lock').setDisplaySize(9, 9).setTint(0xe9e0c9); c.add(i); return i; }
+  return T(sc, x, y, '锁', { size: 8, color: COL.dim, align: 'center', parent: c });
+}
+// 未解锁的格子：灰底 + 淡淡的轮廓图标 + 锁；点了提示解锁条件
+function lockedCell(sc, c, x, y, s, ghost, why) {
+  const k = sc.add.container(x, y); c.add(k); k.add(nine(sc, 0, 0, s, s, 'f_slot', 3));
+  if (ghost && sc.textures.exists(ghost)) { const g = sc.textures.get(ghost).getSourceImage(); img(sc, Math.round((s - g.width) / 2), Math.round((s - g.height) / 2), ghost, k).setAlpha(0.25).setTint(0x8a8296); }
+  lockBadge(sc, k, s - 8, 2);
+  const z = sc.add.zone(0, 0, s, s).setOrigin(0).setInteractive(); k.add(z); z.on('pointerup', () => toast(why));
+  return k;
+}
 // 开关（设置页的 开 / 关）
 function gSwitch(sc, parent, x, y, on, fn) {
   const c = sc.add.container(x, y); parent.add(c); const w = 40, h = 22;
