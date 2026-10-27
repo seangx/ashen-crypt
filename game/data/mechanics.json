@@ -916,8 +916,8 @@
     ]
    }
   },
-  "burn": 0.55,
-  "burnPerFloor": 0.09,
+  "burn": 0.4,
+  "burnPerFloor": 0.09, "burnKnee": 8, "burnAfterKnee": 0.15, "gainKnee": 5, "gainPerFloor": 0.07, "_burnKnee说明": "燃烧按层数增长到 burnKnee 层后变缓（之后每层只涨 burnPerFloor × burnAfterKnee），不让灯火成为深层硬墙；gainKnee 层之后击杀回灯和武器回灯每层 +gainPerFloor（乘法），深层装备合适时灯火经济和前几层相近。深度靠怪物强度对装备卡",
   "hitLamp": { "_说明": "武器基础回灯：普攻（不是技能宝石）命中回灯火，每次出手只算一次（穿透 / 范围不叠），间隔至少 gap ÷ 攻速 秒。每击回 = perSec × 类别系数 ÷ 攻速，所以各类武器每秒回灯大致相同。灯火低于 lampFloor 也照样回，用来从残灯里恢复。乘“魂火回复提高”。", "perSec": 0.25, "gap": 0.8, "cat": { "melee": 1.15, "bow": 1, "gun": 1, "caster": 0.95 } },
     "onKill": {
    "normal": 1,

@@ -127,7 +127,7 @@ function hitMob(m, W, o = {}) {
   if (m.dead) return 0;
   const cm = W.cont ? 1 : rollCrit(W); const crit = cm > 1;
   trigHit(W, crit);
-  if (W.atk && STATS.lampHit && RUN) { const t = RUN.t || 0; if (t >= (player.lampHitT || 0) || t < (player.lampHitT || 0) - 5) { player.lampHitT = t + STATS.lampGap; const g = STATS.lampHit * (STATS.soulGainMul || 1); player.soul = Math.min(STATS.soulMax, player.soul + g); RUN.lampHit = (RUN.lampHit || 0) + g; } } // 武器出手命中回灯：普攻和出手时技能（替这一下普攻放出的）都算，每次出手只算一次；其他触发的技能不回；残灯也回
+  if (W.atk && STATS.lampHit && RUN) { const t = RUN.t || 0; if (t >= (player.lampHitT || 0) || t < (player.lampHitT || 0) - 5) { player.lampHitT = t + STATS.lampGap; const g = STATS.lampHit * (STATS.soulGainMul || 1) * lampGainMul(RUN.base); player.soul = Math.min(STATS.soulMax, player.soul + g); RUN.lampHit = (RUN.lampHit || 0) + g; } } // 武器出手命中回灯：普攻和出手时技能（替这一下普攻放出的）都算，每次出手只算一次；其他触发的技能不回；残灯也回
   let mul = (o.mul || 1) * cm * lampMore();
   if (m.boss) mul *= W.bossMore;
   if (W.perDashInc) mul *= 1 + W.perDashInc * Math.floor(player.dash);
@@ -227,7 +227,7 @@ function kill(m) {
   const hk = m.boss ? 1 : 1 / hordeN(); // 怪海：每只的推进、经验、灯火、掉落按数量摊薄
   if (!m.boss && (m.elite || rnd() < 0.02)) dropThing(m, { kind: 'orb' }); // defense-v3：生命球（精英必掉，普通 2%），碰到回 20% 生命
   if (!m.boss) RUN.prog += (RUN.mode === 'ladder' ? (m.elite ? LD.run.eliteP : LD.run.normalP) : 1) * hk;
-  player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * (RUN.mode !== 'ladder' && RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
+  player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * lampGainMul(RUN.base) * (RUN.mode !== 'ladder' && RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
   deathRules(m);
   if (STATS.lifeOnKill) player.life = Math.min(STATS.life, player.life + STATS.lifeOnKill * hk); // gear-v2：击杀回生命
   if (STATS.flag.shatter && m.frzT > 0) shatter(m); // 碎冰：冻结的敌人死了碎成冰片（冰片打死的冻结敌人也照样碎）
@@ -620,7 +620,7 @@ function logic(dt) {
   const spin = spinning(), lad = RUN.mode === 'ladder';
   if (!RUN.ending && !RUN.next) {
     const rv = !lad && RUN.base < RUN.descent.prevMax; // 重温已经打过的层
-    const net = -(lad ? (SOUL.ladderBurn ?? SOUL.burn) + RUN.L * (SOUL.ladderBurnPerFloor ?? SOUL.burnPerFloor) : SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1) - (spin && P.weapons.some(W => W && W.whirl) ? WH.soulPerSec * (1 - P.soulLess) : 0); // 魂龛里的旋风斩已按 cost 每秒付灯火，不再重复扣
+    const net = -(lad ? (SOUL.ladderBurn ?? SOUL.burn) + lampBurnL(RUN.L, SOUL.ladderBurnPerFloor ?? SOUL.burnPerFloor) : SOUL.burn + lampBurnL(RUN.base)) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1) - (spin && P.weapons.some(W => W && W.whirl) ? WH.soulPerSec * (1 - P.soulLess) : 0); // 魂龛里的旋风斩已按 cost 每秒付灯火，不再重复扣
     player.soul = clamp(player.soul + net * dt, 0, P.soulMax);
     if (P.lifeRegen && player.life > 0) player.life = Math.min(P.life, player.life + P.lifeRegen * dt); // gear-v2：每秒回生命
     if (P.flag.returnLight && !RUN.rlUsed && player.soul < P.soulMax * 0.1) { RUN.rlUsed = 1; player.soul = P.soulMax * P.flag.returnLight / 100; if (G.ui) G.ui.banner('归光 · 灯火复燃', COL.emberHi); } // 归光（每局一次）

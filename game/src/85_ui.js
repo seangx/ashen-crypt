@@ -282,7 +282,7 @@ class UI extends Phaser.Scene {
     const dt = P.shield ? '+' + Math.ceil(player.shield) : ''; if (this.defT.text !== dt) this.defT.setText(dt);
     const n = player.closeN || 0, gt = !RUN ? '' : n > 0 ? `贴 −${Math.round(Math.min(P.closeCap, n * P.closePer))}%` : player.farOK && P.farDR > 0 ? `远 −${P.farDR}%` : ''; if (this.gdT.text !== gt) { this.gdT.setText(gt); this.gdT.setTint(hex(n > 0 ? '#e8dcc0' : '#9fd0ff')); }
     const st = Math.round(sf * 100) + '%'; if (this.soulT.text !== st) this.soulT.setText(st);
-    const bt = !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul)}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
+    const bt = !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + lampBurnL(RUN.base)) * P.burnMul)}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
     const g = this.dashG; g.clear();
     for (let i = 0; i < P.dashMax; i++) { const f = clamp(player.dash - i, 0, 1), x = 7 + i * 9, y = H - 74; g.fillStyle(0x0b080e, 1).fillRect(x, y, 7, 7); g.fillStyle(f >= 1 ? 0xc08aff : 0x2a1e3a, 1).fillRect(x + 1, y + 1, 5, 5); if (f >= 1) g.fillStyle(0xe6c8ff, 1).fillRect(x + 1, y + 1, 5, 1); else g.fillStyle(0xc08aff, 1).fillRect(x + 1, y + 6 - Math.round(f * 5), 5, Math.round(f * 5)); }
     const [sw, wi] = (RUN && whirlWs().sort((a, b) => player.spin[b[1]].n - player.spin[a[1]].n)[0]) || [null, -1]; // 旋转层数（看第一把带旋身的武器）

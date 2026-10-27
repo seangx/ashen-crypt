@@ -260,6 +260,9 @@ const msPow = (g1, g2, L) => { const k = MS.knee || 1e9; return L <= k ? Math.po
 const monHp = L => msPow(MS.hpGrowth, MS.hpGrowth2, L);
 const monDmg = L => msPow(MS.dmgGrowth, MS.dmgGrowth2, L);
 const monXp = L => Math.pow(MS.xpGrowth, L - 1);
+// 灯火燃烧 / 回灯随层数：燃烧过了拐点变缓，回灯过了拐点变多（灯火是计时器，不是深层硬墙）
+const lampBurnL = (L, per = SOUL.burnPerFloor) => { const k = SOUL.burnKnee ?? 1e9; return L <= k ? L * per : k * per + (L - k) * per * (SOUL.burnAfterKnee ?? 1); };
+const lampGainMul = L => 1 + Math.max(0, L - (SOUL.gainKnee ?? 1e9)) * (SOUL.gainPerFloor || 0);
 const killNeed = L => PROG.run.killsBase + L * PROG.run.killsPerLevel;
 const DROP = LOOT.drop;
 const PLAYER = PROG.player;
