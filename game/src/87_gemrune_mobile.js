@@ -72,7 +72,7 @@ Object.assign(MobileUI.prototype, {
     T(this, 10, y + 8, `辅助宝石库存 ${S.mods.length}${over ? ` · 超过 ${RUNE_SOFT}，建议拆一些` : ''}`, { size: 8, color: over ? COL.bad : COL.dim, parent: c });
     const fw = unlocked('feed') ? 52 : 0;
     if (fw) mkBtn(this, c, w - 10 - 56 - fw, y, fw, 26, feedOn ? '喂养开' : '喂养', () => { feedOn = !feedOn; feedSrc = null; this.refresh(); }, { size: 8, style: feedOn ? 's' : 'n' });
-    mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk('r'), { size: 8, style: over ? 'w' : 'n' }); y += 30;
+    mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk('r'), { size: 8, style: over ? 'w' : 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' }); y += 30;
     this.chipRow(c, 10, y, w - 20, [['all', '全部'], ['fit', '适用'], ['new', '新'], ['field', '力场'], ['sort', runeSort === 'lvl' ? '等级↓' : '名称']], runeF, v => { if (v === 'sort') runeSort = runeSort === 'lvl' ? 'name' : 'lvl'; else runeF = v; runePage = 0; this.refresh(); }); y += 30;
     const F = { all: () => true, fit: m => host && modActive(m, host), new: m => m.isNew, field: m => MOD_BY[m.mid].field }[runeF] || (() => true);
     const stacks = stackBy(S.mods.filter(F), runeKey).sort(runeSort === 'lvl' ? (a, b) => b[0].lvl - a[0].lvl || MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) : (a, b) => MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) || b[0].lvl - a[0].lvl);
@@ -163,7 +163,7 @@ Object.assign(MobileUI.prototype, {
     } else T(this, 46, y + 8, '没有装备技能宝石：点下面的宝石装上。', { size: 8, color: COL.dim, parent: c });
     y += 38;
     T(this, 10, y + 8, `背包里的技能宝石 ${nG}`, { size: 8, color: COL.dim, parent: c });
-    if (unlocked('salvage')) mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk('g'), { size: 8 });
+    mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk('g'), { size: 8, disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     this.gemPane(c, w, h, y + 30);
   },
   /* 批量拆解：一次只拆一类（辅助宝石 'r' / 技能宝石 'g'），只动库存 / 背包里的 */

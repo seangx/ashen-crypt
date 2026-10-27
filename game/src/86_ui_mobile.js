@@ -247,7 +247,7 @@ class MobileUI extends UI {
     ELEM.forEach((e, i) => T(this, 134 + i * 20, 78, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
     T(this, 12, 100, `背包 ${S.stash.length}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
     mkBtn(this, c, w - 90, 92, 38, 26, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
-    if (unlocked('salvage')) mkBtn(this, c, w - 50, 92, 40, 26, '批量', () => this.openBulk(), { size: 8, style: 'n' });
+    mkBtn(this, c, w - 50, 92, 40, 26, '批量', () => this.openBulk(), { size: 8, style: 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
     stashTab = 0; if (unlocked('gems') || nGem) mkBtn(this, c, 40, 92, 84, 26, `技能宝石 ${nGem} ›`, () => { trigSel = 0; this.openWin('trig'); }, { size: 8, icon: 'i_sg_GemNova' }); // 技能宝石移到「宝石」页
     if (stashTab === 1) return this.gemPane(c, w, h, 122); // 技能石页：堆叠 + 筛选（87_gemrune_mobile.js）
