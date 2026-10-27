@@ -32,6 +32,7 @@ function newItem(kind, b, ilvl, q, rar) {
   it.mods = Array(it.sock).fill(null);
   setRarity(it, rar);
   it.fp = rollFp(it.rar);
+  it.stones = Array(stoneSockN(it)).fill(null); // 属性石孔（gear-v2 §7）
   return it;
 }
 // 锻造潜力（data/loot.json 的 fp）
@@ -96,19 +97,21 @@ function allBases() {
 }
 // 独特装备：保底词条取指定档位（第 N 高档；loot.json 的 uniqueFixedTier 决定从词条族最高档还是从物品等级允许的最高档往下数），专属规则在范围里掷
 const uniqueTop = (a, ilvl) => { if (LOOT.uniqueFixedTier.mode !== 'ilvl') return a.tiers.length - 1; let top = 0; a.tiers.forEach((t, i) => { if (ilvl >= t[2]) top = i; }); return top; };
-function newUnique(id, ilvl) {
+function newUnique(id, ilvl, rand2) {
   const u = UNIQUE_BY[id];
   const it = newItem(u.kind, u.b, Math.max(ilvl, u.req), rollQuality(Math.max(ilvl, u.req)), 0);
   it.rar = 3; it.u = id; it.rn = u.n; it.fp = 0; it.lp = ri(...LOOT.legendary.potential);
   it.uv = u.rules.map(([, lo, hi]) => lo === hi ? lo : rollRange(lo, hi));
   for (const [fam, N] of u.fixed) { const a = AFF_BY[fam]; if (!a) continue; const t = clamp(uniqueTop(a, it.ilvl) - (N - 1), 0, a.tiers.length - 1); it.affs.push({ k: fam, t, v: rollVal(a, t) }); }
   if (u.sock) { it.sock = u.sock; it.mods = Array(u.sock).fill(null); }
+  { const n = rand2 || G2.uniques.randN; it.rar = 2; for (let i = 0; i < n; i++) rollAffix(it); it.rar = 3; } // gear-v2 §6：独特 = 规则 + 固定词条 + 2–3 条随机词条
+  it.stoneN = u.stoneN ?? 2; it.stones = Array(it.stoneN).fill(null);
   return it;
 }
 function rollUnique(ilvl, boss, ladder) {
   const pool = UNIQUES.filter(u => u.req <= ilvl && (u.w > 0 || boss) && (!u.ladderOnly || ladder || (S.ladder && S.ladder.best >= u.ladderOnly)));
   if (!pool.length) return null;
-  return newUnique(wpick(pool, u => u.w || LOOT.uniqueBossOnlyWeight.w).id, ilvl);
+  return newUnique(wpick(pool, u => u.w || LOOT.uniqueBossOnlyWeight.w).id, ilvl, boss ? G2.uniques.randChest : 0);
 }
 function rollItem(ilvl, rarBonus = 0, boss = false, rarity = null, ladder = false) { // rarity：指定稀有度（不出独特）；ladder：天梯宝箱
   if (rarity === null && rnd() < (boss ? DROP.uniqueBoss : DROP.unique) * (1 + (LX.unique || 0) / 100)) { const u = rollUnique(ilvl, boss, ladder); if (u) return u; }
@@ -155,7 +158,7 @@ function gemBase(g, wl) {
   const cat = GEMC.cats[wb.cat], tags = gemTags(g);
   const aff = cat && cat.tags.some(t => tags.includes(t)) ? GEMC.affinity : 1;
   const f = gemMul(G, g.lvl) * (1 + (g.q || 0) / 100) * aff / GEMC.affinity * (GEMC.pow[wl.b] ?? 1); // 对口时 ×1，不对口 ÷1.2（数据里的旧伤害已经是对口强度）
-  return { ...src, key: G.id, n: G.n, tags: [...tags, 'Weapon'], I: src.I * f, gI: f, aps: src.aps == null ? src.aps : qv(src.aps, q) * (GEMC.spd[wl.b] ?? 1), crit: wb.crit, aff: aff > 1, gem: G.id };
+  return { ...src, key: G.id, n: G.n, tags: [...tags, 'Weapon'], I: src.I * f, gI: f, aps: src.aps == null ? src.aps : qv(src.aps, q) * (GEMC.spd[wl.b] ?? 1), crit: wb.crit, aff: aff > 1, gem: G.id, ...(g.basic && wb.bel ? { el: wb.bel } : {}) }; // gear-v2：普攻用武器自带元素
 }
 // 技能格“需要盾牌”：装着圣盾掷但没有盾（此时技能改成骨矢 1 级）
 const needShield = (eq = S.equip) => !!(eq.gem && eq.gem.kind === 'gem' && GEM_BY[eq.gem.b].form === 'shieldThrow' && !eq.shield);
@@ -171,6 +174,7 @@ function removeItem(it) {
   S.stash = S.stash.filter(x => x !== it);
   for (const k in S.equip) if (S.equip[k] === it) S.equip[k] = null;
   if (it.mods) for (const m of it.mods) if (m) S.mods.push(m);
+  if (it.stones) for (const x of it.stones) if (x) (S.stones = S.stones || []).push(x);
   refreshStats();
 }
 const STASH_CAP = LOOT.stashCap;

@@ -80,7 +80,10 @@ function basicGem(eq) {
   const wl = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : null, cat = wl ? WEAPONS[wl.b].cat : 'bow', B = TRG.basic[cat] || TRG.basic.bow;
   return { kind: 'gem', b: B[0], var: B[1], lvl: clamp(1 + Math.floor((S.level || 1) / 4), 1, MOD_MAX), q: 0, mods: [], sock: 0, affs: [], fake: 1, basic: 1 };
 }
-function basicProc(eq) { const wl = eq.wl && eq.wl.kind === 'weapon' ? WEAPONS[eq.wl.b] : null; return Math.round(TRG.basicProcK / Math.max(0.3, (wl && wl.aps) || 1.2)); }
+function basicProc(eq) { const it = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : null, g = it && G2W[it.b]; // gear-v2 §1b：每把武器自带触发系数，“触发系数提高”是本地词条
+  const pi = it ? it.affs.reduce((s, x) => s + (AFF_BY[x.k] && AFF_BY[x.k].stat === 'procInc' ? x.v : 0), 0) + uval(it, 'procInc') : 0;
+  if (g) return Math.round(g.pc * (1 + pi / 100));
+  const wl = it ? WEAPONS[it.b] : null; return Math.round(TRG.basicProcK / Math.max(0.3, (wl && wl.aps) || 1.2)); }
 const gemCost = g => { const C = TSK[g.b] || { cost: [1, 1] }, t = clamp((g.lvl - 1) / Math.max(1, MOD_MAX - 1), 0, 1); return C.cost[0] + (C.cost[1] - C.cost[0]) * t; };
 
 /* 属性计算：每个生效栏位 → 被触发技能的武器数值 + 充能参数 */
@@ -90,21 +93,21 @@ function trigStats(P, eq) {
   let castDps = W0 ? W0.dps : 0, respDps = 0;
   (S.trigs || []).forEach((T, i) => {
     if (!T) return; const C = TCOND[T.c], fx = trigFx(T), A = T.affs || {}, on = i < n, cast = C.kind === 'cast';
-    const skills = T.socks.filter(isSkill), sups = T.socks.filter(isSupport), costMul = sups.reduce((m, s) => m * (TRG.supCost[s.mid] || TRG.defCost), 1) * (1 - (A.costLess || 0) / 100);
+    const skills = T.socks.filter(isSkill), sups = T.socks.filter(isSupport), FT = P.flag || {}, costMul = (FT.rapid ? 1.25 : 1) * (FT.chainCharge && !cast ? 1.3 : 1) * (FT.auraPower && T.c === 'always' ? 1.5 : 1) * sups.reduce((m, s) => m * (TRG.supCost[s.mid] || TRG.defCost), 1) * (1 - ((A.costLess || 0) + (P.raw.costLess || 0) + ((IMPL[eq.wl && eq.wl.b] && implFx(eq.wl).costLess) || 0)) / 100);
     const ws = []; if (on) skills.forEach((g, j) => {
       const sl = A.supLv ? sups.map(m => ({ ...m, lvl: Math.min(MOD_MAX, (m.lvl || 1) + 1) })) : sups;
       const g2 = { ...g, mods: sl.filter(m => supportFits(m, g)), sock: sups.length }, sk = skillItem({ ...eq, gem: g2 }); if (!sk) return;
-      const W = weaponStats(sk, P), bl = A.burnLamp ? TAF.burnLamp.w[0] + (TAF.burnLamp.w[1] - TAF.burnLamp.w[0]) * (A.burnLamp - 1) / 2 : 0;
-      const mul = (1 + ((A.dmg || 0) + (fx.dmg || 0) + bl) / 100) * (1 + (T.q || 0) / 100) * (skills.length > 1 && !fx.rotate ? trigSplit(T) : 1) * (TRG.fitCond[g.b] === T.c ? TRG.fit : 1);
+      const W = weaponStats(sk, P), blT = A.burnLamp || (FT.burnSoul ? 1 : 0), bl = blT ? TAF.burnLamp.w[0] + (TAF.burnLamp.w[1] - TAF.burnLamp.w[0]) * (blT - 1) / 2 : 0; // tree-v3 燃魂：所有魂龛带 T1 燃灯
+      const mul = (1 + ((A.dmg || 0) + (fx.dmg || 0) + bl + (P.trigDmg || 0)) / 100) * (1 + (T.q || 0) / 100) * (skills.length > 1 && !fx.rotate ? trigSplit(T) : 1) * (TRG.fitCond[g.b] === T.c ? TRG.fit : 1) * (FT.heavyHit && cast ? 1.4 : 1) * (FT.focus ? (cast ? 1.5 : 0.7) : 1) * (FT.auraPower && T.c === 'always' ? 1.4 : 1); // tree-v3：重击、专精、常驻之力
       for (const o of [W.min, W.max]) if (o) for (const e in o) o[e] *= mul;
       if (W.auraDps) W.auraDps *= mul; W.dps *= mul;
       const aoe = (A.aoe || 0) + (fx.aoe || 0); if (aoe) { W.aoeInc = (W.aoeInc || 0) + aoe; if (W.aoeR) W.aoeR *= 1 + aoe / 100; if (T.c === 'always' && W.rng) W.rng *= 1 + aoe / 100; }
       if (A.crit) W.crit += A.crit / 100; if (fx.alwaysCrit) W.crit = Math.max(W.crit, 1);
       const Sk = TSK[g.b] || {}; W.proc = Sk.proc ?? 5; W.atk = cast ? 1 : 0;
-      W.cost = (T.c === 'always' ? gemCost(g) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul + (A.burnLamp || 0);
+      W.cost = (T.c === 'always' ? gemCost(g) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul + blT;
       W.trigSlot = i + 1; W.trigMul = mul; W.wi = TRIG_BASE + i * TRIG_PER + j; ws.push(W);
     });
-    const tier = trigTier(T.ilvl), cap = Math.max(C.cap * (1 - (TRG.affCap.cap ? Math.min(100 - TRG.affCap.cap, A.cap || 0) : 0) / 100), (C.cap || 100) * TRG.affCap.cap / 100) * (fx.capMul || 1);
+    const tier = trigTier(T.ilvl), cap = Math.max(C.cap * (1 - (TRG.affCap.cap ? Math.min(100 - TRG.affCap.cap, A.cap || 0) : 0) / 100), (C.cap || 100) * TRG.affCap.cap / 100) * (fx.capMul || 1) * (P.flag && P.flag.overflow ? 1.25 : 1); // tree-v3 蓄满：容量 +25%
     const N = C.mode === 'timer' ? Math.max(TRG.affCap.timerMin, (fx.N || C.N[tier - 1]) - (A.gap || 0)) : 0;
     const per = trigRate(T, C, P, cap, N, fx, A);
     const dps = ws.reduce((s, W) => s + (C.mode === 'always' ? W.dps : W.dps / Math.max(0.2, W.aps || 1) * per), 0) * (1 + Math.min(TRG.affCap.extra, A.extra || 0) / 100);
@@ -117,7 +120,7 @@ function trigStats(P, eq) {
   P.castShare = castShare; P.castDps = castDps; P.respDps = respDps; P.trigCost = P.trigs.reduce((s, t) => s + (t && t.on ? t.cost * (t.mode === 'always' ? 1 : t.per) : 0), 0);
   P.dps = P.dps - (W0 ? W0.dps * castShare : 0) + P.trigs.reduce((s, t) => s + (t && t.on ? t.dps : 0), 0);
   // 格挡（defense-v3 §3.6 简化版）：只在盾上；基础 10% + 盾“格挡”词条 ÷ 4
-  const blk = P.blk || 0; P.blockCh = eq.shield ? Math.min(0.3, 0.1 + blk / 400) : 0;
+  const blk = P.blk || 0; P.blockCh = eq.shield ? blk / 100 : 0; // defense-v3：P.blk 已含盾牌基础格挡
 }
 // 面板用的每秒期望放出次数
 function trigRate(T, C, P, cap, N, fx, A) {
@@ -143,10 +146,12 @@ const TRIGS_RT = { ch: [0, 0, 0, 0], st: [0, 0, 0, 0], cg: [0, 0, 0, 0], gap: [0
 function trigReset() { Object.assign(TRIGS_RT, { ch: [0, 0, 0, 0], st: [0, 0, 0, 0], cg: [0, 0, 0, 0], gap: [0, 0, 0, 0], tm: [0, 0, 0, 0], flash: [0, 0, 0, 0], stack: [0, 0, 0, 0], stackT: [0, 0, 0, 0], rot: [0, 0, 0, 0], fired: [], later: [], stillT: 0, n: [0, 0, 0, 0] }); }
 // 灯态（lamp-v2 §4）：明灯 ≥ 70%、残灯 < 30%；只在下行时生效
 const LST = TRG.lampStates;
-function lampState() { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax) return 'dim'; const f = player.soul / STATS.soulMax; return f >= LST.bright.min ? 'bright' : f < LST.ember.max ? 'ember' : 'dim'; }
-const lampMore = () => TRIGS_RT.lampState === 'ember' ? 1 + LST.ember.more / 100 : 1;
-const lampCritAdd = () => TRIGS_RT.lampState === 'ember' ? LST.ember.crit / 100 : 0;
-const lampTaken = () => TRIGS_RT.lampState === 'ember' ? 1 + LST.ember.taken / 100 : 1;
+function lampState() { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax) return 'dim'; const f = player.soul / STATS.soulMax, F = STATS.flag || {}; // tree-v3：将熄之焰、长明改阈值
+  const bMin = F.dimFlame ? 9 : F.longLight ? 0.5 : LST.bright.min, eMax = F.dimFlame ? 0.5 : LST.ember.max; return f >= bMin ? 'bright' : f < eMax ? 'ember' : 'dim'; }
+const emberK = () => STATS.flag && STATS.flag.dimFlame ? 1.5 : 1;
+const lampMore = () => TRIGS_RT.lampState === 'ember' ? (1 + LST.ember.more * emberK() / 100) * (STATS.flag && STATS.flag.longLight ? 0.8 : 1) * (1 + ((STATS.tree && STATS.tree.add.emberStep) || 0) / 100) : 1;
+const lampCritAdd = () => TRIGS_RT.lampState === 'ember' ? LST.ember.crit * emberK() / 100 : 0;
+const lampTaken = () => TRIGS_RT.lampState === 'ember' ? 1 + LST.ember.taken * emberK() / 100 : 1;
 const lampShieldRegen = () => TRIGS_RT.lampState === 'bright' ? 1 + LST.bright.shieldRegen / 100 : 1;
 const lampLightR = () => { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax) return 110; const f = clamp(player.soul / STATS.soulMax, 0, 1); return LST.ember.lightMin + (LST.ember.lightMax - LST.ember.lightMin) * f; };
 const lampOk = () => typeof RUN === 'undefined' || !RUN || player.soul >= STATS.soulMax * TRG.lampFloor;
@@ -178,7 +183,7 @@ function trigFire(i, o = {}) {
 const scaleDmg = (o, k) => { if (!o) return o; const r = {}; for (const e in o) r[e] = o[e] * k; return r; };
 // 加充能：充能型满了 → 出手型等下一次出手，响应型立刻放；溢出保留（最多再存 store 次）
 function trigCharge(i, v) {
-  const t = STATS.trigs[i], R = TRIGS_RT, fx = trigFx(t.T), store = fx.store || TRG.store; R.ch[i] += v * t.gain;
+  const t = STATS.trigs[i], R = TRIGS_RT, fx = trigFx(t.T), store = Math.max(fx.store || TRG.store, STATS.flag && STATS.flag.overflow ? 3 : 0); R.ch[i] += v * t.gain;
   while (R.ch[i] >= t.cap) {
     if (!t.cast) { if (lampOk() || fx.lifeCost) { R.ch[i] -= t.cap; if (!trigFire(i)) { R.ch[i] = t.cap; break; } } else { R.ch[i] = t.cap; break; } }
     else { if (R.st[i] >= store) { R.ch[i] = t.cap; break; } R.st[i]++; R.ch[i] -= t.cap; }
@@ -199,11 +204,12 @@ function castAttack(W, wi) {
 }
 // 出手技能命中：给命中时 / 残灯时 / 暴击时充能（每次施放每个魂龛最多 40 分）；响应技能不给
 function trigHit(W, crit) {
-  if (!RUN || !STATS.trigs || !W.atk || W.cont) return;
+  const cc = !W.atk && W.trigSlot && STATS.flag && STATS.flag.chainCharge; // tree-v3 连环：响应技能也给【命中时】充能 ×0.5
+  if (!RUN || !STATS.trigs || (!W.atk && !cc) || W.cont) return;
   const own = W.trigSlot ? W.trigSlot - 1 : -1, R = TRIGS_RT, cap = TRG.perCastCap;
   liveTrigs((t, i) => {
     if (i === own || !t.cast || t.mode !== 'charge' || trigFx(t.T).fixed) return; const c = t.T.c;
-    let v = c === 'hit' ? W.proc : c === 'ember' ? (R.lampState === 'ember' ? W.proc * 2 : 0) : c === 'crit' && crit ? TCOND.crit.per : 0;
+    if (cc && c !== 'hit') return; let v = c === 'hit' ? W.proc * (cc ? 0.5 : 1) : c === 'ember' ? (R.lampState === 'ember' ? W.proc * 2 : 0) : c === 'crit' && crit ? TCOND.crit.per : 0;
     v = Math.min(v, cap - R.cg[i]); if (v <= 0) return; R.cg[i] += v; trigCharge(i, v);
   });
 }

@@ -1,5 +1,5 @@
 {
- "_说明": "天赋树（自行设计）。6 个按标签分的区（2026-10-23 用户选“按标签重排”）：近战、范围、投射物、持续、守备、灯火，顺时针从正上方开始；c 是区的颜色。每区：主路 9 个节点（small 是小节点轮流用的效果，notable 是两个中节点，key 是主路尽头的大型节点），外加 4 个小团（clusters：small 小节点效果 ×5，nn/nadd 中节点名字和效果，key 是改规则的核心天赋；顺序内左、内右、外左、外右，外左靠前一个区、外右靠后一个区，放和那个区沾边的大天赋，比如近战的外右是旋风之心，挨着范围）。bridge 是内圈桥 = 元素环（骸骨、余烬、雷殛、瘟疫、圣辉、魂力），ring 是外圈桥 = 两区交界（两种标签各一半）。第 i 个连接区 i 和 i+1，桥中间是印记槽。效果写法：add 提高或附加（相加），more 总增或总降（相乘，1.4 = 总增 40%，0.8 = 总降 20%；dashMax 例外，是直接加减），flag 改规则（见 rules.json，数值是 {v}）。ail:元素 是异常几率，按小数写（0.03 = 3%）；inc:元素 / inc:all 是伤害提高 %；res:元素 是抗性 %。核心天赋的说明文字会按效果自动生成。 第 6 步重排（2026-10-24）：元素环 = 余烬（近战|范围）、寒霜（范围|投射物）、雷殛、瘟疫、圣辉、骸骨（灯火|近战），魂力格换成寒霜；碎冰、碎冰连锁两个小团改成寒霜主题，夹着寒霜桥；星坠雨小团改火焰（挨余烬桥），回响圣盾小团改护甲+圣光（挨圣辉桥）。 整理（design/spec-tree-defense.md，2026-10-24）：去掉 Astroloot 遗留的质量 / 时间 / 遁靴伤害 / 基础速度节点；加通用防御四团（贴身 铁壁阵、控场 寒狱、续航 饮盾、远离 孤狼）和派生 / 延迟 / 灯火节点。新 stat：closePer closeCap ctrlWeaken shieldOnHit（‰）farDR，以及装备已有的 delayInc frozenTaken chainStep projSlow spawnAdd block shieldDmg burnLess soulKillInc moveInc，天赋里的值和装备相加。",
+ "_说明": "天赋树（自行设计）。6 个按标签分的区（2026-10-23 用户选“按标签重排”）：近战、范围、投射物、持续、守备、灯火，顺时针从正上方开始；c 是区的颜色。每区：主路 9 个节点（small 是小节点轮流用的效果，notable 是两个中节点，key 是主路尽头的大型节点），外加 4 个小团（clusters：small 小节点效果 ×5，nn/nadd 中节点名字和效果，key 是改规则的核心天赋；顺序内左、内右、外左、外右，外左靠前一个区、外右靠后一个区，放和那个区沾边的大天赋，比如近战的外右是旋风之心，挨着范围）。bridge 是内圈桥 = 元素环（骸骨、余烬、雷殛、瘟疫、圣辉、魂力），ring 是外圈桥 = 两区交界（两种标签各一半）。第 i 个连接区 i 和 i+1，桥中间是印记槽。效果写法：add 提高或附加（相加），more 总增或总降（相乘，1.4 = 总增 40%，0.8 = 总降 20%；dashMax 例外，是直接加减），flag 改规则（见 rules.json，数值是 {v}）。ail:元素 是异常几率，按小数写（0.03 = 3%）；inc:元素 / inc:all 是伤害提高 %；res:元素 是抗性 %。核心天赋的说明文字会按效果自动生成。 第 6 步重排（2026-10-24）：元素环 = 余烬（近战|范围）、寒霜（范围|投射物）、雷殛、瘟疫、圣辉、骸骨（灯火|近战），魂力格换成寒霜；碎冰、碎冰连锁两个小团改成寒霜主题，夹着寒霜桥；星坠雨小团改火焰（挨余烬桥），回响圣盾小团改护甲+圣光（挨圣辉桥）。 整理（design/spec-tree-defense.md，2026-10-24）：去掉 Astroloot 遗留的质量 / 时间 / 遁靴伤害 / 基础速度节点；加通用防御四团（贴身 铁壁阵、控场 寒狱、续航 饮盾、远离 孤狼）和派生 / 延迟 / 灯火节点。新 stat：closePer closeCap ctrlWeaken shieldOnHit（‰）farDR，以及装备已有的 delayInc frozenTaken chainStep projSlow spawnAdd block shieldDmg burnLess soulKillInc moveInc，天赋里的值和装备相加。 tree-v3（10-27）：按标签重排，大天赋不点名技能 / 元素；内环统一成元素玩法节点（元素大天赋等元素系统上线后放进桥中心）。",
  "branches": [
   {
    "id": "melee",
@@ -7,7 +7,7 @@
    "c": "#e8dcc0",
    "small": [
     {
-     "inc:melee": 10
+     "inc:melee": 14
     },
     {
      "aspd": 4
@@ -48,7 +48,7 @@
      "aoeInc": 6
     },
     {
-     "areaInc": 8
+     "areaInc": 11
     },
     {
      "delayInc": 8
@@ -56,7 +56,7 @@
    ],
    "notable": [
     {
-     "n": "烈焰之环",
+     "n": "扩张之环",
      "add": {
       "aoeInc": 15,
       "areaInc": 10
@@ -71,12 +71,11 @@
     }
    ],
    "key": {
-    "n": "焚城",
-    "add": {
-     "ail:exp": 0.2
-    },
+    "n": "震荡",
+    "d": "余震（辅助石和所有余震效果）多重复 3 次；所有技能命中 10% 几率余震；冲刺槽 −1",
     "flag": {
-     "afterRep": 3
+     "afterRep": 3,
+     "quake": 1
     },
     "more": {
      "dashMax": -1
@@ -89,7 +88,7 @@
    "c": "#6cb8ff",
    "small": [
     {
-     "inc:proj": 10
+     "inc:proj": 14
     },
     {
      "projSpd": 6
@@ -117,16 +116,13 @@
     }
    ],
    "key": {
-    "n": "织雷之心",
+    "n": "弹射之心",
+    "d": "可弹射的技能伤害 ×1.3，每弹射一次之后的命中 +4%；不可弹射的技能伤害 ×0.8",
     "flag": {
-     "sparkHeart": 1,
-     "shockSpread": 1
+     "bounceHeart": 1
     },
     "add": {
-     "chain": 1
-    },
-    "more": {
-     "dmg:nonEle": 0.85
+     "chainStep": 4
     }
    }
   },
@@ -136,13 +132,13 @@
    "c": "#7cd65a",
    "small": [
     {
-     "dotInc": 10
+     "dotInc": 14
     },
     {
      "durInc": 6
     },
     {
-     "ail:nuc": 0.03
+     "ailNative": 0.03
     }
    ],
    "notable": [
@@ -161,7 +157,7 @@
     }
    ],
    "key": {
-    "n": "大瘟疫",
+    "n": "腐朽",
     "more": {
      "dot": 1.6,
      "dmg:hit": 0.8
@@ -174,13 +170,13 @@
    "c": "#c9a46a",
    "small": [
     {
-     "armorInc": 8
+     "armorInc": 11
     },
     {
-     "deflectInc": 10
+     "deflectInc": 14
     },
     {
-     "res:all": 3
+     "res:all": 8
     }
    ],
    "notable": [
@@ -232,28 +228,22 @@
     {
      "n": "残步",
      "add": {
-      "dodge": 6,
-      "moveInc": 6
+      "emberStep": 10
      }
     },
     {
-     "n": "长明",
+     "n": "灯油",
      "add": {
-      "burnLess": 10,
-      "energy": 4
+      "lampMax": 15,
+      "burnLess": 10
      }
     }
    ],
    "key": {
-    "n": "幻影",
-    "add": {
-     "dodge": 15
-    },
+    "n": "将熄之焰",
+    "d": "残灯阈值 30% → 50%，残灯效果 ×1.5；永远进不了明灯",
     "flag": {
-     "dodgeCap": 10
-    },
-    "more": {
-     "armor": 0.6
+     "dimFlame": 1
     }
    }
   }
@@ -278,37 +268,38 @@
    },
    {
     "small": {
-     "inc:kin": 8
+     "inc:melee": 12
     },
-    "nn": "重锤",
+    "nn": "重手",
     "nadd": {
-     "inc:kin": 15,
-     "inc:melee": 10
+     "inc:melee": 20,
+     "aspd": 5
     },
     "key": {
-     "n": "巨像",
+     "n": "重击",
+     "d": "出手放出的技能伤害总增 40%；出手速度总降 20%",
+     "flag": {
+      "heavyHit": 1
+     },
      "more": {
-      "dmg:kin": 1.4,
-      "speed": 0.8
+      "aspd": 0.8
      }
     }
    },
    {
     "small": {
-     "inc:kin": 8
+     "aspd": 4
     },
-    "nn": "碎骨",
+    "nn": "专注",
     "nadd": {
-     "ail:kin": 0.08,
-     "inc:kin": 15
+     "aspd": 8,
+     "inc:all": 10
     },
     "key": {
-     "n": "骨崩",
+     "n": "专精",
+     "d": "出手时魂龛的技能伤害总增 50%；【响应】魂龛的技能伤害总降 30%",
      "flag": {
-      "debrisChain": 1
-     },
-     "more": {
-      "dmg:nonKin": 0.75
+      "focus": 1
      }
     }
    },
@@ -322,9 +313,13 @@
      "aoeInc": 10
     },
     "key": {
-     "n": "旋风之心",
+     "n": "速攻",
+     "d": "出手速度总增 25%；所有技能灯火消耗 +25%",
      "flag": {
-      "whirlHeart": 1
+      "rapid": 1
+     },
+     "more": {
+      "aspd": 1.25
      }
     }
    }
@@ -332,20 +327,21 @@
   "area": [
    {
     "small": {
-     "inc:exp": 8
+     "delayInc": 12
     },
     "nn": "坠星",
     "nadd": {
-     "inc:exp": 15,
+     "delayInc": 20,
      "aoeInc": 10
     },
     "key": {
      "n": "星坠雨",
+     "d": "延迟技能每次多落 2 个（散开，每个 ×0.5）；出手速度总降 10%",
      "flag": {
       "starfall": 1
      },
      "more": {
-      "speed": 0.9
+      "aspd": 0.9
      }
     }
    },
@@ -359,12 +355,10 @@
      "critInc": 10
     },
     "key": {
-     "n": "静电场",
+     "n": "连环",
+     "d": "【响应】技能也给【命中时】充能（×0.5，不给自己）；【响应】技能消耗 +30%",
      "flag": {
-      "shockAura": 1
-     },
-     "more": {
-      "armor": 0.85
+      "chainCharge": 1
      }
     }
    },
@@ -379,6 +373,7 @@
     },
     "key": {
      "n": "殉爆",
+     "d": "敌人死亡时爆炸，造成它最大生命 15% 的伤害；护甲总降 20%",
      "flag": {
       "deathBoom": 1
      },
@@ -389,21 +384,18 @@
    },
    {
     "small": {
-     "inc:cold": 8
+     "aoeInc": 6
     },
-    "nn": "寒裂",
+    "nn": "积蓄",
     "nadd": {
-     "inc:cold": 15,
-     "ail:cold": 0.05,
-     "frozenTaken": 10
+     "aoeInc": 10,
+     "inc:all": 10
     },
     "key": {
-     "n": "碎冰",
+     "n": "蓄满",
+     "d": "溢出的充能最多存 3 次；所有魂龛容量 +25%",
      "flag": {
-      "shatter": 1
-     },
-     "more": {
-      "dmg:nonCold": 0.8
+      "overflow": 1
      }
     }
    }
@@ -411,20 +403,18 @@
   "proj": [
    {
     "small": {
-     "inc:cold": 8
+     "inc:proj": 12
     },
-    "nn": "冰晶",
+    "nn": "凝神",
     "nadd": {
-     "inc:cold": 15,
-     "projDur": 15
+     "inc:proj": 20,
+     "critInc": 10
     },
     "key": {
-     "n": "碎冰连锁",
+     "n": "狙杀",
+     "d": "投射物数为 1 的技能伤害总增 60%；“投射物 +N”对你无效",
      "flag": {
-      "shardChain": 1
-     },
-     "more": {
-      "dmg:nonCold": 0.8
+      "snipe": 1
      }
     }
    },
@@ -449,12 +439,12 @@
    },
    {
     "small": {
-     "inc:ele": 8
+     "inc:proj": 12
     },
     "nn": "链电",
     "nadd": {
      "chain": 1,
-     "inc:ele": 10
+     "inc:proj": 10
     },
     "key": {
      "n": "雷链",
@@ -468,20 +458,24 @@
    },
    {
     "small": {
-     "ail:ele": 0.03
+     "projSpd": 6
     },
-    "nn": "导电",
+    "nn": "贯穿",
     "nadd": {
-     "inc:ele": 20,
-     "ail:ele": 0.05
+     "pierce": 1,
+     "inc:proj": 10
     },
     "key": {
-     "n": "雷暴",
+     "n": "穿心",
+     "d": "穿透的投射物每穿过一个敌人伤害 +10%；投射物速度 −20%",
      "flag": {
-      "shockMul": 2
+      "pierceStack": 1
+     },
+     "add": {
+      "pierce": 1
      },
      "more": {
-      "dmg:nonEle": 0.8
+      "projSpd": 0.8
      }
     }
    }
@@ -489,15 +483,16 @@
   "dot": [
    {
     "small": {
-     "inc:nuc": 8
+     "dotInc": 12
     },
     "nn": "疫病",
     "nadd": {
-     "ail:nuc": 0.08,
-     "inc:nuc": 10
+     "ailNative": 0.08,
+     "dotInc": 10
     },
     "key": {
      "n": "传染",
+     "d": "带你任何持续伤害的敌人死亡时，传给附近 3 个敌人；直接命中伤害总降 15%",
      "flag": {
       "contagion": 1
      },
@@ -508,52 +503,49 @@
    },
    {
     "small": {
-     "dotInc": 8
+     "dotInc": 11
     },
     "nn": "溃烂",
     "nadd": {
      "dotInc": 20
     },
     "key": {
-     "n": "瘟疫之触",
-     "add": {
-      "ail:nuc": 1
-     },
-     "more": {
-      "rad": 0.5
+     "n": "常驻之力",
+     "d": "常驻技能伤害总增 40%；常驻技能每秒消耗 +50%",
+     "flag": {
+      "auraPower": 1
      }
     }
    },
    {
     "small": {
-     "inc:exp": 8
+     "durInc": 6
     },
-    "nn": "野火",
+    "nn": "久燃",
     "nadd": {
-     "ail:exp": 0.08,
-     "inc:exp": 15
+     "durInc": 15,
+     "dotInc": 10
     },
     "key": {
-     "n": "灼魂",
+     "n": "久伤",
+     "d": "持续伤害可以暴击（按出手技能的暴击率）；直接命中的暴击伤害 −50%",
      "flag": {
-      "burnKeep": 1
-     },
-     "more": {
-      "dmg:exp": 0.6
+      "dotCrit": 1
      }
     }
    },
    {
     "small": {
-     "double": 2
+     "ailNative": 0.03
     },
     "nn": "剧毒",
     "nadd": {
      "double": 5,
-     "inc:nuc": 10
+     "dotInc": 10
     },
     "key": {
      "n": "蚀骨",
+     "d": "带你任何异常的敌人全抗 −20 点；出手速度总降 10%",
      "flag": {
       "corrode": 1
      },
@@ -566,12 +558,12 @@
   "guard": [
    {
     "small": {
-     "deflectInc": 8
+     "meleeDR": 2
     },
     "nn": "庇护",
     "nadd": {
      "deflectInc": 20,
-     "res:all": 4
+     "res:all": 10
     },
     "key": {
      "n": "圣盾",
@@ -585,27 +577,24 @@
    },
    {
     "small": {
-     "armorInc": 6
+     "eliteDR": 2
     },
-    "nn": "圣徽",
+    "nn": "坚守",
     "nadd": {
-     "armorInc": 15,
-     "block": 8,
-     "shieldDmg": 10
+     "eliteDR": 6,
+     "armorInc": 15
     },
     "key": {
-     "n": "回响圣盾",
+     "n": "磐石",
+     "d": "精英伤害降低翻倍；普通怪对你的伤害 +15%",
      "flag": {
-      "echoShield": 1
-     },
-     "more": {
-      "life": 0.9
+      "steadfast": 1
      }
     }
    },
    {
     "small": {
-     "ctrlWeaken": 4
+     "rangedDR": 2
     },
     "nn": "镇压",
     "nadd": {
@@ -620,7 +609,7 @@
    },
    {
     "small": {
-     "shieldOnHit": 0.5
+     "lifeRegen": 3
     },
     "nn": "饮魂",
     "nadd": {
@@ -665,31 +654,27 @@
      "burnLess": 8
     },
     "key": {
-     "n": "火痕",
+     "n": "长明",
+     "d": "明灯阈值 70% → 50%，明灯时燃烧 −50%；残灯时伤害总降 20%",
      "flag": {
-      "fireTrail": 1
-     },
-     "more": {
-      "dashMax": -1
+      "longLight": 1
      }
     }
    },
    {
     "small": {
-     "dodge": 3
+     "lampMax": 4
     },
-    "nn": "鬼步",
+    "nn": "添油",
     "nadd": {
-     "dodge": 8,
+     "lampMax": 10,
      "moveInc": 5
     },
     "key": {
-     "n": "闪避反击",
+     "n": "燃魂",
+     "d": "所有魂龛都带燃灯（T1 档）；灯火上限 −30%",
      "flag": {
-      "dodgeSpikes": 1
-     },
-     "more": {
-      "armor": 0.8
+      "burnSoul": 1
      }
     }
    },
@@ -703,12 +688,13 @@
      "moveInc": 5
     },
     "key": {
-     "n": "残影",
+     "n": "以灯代血",
+     "d": "受到的伤害 30% 先扣灯火（1 灯火抵 4 伤害）；生命上限 −20%",
      "flag": {
-      "afterDash": 1
+      "lampBlood": 1
      },
-     "add": {
-      "dashRegen": -30
+     "more": {
+      "life": 0.8
      }
     }
    }
@@ -716,28 +702,34 @@
  },
  "bridge": [
   {
-   "inc:exp": 10,
-   "ail:exp": 0.02
+   "flatInc": 10,
+   "addFx": 8,
+   "ailNative": 0.02
   },
   {
-   "inc:cold": 10,
-   "ail:cold": 0.02
+   "flatInc": 10,
+   "addFx": 8,
+   "ailNative": 0.02
   },
   {
-   "inc:ele": 10,
-   "ail:ele": 0.02
+   "flatInc": 10,
+   "addFx": 8,
+   "ailNative": 0.02
   },
   {
-   "inc:nuc": 10,
-   "ail:nuc": 0.02
+   "flatInc": 10,
+   "addFx": 8,
+   "ailNative": 0.02
   },
   {
-   "inc:pla": 10,
-   "ail:pla": 0.02
+   "flatInc": 10,
+   "addFx": 8,
+   "ailNative": 0.02
   },
   {
-   "inc:kin": 10,
-   "ail:kin": 0.02
+   "flatInc": 10,
+   "addFx": 8,
+   "ailNative": 0.02
   }
  ],
  "ring": [
@@ -759,7 +751,7 @@
   },
   {
    "deflectInc": 8,
-   "dodge": 2
+   "rangedDR": 2
   },
   {
    "moveInc": 4,

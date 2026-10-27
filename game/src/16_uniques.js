@@ -15,7 +15,7 @@ const RULE_TEXT = {
   dotInc: v => `持续伤害提高 ${v}%`, burnSlow: v => `灼烧衰减降低 ${v}%`, kinBaseInc: v => `物理基础伤害提高 ${v}%`,
   kinShock: v => `物理伤害有 ${v}% 几率造成感电`, double: v => `${v}% 几率造成双倍伤害`, shockMul: v => `感电效果提高 ${v}%`, runeLvl: v => `这件装备上的符文等级 +${v}`,
   massInc: v => `${ATTR_N.mass}${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`, energyInc: v => `${ATTR_N.energy}${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`, timeInc: v => `${ATTR_N.time}${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`,
-  rangeInc: v => `射程提高 ${v}%`, spinDecay: v => `代价：旋转层数掉得更快，不命中 ${Math.round(WH.decay * (1 - v / 100) * 10) / 10} 秒就清零（原来 ${WH.decay} 秒）`, resAll: v => `全部抗性 ${v >= 0 ? '+' : ''}${v}%`, blindAura: () => ruleText('blindAura'), shockAura: () => ruleText('shockAura'),
+  rangeInc: v => `射程提高 ${v}%`, spinDecay: v => `代价：旋转层数掉得更快，不命中 ${Math.round(WH.decay * (1 - v / 100) * 10) / 10} 秒就清零（原来 ${WH.decay} 秒）`, resAll: v => `全抗 ${v >= 0 ? '+' : ''}${v}`, rangedDRU: v => `远程伤害降低 ${v}%`, rangedSpike: () => `被远程命中时，骨刺刺穿身边的敌人（护盾上限的 50%），每秒最多一次`, blindAura: () => ruleText('blindAura'), shockAura: () => ruleText('shockAura'),
   fieldHere: () => '力场符文插在这里也生效', takenKin: v => `受到的伤害有 ${v}% 按物理抗性结算`, dodge: v => `闪避 +${v}`, dodgeCap: v => ruleText('dodgeCap', v),
   dodgeSpikes: () => ruleText('dodgeSpikes'), velocity: v => `移动速度提高 ${v}%`, critLess: v => `暴击率总降 ${v}%`,
   areaEye: () => ruleText('areaEye'), projLess: v => `代价：投射物伤害总降 ${v}%`, armorLess: v => `代价：护盾总降 ${v}%`,
@@ -26,7 +26,7 @@ const RULE_TEXT = {
   winterHeart: v => `冰球速度 −70%；持续时间 +${v}%；冰片频率 ×1.5`, winterCost: v => `代价：每次施放的灯火消耗 +${v}%`,
   shardCrown: () => '派生物再派生一层（每层 ×0.5）', frozenTaken: v => `冻结的敌人受到的伤害提高 ${v}%`, projSlowU: v => `代价：投射物速度降低 ${v}%（寒魄球用起来是好处）`,
   autoNova: v => `新星每 ${UQX.autoNovaEvery} 秒自动脉冲一次（×${v}%），不再按攻速出手`, iceGround: () => `脚下留 ${UQX.iceGround.dur} 秒冰地，每秒叠 ${UQX.iceGround.chillPerSec} 层冰缓`, moveLess: v => `代价：移速 −${v}%`,
-  coffin: () => `每冻结一个敌人回 ${UQX.coffinShield}% 护盾`, freezeDur: v => `冻结时间 +${v}%`, fireResLess: v => `代价：火焰抗性 −${v}%`,
+  coffin: () => `每冻结一个敌人回 ${UQX.coffinShield}% 护盾`, freezeDur: v => `冻结时间 +${v}%`, fireResLess: v => `代价：火焰抗性 −${v}`,
   vortexTreads: () => `旋转叠满层时移速 +${UQX.vortex.moveFull}%、受到的伤害 −${UQX.vortex.takenFull}%（永冬自动脉冲期间算满层）；代价：没有层数时移速 −${UQX.vortex.moveNone}%`,
   chainCrown: () => ruleText('chainCrown'), projCrown: () => ruleText('projCrown'), durCrown: () => ruleText('durCrown'), velCrown: () => ruleText('velCrown'), meleeCrown: () => ruleText('meleeCrown'), multicrit: () => ruleText('multicrit'), dashMax: v => `冲刺槽 +${v}`, finale: () => ruleText('finale'), splitEnd: () => ruleText('splitEnd'),
 };

@@ -1,47 +1,1153 @@
 {
- "_说明": "独特装备。b 底材；req 需求物品等级；w 掉落权重（0 = 只从 Boss 掉）；fixed 保底词条 [词条族, 档位 N]（N=1 最高档，见 loot.json 的 uniqueFixedTier）；rules 专属规则 [规则键, 下限, 上限]，掉落时在范围里掷；sock 固定符文槽数；when 技能石要有这个标签规则才生效（spec-skill-gems §4）。规则键的含义见 src/16_uniques.js 的 RULE_TEXT，改规则类的（blindAura、dodgeSpikes 等）参数在 rules.json。",
+ "_说明": "独特装备。b 底材；req 需求物品等级；w 掉落权重（0 = 只从 Boss 掉）；fixed 保底词条 [词条族, 档位 N]（N=1 最高档，见 loot.json 的 uniqueFixedTier）；rules 专属规则 [规则键, 下限, 上限]，掉落时在范围里掷；sock 固定符文槽数；when 技能石要有这个标签规则才生效（spec-skill-gems §4）。规则键的含义见 src/16_uniques.js 的 RULE_TEXT，改规则类的（blindAura、dodgeSpikes 等）参数在 rules.json。 gear-v2 / uniques-audit（10-27）：底子按武器表重新指定，固定词条换成新词条族，抗性改成点数；删除经卷头冠。",
  "list": [
-  {"id": "StormCrown", "n": "雷冠", "kind": "core", "b": "NebulaCore", "req": 20, "w": 40, "ladderOnly": 20, "fixed": [["IncreasedAttackSpeed", 1]], "rules": [["chainCrown", 1, 1], ["shockMul", 20, 40], ["armorLess", 15, 15]], "_说明": "弹射标签的独特（design/spec-tags.md）"},
-  {"id": "StormEye", "n": "风暴之眼", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "ladderOnly": 20, "fixed": [["IncreasedAttackSpeed", 1]], "rules": [["areaEye", 1, 1], ["rangeInc", 15, 25], ["projLess", 30, 30]], "_说明": "ladderOnly：只在天梯宝箱里出，或天梯最高层达到这个数以后的普通掉落里出"},
-  {"id": "HundredBones", "n": "百骨冠", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "fixed": [], "rules": [["projCrown", 1, 1]], "_说明": "投射物标签的独特（design/spec-tags.md）"},
-  {"id": "StarTrail", "n": "疾星冠", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "fixed": [], "rules": [["velCrown", 1, 1]], "_说明": "投射物速度 / 持续时间的独特（design/spec-spark.md 第五版）"},
-  {"id": "EverEmber", "n": "永燃冠", "kind": "core", "b": "NebulaCore", "req": 20, "w": 40, "fixed": [], "rules": [["durCrown", 1, 1]], "_说明": "持续标签的独特（design/spec-tags.md）"},
-  {"id": "SkullSplitter", "n": "碎颅冠", "kind": "core", "b": "TitaniumCore", "req": 20, "w": 40, "fixed": [], "rules": [["meleeCrown", 1, 1]], "_说明": "近战标签的独特（design/spec-tags.md）"},
-  {"id": "RustBlaster", "n": "锈骨弩", "kind": "weapon", "b": "Cannon", "req": 1, "w": 100, "fixed": [["IncreasedKineticBaseDamage",1],["IncreasedBaseAttackSpeed",1]], "rules": [["knock",1,1],["knockMore",40,60]]},
-  {"id": "RockCat", "n": "山猫火罐", "kind": "weapon", "b": "Blastgun", "when": "AoE", "req": 1, "w": 100, "fixed": [["FlatExplosiveDamage",1],["IncreasedExplosiveBaseDamage",1]], "rules": [["aspdLess",20,30],["afterPct",85,90],["afterRep",2,3]]},
-  {"id": "SpectraRail", "n": "三棱穿心弩", "kind": "weapon", "b": "Railgun", "req": 12, "w": 100, "fixed": [["FlatKineticDamage",1],["IncreasedKineticBaseDamage",3],["IncreasedThermalBaseDamage",1]], "rules": [["convKinThermal",80,100],["pierce",2,4]]},
-  {"id": "Nukie", "n": "疫爆陷阱", "kind": "weapon", "b": "PlasmaNova", "when": "Mine", "req": 6, "w": 100, "fixed": [["IncreasedExplosiveBaseDamage",1],["IncreasedNuclearBaseDamage",1]], "rules": [["convExpNuc",100,100],["ail:nuc",30,50],["pull",1,1]]},
-  {"id": "Doomcloud", "n": "末日瘴云", "kind": "weapon", "b": "PlasmaNova", "when": "Mine", "req": 6, "w": 100, "fixed": [["IncreasedNuclearBaseDamage",1]], "rules": [["dotMore",30,50],["shred:nuc",15,25]]},
-  {"id": "FungusFury", "n": "菌怒", "kind": "weapon", "b": "SporeBlaster", "req": 8, "w": 100, "fixed": [["IncreasedNuclearBaseDamage",4],["FlatNuclearDamage",6]], "rules": [["chain",2,3]]},
-  {"id": "BigBertha", "n": "攻城骨弩", "kind": "weapon", "b": "Cannon", "req": 12, "w": 100, "fixed": [["IncreasedKineticBaseDamage",1]], "rules": [["flatPerArmor",3,5],["debrisPerEnergy",2,4],["aspdLess",50,70],["ail:kin",20,30]]},
-  {"id": "Aetherbane", "n": "噬魂骨刺", "kind": "weapon", "b": "Spikes", "req": 40, "w": 100, "fixed": [["FlatKineticDamage",1],["IncreasedBaseAttackSpeed",2]], "rules": [["killInc",1,2]]},
-  {"id": "DeathRay", "n": "死光杖", "kind": "weapon", "b": "Laser", "req": 28, "w": 40, "fixed": [["IncreasedPlasmaBaseDamage",1]], "rules": [["cull",10,15],["dotMore",20,30]]},
-  {"id": "TheTwin", "n": "双生圣焰铳", "kind": "weapon", "b": "Blastgun", "req": 24, "w": 40, "fixed": [["FlatNuclearDamage",2],["IncreasedBaseAttackSpeed",2]], "rules": [["twinNuc",50,80],["convPlaNuc",50,50],["ail:nuc",20,30]]},
-  {"id": "GruvaksHorn", "n": "古鲁瓦克之角", "kind": "weapon", "b": "Hullbreaker", "req": 55, "w": 40, "fixed": [["IncreasedKineticBaseDamage",1]], "rules": [["knockMore",80,150],["pull",1,1]]},
-  {"id": "SolarasFire", "n": "索拉之焰", "kind": "weapon", "b": "StarfallRod", "when": "DoT", "req": 32, "w": 100, "fixed": [["FlatExplosiveDamage",1],["IncreasedExplosiveBaseDamage",2]], "rules": [["dotInc",20,30],["burnSlow",50,50]]},
-  {"id": "LeesTempests", "n": "李的风暴", "kind": "weapon", "b": "TurbineBlades", "req": 60, "w": 0, "fixed": [], "rules": [["kinBaseInc",60,100],["kinShock",20,30],["double",10,20],["shockMul",50,100]]},
-  {"id": "Slotfather", "n": "符文教父", "kind": "weapon", "b": "Blastgun", "req": 76, "w": 0, "fixed": [], "rules": [["runeLvl",16,24]]},
-  {"id": "Goroboro", "n": "戈罗波罗", "kind": "weapon", "b": "Spikes", "req": 42, "w": 40, "fixed": [], "rules": [["kinBaseInc",80,120],["aspdLess",20,30]]},
-  {"id": "Arestum", "n": "三相之盾", "kind": "shield", "b": "TitaniumShield", "req": 40, "w": 40, "fixed": [], "rules": [["armorInc",10,25],["energyInc",10,25],["shieldRegenPct",1,2]]},
-  {"id": "GlassShield", "n": "琉璃盾", "kind": "shield", "b": "PhantomShield", "req": 70, "w": 0, "fixed": [], "rules": [["rangeInc",15,25],["resAll",-20,-20],["blindAura",1,1]]},
-  {"id": "VoltronsPrison", "n": "雷囚之盾", "kind": "shield", "b": "NebulaShield", "req": 36, "w": 40, "fixed": [["IncreasedDeflectorShield",1],["FlatDeflectorShield",1],["FlatEnergy",1]], "rules": [["resAll",10,15],["shockAura",1,1]]},
-  {"id": "Papyrus", "n": "经卷头冠", "kind": "core", "b": "NebulaCore", "req": 8, "w": 40, "sock": 6, "fixed": [], "rules": [["fieldHere",1,1]]},
-  {"id": "Bastion", "n": "城垛盔", "kind": "core", "b": "TitaniumCore", "req": 50, "w": 40, "fixed": [["IncreasedArmor",1],["KineticResistance",1]], "rules": [["takenKin",30,50]]},
-  {"id": "MoonKing", "n": "月王兜帽", "kind": "core", "b": "PhantomCore", "req": 50, "w": 40, "fixed": [], "rules": [["dodge",10,20],["dodgeCap",5,10],["dodgeSpikes",1,1]]},
-  {"id": "Siebenmeilen", "n": "七里靴", "kind": "engine", "b": "Thruster", "req": 1, "w": 100, "fixed": [["IncreasedDuration",1],["IncreasedAttackSpeed",1],["ThermalResistance",2]], "rules": [["velocity",20,40]]},
-  {"id": "StoneOfBalu", "n": "巴鲁之石", "kind": "hub", "b": "IridiumNexus", "req": 28, "w": 40, "fixed": [], "rules": [["energyAdd",10,20],["energyInc",20,40],["aspdLessAll",10,15]]},
-  {"id": "CritRipper", "n": "开膛提灯", "kind": "off", "b": "GraveLantern", "req": 50, "w": 40, "fixed": [], "rules": [["critLess",40,80],["multicrit",1,1]]},
-  {"id": "EscapeCircuit", "n": "遁逃之靴", "kind": "engine", "b": "Thruster", "req": 12, "w": 100, "fixed": [["IncreasedBaseVelocity",3]], "rules": [["dashMax",1,1]]},
-  {"id": "GrandFinale", "n": "终幕法源", "kind": "off", "b": "SoulSource", "req": 16, "w": 100, "fixed": [], "rules": [["finale",1,1]]},
-  {"id": "Wrath", "n": "狂裂箭袋", "kind": "off", "b": "BoneQuiver", "req": 24, "w": 40, "fixed": [], "rules": [["splitEnd",1,1]]},
-  {"id": "DoomCrown", "n": "末日冠", "kind": "core", "b": "NebulaCore", "req": 30, "w": 30, "ladderOnly": 20, "fixed": [], "rules": [["delayCrown", 10, 14], ["delayAdd", 1, 1], ["aoeInc", 20, 30], ["earlyWarn", 1, 1]]},
-  {"id": "ScorchedCircle", "n": "焦土法阵", "kind": "hub", "b": "AmberNexus", "req": 24, "w": 40, "fixed": [], "rules": [["groundStack", 3, 3], ["durLess", 30, 30]]},
-  {"id": "MartyrShield", "n": "殉道者之盾", "kind": "shield", "b": "SigilShield", "req": 30, "w": 30, "ladderOnly": 20, "sock": 2, "fixed": [], "rules": [["martyrThrow", 15, 25], ["martyrArmor", 1, 1]], "_说明": "martyrThrow 以 0.1% 为单位"},
-  {"id": "EchoCrown", "n": "回音冠", "kind": "core", "b": "PhantomCore", "req": 20, "w": 40, "fixed": [], "rules": [["echoCrown", 25, 35], ["chainLess", 1, 1]]},
-  {"id": "WinterHeart", "n": "冬之心", "kind": "weapon", "b": "FrostOrb", "req": 30, "w": 30, "ladderOnly": 20, "fixed": [], "rules": [["winterHeart", 80, 100], ["winterCost", 50, 50]]},
-  {"id": "ShardCrown", "n": "碎晶冠", "kind": "core", "b": "NebulaCore", "req": 24, "w": 40, "fixed": [], "rules": [["shardCrown", 1, 1], ["frozenTaken", 15, 25], ["projSlowU", 20, 20]]},
-  {"id": "EverwinterCircle", "n": "永冬法阵", "kind": "hub", "b": "FrostNexus", "req": 30, "w": 30, "ladderOnly": 20, "fixed": [], "rules": [["autoNova", 50, 65], ["iceGround", 1, 1], ["moveLess", 15, 15]]},
-  {"id": "CoffinShield", "n": "冰棺盾", "kind": "shield", "b": "TitaniumShield", "req": 20, "w": 40, "fixed": [], "rules": [["coffin", 1, 1], ["freezeDur", 20, 35], ["fireResLess", 20, 20]]},
-  {"id": "VortexTreads", "n": "旋涡之履", "kind": "engine", "b": "Thruster", "req": 20, "w": 40, "fixed": [], "rules": [["vortexTreads", 1, 1]]}
-]
+  {
+   "id": "StormCrown",
+   "n": "雷冠",
+   "kind": "core",
+   "b": "NebulaCore",
+   "req": 20,
+   "w": 40,
+   "ladderOnly": 20,
+   "fixed": [
+    [
+     "CoreCrit",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "chainCrown",
+     1,
+     1
+    ],
+    [
+     "shockMul",
+     20,
+     40
+    ],
+    [
+     "armorLess",
+     15,
+     15
+    ]
+   ],
+   "_说明": "弹射标签的独特（design/spec-tags.md）"
+  },
+  {
+   "id": "StormEye",
+   "n": "风暴之眼",
+   "kind": "core",
+   "b": "PhantomCore",
+   "req": 20,
+   "w": 40,
+   "ladderOnly": 20,
+   "fixed": [
+    [
+     "IncreasedArea",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "areaEye",
+     1,
+     1
+    ],
+    [
+     "rangeInc",
+     15,
+     25
+    ],
+    [
+     "projLess",
+     30,
+     30
+    ]
+   ],
+   "_说明": "ladderOnly：只在天梯宝箱里出，或天梯最高层达到这个数以后的普通掉落里出"
+  },
+  {
+   "id": "HundredBones",
+   "n": "百骨冠",
+   "kind": "core",
+   "b": "PhantomCore",
+   "req": 20,
+   "w": 40,
+   "fixed": [
+    [
+     "TrigDamage",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "projCrown",
+     1,
+     1
+    ]
+   ],
+   "_说明": "投射物标签的独特（design/spec-tags.md）"
+  },
+  {
+   "id": "StarTrail",
+   "n": "疾星冠",
+   "kind": "core",
+   "b": "PhantomCore",
+   "req": 20,
+   "w": 40,
+   "fixed": [
+    [
+     "CoreCrit",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "velCrown",
+     1,
+     1
+    ]
+   ],
+   "_说明": "投射物速度 / 持续时间的独特（design/spec-spark.md 第五版）"
+  },
+  {
+   "id": "EverEmber",
+   "n": "永燃冠",
+   "kind": "core",
+   "b": "NebulaCore",
+   "req": 20,
+   "w": 40,
+   "fixed": [
+    [
+     "IncreasedDuration",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "durCrown",
+     1,
+     1
+    ]
+   ],
+   "_说明": "持续标签的独特（design/spec-tags.md）"
+  },
+  {
+   "id": "SkullSplitter",
+   "n": "碎颅冠",
+   "kind": "core",
+   "b": "TitaniumCore",
+   "req": 20,
+   "w": 40,
+   "fixed": [
+    [
+     "FlatLife",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "meleeCrown",
+     1,
+     1
+    ]
+   ],
+   "_说明": "近战标签的独特（design/spec-tags.md）"
+  },
+  {
+   "id": "RustBlaster",
+   "n": "锈骨弩",
+   "kind": "weapon",
+   "b": "Cannon",
+   "req": 1,
+   "w": 100,
+   "fixed": [
+    [
+     "BaseDmgInc",
+     1
+    ],
+    [
+     "IncreasedBaseAttackSpeed",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "knock",
+     1,
+     1
+    ],
+    [
+     "knockMore",
+     40,
+     60
+    ]
+   ]
+  },
+  {
+   "id": "RockCat",
+   "n": "山猫火罐",
+   "kind": "weapon",
+   "b": "Blastgun",
+   "when": "AoE",
+   "req": 1,
+   "w": 100,
+   "fixed": [
+    [
+     "FlatExplosiveDamage",
+     1
+    ],
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "aspdLess",
+     20,
+     30
+    ],
+    [
+     "afterPct",
+     85,
+     90
+    ],
+    [
+     "afterRep",
+     2,
+     3
+    ]
+   ]
+  },
+  {
+   "id": "SpectraRail",
+   "n": "三棱穿心弩",
+   "kind": "weapon",
+   "b": "Railgun",
+   "req": 12,
+   "w": 100,
+   "fixed": [
+    [
+     "FlatKineticDamage",
+     1
+    ],
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "convKinThermal",
+     80,
+     100
+    ],
+    [
+     "pierce",
+     2,
+     4
+    ]
+   ]
+  },
+  {
+   "id": "Nukie",
+   "n": "疫爆陷阱",
+   "kind": "weapon",
+   "b": "PlasmaNova",
+   "when": "Mine",
+   "req": 6,
+   "w": 100,
+   "fixed": [
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "convExpNuc",
+     100,
+     100
+    ],
+    [
+     "ail:nuc",
+     30,
+     50
+    ],
+    [
+     "pull",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "Doomcloud",
+   "n": "末日瘴云",
+   "kind": "weapon",
+   "b": "Laser",
+   "when": "Mine",
+   "req": 6,
+   "w": 100,
+   "fixed": [
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "dotMore",
+     30,
+     50
+    ],
+    [
+     "shred:nuc",
+     15,
+     25
+    ]
+   ]
+  },
+  {
+   "id": "FungusFury",
+   "n": "菌怒",
+   "kind": "weapon",
+   "b": "SporeBlaster",
+   "req": 8,
+   "w": 100,
+   "fixed": [
+    [
+     "BaseDmgInc",
+     1
+    ],
+    [
+     "FlatNuclearDamage",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "chain",
+     2,
+     3
+    ]
+   ]
+  },
+  {
+   "id": "BigBertha",
+   "n": "攻城骨弩",
+   "kind": "weapon",
+   "b": "Siegebow",
+   "req": 12,
+   "w": 100,
+   "fixed": [
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "flatPerArmor",
+     3,
+     5
+    ],
+    [
+     "debrisPerEnergy",
+     2,
+     4
+    ],
+    [
+     "aspdLess",
+     50,
+     70
+    ],
+    [
+     "ail:kin",
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "Aetherbane",
+   "n": "噬魂骨刺",
+   "kind": "weapon",
+   "b": "Spikes",
+   "req": 40,
+   "w": 100,
+   "fixed": [
+    [
+     "FlatKineticDamage",
+     1
+    ],
+    [
+     "IncreasedBaseAttackSpeed",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "killInc",
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "id": "DeathRay",
+   "n": "死光杖",
+   "kind": "weapon",
+   "b": "Laser",
+   "req": 28,
+   "w": 40,
+   "fixed": [
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "cull",
+     10,
+     15
+    ],
+    [
+     "dotMore",
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "TheTwin",
+   "n": "双生圣焰铳",
+   "kind": "weapon",
+   "b": "PlasmaBlaster",
+   "req": 24,
+   "w": 40,
+   "fixed": [
+    [
+     "FlatNuclearDamage",
+     2
+    ],
+    [
+     "IncreasedBaseAttackSpeed",
+     2
+    ]
+   ],
+   "rules": [
+    [
+     "twinNuc",
+     50,
+     80
+    ],
+    [
+     "convPlaNuc",
+     50,
+     50
+    ],
+    [
+     "ail:nuc",
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "GruvaksHorn",
+   "n": "古鲁瓦克之角",
+   "kind": "weapon",
+   "b": "Hullbreaker",
+   "req": 55,
+   "w": 40,
+   "fixed": [
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "knockMore",
+     80,
+     150
+    ],
+    [
+     "pull",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "SolarasFire",
+   "n": "索拉之焰",
+   "kind": "weapon",
+   "b": "StarfallRod",
+   "when": "DoT",
+   "req": 32,
+   "w": 100,
+   "fixed": [
+    [
+     "FlatExplosiveDamage",
+     1
+    ],
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "dotInc",
+     20,
+     30
+    ],
+    [
+     "burnSlow",
+     50,
+     50
+    ]
+   ]
+  },
+  {
+   "id": "LeesTempests",
+   "n": "李的风暴",
+   "kind": "weapon",
+   "b": "TurbineBlades",
+   "req": 60,
+   "w": 0,
+   "fixed": [
+    [
+     "ProcCoefInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "kinBaseInc",
+     60,
+     100
+    ],
+    [
+     "kinShock",
+     20,
+     30
+    ],
+    [
+     "double",
+     10,
+     20
+    ],
+    [
+     "shockMul",
+     50,
+     100
+    ]
+   ]
+  },
+  {
+   "id": "Slotfather",
+   "n": "符文教父",
+   "kind": "weapon",
+   "b": "Blastgun",
+   "req": 76,
+   "w": 0,
+   "fixed": [
+    [
+     "AllModsLevel",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "runeLvl",
+     2,
+     3
+    ]
+   ]
+  },
+  {
+   "id": "Goroboro",
+   "n": "戈罗波罗",
+   "kind": "weapon",
+   "b": "Spikes",
+   "req": 42,
+   "w": 40,
+   "fixed": [
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "kinBaseInc",
+     80,
+     120
+    ],
+    [
+     "aspdLess",
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "Arestum",
+   "n": "三相之盾",
+   "kind": "shield",
+   "b": "TitaniumShield",
+   "req": 40,
+   "w": 40,
+   "fixed": [
+    [
+     "FlatArmor",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "armorInc",
+     10,
+     25
+    ],
+    [
+     "energyInc",
+     10,
+     25
+    ],
+    [
+     "shieldRegenPct",
+     1,
+     2
+    ]
+   ]
+  },
+  {
+   "id": "GlassShield",
+   "n": "琉璃盾",
+   "kind": "shield",
+   "b": "PhantomShield",
+   "req": 70,
+   "w": 0,
+   "fixed": [
+    [
+     "Block",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "rangeInc",
+     15,
+     25
+    ],
+    [
+     "resAll",
+     -40,
+     -40
+    ],
+    [
+     "blindAura",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "VoltronsPrison",
+   "n": "雷囚之盾",
+   "kind": "shield",
+   "b": "NebulaShield",
+   "req": 36,
+   "w": 40,
+   "fixed": [
+    [
+     "IncreasedDeflectorShield",
+     1
+    ],
+    [
+     "FlatDeflectorShield",
+     1
+    ],
+    [
+     "FlatEnergy",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "resAll",
+     20,
+     30
+    ],
+    [
+     "shockAura",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "Bastion",
+   "n": "城垛盔",
+   "kind": "core",
+   "b": "TitaniumCore",
+   "req": 50,
+   "w": 40,
+   "fixed": [
+    [
+     "IncreasedArmor",
+     1
+    ],
+    [
+     "KineticResistance",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "takenKin",
+     30,
+     50
+    ]
+   ]
+  },
+  {
+   "id": "MoonKing",
+   "n": "月王兜帽",
+   "kind": "core",
+   "b": "PhantomCore",
+   "req": 50,
+   "w": 40,
+   "fixed": [
+    [
+     "EliteDR",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "rangedDRU",
+     8,
+     15
+    ],
+    [
+     "rangedSpike",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "Siebenmeilen",
+   "n": "七里靴",
+   "kind": "engine",
+   "b": "Thruster",
+   "req": 1,
+   "w": 100,
+   "fixed": [
+    [
+     "MoveSpeed",
+     1
+    ],
+    [
+     "AllResistance",
+     2
+    ]
+   ],
+   "rules": [
+    [
+     "velocity",
+     20,
+     40
+    ]
+   ]
+  },
+  {
+   "id": "StoneOfBalu",
+   "n": "巴鲁之石",
+   "kind": "hub",
+   "b": "IridiumNexus",
+   "req": 28,
+   "w": 40,
+   "fixed": [
+    [
+     "FlatEnergy",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "energyAdd",
+     10,
+     20
+    ],
+    [
+     "energyInc",
+     20,
+     40
+    ],
+    [
+     "aspdLessAll",
+     10,
+     15
+    ]
+   ]
+  },
+  {
+   "id": "CritRipper",
+   "n": "开膛提灯",
+   "kind": "off",
+   "b": "GraveLantern",
+   "req": 50,
+   "w": 40,
+   "fixed": [
+    [
+     "CritDamage",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "critLess",
+     40,
+     80
+    ],
+    [
+     "multicrit",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "EscapeCircuit",
+   "n": "遁逃之靴",
+   "kind": "engine",
+   "b": "Thruster",
+   "req": 12,
+   "w": 100,
+   "fixed": [
+    [
+     "MoveSpeed",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "dashMax",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "GrandFinale",
+   "n": "终幕法源",
+   "kind": "off",
+   "b": "SoulSource",
+   "req": 16,
+   "w": 100,
+   "fixed": [
+    [
+     "TrigDamage",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "finale",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "Wrath",
+   "n": "狂裂箭袋",
+   "kind": "off",
+   "b": "BoneQuiver",
+   "req": 24,
+   "w": 40,
+   "fixed": [
+    [
+     "IncreasedAttackSpeed",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "splitEnd",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "DoomCrown",
+   "n": "末日冠",
+   "kind": "core",
+   "b": "NebulaCore",
+   "req": 30,
+   "w": 30,
+   "ladderOnly": 20,
+   "fixed": [
+    [
+     "IncreasedArea",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "delayCrown",
+     10,
+     14
+    ],
+    [
+     "delayAdd",
+     1,
+     1
+    ],
+    [
+     "aoeInc",
+     20,
+     30
+    ],
+    [
+     "earlyWarn",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "ScorchedCircle",
+   "n": "焦土法阵",
+   "kind": "hub",
+   "b": "AmberNexus",
+   "req": 24,
+   "w": 40,
+   "fixed": [
+    [
+     "AilEffect",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "groundStack",
+     3,
+     3
+    ],
+    [
+     "durLess",
+     30,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "MartyrShield",
+   "n": "殉道者之盾",
+   "kind": "shield",
+   "b": "SigilShield",
+   "req": 30,
+   "w": 30,
+   "ladderOnly": 20,
+   "sock": 2,
+   "fixed": [
+    [
+     "Block",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "martyrThrow",
+     15,
+     25
+    ],
+    [
+     "martyrArmor",
+     1,
+     1
+    ]
+   ],
+   "_说明": "martyrThrow 以 0.1% 为单位"
+  },
+  {
+   "id": "EchoCrown",
+   "n": "回音冠",
+   "kind": "core",
+   "b": "PhantomCore",
+   "req": 20,
+   "w": 40,
+   "fixed": [
+    [
+     "TrigDamage",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "echoCrown",
+     25,
+     35
+    ],
+    [
+     "chainLess",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "WinterHeart",
+   "n": "冬之心",
+   "kind": "weapon",
+   "b": "FrostOrb",
+   "req": 30,
+   "w": 30,
+   "ladderOnly": 20,
+   "fixed": [
+    [
+     "ProcCoefInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "winterHeart",
+     80,
+     100
+    ],
+    [
+     "winterCost",
+     50,
+     50
+    ]
+   ]
+  },
+  {
+   "id": "ShardCrown",
+   "n": "碎晶冠",
+   "kind": "core",
+   "b": "NebulaCore",
+   "req": 24,
+   "w": 40,
+   "fixed": [
+    [
+     "AddFxEffect",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "shardCrown",
+     1,
+     1
+    ],
+    [
+     "frozenTaken",
+     15,
+     25
+    ],
+    [
+     "projSlowU",
+     20,
+     20
+    ]
+   ]
+  },
+  {
+   "id": "EverwinterCircle",
+   "n": "永冬法阵",
+   "kind": "hub",
+   "b": "FrostNexus",
+   "req": 30,
+   "w": 30,
+   "ladderOnly": 20,
+   "fixed": [
+    [
+     "FlatColdDamageHub",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "autoNova",
+     50,
+     65
+    ],
+    [
+     "iceGround",
+     1,
+     1
+    ],
+    [
+     "moveLess",
+     15,
+     15
+    ]
+   ]
+  },
+  {
+   "id": "CoffinShield",
+   "n": "冰棺盾",
+   "kind": "shield",
+   "b": "TitaniumShield",
+   "req": 20,
+   "w": 40,
+   "fixed": [
+    [
+     "IncreasedArmor",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "coffin",
+     1,
+     1
+    ],
+    [
+     "freezeDur",
+     20,
+     35
+    ],
+    [
+     "fireResLess",
+     40,
+     40
+    ]
+   ]
+  },
+  {
+   "id": "VortexTreads",
+   "n": "旋涡之履",
+   "kind": "engine",
+   "b": "Thruster",
+   "req": 20,
+   "w": 40,
+   "fixed": [
+    [
+     "FlatLife",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "vortexTreads",
+     1,
+     1
+    ]
+   ]
+  }
+ ]
 }

@@ -195,6 +195,8 @@ function ailment(m, e, d, W, o) {
 }
 function damage(m, amt, el, crit, small) {
   if (m.dead || amt <= 0) return;
+  if (STATS.fullLampDmg && player.soul >= STATS.soulMax * 0.9) amt *= 1 + STATS.fullLampDmg / 100; // gear-v2：满灯伤害
+  if (!small) { lampGain('hit', STATS.lampOnHit, 2); if (crit) lampGain('crit', STATS.lampOnCrit, 3); }
   const crowd = mobs.length > 15 && !m.boss && !m.elite; // 怪海里的普通怪：不白闪、不飘数字，只留刀痕和击退
   m.hp -= amt; if (!small && !crowd && !(m.flCd > 0)) { m.fl = 0.06; m.flCd = 0.45; } // 受击白闪限频：连续挨打不会一直发白
   if ((!small || amt > m.max * 0.04) && !crowd) fx({ t: 'num', x: m.x, y: m.y - m.size * 2, v: amt, el, crit, small }); 
@@ -220,6 +222,7 @@ function kill(m) {
   if (!m.boss) RUN.prog += (RUN.mode === 'ladder' ? (m.elite ? LD.run.eliteP : LD.run.normalP) : 1) * hk;
   if (RUN.mode !== 'ladder') player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * (RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
   deathRules(m);
+  if (STATS.lifeOnKill) player.life = Math.min(STATS.life, player.life + STATS.lifeOnKill * hk); // gear-v2：击杀回生命
   if (STATS.flag.shatter && m.frzT > 0) shatter(m); // 碎冰：冻结的敌人死了碎成冰片（冰片打死的冻结敌人也照样碎）
   const mm = manualMul();
   const xp = m.d.xp * (m.elite ? ELITE.xp : 1) * monXp(RUN.L) * (1 + LX.xp / 100) * mm * hk;
@@ -228,9 +231,10 @@ function kill(m) {
   const L = RUN.L;
   const mult = (m.boss || (lad && !LD.run.mobDrops) ? 0 : m.elite ? DROP.eliteMul : 1) * mm * hk; // 天梯：怪物不掉落，只有通关宝箱
   const shardDrop = () => { const k = rollShard(L); dropThing(m, { kind: 'shard', k }); if (rnd() * 100 < LX.twin) dropThing(m, { kind: 'shard', k }); };
-  if (rnd() < DROP.item * mult * (1 + LX.iiq / 100)) RUN.cache = (RUN.cache || 0) + 1; // 战斗中不掉装备：记进这一层的 Boss 宝箱，打掉 Boss 一次掉出来
+  if (rnd() < DROP.item * mult * (1 + (LX.iiq + (STATS.findInc || 0)) / 100)) RUN.cache = (RUN.cache || 0) + 1; // 战斗中不掉装备：记进这一层的 Boss 宝箱，打掉 Boss 一次掉出来
   if (rnd() < DROP.shard * mult * (1 + LX.dice / 100)) shardDrop();
   if (rnd() < DROP.mod * mult * (1 + LX.runes / 100)) dropRune(m, L);
+  if (rnd() < STONES.dropChance * mult * (1 + (STATS.findInc || 0) / 100)) { const st = rollStone(L); (S.stones = S.stones || []).unshift(st); if (RUN.gain) RUN.gain.stones = (RUN.gain.stones || 0) + 1; if (G.ui && G.ui.feed) G.ui.feed(`${stoneOf(st.sid).n} ${st.t} 阶`, stoneOf(st.sid).c); } // gear-v2 §7：属性石直接进背包
   if (m.boss) player.life = Math.min(STATS.life, player.life + STATS.life * MECH.bossKillLife / 100); // 打掉守关 Boss 回一截生命
   if (m.boss && RUN.mode === 'ladder') ladderWin(m);
   else if (m.boss) {
@@ -326,25 +330,23 @@ function shieldOnHit() {
   const cap = STATS.shield * STATS.sohCap / 100, g = Math.min(STATS.shield * STATS.shieldOnHit / 1000, cap - player.sohGot); if (g <= 0) return;
   player.sohGot += g; player.shield = Math.min(STATS.shield, player.shield + g); if (RUN.soh !== undefined) RUN.soh += g;
 }
-function hurtPlayer(d, el, ck = 1) {
+function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite }（defense-v3 条件减伤）
   if (!RUN || RUN.ending || player.dashT > 0 || player.hurtT > 0) return;
-  if (rnd() * 100 < STATS.dodge) {
-    fx({ t: 'text', x: player.x, y: player.y - 16, s: '闪避', c: COL.dim });
-    if (STATS.flag.dodgeSpikes) for (const m of mobs) if (!m.dead && dist2(m, player) < RL.dodgeSpikes.r ** 2) { damage(m, mitigate(m, 'kin', STATS.shield * (RL.dodgeSpikes.shieldPct ?? RL.dodgeSpikes.armorPct) / 100), 'kin', false); fx({ t: 'spike', x: m.x, y: m.y, el: 'kin' }); }
-    return;
-  }
   const FL = STATS.flag;
   d *= ck * genericTaken() * lampTaken();
-  if (STATS.blockCh && rnd() < STATS.blockCh) { d *= 0.5; fx({ t: 'text', x: player.x, y: player.y - 16, s: '格挡', c: '#7ab0ff' }); trigEach('block'); } // 格挡（defense-v3 §3.6 简化：挡住减半） /* 控场、贴身、远离：流派减伤这一格，各自相乘 */
+  if (src && src.melee) d *= 1 - (STATS.meleeDR || 0) / 100; if (src && src.ranged) { d *= 1 - (STATS.rangedDR || 0) / 100; if (STATS.flag.rangedSpike && !(player.rsT > RUN.t)) { player.rsT = RUN.t + 1; for (const m of mobs) if (!m.dead && dist2(m, player) < (3 * UNIT) ** 2) { damage(m, mitigate(m, 'kin', STATS.shield * 0.5), 'kin', false); fx({ t: 'spike', x: m.x, y: m.y, el: 'kin' }); } } } if (src && src.elite) d *= 1 - Math.min(G2D.drCap * (STATS.flag.steadfast ? 2 : 1), (STATS.eliteDR || 0) * (STATS.flag.steadfast ? 2 : 1)) / 100; else if (src && STATS.flag.steadfast) d *= 1.15; // tree-v3 磐石
+  if (STATS.blk && rnd() * 100 < STATS.blk) { d = Math.max(0, d - (STATS.blockVal || 0)); fx({ t: 'text', x: player.x, y: player.y - 16, s: '格挡', c: '#7ab0ff' }); trigEach('block'); } // 格挡（defense-v3 §3.6 简化：挡住减半） /* 控场、贴身、远离：流派减伤这一格，各自相乘 */
   if (FL.still && isStill()) d *= 1 - RL.still.takenLess / 100;
   if (FL.rotFlesh) { const R = RL.rotFlesh; let n = 0; for (const x of mobs) if (!x.dead && x.rad.length && dist2(x, player) < R.r * R.r) n++; d *= 1 - Math.min(R.max, n * R.per) / 100; }
   const tk = FL.takenKin || 0;
-  d = d * (1 - tk) * (1 - STATS.res[el] / 100) + d * tk * (1 - STATS.res.kin / 100);
-  d *= 1 - armorDr(STATS.armor, d); // 护甲：对碎伤减得多，对重击减得少
+  const L = monLv(); d = d * (1 - tk) * (1 - resDrL(STATS.res[el] || 0, L)) + d * tk * (1 - resDrL(STATS.res.kin || 0, L)); // defense-v3：抗性点数按怪物等级换算
+  d *= 1 - armorDrL(STATS.armor, L); // defense-v3：护甲按怪物等级换算
+  lampGain('struck', STATS.lampOnStruck, 2);
   if (STATS.flag.vortexTreads && vortexState() === 1) d *= 1 - UQX.vortex.takenFull / 100; // 旋涡之履
   if (player.guardT > 0) d *= 1 - MECH.meleeGuardLess;
   d *= 1 - Math.max(0, ...STATS.weapons.map((W, i) => W && W.whirl ? Math.min(WH.drCap, WH.drPerStack * player.spin[i].n) : 0)) / 100; // 旋身：每层当前旋转减伤，有上限
   if (RUN.gd) RUN.gd[player.closeN > 0 ? 'hitC' : 'hitF'] += d / STATS.life; /* 模拟统计：贴身 / 不贴身时的承伤（按生命上限的比例） */
+  if (STATS.flag.lampBlood && d > 0 && player.soul > 0) { const pay = Math.min(d * 0.3, player.soul * 4); player.soul -= pay / 4; d -= pay; } // tree-v3 以灯代血
   if (player.shield > 0) { const a = Math.min(player.shield, d); player.shield -= a; d -= a; fx({ t: 'shield', x: player.x, y: player.y }); }
   if (d > 0 && FL.absorb) player.shield = Math.min(STATS.shield, player.shield + d * RL.absorb.pct / 100); // 圣盾：扣到生命的一部分转成护盾
   if (d > 0) { player.life -= d; trigStruck(d); player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); hurtFeedback(d); }
@@ -519,6 +521,7 @@ function projHit(p, m) {
   p.hit.add(m);
   let mul = p.mul * (p.pierced ? p.W.pierceMore : 1) * (1 + p.W.chainInc * (p.spark ? p.sch || 0 : p.chain));
   if (p.first && p.split > 0) mul *= 1 + p.W.splitInc * p.split;
+  if (p.W.pierceStep) mul *= 1 + p.W.pierceStep * Math.max(0, p.hit.size - 1); // tree-v3 穿心：每穿过一个敌人 +10%
   if (p.W.aoeR && p.W.form === 'proj') { // 火油罐：命中后范围爆炸
     fx({ t: 'boom', x: m.x, y: m.y - 3, r: p.W.aoeR, el: p.el }); sfx('boom'); aoePull(m.x, m.y, p.W.aoeR);
     for (const n of mobs) if (!n.dead && dist2(n, m) < (p.W.aoeR + n.size) ** 2) hitMob(n, p.W, { mul });
@@ -592,8 +595,9 @@ function logic(dt) {
   const spin = spinning(), lad = RUN.mode === 'ladder';
   if (!RUN.ending && !RUN.next) {
     const rv = !lad && RUN.base < RUN.descent.prevMax; // 重温已经打过的层
-    const net = (lad ? P.soulRegen : -(SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1)) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
+    const net = (lad ? P.soulRegen : -(SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1)) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
     player.soul = clamp(player.soul + net * dt, 0, P.soulMax);
+    if (P.lifeRegen && player.life > 0) player.life = Math.min(P.life, player.life + P.lifeRegen * dt); // gear-v2：每秒回生命
     if (player.soul <= 0) player.soulEmpty += dt;
     if (!lad && player.soul <= 0) { RUN.result = 'lampout'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('灯火燃尽 · 平安返回', COL.emberHi); }
   }
@@ -709,12 +713,12 @@ function logic(dt) {
     const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd;
     m.atkCd -= dt * ck; m.cd -= dt * ck; // 冰缓也降攻速
     const MA = PROG.monsterAttack;
-    if (d < m.size + MA.touch && m.atkCd <= 0) { hurtPlayer(m.dmg * bl, m.el, ctrlK(m)); m.atkCd = MA.meleeCd; }
+    if (d < m.size + MA.touch && m.atkCd <= 0) { hurtPlayer(m.dmg * bl, m.el, ctrlK(m), { melee: 1, elite: m.elite || m.boss }); m.atkCd = MA.meleeCd; }
     slamStep(m, dt * ck, bl);
     if (m.boss && m.cd <= 0) bossAct(m, Math.atan2(dy, dx), bl);
     else if (m.d.ai === 'ranged' && m.cd <= 0) {
       m.cd = m.d.cd; const lt = m.d.lead ? d / MA.shotSpd * m.d.lead : 0, a = Math.atan2(player.y + player.vy * lt - m.y, player.x + player.vx * lt - m.x); // lead：按角色速度预判落点
-      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, ck: ctrlK(m), el: m.el, chill: m.d.chill, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
+      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, ck: ctrlK(m), elite: m.elite || m.boss, el: m.el, chill: m.d.chill, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
     }
   }
   // 互相推开
@@ -743,7 +747,7 @@ function slamStep(m, dt, bl) {
     m.slam.t -= dt; if (m.slam.t > 0) return;
     const s = m.slam; m.slam = null;
     fx({ t: 'slam', x: s.x, y: s.y, r: s.r });
-    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m)); }
+    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m), { melee: 1, elite: m.elite || m.boss }); }
     return;
   }
   m.slamCd = (m.slamCd ?? C.every * rf(0.5, 1)) - dt;
@@ -850,7 +854,7 @@ function stepProjs(dt) {
   for (const p of projs) {
     if (p.enemy) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
-      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el, p.ck || 1) && p.chill) chillPlayer(p.chill); p.dead = true; }
+      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el, p.ck || 1, { ranged: 1, elite: p.elite }) && p.chill) chillPlayer(p.chill); p.dead = true; }
       if (p.pool && (p.dead || p.life <= 0)) { zones.push({ enemy: true, x: p.x, y: p.y + 6, r: p.pool.r, t: p.pool.dur, tickT: p.pool.tick, dmg: p.pool.dmg, ck: p.ck, el: p.el }); p.pool = null; p.dead = true; }
     } else if (p.orb) { stepOrb(p, dt);
     } else if (p.sthrow) { stepThrow(p, dt);
