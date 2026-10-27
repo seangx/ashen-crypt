@@ -451,7 +451,7 @@ function fire(W, i) {
     }
     case 'nova': { // 圣钟 / 霜钟：以自身为中心
       if (!inRange(W, W.rng)) return false;
-      const n = attacks(W), cost = NV.soulPerCast * (1 - STATS.soulLess), frost = W.frostNova && (!RUN || player.soul >= cost); // 霜环：灯火不够时放普通的新星；先叠冰缓再结算伤害，这一下冻住的怪当场吃“冻结受伤提高”，打死就碎
+      const n = attacks(W), cost = W.trigSlot ? 0 : NV.soulPerCast * (1 - STATS.soulLess), frost = W.frostNova && (!RUN || player.soul >= cost); // 霜环：灯火不够时放普通的新星；先叠冰缓再结算伤害，这一下冻住的怪当场吃“冻结受伤提高”，打死就碎
       const f0 = RUN ? RUN.freezes || 0 : 0, kb = NV.knockPx * Math.log(50); // 击退 knockPx 像素（kx 每秒衰减到 2%，位移 ≈ kx ÷ ln50）
       for (let k = 0; k < n; k++) { fx({ t: 'boom', x: px, y: py + 6, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.aoeR + m.size) ** 2) { if (frost) chillOn(m, W.chillStacks, W); hitMob(m, W, frost ? { mul: W.novaMul } : {}); if (frost && !m.dead) { if (!m.boss) { const dx = m.x - player.x, dy = m.y - player.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * kb; m.ky += dy / d * kb; } } } aoePull(px, py + 6, W.aoeR); }
       if (W.autoNova && STATS.flag.iceGround) pushGround({ ice: 1, gk: 'ice', x: px, y: py + 6, r: W.aoeR * UQX.iceGround.rMul, t: UQX.iceGround.dur, tickT: 0.5, tick: 0 });
@@ -460,7 +460,7 @@ function fire(W, i) {
     }
     case 'orb': { // 寒魄宝珠：朝怪最密的方向放慢速冰球（无限穿透），插符文的沿途放冰片
       const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
-      const cost = OB.soulPerCast * (W.orbCost || 1) * (1 - STATS.soulLess), rune = W.frostOrb && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost;
+      const cost = W.trigSlot ? 0 : OB.soulPerCast * (W.orbCost || 1) * (1 - STATS.soulLess), rune = W.frostOrb && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost;
       const dR = AU.orb.denseR ** 2; let best = live[0], bn = -1; for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < dR) c++; if (c > bn) { bn = c; best = a; } }
       const a0 = Math.atan2(best.y - 5 - py, best.x - px), n = attacks(W), fan = OB.fan * Math.PI / 180, cast = { ref: 0, rune };
       for (let k = 0; k < n; k++) { const a = a0 + (k - (n - 1) / 2) * fan; projs.push({ W, orb: 1, x: px, y: py, a, vx: Math.cos(a) * W.orbSpd, vy: Math.sin(a) * W.orbSpd, life: W.orbLife, age: 0, el: W.el, r: 5, sch: W.chain, rune, cast, emitT: OB.emit, rot: rf(0, Math.PI * 2), touch: new Map(), hit: new Set(), mul: 1 }); }
@@ -468,7 +468,7 @@ function fire(W, i) {
     }
     case 'meteor': { // 坠星杖：选射程内敌人最多的点（按速度 × 延迟预判），预警后落地
       const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
-      const cost = MT.soulPerCast * (1 - STATS.soulLess), rune = W.meteor && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost; // 灯火不够时放不带符文的陨石
+      const cost = W.trigSlot ? 0 : MT.soulPerCast * (1 - STATS.soulLess), rune = W.meteor && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost; // 灯火不够时放不带符文的陨石
       const delay = W.delayTot || (W.delay || MT.delay), R2 = W.aoeR * W.aoeR; let best = live[0], bn = -1;
       for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < R2) c++; if (c > bn) { bn = c; best = a; } }
       let cx = 0, cy = 0, vx = 0, vy = 0, k0 = 0; for (const b2 of live) if (dist2(best, b2) < R2) { cx += b2.x; cy += b2.y; vx += b2.vx || 0; vy += b2.vy || 0; k0++; }
@@ -516,7 +516,7 @@ function fire(W, i) {
     const old = projs.filter(p => p.spark && !p.dead), over = old.length + n - SP.maxAlive; for (let k = 0; k < over && k < old.length; k++) old[k].dead = true; // 同屏上限：最老的先消失
     for (let k = 0; k < n; k++) shoot(W, px, py, a + (n > 1 ? (k / (n - 1) - 0.5) * SP.fan : 0), { pierce: W.pierce, chain: 0, sch: W.chain, split: 0, ret: 0, hit: new Set(), mul: W.sparkMul, life, first: true, spark: 1, vol, ph: k % 2 ? Math.PI : 0 });
     if (RUN && RUN.dmg) RUN.dmg.sN = (RUN.dmg.sN || 0) + n; // 模拟统计：放出的游雷颗数
-    if (RUN) player.soul = Math.max(0, player.soul - SP.soulPerCast * (1 - STATS.soulLess));
+    if (RUN && !W.trigSlot) player.soul = Math.max(0, player.soul - SP.soulPerCast * (1 - STATS.soulLess)); // 魂龛里的技能石已经按 cost 付过灯火
     sfx('shoot'); return true;
   }
   const n = attacks(W), pel = W.b.pellets || 1;
@@ -619,7 +619,7 @@ function logic(dt) {
   const spin = spinning(), lad = RUN.mode === 'ladder';
   if (!RUN.ending && !RUN.next) {
     const rv = !lad && RUN.base < RUN.descent.prevMax; // 重温已经打过的层
-    const net = -(lad ? (SOUL.ladderBurn ?? SOUL.burn) + RUN.L * (SOUL.ladderBurnPerFloor ?? SOUL.burnPerFloor) : SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
+    const net = -(lad ? (SOUL.ladderBurn ?? SOUL.burn) + RUN.L * (SOUL.ladderBurnPerFloor ?? SOUL.burnPerFloor) : SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1) - (spin && P.weapons.some(W => W && W.whirl) ? WH.soulPerSec * (1 - P.soulLess) : 0); // 魂龛里的旋风斩已按 cost 每秒付灯火，不再重复扣
     player.soul = clamp(player.soul + net * dt, 0, P.soulMax);
     if (P.lifeRegen && player.life > 0) player.life = Math.min(P.life, player.life + P.lifeRegen * dt); // gear-v2：每秒回生命
     if (P.flag.returnLight && !RUN.rlUsed && player.soul < P.soulMax * 0.1) { RUN.rlUsed = 1; player.soul = P.soulMax * P.flag.returnLight / 100; if (G.ui) G.ui.banner('归光 · 灯火复燃', COL.emberHi); } // 归光（每局一次）

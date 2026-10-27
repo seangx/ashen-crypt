@@ -241,82 +241,49 @@
  "skill": {
   "GemStab": {
    "proc": 25,
-   "cost": [
-    0.3,
-    0.5
-   ]
+   "cost": [0.38, 0.63]
   },
   "GemWhirl": {
    "proc": 2,
-   "cost": [
-    0.6,
-    1.0
-   ],
+   "cost": [0.85, 1.3],
    "trigCost": 3
   },
   "GemRam": {
    "proc": 12,
-   "cost": [
-    2,
-    3
-   ]
+   "cost": [0.72, 1.08]
   },
   "GemBolt": {
    "proc": 25,
-   "cost": [
-    0.3,
-    0.5
-   ]
+   "cost": [0.45, 0.7]
   },
   "GemSickle": {
    "proc": 12,
-   "cost": [
-    0.4,
-    0.6
-   ]
+   "cost": [0.24, 0.36]
   },
   "GemScatter": {
    "proc": 12,
-   "cost": [
-    0.5,
-    0.8
-   ]
+   "cost": [1.05, 1.7]
   },
   "GemTaser": {
    "proc": 25,
-   "cost": [
-    2,
-    3
-   ]
+   "cost": [0.4, 0.6]
   },
   "GemSpark": {
    "proc": 5,
-   "cost": [
-    0.8,
-    1.2
-   ],
+   "cost": [0.24, 0.75],
    "trigCost": 3
   },
   "GemFrostOrb": {
    "proc": 25,
-   "cost": [
-    4,
-    6
-   ]
+   "cost": [0.62, 0.93]
   },
   "GemPlague": {
    "proc": 12,
-   "cost": [
-    2,
-    3
-   ]
+   "cost": [0.47, 0.7]
   },
   "GemFirepot": {
    "proc": 5,
-   "cost": [
-    3,
-    4
-   ]
+   "cost": [0.7, 0.9]
   },
   "GemShield": {
    "proc": 12,
@@ -327,31 +294,19 @@
   },
   "GemNova": {
    "proc": 5,
-   "cost": [
-    3,
-    4
-   ]
+   "cost": [0.8, 1.07]
   },
   "GemFrostNova": {
    "proc": 5,
-   "cost": [
-    4,
-    5
-   ]
+   "cost": [1.4, 1.78]
   },
   "GemMeteor": {
    "proc": 5,
-   "cost": [
-    6,
-    8
-   ]
+   "cost": [1.75, 2.35]
   },
   "GemTrap": {
    "proc": 5,
-   "cost": [
-    3,
-    4
-   ]
+   "cost": [0.9, 1.2]
   },
   "GemFlame": {
    "proc": 2,
@@ -359,7 +314,7 @@
     4,
     5
    ],
-   "castCost": 0.4
+   "castCost": 0.36
   },
   "GemBeam": {
    "proc": 2,
@@ -367,14 +322,11 @@
     4,
     5
    ],
-   "castCost": 0.4
+   "castCost": 0.33
   },
   "GemMiasma": {
    "proc": 0,
-   "cost": [
-    0.5,
-    0.8
-   ]
+   "cost": [0.26, 0.42]
   }
  },
  "defCost": 1.2,

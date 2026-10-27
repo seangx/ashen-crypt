@@ -157,7 +157,7 @@ const lampTaken = () => TRIGS_RT.lampState === 'ember' ? 1 + LST.ember.taken * e
 const lampShieldRegen = () => TRIGS_RT.lampState === 'bright' ? 1 + LST.bright.shieldRegen / 100 : 1;
 const lampLightR = () => { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax) return 110; if (STATS.flag && STATS.flag.lightEater) return LST.ember.lightMin; const f = clamp(player.soul / STATS.soulMax, 0, 1); return LST.ember.lightMin + (LST.ember.lightMax - LST.ember.lightMin) * f; };
 const lampOk = () => typeof RUN === 'undefined' || !RUN || player.soul >= STATS.soulMax * TRG.lampFloor;
-// 放一个魂龛的技能。付灯火（血誓付生命），按全局每秒上限防循环
+// 放一个魂龛的技能（旧主技能石的每次施放灯火 soulPerCast 不再重复扣：W.trigSlot 时为 0）。付灯火（血誓付生命），按全局每秒上限防循环
 function trigFire(i, o = {}) {
   const t = STATS.trigs && STATS.trigs[i]; if (!t || !t.on || !t.ws.length) return false;
   const fx = trigFx(t.T), now = G.time || 0; TRIGS_RT.fired = TRIGS_RT.fired.filter(x => now - x < 1);
