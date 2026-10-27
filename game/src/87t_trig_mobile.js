@@ -184,7 +184,8 @@ Object.assign(MobileUI.prototype, {
       const nm = tw ? trigName(it) : itemName(it), kind = tw ? '魂龛' : KIND_N[it.kind] || it.kind;
       T_(this, c, x + cw / 2, y0 + 54, nm, { size: 8, color: '#ffa31a' }); T_(this, c, x + cw / 2, y0 + 66, kind + ' · ' + it.ilvl + ' 级', { size: 8, color: '#e0e4f0' });
       const lines = tw ? [`【${trigKindN(it.c)}】${TCOND[it.c].n}`, trigU(it).d] : ruleLines(it);
-      const txt = lines.flatMap(l => wrapText(l, cw - 8, 8)).slice(0, 7).join('\n'); T_(this, c, x + cw / 2, y0 + 80, txt, { size: 8, color: '#9fe08a' });
+      const wl = lines.flatMap(l => wrapText(l, cw - 8, 8)), txt = (wl.length > 7 ? [...wl.slice(0, 6), wl[6].slice(0, Math.max(1, wl[6].length - 1)) + '…'] : wl).join('\n'); // 长规则：截断并标省略号（点图标看全文）
+      if (!tw && reelTags({ id: it.u }).some(t => reelSkillTags().has(t))) T_(this, c, x + cw / 2, y0 + ch - 40, '★ 同标签', { size: 8, color: '#ffd23a' }); T_(this, c, x + cw / 2, y0 + 80, txt, { size: 8, color: '#9fe08a' });
       const b = mkBtn(this, c, x + 4, y0 + ch - 26, cw - 8, 22, p.jack ? '全拿' : '选这件', () => { reelPick(k); toast(p.jack ? '三件都进背包了' : `${nm} 进背包了`); if (S.reelsPending.length) this.refresh(); else this.closeWin(); }, { size: 8, style: 'w' });
 
     });

@@ -105,18 +105,20 @@ function trigStats(P, eq) {
       if (A.crit) W.crit += A.crit / 100; if (fx.alwaysCrit) W.crit = Math.max(W.crit, 1);
       const Sk = TSK[g.b] || {}; W.proc = Sk.proc ?? 5; W.atk = cast ? 1 : 0;
       W.cost = (T.c === 'always' ? gemCost(g) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul + blT;
-      W.trigSlot = i + 1; W.trigMul = mul; W.wi = TRIG_BASE + i * TRIG_PER + j; ws.push(W);
+      W.trigSlot = i + 1; W.trigMul = mul; W.ailEffT = A.ailEff || 0; W.wi = TRIG_BASE + i * TRIG_PER + j; ws.push(W);
     });
     const tier = trigTier(T.ilvl), cap = Math.max(C.cap * (1 - (TRG.affCap.cap ? Math.min(100 - TRG.affCap.cap, A.cap || 0) : 0) / 100), (C.cap || 100) * TRG.affCap.cap / 100) * (fx.capMul || 1) * (P.flag && P.flag.overflow ? 1.25 : 1); // tree-v3 蓄满：容量 +25%
     const N = C.mode === 'timer' ? Math.max(TRG.affCap.timerMin, (fx.N || C.N[tier - 1]) - (A.gap || 0)) : 0;
     const per = trigRate(T, C, P, cap, N, fx, A);
-    const dps = ws.reduce((s, W) => s + (C.mode === 'always' ? W.dps : W.dps / Math.max(0.2, W.aps || 1) * per), 0) * (1 + Math.min(TRG.affCap.extra, A.extra || 0) / 100);
+    const dps = ws.reduce((s, W) => s + (C.mode === 'always' ? W.dps : W.cont || W.form === 'orbit' ? W.dps * (cast ? 0.4 : TRG.sustain || 2) * per : W.dps / Math.max(0.2, W.aps || 1) * per), 0) * (1 + Math.min(TRG.affCap.extra, A.extra || 0) / 100);
     P.trigs[i] = { T, ws, on, cast, mode: C.mode, cap: cap || 100, N, gain: 1 + (A.gain || 0) / 100, per, dps, cost: ws.reduce((s, W) => s + W.cost, 0), thr: (fx.thr || C.thr || 0) + (A.lowThr || 0) / 100 };
     if (on) { if (cast) castDps += dps; else respDps += dps; }
   });
   // 【出手】魂龛占掉的出手不放底技能：按占比扣掉底技能
   const aps = W0 ? W0.aps || 1 : 1, castShare = Math.min(1, P.trigs.reduce((s, t) => s + (t && t.on && t.cast && t.ws.length ? t.per / aps : 0), 0));
   if (W0) castDps -= W0.dps * castShare;
+  { const all = [W0, ...P.trigs.flatMap(t => t && t.on ? t.ws : [])], RS = elemReso(P, all); // 元素共鸣
+    if (RS > 1) { for (const W of all) if (W) { for (const o of [W.min, W.max]) if (o) for (const e in o) o[e] *= RS; W.dps *= RS; if (W.auraDps) W.auraDps *= RS; } for (const t of P.trigs) if (t) t.dps *= RS; castDps *= RS; respDps *= RS; } }
   P.castShare = castShare; P.castDps = castDps; P.respDps = respDps; P.trigCost = P.trigs.reduce((s, t) => s + (t && t.on ? t.cost * (t.mode === 'always' ? 1 : t.per) : 0), 0);
   P.dps = P.dps - (W0 ? W0.dps * castShare : 0) + P.trigs.reduce((s, t) => s + (t && t.on ? t.dps : 0), 0);
   // 格挡（defense-v3 §3.6 简化版）：只在盾上；基础 10% + 盾“格挡”词条 ÷ 4
@@ -146,14 +148,14 @@ const TRIGS_RT = { ch: [0, 0, 0, 0], st: [0, 0, 0, 0], cg: [0, 0, 0, 0], gap: [0
 function trigReset() { Object.assign(TRIGS_RT, { ch: [0, 0, 0, 0], st: [0, 0, 0, 0], cg: [0, 0, 0, 0], gap: [0, 0, 0, 0], tm: [0, 0, 0, 0], flash: [0, 0, 0, 0], stack: [0, 0, 0, 0], stackT: [0, 0, 0, 0], rot: [0, 0, 0, 0], fired: [], later: [], stillT: 0, n: [0, 0, 0, 0] }); }
 // 灯态（lamp-v2 §4）：明灯 ≥ 70%、残灯 < 30%；只在下行时生效
 const LST = TRG.lampStates;
-function lampState() { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax) return 'dim'; const f = player.soul / STATS.soulMax, F = STATS.flag || {}; // tree-v3：将熄之焰、长明改阈值
+function lampState() { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax || (STATS.flag && STATS.flag.lampChain)) return 'dim'; /* 灯链：始终「暗」 */ const f = player.soul / STATS.soulMax, F = STATS.flag || {}; // tree-v3：将熄之焰、长明改阈值
   const bMin = F.dimFlame ? 9 : F.longLight ? 0.5 : LST.bright.min, eMax = F.dimFlame ? 0.5 : LST.ember.max; return f >= bMin ? 'bright' : f < eMax ? 'ember' : 'dim'; }
 const emberK = () => STATS.flag && STATS.flag.dimFlame ? 1.5 : 1;
 const lampMore = () => TRIGS_RT.lampState === 'ember' ? (1 + LST.ember.more * emberK() / 100) * (STATS.flag && STATS.flag.longLight ? 0.8 : 1) * (1 + ((STATS.tree && STATS.tree.add.emberStep) || 0) / 100) : 1;
 const lampCritAdd = () => TRIGS_RT.lampState === 'ember' ? LST.ember.crit * emberK() / 100 : 0;
 const lampTaken = () => TRIGS_RT.lampState === 'ember' ? 1 + LST.ember.taken * emberK() / 100 : 1;
 const lampShieldRegen = () => TRIGS_RT.lampState === 'bright' ? 1 + LST.bright.shieldRegen / 100 : 1;
-const lampLightR = () => { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax) return 110; const f = clamp(player.soul / STATS.soulMax, 0, 1); return LST.ember.lightMin + (LST.ember.lightMax - LST.ember.lightMin) * f; };
+const lampLightR = () => { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax) return 110; if (STATS.flag && STATS.flag.lightEater) return LST.ember.lightMin; const f = clamp(player.soul / STATS.soulMax, 0, 1); return LST.ember.lightMin + (LST.ember.lightMax - LST.ember.lightMin) * f; };
 const lampOk = () => typeof RUN === 'undefined' || !RUN || player.soul >= STATS.soulMax * TRG.lampFloor;
 // 放一个魂龛的技能。付灯火（血誓付生命），按全局每秒上限防循环
 function trigFire(i, o = {}) {
@@ -167,6 +169,7 @@ function trigFire(i, o = {}) {
   for (const W0 of list) {
     const W = mulSt !== 1 ? { ...W0, min: scaleDmg(W0.min, mulSt), max: scaleDmg(W0.max, mulSt) } : W0;
     TRIGS_RT.castSlot = i; const ok = fire(W, W0.wi); any = ok || any;
+    if (ok && (W0.cont || W0.form === 'orbit') && t.T.c !== 'always' && !o.sus) { const SU = TRIGS_RT.sus || (TRIGS_RT.sus = []), d = t.cast ? 0.4 : (TRG.sustain || 2); const ex = SU.find(x => x.wi === W0.wi); if (ex) ex.t = d; else SU.push({ i, W, wi: W0.wi, t: d, cd: 1 / (W0.aps || 1) }); } // 持续型：响应放一次持续 2 秒（出手 0.4 秒）
     if (ok && A.extra && rnd() * 100 < Math.min(TRG.affCap.extra, A.extra)) fire(W, W0.wi);
     if (ok && RUN) { if (fx.lifeCost) player.life = Math.max(1, player.life - player.life * fx.lifeCost); else player.soul = Math.max(0, player.soul - W0.cost); }
   }
@@ -231,6 +234,7 @@ function trigStep(dt) {
   const ls = lampState(); if (ls !== R.lampState) { if (R.lampState && ls !== 'dim' && G.ui) fx({ t: 'text', x: player.x, y: player.y - 22, s: LST[ls].n, c: ls === 'ember' ? COL.emberHi : '#ffe9a0' }); R.lampState = ls; }
   R.stillT = isStill() ? R.stillT + dt : 0;
   R.later = R.later.filter(x => { x.t -= dt; if (x.t <= 0) { trigFire(x.i, { again: 1 }); return false; } return true; });
+  if (R.sus && R.sus.length) R.sus = R.sus.filter(x => { x.t -= dt; x.cd -= dt; if (x.cd <= 0 && x.t > 0) { R.castSlot = x.i; fire(x.W, x.wi); R.castSlot = -1; x.cd = 1 / (x.W.aps || 1); } return x.t > 0; });
   liveTrigs((t, i) => {
     R.gap[i] = Math.max(0, R.gap[i] - dt); R.flash[i] = Math.max(0, R.flash[i] - dt);
     if (R.stackT[i] > 0 && (R.stackT[i] -= dt) <= 0) R.stack[i] = 0;

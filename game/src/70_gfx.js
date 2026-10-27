@@ -20,6 +20,7 @@ function buildTextures(sc) {
   for (const k in SPR.icons) add('i_' + k, SPR.icons[k]);
   for (const k of ['anvil', 'star', 'book', 'ladder']) add('i_' + k, sprite(ART[k]));
   add('i_soulf', sprite(ART.soulf)); add('cursor', sprite(ART.cursor, '#0d0a12')); add('up', sprite(ART.up.map(r => r.replace(/g/g, 'm')), '#0d0a12'));
+  add('lorb', cvs(7, 7, x => { px(x, '#5a0a14', 1, 0, 5, 7); px(x, '#5a0a14', 0, 1, 7, 5); px(x, '#e0283c', 1, 1, 5, 5); px(x, '#ff9a9a', 2, 2, 2, 2); })); // 生命球
   add('shard', SPR.shard); for (const g of GLYPHS) add('glyph_' + g.id, SPR.glyphs[g.id]);
   add('dust', DUST_ICON); add('soul', SOUL_ICON); add('glow', GLOW);
   add('px', cvs(1, 1, x => px(x, '#fff', 0, 0)));

@@ -49,6 +49,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
     }
     T(sc, it.sock * 13 + 3, cy + 3, hub ? `升级槽 ${it.sock}` : `符文槽 ${it.sock}`, { size: 8, color: COL.faint, parent: c }); cy += 15;
   }
+  if (typeof stoneOf === 'function' && it.stones && it.stones.some(Boolean)) ln('属性石：' + it.stones.filter(Boolean).map(s => { const S0 = stoneOf(s.sid), f = stoneFx(it, s); return `${S0.n}${s.t}阶${f ? ` ${STAT_N2[f[0]] || f[0]} +${f[1]}` : ''}`; }).join('；'), '#9be05a'); // gear-v2 §7：详情里显示已镶的属性石
   if (it.affs.length) { rect(sc, 0, cy + 1, w, 1, '#3a3049', 1, c); cy += 4; }
   it.affs.forEach((x, i) => {
     const a = AFF_BY[x.k]; const ex = exTier(a, x.t), top = !ex && x.t === craftTop(a), hi = a.tiers.length - x.t <= 3;
@@ -459,6 +460,7 @@ class UI extends Phaser.Scene {
     const tabs = [['gear', '装备'], ['mods', '符文'], ['tree', '天赋'], ['craft', '铁砧'], ['bulk', '拆解']].filter(([id]) => unlocked(id === 'bulk' ? 'salvage' : id)), bh = mob ? 40 : 18, tw = Math.floor((w - 24 - (tabs.length - 1) * 4) / Math.max(1, tabs.length));
     tabs.forEach(([id, n], i) => mkBtn(this, c, 12 + i * (tw + 4), y, tw, bh, n, () => id === 'bulk' ? this.openBulk() : this.openWin(id)));
     y += bh + 6;
+    if (mob && S.reelsPending && S.reelsPending.length) { mkBtn(this, c, 12, y, w - 24, bh, `骸骨轮盘 ×${S.reelsPending.length} · 现在开`, () => { R.cd = false; this.openWin('reels'); }, { style: 'w' }); y += bh + 6; } // 手机：整备页直接开轮盘
     const by = mob ? Math.max(y + 18, h - bh - 12) : h - bh - 10, half = Math.floor((w - 28) / 2);
     this.prepCdT = T(this, w / 2, by - 14, this.prepCdText(), { size: 8, color: COL.emberHi, align: 'center', parent: c });
     mkBtn(this, c, 12, by, half, bh, '返回营地', () => prepReturn(), { style: 'r' });

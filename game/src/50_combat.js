@@ -102,6 +102,7 @@ function deathRules(m) {
   const FL = STATS.flag; const near = (r, n) => mobs.filter(x => x !== m && !x.dead && dist2(x, m) < r * r).sort((a, b) => dist2(a, m) - dist2(b, m)).slice(0, n);
   if (FL.shockSpread && m.shock > 0) for (const x of near(RL.shockSpread.r, RL.shockSpread.n)) { x.shock = Math.max(x.shock, m.shock); x.shockT = MECH.shockDur; fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: x.x, y2: x.y - 5, el: 'ele' }); }
   if (FL.contagion && m.rad.length) for (const x of near(RL.contagion.r, RL.contagion.n)) x.rad.push(...m.rad.map(r => ({ ...r })));
+  elemDeath(m, near);
   if (FL.deathBoom && !m.boss) { const R = RL.deathBoom; fx({ t: 'boom', x: m.x, y: m.y - 4, r: R.r, el: 'exp' }); for (const x of near(R.r, 99)) damage(x, mitigate(x, 'exp', m.max * R.pct / 100), 'exp', false, true); }
 }
 
@@ -109,7 +110,7 @@ function deathRules(m) {
 // 感电：每层全部抗性 -1%，闪电抗性再 -2%
 const shockRes = (m, e) => m.shock * (MECH.shockAll + (e === 'ele' ? MECH.shockEle : 0)) * (STATS.shockMul || 1) * ailEff('ele');
 // 异常效果提高%（AilEffect 词条，spec-bd-gear §3.2）：碎骨 kin、余震 exp、灼烧 burn、感电 ele、致盲 pla、疫病 nuc、冰缓 cold
-const ailEff = e => (1 + ((STATS.raw && STATS.raw['ailEff:' + e]) || 0) / 100) * (e === 'cold' && STATS.flag && STATS.flag.chillMul || 1); // 誓约：冰缓效果 −30%
+const ailEffG = e => (1 + ((STATS.raw && STATS.raw['ailEff:' + e]) || 0) / 100) * (e === 'cold' && STATS.flag && STATS.flag.chillMul || 1); // 誓约：冰缓效果 −30%
 // Boss 疲惫：开打 5 秒后每秒一层，每层承受伤害 ×1.04，最多 60 层
 const fatigue = m => m.boss ? Math.pow(MECH.fatigueStep, m.fat) : 1;
 function mitigate(m, e, d) { return d * (1 - ((m.res[e] || 0) - shockRes(m, e) - (m.shredT > 0 ? m.shred[e] || 0 : 0) - (STATS.flag.corrode && m.rad.length ? RL.corrode.res : 0) - ((STATS.raw && STATS.raw['pen:' + e]) || 0)) / 100) * fatigue(m); }
@@ -131,7 +132,7 @@ function hitMob(m, W, o = {}) {
   if (W.perDashInc) mul *= 1 + W.perDashInc * Math.floor(player.dash);
   if (W.doubleChance && rnd() < W.doubleChance) mul *= 2;
   if (W.killInc && RUN) mul *= 1 + Math.min(RL.killInc.max, W.killInc * RUN.kills) / 100;
-  mul *= ruleMul(m);
+  mul *= ruleMul(m) * elemMul(m);
   if (STATS.flag.ctrlPrison && !isCtrl(m)) mul *= 1 - RL.ctrlPrison.less / 100; /* 寒狱：对未受控的敌人总降 */
   if (m.frzT > 0 && STATS.frozenTaken) mul *= 1 + STATS.frozenTaken; // 冻结的敌人受到的伤害提高
   if (m.frzT > 0 && STATS.flag.frozenMore) mul *= 1 + STATS.flag.frozenMore / 100; // 誓约：对冻结的敌人总增
@@ -156,6 +157,8 @@ function hitMob(m, W, o = {}) {
   const tick = W.cont ? 1 / W.aps : 1;
   for (const e in by) if (W.ail[e] && rnd() < W.ail[e] * tick) ailment(m, e, by[e], W, o);
   if (W.kinShock && by.kin && rnd() < W.kinShock * tick) ailment(m, 'ele', by.kin, W, o);
+  if (W.atk) elemOnHit(m, W, o); // 元素系统：附加特效
+  { const ach = (W.afterCh || 0) + (STATS.flag.quake ? 0.1 : 0); if (ach && !o.re && !o.ground && !o.arc && !m.dead && rnd() < ach * tick) m.after.push({ n: 1 + (STATS.afterRep || 0) + (W.afterRep || 0), t: MECH.afterTick, d: total * 0.6, k: 0.6, el: top }); } // 余震：几率以 60% 再结算（任意元素）
   if (by.exp) { m.burn += by.exp * MECH.burnFromFire * ailEff('burn'); if (W.burnSlow) m.burnSlow = W.burnSlow; } // 火焰伤害都会累积灼烧
   if (W.meleeRe && !o.re && !m.dead && rnd() < W.meleeRe) total += hitMob(m, W, { ...o, re: 1 }); // 碎颅冠：近战命中再结算一次
   return total;
@@ -179,13 +182,15 @@ function chillOn(m, n, W) {
 // 角色被寒霜怪打中：叠冰缓（移速、攻速降低），不会被冻结
 function chillPlayer(n) { player.chill = Math.min(MECH.playerChillMax, (player.chill || 0) + n); player.chillT = MECH.chillDur; }
 const pChillK = () => 1 - (player.chill || 0) * MECH.chillPer / 100;
+const ailEff = e => ailEffG(e);
 function ailment(m, e, d, W, o) {
+  const ailEff = x => ailEffG(x) * (x === W.el && W.ailEffT ? 1 + W.ailEffT / 100 : 1); // 魂龛词条：本源异常效果
   switch (e) {
     case 'kin': { if (o.noDebris) break; // 碎骨：周围一圈，命中伤害的 20%
       const r = W.debrisR || MECH.debrisR * UNIT; if (mobs.length <= 15 || rnd() < 0.15) fx({ t: 'ring', x: m.x, y: m.y - 4, r, el: 'kin' }); // 怪海里碎骨圈只偶尔画
       for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < r * r) { damage(n, mitigate(n, 'kin', d * MECH.debrisPct * W.debrisMore * ailEff('kin')), 'kin', false, true); if (n.dead && STATS.flag.debrisChain && (o.depth || 0) < RL.debrisChain.depth) ailment(n, 'kin', d, W, { ...o, depth: (o.depth || 0) + 1 }); }
       break; }
-    case 'exp': { const k = W.afterPct || MECH.afterPct; m.after.push({ n: MECH.afterRepeats + (STATS.afterRep || 0) + (W.afterRep || 0), t: MECH.afterTick, d: d * k * ailEff('exp'), k }); break; } // 余震
+    case 'exp': m.burn += d * MECH.burnFromFire * ailEff('exp'); break; // 火焰本源异常：灼烧
     case 'ele': m.shock = Math.min(MECH.shockMax, m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)); // 织雷之心：游雷一次叠两层
       m.shockT = MECH.shockDur; break;
     case 'pla': m.blindT = MECH.blindDur; m.blindK = Math.min(MECH.blindMax, MECH.blindLess * W.blindMore * ailEff('pla')); break;
@@ -196,7 +201,7 @@ function ailment(m, e, d, W, o) {
 function damage(m, amt, el, crit, small) {
   if (m.dead || amt <= 0) return;
   if (STATS.fullLampDmg && player.soul >= STATS.soulMax * 0.9) amt *= 1 + STATS.fullLampDmg / 100; // gear-v2：满灯伤害
-  if (!small) { lampGain('hit', STATS.lampOnHit, 2); if (crit) lampGain('crit', STATS.lampOnCrit, 3); }
+  if (!small) { if (STATS.flag.lightEater) lampGain('eat', 0.3, STATS.flag.lightEater); lampGain('hit', STATS.lampOnHit, 2); if (crit) lampGain('crit', STATS.lampOnCrit, 3); }
   const crowd = mobs.length > 15 && !m.boss && !m.elite; // 怪海里的普通怪：不白闪、不飘数字，只留刀痕和击退
   m.hp -= amt; if (!small && !crowd && !(m.flCd > 0)) { m.fl = 0.06; m.flCd = 0.45; } // 受击白闪限频：连续挨打不会一直发白
   if ((!small || amt > m.max * 0.04) && !crowd) fx({ t: 'num', x: m.x, y: m.y - m.size * 2, v: amt, el, crit, small }); 
@@ -219,8 +224,9 @@ function kill(m) {
   if (!RUN) return;
   RUN.kills++;
   const hk = m.boss ? 1 : 1 / hordeN(); // 怪海：每只的推进、经验、灯火、掉落按数量摊薄
+  if (!m.boss && (m.elite || rnd() < 0.02)) dropThing(m, { kind: 'orb' }); // defense-v3：生命球（精英必掉，普通 2%），碰到回 20% 生命
   if (!m.boss) RUN.prog += (RUN.mode === 'ladder' ? (m.elite ? LD.run.eliteP : LD.run.normalP) : 1) * hk;
-  if (RUN.mode !== 'ladder') player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * (RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
+  player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * (RUN.mode !== 'ladder' && RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
   deathRules(m);
   if (STATS.lifeOnKill) player.life = Math.min(STATS.life, player.life + STATS.lifeOnKill * hk); // gear-v2：击杀回生命
   if (STATS.flag.shatter && m.frzT > 0) shatter(m); // 碎冰：冻结的敌人死了碎成冰片（冰片打死的冻结敌人也照样碎）
@@ -263,6 +269,7 @@ function dropThing(m, o, burst) { const a = burst ? rf(0, Math.PI * 2) : 0, sp =
 function collect(dp) {
   const g = RUN && RUN.gain;
   if (dp.kind === 'item') { addItem(dp.item); g && g.items.push(dp.item); if (G.ui) G.ui.feedItem(dp.item); }
+  else if (dp.kind === 'orb') { player.life = Math.min(STATS.life, player.life + STATS.life * 0.2); fx({ t: 'text', x: player.x, y: player.y - 20, s: '+生命', c: '#ff8a7a' }); }
   else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; unlockEvent('gainShard'); if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
   else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; unlockEvent('gainGlyph'); if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
 
@@ -595,10 +602,12 @@ function logic(dt) {
   const spin = spinning(), lad = RUN.mode === 'ladder';
   if (!RUN.ending && !RUN.next) {
     const rv = !lad && RUN.base < RUN.descent.prevMax; // 重温已经打过的层
-    const net = (lad ? P.soulRegen : -(SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1)) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
+    const net = -(SOUL.burn + (lad ? RUN.L : RUN.base) * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
     player.soul = clamp(player.soul + net * dt, 0, P.soulMax);
     if (P.lifeRegen && player.life > 0) player.life = Math.min(P.life, player.life + P.lifeRegen * dt); // gear-v2：每秒回生命
+    if (P.flag.returnLight && !RUN.rlUsed && player.soul < P.soulMax * 0.1) { RUN.rlUsed = 1; player.soul = P.soulMax * P.flag.returnLight / 100; if (G.ui) G.ui.banner('归光 · 灯火复燃', COL.emberHi); } // 归光（每局一次）
     if (player.soul <= 0) player.soulEmpty += dt;
+    if (lad && player.soul <= 0) { RUN.result = 'timeout'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('灯灭'); } // 天梯：灯灭即失败（lamp-v2 §6）
     if (!lad && player.soul <= 0) { RUN.result = 'lampout'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('灯火燃尽 · 平安返回', COL.emberHi); }
   }
   RUN.t += dt;
@@ -677,7 +686,7 @@ function logic(dt) {
     player.wcd[i] -= dt * pChillK();
     if (player.wcd[i] <= 0) { if (W.basic ? castAttack(W, i) : fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
   });
-  trigStep(dt); stepProjs(dt);
+  trigStep(dt); elemStep(dt); stepProjs(dt);
   if (STATS.shieldW) stepShieldThrow(STATS.shieldW, dt); else if (STATS.armorHeld != null) STATS.armor = STATS.armorHeld;
   stepZones(dt); stepMeteors(dt);
   if (player.chillT > 0) { player.chillT -= dt; if (player.chillT <= 0) player.chill = 0; }
@@ -696,7 +705,7 @@ function logic(dt) {
     if (m.burn > 0.5) { m.burnT -= dt; if (m.burnT <= 0) { m.burnT = MECH.burnTick; const tk = m.burn * MECH.burnTickPct, keep = STATS.flag.burnKeep; m.burn -= tk * (1 - (m.burnSlow || 0)) * (keep ? RL.burnKeep.drainMul : 1) + (keep ? 0 : m.burn * MECH.burnDecay); damage(m, mitigate(m, 'exp', tk * (keep ? RL.burnKeep.dmgMul : 1)), 'exp', false, true); if (rnd() < 0.3) fx({ t: 'burn', x: m.x, y: m.y }); } }
     else m.burn = 0;
     if (m.rad.length) { let d = 0; for (const r of m.rad) { d += r.dps * Math.min(dt, r.t); r.t -= dt; } m.rad = m.rad.filter(r => r.t > 0); m.radAcc = (m.radAcc || 0) + d; m.radT = (m.radT || 0) + dt; if (m.radT > 0.25) { damage(m, mitigate(m, 'nuc', m.radAcc), 'nuc', false, true); m.radAcc = 0; m.radT = 0; } }
-    for (const a of m.after) { a.t -= dt; if (a.t <= 0 && a.n > 0) { a.n--; a.t = MECH.afterTick; damage(m, mitigate(m, 'exp', a.d), 'exp', false, true); a.d *= a.k || MECH.afterPct; fx({ t: 'ring', x: m.x, y: m.y - 4, r: 10, el: 'exp' }); } }
+    for (const a of m.after) { a.t -= dt; if (a.t <= 0 && a.n > 0) { a.n--; a.t = MECH.afterTick; damage(m, a.el ? a.d : mitigate(m, 'exp', a.d), a.el || 'exp', false, true); a.d *= a.k || MECH.afterPct; fx({ t: 'ring', x: m.x, y: m.y - 4, r: 10, el: 'exp' }); } }
     m.after = m.after.filter(a => a.n > 0);
     if (m.dead) continue;
     if (m.stunT > 0) { m.stunT -= dt; m.vx = m.vy = 0; m.x += m.kx * dt; m.y += m.ky * dt; const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd; continue; } // 陨石眩晕：同冻结，不能移动、攻击
@@ -735,7 +744,7 @@ function logic(dt) {
     dp.age += dt;
     if (dp.z > 0 || dp.vz > 0) { dp.vz -= 260 * dt; dp.z += dp.vz * dt; dp.x += dp.vx * dt; dp.y += dp.vy * dt; if (dp.z <= 0) { dp.z = 0; dp.vz = Math.abs(dp.vz) > 30 ? -dp.vz * 0.35 : 0; dp.vx *= .5; dp.vy *= .5; } }
     const dx = player.x - dp.x, dy = player.y - dp.y, dl = Math.hypot(dx, dy);
-    if (dp.age > 0.5 && (dl < P.pickup || dp.mag)) { dp.mag = true; const sp = 200 * dt; if (dl < 5) { collect(dp); dp.done = true; } else { dp.x += dx / dl * Math.min(sp, dl); dp.y += dy / dl * Math.min(sp, dl); } }
+    if (dp.age > 0.5 && (dl < P.pickup || dp.mag || (dp.kind === 'orb' && dl < 60))) { dp.mag = true; const sp = 200 * dt; if (dl < 5) { collect(dp); dp.done = true; } else { dp.x += dx / dl * Math.min(sp, dl); dp.y += dy / dl * Math.min(sp, dl); } }
   }
   drops = drops.filter(d => !d.done);
 }

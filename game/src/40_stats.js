@@ -57,7 +57,7 @@ function computeStats(eq = S.equip) {
   P.shield = Math.round((PLAYER.shield + (base.deflect || 0) + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
   P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0) + (TA.shieldRegenPct || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
   P.life = Math.max(1, Math.round((PLAYER.life + PLAYER.lifePerLevel * ((S.level || 1) - 1) + (A.life || 0) + (TA.life || 0)) * (1 + ((A.lifeInc || 0) + (TA.lifeInc || 0)) / 100) * (TM.life ?? 1))); // 天赋代价可以是生命总降
-  P.dodgeCap = MECH.dodgeCap + (TS.flag.dodgeCap || 0);
+  P.dodgeCap = MECH.dodgeCap;
   P.dodge = 0; // defense-v3：闪避删除
   P.maxRes = PLAYER.maxRes; P.maxResE = {}; P.res = {};
   for (const e of ELEM) {
@@ -93,7 +93,7 @@ function computeStats(eq = S.equip) {
   { const g = k => (A[k] || 0) + (TA[k] || 0); // gear-v2 新属性
     P.meleeDR = Math.min(G2D.drCap, g('meleeDR')); P.rangedDR = Math.min(G2D.drCap, g('rangedDR')); P.eliteDR = Math.min(G2D.drCap, g('eliteDR'));
     P.lifeRegen = g('lifeRegen'); P.lifeOnKill = g('lifeOnKill'); P.lampOnCrit = g('lampOnCrit'); P.lampOnStruck = g('lampOnStruck'); P.lampOnHit = g('lampOnHit');
-    P.fullLampDmg = g('fullLampDmg'); P.trigDmg = g('trigDmg'); P.findInc = g('findInc'); P.addFx = g('addFx'); P.baseCrit = g('baseCrit'); P.dotIncG = g('dotIncG'); }
+    P.fullLampDmg = g('fullLampDmg'); P.trigDmg = g('trigDmg'); P.findInc = g('findInc'); P.addFx = g('addFx'); P.resoInc = g('resoInc'); P.baseCrit = g('baseCrit'); P.dotIncG = g('dotIncG'); }
   // 全局伤害修正
   P.aspdInc = (A.aspd || 0) + (TA.aspd || 0);
   P.thermalInc = A.thermalInc || 0;
@@ -110,7 +110,7 @@ function computeStats(eq = S.equip) {
   P.weapons = [sk ? weaponStats(sk, P) : null, null];
   P.armorHeld = P.armor; P.shieldW = sk ? null : shieldWeapon(eq.shield, P, P.gem); // 圣盾掷：盾变成一把虚拟武器
   P.dps = P.weapons.reduce((s, w) => s + (w ? w.dps : 0), 0) + (P.shieldW ? P.shieldW.dps : 0);
-  if (P.weapons[0]) P.weapons[0].basic = 1; trigStats(P, eq);
+  if (P.weapons[0]) P.weapons[0].basic = 1; elemStats(P); trigStats(P, eq);
   return P;
 }
 
@@ -182,6 +182,7 @@ function weaponStats(it, P, isEngine) {
   if (P.flag.snipe && has('Projectile') && W.extra <= 0) W.more *= 1.6; // 狙杀
   if (P.flag.pierceStack) W.pierceStep = 0.1; // 穿心
   if (P.flag.whirlHeart) { if (has('Melee') && has('AoE')) W.more *= WH.heartMore; } // 旋风之心：【近战·范围】
+  if (P.flag.nonMeleeLess && !has('Melee')) W.more *= 1 - P.flag.nonMeleeLess / 100; if (P.flag.otherLess && !has('Shield')) W.more *= 1 - P.flag.otherLess / 100; // 独特代价
   if (P.flag.sparkHeart) { if (has('ProjectileCanChain')) W.more *= SP.heartMore; } // 织雷之心：【投射物·弹射】
   const gain = {}, rflat = {}; if (W.offGain) gain[b.el] = W.offGain; // 幽魂法源：额外获得主手元素伤害
   for (const { m, fx } of activeRunes(it.src || it, P, it.src && !it.th ? U('runeLvl') : 0)) {
@@ -210,21 +211,27 @@ function weaponStats(it, P, isEngine) {
     if (fx.whirl && b.form === 'orbit') { W.whirl = 1; W.morePer = fx.spinMore || WH.morePer; } // 每层倍率随符文等级成长
     rangeInc += fx.rangeInc || 0; aoeInc += fx.aoeInc || 0; critInc += fx.critInc || 0; critDmg += fx.critDmg || 0; projSpd += fx.projSpd || 0; W.projDurInc += fx.projDur || 0; if (fx.projDurMore) W.projDurMore *= 1 + fx.projDurMore / 100; if (fx.projMore && has('Projectile')) W.more *= fx.projMore;
     if (fx.ail) for (const e in fx.ail) W.ail[e] += fx.ail[e];
+    if (fx.afterCh) W.afterCh = (W.afterCh || 0) + fx.afterCh; // 余震符文：几率再结算一次
+    if (fx.convTo && !isEngine) { W.convTo = fx.convTo; W.more *= 1 + (fx.convMore || 20) / 100; } // 转换符文
     if (fx.gain) for (const e in fx.gain) gain[e] = (gain[e] || 0) + fx.gain[e];
     if (fx.flat) for (const e in fx.flat) { const f = rflat[e] || [0, 0]; rflat[e] = [f[0] + fx.flat[e][0], f[1] + fx.flat[e][1]]; }
   }
   // 底材 + 附加 → 基础提高
   const [bmin, bmax] = it.throwDmg ? [it.throwDmg, it.throwDmg] : b.min ? weaponBase(b, q) : [0, 0];
   const ok = e => !pure || e === b.el;
+  W.flat = {}; for (const e of ELEM) { let a = 0, z = 0; for (const f of [flat[e], rflat[e]]) if (f && ok(e)) { a += f[0]; z += f[1]; } if (a || z) W.flat[e] = [a, z]; } // 元素系统：附加伤害（判定附加元素 / 特效基数）
+  const nonNat = (P.flag.pureColor ? 0.5 : 1) * (P.flag.echoFx ? 0.75 : 1); // 纯色 / 余波：附加伤害打折
   for (const e of ELEM) {
     let mn = e === b.el ? bmin : 0, mx = e === b.el ? bmax : 0;
-    for (const f of [flat[e], rflat[e]]) if (f && ok(e)) { mn += f[0]; mx += f[1]; }
+    for (const f of [flat[e], rflat[e]]) if (f && ok(e)) { const k2 = e === b.el ? (P.flag.echoFx ? 0.75 : 1) : nonNat; mn += f[0] * k2; mx += f[1] * k2; }
     const k = 1 + (baseInc[e] || 0) / 100; if (TA.flatInc && e !== b.el) { mn *= 1 + TA.flatInc / 100; mx *= 1 + TA.flatInc / 100; } // tree-v3：附加伤害提高
     W.min[e] = mn * k; W.max[e] = mx * k;
   }
   // 独特装备的伤害转换
   const conv = (from, to, pct) => { if (!pct) return; const mn = W.min[from] * pct, mx = W.max[from] * pct; W.min[from] -= mn; W.max[from] -= mx; for (const e of to) { W.min[e] += mn / to.length; W.max[e] += mx / to.length; } };
   if (W.frostNova && b.el !== 'cold') { conv(b.el, ['cold'], 1); W.ail.cold += W.ail[b.el]; W.ail[b.el] = 0; W.el = 'cold'; } // 圣钟插霜环符文：元素改成寒霜
+  if (W.convTo && W.convTo !== W.el) { const fr = W.el || b.el; conv(fr, [W.convTo], 1); W.ail[W.convTo] += W.ail[fr]; W.ail[fr] = 0; W.el = W.convTo; } // 转换符文：本源元素和本源异常一起换
+  if (P.flag.mutate) W.more *= 0.8; // 异变
   if (P.flag.dmgMore) W.more *= 1 + P.flag.dmgMore / 100; // 誓约：伤害总增
   if (has('Delayed') && P.flag.delayMore) W.more *= 1 + P.flag.delayMore / 100; // 誓约：延迟类伤害总增
   if (b.form === 'meteor') { W.delayTot = (W.delay || MT.delay) + P.delayAdd; if (P.flag.delayCrown) W.more *= 1 + P.flag.delayCrown / 100 * W.delayTot / UQX.delayStep; } // 末日冠：每 0.1 秒延迟总增
@@ -243,7 +250,7 @@ function weaponStats(it, P, isEngine) {
   for (const e of ELEM) {
     const i = 1 + (inc + (TA['inc:' + e] || 0) + (e === 'nuc' && P.twin === 2 ? U('twinNuc') : 0) + (THERMAL[e] ? P.thermalInc + implThermal : 0)) / 100;
     const more = W.more * (TM['dmg:' + e] ?? 1) * (e === 'kin' ? 1 + P.mass * MECH.massKinMore : THERMAL[e] ? (1 + P.energy * MECH.energyThermalMore) * (TM['dmg:thermal'] ?? 1) : 1) * (e !== 'ele' ? TM['dmg:nonEle'] ?? 1 : 1) * (e !== 'kin' ? TM['dmg:nonKin'] ?? 1 : 1) * (e !== 'pla' ? TM['dmg:nonPla'] ?? 1 : 1) * (e !== 'cold' ? TM['dmg:nonCold'] ?? 1 : 1) * (W.cont ? W.dotMore : 1);
-    W.min[e] *= i * more; W.max[e] *= i * more;
+    W.min[e] *= i * more; W.max[e] *= i * more; (W.incMul || (W.incMul = {}))[e] = i * more;
   }
   // 速度、范围、暴击
   const CT = MECH.contTicks, aps0 = b.cont ? CT : qv(b.aps || 0, q); // 持续伤害武器：数值是每秒伤害，按每秒 CT 跳结算

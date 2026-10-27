@@ -13,7 +13,7 @@ const THERMAL_N = '元素';
 // 各元素专属异常
 const AIL = {
   kin: { id: 'shrap', n: '碎骨', d: '命中后在周围炸开碎骨，造成一部分伤害（碎骨不会再触发碎骨）' },
-  exp: { id: 'after', n: '余震', d: '按上一击的一定比例再重复命中数次' },
+  exp: { id: 'burn', n: '灼烧', d: '火焰本源异常：把命中伤害的一部分累积进灼烧池，每跳衰减' },
   ele: { id: 'shock', n: '感电', d: '叠层降低目标全部抗性' },
   pla: { id: 'blind', n: '致盲', d: '目标伤害与速度总降，随时间减弱' },
   nuc: { id: 'rad', n: '疫病', d: '按命中伤害的比例持续造成伤害，可以叠加' },
@@ -153,7 +153,7 @@ const r2 = v => Math.round(v * 100) / 100;
 const roundTo = (v, dec) => dec == null ? v : dec === 0 ? Math.round(v) : Math.round(v * 10 ** dec) / 10 ** dec;
 // 数字 / ["lp", a, b, 小数位] / ["lpsq", a, b, 小数位] / ["step", 基数, 每几级] / ["cyc", 每级, 周期, 小数位]，可以嵌套在对象和数组里
 function specAt(s, L) {
-  if (typeof s === 'number') return s;
+  if (typeof s === 'number' || typeof s === 'string') return s;
   if (Array.isArray(s) && typeof s[0] === 'string') {
     const [f, a, b, dec] = s;
     if (f === 'lp') return roundTo(lp(a, b)(L), dec);
@@ -195,7 +195,9 @@ const MOD_D = {
   Range: f => `射程提高 ${f.rangeInc}%`,
   Knockback: f => `命中击退敌人，击退造成的伤害总增 ${Math.round((f.knockMore - 1) * 100)}%`,
   Debris: f => `${AIL.kin.n}几率 +${Math.round(f.ail.kin * 100)}%，${AIL.kin.n}伤害总增 ${Math.round((f.debrisMore - 1) * 100)}%`,
-  Aftershock: f => `${AIL.exp.n}几率 +${Math.round(f.ail.exp * 100)}%，额外获得 ${Math.round(f.gain.exp * 100)}% 伤害作为火焰伤害`,
+  Aftershock: f => `命中 ${Math.round(f.afterCh * 100)}% 几率余震：以 60% 伤害再结算一次（任意元素）；额外获得 ${Math.round(f.gain.exp * 100)}% 伤害作为火焰伤害`,
+  ConvKin: f => `本源元素转为物理（本源异常一起换成碎骨），伤害 +${f.convMore}%`, ConvExp: f => `本源元素转为火焰（本源异常换成灼烧），伤害 +${f.convMore}%`, ConvEle: f => `本源元素转为闪电（本源异常换成感电），伤害 +${f.convMore}%`,
+  ConvCold: f => `本源元素转为寒霜（本源异常换成冰缓），伤害 +${f.convMore}%`, ConvPla: f => `本源元素转为圣光（本源异常换成致盲），伤害 +${f.convMore}%`, ConvNuc: f => `本源元素转为瘟疫（本源异常换成疫病），伤害 +${f.convMore}%`,
   Shock: f => `${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%，额外获得 ${Math.round(f.gain.ele * 100)}% 伤害作为闪电伤害`,
   Blind: f => `${AIL.pla.n}几率 +${Math.round(f.ail.pla * 100)}%，致盲效果总增 ${Math.round((f.blindMore - 1) * 100)}%`,
   Radiation: f => `${AIL.nuc.n}几率 +${Math.round(f.ail.nuc * 100)}%，疫病伤害总增 ${Math.round((f.radMore - 1) * 100)}%`,

@@ -3,6 +3,7 @@
    点背包里的石头选中 → 点空孔放入；点孔里的石头取回；3 颗同种同阶 → 合成高一阶。
    ========================================================= */
 let stonePick = null;
+const fitW = (s, mw, sz = 8) => { s = String(s); if (textW(s, sz) <= mw) return s; while (s.length > 1 && textW(s + '…', sz) > mw) s = s.slice(0, -1); return s + '…'; }; // 长词条按像素宽截断
 Object.assign(MobileUI.prototype, {
   win_stones(c, w, h) {
     const R = () => this.refresh(), bag = S.stones || [];
@@ -15,7 +16,7 @@ Object.assign(MobileUI.prototype, {
     slots.forEach((s, i) => {
       const it = S.equip[s.id], n = stoneSockN(it), yy = y + i * 42; it.stones = it.stones || [];
       T(this, 16, yy + 5, s.n, { size: 8, color: COL.dim, parent: c });
-      const nm = itemName(it); T(this, 16, yy + 19, nm.length > 7 ? nm.slice(0, 7) + '…' : nm, { size: 8, color: COL.text, parent: c });
+      const nm = itemName(it); T(this, 16, yy + 19, fitW(nm, 66), { size: 8, color: COL.text, parent: c });
       for (let k = 0; k < n; k++) {
         const x = w - 16 - (n - k) * (SZ + 6), st = it.stones[k], S0 = st && stoneOf(st.sid);
         bub(this, c, x, yy + 3, SZ, SZ, st ? hx(S0.c) : 0x120e1a, { ring: !st && stonePick ? CY : null });
@@ -28,7 +29,7 @@ Object.assign(MobileUI.prototype, {
         });
       }
       const sum = it.stones.filter(Boolean).map(x => stoneFx(it, x)).filter(Boolean).map(f => `${STAT_N2[f[0]] || f[0]} +${f[1]}`).join(' ');
-      if (sum) T(this, 16 + 70, yy + 19, sum.length > 14 ? sum.slice(0, 14) + '…' : sum, { size: 8, color: '#9be05a', parent: c });
+      if (sum) T(this, 16 + 70, yy + 19, fitW(sum, w - 16 - 86 - (n * 36) - 4), { size: 8, color: '#9be05a', parent: c });
     });
     y += Math.max(1, slots.length) * 42 + 8;
     // 背包：按 (种类, 阶) 叠放
@@ -45,8 +46,8 @@ Object.assign(MobileUI.prototype, {
       T_(this, c, x + 17, yy + 12, String(s.t), { size: 12, color: '#1a1426', shadowColor: null });
       T(this, x + 36, yy + 5, `${S0.n} ×${L.length}`, { size: 8, color: COL.text, parent: c });
       const wf = S0.w ? `${STAT_N2[S0.w[0]] || S0.w[0]}` : '武器无效', af = S0.a ? `${STAT_N2[S0.a[0]] || S0.a[0]}` : '护甲无效';
-      T(this, x + 36, yy + 18, `武 ${wf}`.slice(0, fz ? 5 : 9), { size: 8, color: COL.dim, parent: c });
-      T(this, x + 36, yy + 30, `甲 ${af}`.slice(0, fz ? 5 : 9), { size: 8, color: COL.dim, parent: c });
+      T(this, x + 36, yy + 18, fitW(`武 ${wf}`, cw - 40 - (fz ? 42 : 4)), { size: 8, color: COL.dim, parent: c });
+      T(this, x + 36, yy + 30, fitW(`甲 ${af}`, cw - 40 - (fz ? 42 : 4)), { size: 8, color: COL.dim, parent: c });
       zoneOn(this, c, x, yy, cw - (L.length >= 3 && s.t < 5 ? 40 : 0), ch, () => { stonePick = stonePick === s.id ? null : s.id; R(); });
       if (L.length >= 3 && s.t < 5) mkBtn(this, c, x + cw - 40, yy + 14, 36, 24, '合成', () => { if (stoneFuse(s.sid, s.t)) toast(`合成 ${S0.n} ${s.t + 1} 阶`, '#ffe066'); stonePick = null; R(); }, { size: 8, style: 'w' });
     });

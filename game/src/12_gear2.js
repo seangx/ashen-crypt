@@ -67,5 +67,5 @@ const monLv = () => (typeof RUN !== 'undefined' && RUN && RUN.L) || (S.depth || 
 const armorDrL = (A, L) => A > 0 ? A / (A + G2D.armorK * Math.max(1, L)) : 0;
 const resDrL = (R, L) => R > 0 ? R / (R + G2D.resK * Math.max(1, L)) : R < 0 ? Math.max(-1, R / (G2D.resK * Math.max(1, L))) : 0;
 // 灯火回复类词条：每秒有上限（gear-v2 §4.3）
-function lampGain(k, v, cap) { if (!v || typeof RUN === 'undefined' || !RUN || RUN.mode === 'ladder') return; const g = RUN.lg || (RUN.lg = {}), s = Math.floor(RUN.t); if (!g[k] || g[k].s !== s) g[k] = { s, n: 0 };
+function lampGain(k, v, cap) { if (!v || typeof RUN === 'undefined' || !RUN) return; if (RUN.mode === 'ladder') v *= 0.5; /* 天梯：灯火获取减半 */ const g = RUN.lg || (RUN.lg = {}), s = Math.floor(RUN.t); if (!g[k] || g[k].s !== s) g[k] = { s, n: 0 };
   const a = Math.min(v, cap - g[k].n); if (a <= 0) return; g[k].n += a; player.soul = Math.min(STATS.soulMax, player.soul + a); }

@@ -138,7 +138,7 @@ class MobileUI extends UI {
     const wi = P.weapons.findIndex(w => w && w.whirl); const sn = wi >= 0 ? player.spin[wi].n : 0; this.spinC.setVisible(sn > 0); if (sn > 0) set(this.spinT, String(sn));
     // 顶栏
     const L = RUN ? RUN.L : S.depth;
-    const dl = RUN && RUN.mode === 'ladder' ? `天梯 ${L} 层 · ${mmss(Math.max(0, RUN.limit - RUN.t))}` : RUN && RUN.map ? `墓图 ${RUN.map.tier} 阶` : RUN ? `第 ${L} 层 · ${themeFor(L).n}` : `营地 · 下一趟第 ${descentStart()} 层`;
+    const dl = RUN && RUN.mode === 'ladder' ? `天梯 ${L} 层 · 用时 ${mmss(RUN.t)}` : RUN && RUN.map ? `墓图 ${RUN.map.tier} 阶` : RUN ? `第 ${L} 层 · ${themeFor(L).n}` : `营地 · 下一趟第 ${descentStart()} 层`;
     if (this.depthT.text !== dl) { this.depthT.setText(dl); const rw = Math.min(W - 4, textW(dl) + 44); this.ribbon.setSize(rw, 22); this.ribbon.x = Math.round(W / 2 - rw / 2); }
     this.bossC.setVisible(!!RUN);
     const b = this.bossG; b.clear();
@@ -241,10 +241,10 @@ class MobileUI extends UI {
     { const cv = dollCanvas(S.equip, 0); if (this.textures.exists('doll_ui')) this.textures.remove('doll_ui'); this.textures.addCanvas('doll_ui', cv);
       rect(this, 42, 38, 30, 30, '#120c18', 1, c); const im = img(this, 42 + 15 - DOLL_W / 2, 38 + 30 - DOLL_H, 'doll_ui', c); im.setCrop(DOLL_W / 2 - 15, 0, 30, DOLL_H); }
     const P = STATS;
-    [['预计秒伤', fmt(P.dps), COL.emberHi], ['生命', fmt(P.life), '#ff8a7a'], ['护盾', `${fmt(P.shield)} +${r1(P.shieldRegen)}/秒`, '#bfe0ff'], ['护甲', `${fmt(P.armor)} 减伤${Math.round(armorDr(P.armor, typicalHit(S.depth)) * 100)}%`], ['闪避', P.dodge + '%'], ['冲刺槽', String(P.dashMax)]]
-      .forEach(([a, b, col], i) => { T(this, 112, 8 + i * 11, a, { size: 8, color: COL.dim, parent: c }); T(this, w - 10, 8 + i * 11, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); });
-    T(this, 112, 76, '抗性', { size: 8, color: COL.dim, parent: c });
-    ELEM.forEach((e, i) => T(this, 134 + i * 20, 76, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
+    [['出手秒伤', fmt(P.castDps || P.dps), COL.emberHi], ['响应秒伤', fmt(P.respDps || 0), '#ffb36a'], ['最缺', elemNeed(P), COL.cyan], ['生命', fmt(P.life), '#ff8a7a'], ['护盾', `${fmt(P.shield)} +${r1(P.shieldRegen)}/秒`, '#bfe0ff'], ['护甲', `${fmt(P.armor)} 减伤${Math.round(armorDr(P.armor, typicalHit(S.depth)) * 100)}%`], ['附加特效', elemFxName(P), P.addEl ? ELEM_C[P.addEl] : COL.faint]]
+      .forEach(([a, b, col], i) => { T(this, 112, 13 + i * 9, a, { size: 8, color: COL.dim, parent: c }); T(this, w - 10, 13 + i * 9, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); }); // 双行面板（system-v2 §5）
+    T(this, 112, 78, '抗性', { size: 8, color: COL.dim, parent: c });
+    ELEM.forEach((e, i) => T(this, 134 + i * 20, 78, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
     T(this, 12, 100, `背包 ${S.stash.length}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
     mkBtn(this, c, w - 90, 92, 38, 26, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
     if (unlocked('salvage')) mkBtn(this, c, w - 50, 92, 40, 26, '批量', () => this.openBulk(), { size: 8, style: 'n' });
@@ -386,7 +386,7 @@ class MobileUI extends UI {
     const r = this.winArg; if (!r) return;
     const lad = r.mode === 'ladder', lamp = r.result === 'lampout', back = r.result === 'retreat', emg = r.result === 'emergency', abd = r.result === 'abandon';
     const win = r.result === 'win' || (!lad && (lamp || back || emg || abd)); // 推关：灯火燃尽、撤回、紧急撤回都是平安返回
-    const title = abd ? '提前返回' : lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '时间到' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
+    const title = abd ? '提前返回' : lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '灯灭' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
     const g = r.gain;
     const note = lad && win && r.lad.tierUp.length ? [`晋升${LADDER_TIERS[r.lad.tierUp[r.lad.tierUp.length - 1]].n}：送每种铸符各 ${LD.tiers.firstGlyphs} 张`, COL.emberHi]
       : abd ? [lad ? '提前离开天梯：这一层不算通过，没有损失' : '提前返回：东西全部带走，没打完的这一层不算通过', COL.emberHi]

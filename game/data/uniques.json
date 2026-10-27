@@ -1148,6 +1148,384 @@
      1
     ]
    ]
+  },
+  {
+   "id": "TwinCrown",
+   "n": "双生冠",
+   "kind": "core",
+   "b": "NebulaCore",
+   "req": 30,
+   "w": 40,
+   "fixed": [
+    [
+     "AddFxEffect",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "twinFx",
+     60,
+     60
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "PrismCircle",
+   "n": "棱镜法阵",
+   "kind": "hub",
+   "b": "IridiumNexus",
+   "req": 36,
+   "w": 40,
+   "fixed": [
+    [
+     "AddFxEffect",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "prismFx",
+     40,
+     40
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "PureHeart",
+   "n": "纯色之心",
+   "kind": "off",
+   "b": "SoulSource",
+   "req": 34,
+   "w": 40,
+   "fixed": [
+    [
+     "TrigDamage",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "pureHeart",
+     25,
+     25
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "EmberGrip",
+   "n": "余烬之握",
+   "kind": "weapon",
+   "b": "FlameSlinger",
+   "req": 26,
+   "w": 40,
+   "fixed": [
+    [
+     "FlatExplosiveDamage",
+     1
+    ],
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "emberGrip",
+     1,
+     1
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "BoneBreaker",
+   "n": "裂骨之锤",
+   "kind": "weapon",
+   "b": "Hullbreaker",
+   "req": 30,
+   "w": 40,
+   "fixed": [
+    [
+     "FlatKineticDamage",
+     1
+    ],
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "boneBreak",
+     30,
+     30
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "WildfireCircle",
+   "n": "焚野法阵",
+   "kind": "hub",
+   "b": "AmberNexus",
+   "req": 30,
+   "w": 40,
+   "fixed": [
+    [
+     "FlatExplosiveDamageHub",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "wildfire",
+     3,
+     3
+    ],
+    [
+     "burnKeepU",
+     1,
+     1
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "ThunderChain",
+   "n": "雷链冠",
+   "kind": "core",
+   "b": "NebulaCore",
+   "req": 30,
+   "w": 40,
+   "fixed": [
+    [
+     "CoreCrit",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "chainBlast",
+     60,
+     60
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "FrostCoffin",
+   "n": "霜棺之心",
+   "kind": "off",
+   "b": "GraveLantern",
+   "req": 34,
+   "w": 40,
+   "fixed": [
+    [
+     "FlatColdDamageOff",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "frostCoffin",
+     50,
+     50
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "JudgeShield",
+   "n": "审判之盾",
+   "kind": "shield",
+   "b": "SigilShield",
+   "req": 32,
+   "w": 40,
+   "fixed": [
+    [
+     "Block",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "judgeBlind",
+     20,
+     20
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "PlagueTide",
+   "n": "瘟潮靴",
+   "kind": "engine",
+   "b": "Thruster",
+   "req": 28,
+   "w": 40,
+   "fixed": [
+    [
+     "MoveSpeed",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "plagueTide",
+     50,
+     50
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "ReturnLight",
+   "n": "回光之冠",
+   "kind": "core",
+   "b": "PhantomCore",
+   "req": 24,
+   "w": 40,
+   "fixed": [
+    [
+     "LampMax",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "returnLight",
+     60,
+     60
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "LightEater",
+   "n": "噬光之刃",
+   "kind": "weapon",
+   "b": "TurbineBlades",
+   "req": 28,
+   "w": 40,
+   "fixed": [
+    [
+     "BaseDmgInc",
+     1
+    ],
+    [
+     "LampOnHit",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "lightEater",
+     3,
+     3
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "LampChain",
+   "n": "灯奴之链",
+   "kind": "hub",
+   "b": "AmberNexus",
+   "req": 26,
+   "w": 40,
+   "fixed": [
+    [
+     "LampBurnLess",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "lampChain",
+     40,
+     40
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "DarkWalker",
+   "n": "黑暗行者",
+   "kind": "engine",
+   "b": "Thruster",
+   "req": 30,
+   "w": 40,
+   "fixed": [
+    [
+     "MoveSpeed",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "darkWalker",
+     30,
+     30
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "WhirlHeartU",
+   "n": "旋风之心",
+   "kind": "weapon",
+   "b": "TurbineBlades",
+   "req": 30,
+   "w": 40,
+   "fixed": [
+    [
+     "MeleeDamage",
+     1
+    ],
+    [
+     "BaseDmgInc",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "whirlHeart",
+     1,
+     1
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "EchoAegis",
+   "n": "回响圣盾",
+   "kind": "shield",
+   "b": "SigilShield",
+   "req": 30,
+   "w": 40,
+   "fixed": [
+    [
+     "Block",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "aegisBurst",
+     1,
+     1
+    ],
+    [
+     "otherLess",
+     20,
+     20
+    ]
+   ],
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
   }
  ]
 }
