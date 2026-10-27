@@ -25,7 +25,7 @@ function autoAnchorStep(dt) {
 }
 // 走位：怪、敌方弹、毒池、墙都往外推，再加一点绕圈；附近没有怪就去捡东西
 function meteorTarget() { // 陨火 / 寒魄球（auto.json meteor / orb）：贴身的怪 ≥ retreatAt 只就交给风筝；否则离怪群比 keepDist 远就靠过去，停在 keepDist
-  const MW = STATS.weapons.find(w => w && (w.form === 'meteor' || w.form === 'orb')) || STATS.shieldW; if (!MW) return null;
+  const MW = combatWs().map(e => e[0]).find(w => w.form === 'meteor' || w.form === 'orb') || STATS.shieldW; if (!MW) return null;
   const K = AU[MW.form === 'shieldThrow' ? 'shield' : MW.form], keep = K.keepDist, P = player, live = mobs.filter(m => !m.dead && m.rise <= 0.2); if (!live.length) return null;
   let close = 0, near = 1e9; for (const m of live) { const d = Math.sqrt(dist2(m, P)) - m.size; near = Math.min(near, d); if (d < K.closeR) close++; }
   if (close >= K.retreatAt || near < keep * 0.6) return null;
@@ -71,7 +71,7 @@ function autoTarget() {
 const MELEE_FORMS = ['orbit', 'ram', 'reflect'];
 // 环绕武器要有旋身符文或旋风之心才按近战走，否则照常风筝；撞城、荆棘类一直近战
 const gemAi = w => w.b && w.b.gem && GEM_BY[w.b.gem] ? GEM_BY[w.b.gem].ai : null; // spec-skill-gems §4：近战 / 远程读技能石的 ai
-const meleeW = () => STATS.weapons.find(w => w && w.form !== 'nova' && gemAi(w) ? gemAi(w) === 'melee' : w && ((MELEE_FORMS.includes(w.form) && (w.form !== 'orbit' || w.whirl || STATS.flag.whirlHeart)) || (w.form === 'nova' && w.frostNova && AU.nova.melee))); // 霜环：近战打法（auto.json nova）
+const meleeW = () => combatWs().map(e => e[0]).find(w => w && w.form !== 'nova' && gemAi(w) ? gemAi(w) === 'melee' : w && ((MELEE_FORMS.includes(w.form) && (w.form !== 'orbit' || w.whirl || STATS.flag.whirlHeart)) || (w.form === 'nova' && w.frostNova && AU.nova.melee))); // 霜环：近战打法（auto.json nova）
 function meleeTarget(W) {
   const K = AU.melee, f = player.life / STATS.life;
   if (f < K.retreat) AUTO.retreat = true; else if (f >= K.back) AUTO.retreat = false;

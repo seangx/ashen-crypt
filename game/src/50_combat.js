@@ -210,7 +210,7 @@ function damage(m, amt, el, crit, small) {
 }
 // 碎冰（大天赋 shatter）：尸体向四周放 shardN (+ 派生 +N) 片冰片，每片 = 新星武器单次 × shardMul；冰片算派生和投射物，不穿透
 function shatter(m) {
-  const W = STATS.weapons.find(w => w && (w.frostNova || w.tags.includes('Nova'))); if (!W) return;
+  const W = combatWs().map(e => e[0]).find(w => w.frostNova || (w.tags || []).includes('Nova')); if (!W) return;
   const n = NV.shardN + (STATS.spawnAdd || 0), a0 = rf(0, Math.PI * 2);
   const old = projs.filter(p => p.shard && !p.dead), over = old.length + n - NV.maxShards; for (let k = 0; k < over && k < old.length; k++) old[k].dead = true;
   for (let i = 0; i < n; i++) { const a = a0 + i / n * Math.PI * 2 + rf(-1, 1) * (OB.jitter || 0) * Math.PI / 180, p = shoot(W, m.x, m.y - 5, a, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set([m]), mul: NV.shardMul * (1 + ((STATS.raw['inc:proj'] || 0) + (STATS.tree.add['inc:proj'] || 0)) / 100), life: NV.shardLife, shard: 1 }); p.vx = Math.cos(a) * NV.shardSpeed; p.vy = Math.sin(a) * NV.shardSpeed; p.r = 2; }
@@ -300,7 +300,7 @@ function modXp(x) {
 /* ---------- 玩家受伤：闪避 → 抗性 → 护甲减伤 → 流派减伤 → 护盾 → 生命 ---------- */
 // 旋涡之履：1 = 叠满（或永冬自动脉冲中），0 = 没有层数，0.5 = 中间，-1 = 没穿
 function vortexState() {
-  if (!STATS.flag.vortexTreads) return -1; if (STATS.weapons.some(W => W && W.autoNova)) return 1;
+  if (!STATS.flag.vortexTreads) return -1; if (combatWs().some(([W]) => W.autoNova)) return 1;
   let full = false, any = false; whirlWs().forEach(([W, i]) => { { const n = player.spin[i].n; if (n >= W.stackMax) full = true; if (n > 0) any = true; } });
   return full ? 1 : any ? 0.5 : 0;
 }
@@ -424,11 +424,24 @@ const whirlR = (W, n) => W.rng * (1 + n * WH.rngPer / 100) * Math.max(0.2, 1 + W
 /* 所有在打的技能：普攻（STATS.weapons，下标 i）+ 魂龛里的技能石（下标 W.wi）。旋风斩插在魂龛里时旋势 / 特效靠它 */
 const combatWs = () => { const a = []; (STATS.weapons || []).forEach((W, i) => { if (W) a.push([W, i]); }); (STATS.trigs || []).forEach(t => { if (t && t.on && t.ws) for (const W of t.ws) if (W.wi != null) a.push([W, W.wi]); }); return a; };
 const whirlWs = () => combatWs().filter(([W]) => W.whirl);
+function auraHit(W, mul = 1) { const AT = MECH.auraTick;
+  if (!W.tick) { W.tick = { ...W, cont: true, aps: 1 / AT, min: { ...W.min }, max: { ...W.max } }; W.tick.min[W.el] = W.tick.max[W.el] = W.auraDps * AT; }
+  for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2) hitMob(m, W.tick, mul !== 1 ? { mul } : undefined); }
 const spinning = () => whirlWs().some(([W, i]) => player.spin[i].n > 0);
 const inRange = (W, r) => mobs.some(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2);
 function fire(W, i) {
   const px = player.x, py = player.y - 6;
   switch (W.form) {
+    case 'aura': { // 瘟疫光环插在魂龛：常驻的由下面的光环循环每 auraTick 结算，这里不出手；其他魂龛触发一次 = 结算 1 秒的量
+      const t = W.trigSlot && STATS.trigs && STATS.trigs[W.trigSlot - 1]; if (t && t.mode === 'always') return true;
+      auraHit(W, 1 / MECH.auraTick); return true;
+    }
+    case 'ram': { // 冲撞（冲刺时触发）：撞身边一圈，按冲刺倍率
+      const r = 18; let hits = 0;
+      for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2) { hitMob(m, W, { mul: MECH.ramDashMul }); fx({ t: 'hit', x: m.x, y: m.y - 4, el: W.el || 'kin' }); hits++; }
+      if (hits) { sfx('slash'); fx({ t: 'ring', x: player.x, y: player.y - 4, r, el: W.el || 'kin' }); }
+      return hits > 0;
+    }
     case 'orbit': { // 回旋骨刃：砍身边一圈；旋身符文叠旋势（伤害、半径），转的时候每砍中一个敌人回灯火
       const st = player.spin[i], n = W.whirl ? st.n : 0, mul = W.whirl ? Math.pow(W.morePer, n) : 1, r = whirlR(W, n);
       let hits = 0;
@@ -678,10 +691,7 @@ function logic(dt) {
   P.weapons.forEach((W, i) => {
     if (!W || W.form === 'reflect') return;
     if (W.form === 'aura') { // 瘟疫香炉：每 auraTick 秒结算一次
-      const AT = MECH.auraTick; player.wcd[i] -= dt; if (player.wcd[i] > 0) return; player.wcd[i] = AT;
-      if (!W.tick) { W.tick = { ...W, cont: true, aps: 1 / AT, min: { ...W.min }, max: { ...W.max } }; W.tick.min[W.el] = W.tick.max[W.el] = W.auraDps * AT; }
-      for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2) hitMob(m, W.tick);
-      return;
+      const AT = MECH.auraTick; player.wcd[i] -= dt; if (player.wcd[i] > 0) return; player.wcd[i] = AT; auraHit(W); return;
     }
     if (W.form === 'ram') { // 撞城骨锤：撞上敌人造成伤害，越快越痛
       const sp = player.dashT > 0 ? MECH.ramDashMul : clamp(Math.hypot(player.vx, player.vy) / P.speed, MECH.ramMinMul, 1);
@@ -691,6 +701,8 @@ function logic(dt) {
     player.wcd[i] -= dt * pChillK();
     if (player.wcd[i] <= 0) { if (W.basic ? castAttack(W, i) : fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
   });
+  // 魂龛【常驻】里的瘟疫光环：每 auraTick 结算一次（灯火见底就停）
+  for (const [W, i] of combatWs()) if (i >= 2 && W.form === 'aura') { const t = STATS.trigs[W.trigSlot - 1]; if (!t || t.mode !== 'always' || !lampOk()) continue; if ((W._at = (W._at || 0) - dt) <= 0) { W._at = MECH.auraTick; auraHit(W); } }
   trigStep(dt); elemStep(dt); stepProjs(dt);
   if (STATS.shieldW) stepShieldThrow(STATS.shieldW, dt); else if (STATS.armorHeld != null) STATS.armor = STATS.armorHeld;
   stepZones(dt); stepMeteors(dt);
