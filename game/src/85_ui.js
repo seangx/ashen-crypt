@@ -285,7 +285,7 @@ class UI extends Phaser.Scene {
     const bt = !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul)}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
     const g = this.dashG; g.clear();
     for (let i = 0; i < P.dashMax; i++) { const f = clamp(player.dash - i, 0, 1), x = 7 + i * 9, y = H - 74; g.fillStyle(0x0b080e, 1).fillRect(x, y, 7, 7); g.fillStyle(f >= 1 ? 0xc08aff : 0x2a1e3a, 1).fillRect(x + 1, y + 1, 5, 5); if (f >= 1) g.fillStyle(0xe6c8ff, 1).fillRect(x + 1, y + 1, 5, 1); else g.fillStyle(0xc08aff, 1).fillRect(x + 1, y + 6 - Math.round(f * 5), 5, Math.round(f * 5)); }
-    const wi = P.weapons.findIndex(w => w && w.whirl), sw = P.weapons[wi]; // 旋转层数（看第一把带旋身的武器）
+    const [sw, wi] = (RUN && whirlWs().sort((a, b) => player.spin[b[1]].n - player.spin[a[1]].n)[0]) || [null, -1]; // 旋转层数（看第一把带旋身的武器）
     this.spinC.setVisible(!!sw && !!RUN);
     if (sw) { const sp = player.spin[wi].n, spt = `${sp}`; if (this.spinT.text !== spt) this.spinT.setText(spt).setTint(hex(sp >= sw.stackMax ? COL.emberHi : COL.text)); }
     const L = RUN ? RUN.L : S.depth;

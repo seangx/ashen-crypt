@@ -301,7 +301,7 @@ function modXp(x) {
 // 旋涡之履：1 = 叠满（或永冬自动脉冲中），0 = 没有层数，0.5 = 中间，-1 = 没穿
 function vortexState() {
   if (!STATS.flag.vortexTreads) return -1; if (STATS.weapons.some(W => W && W.autoNova)) return 1;
-  let full = false, any = false; STATS.weapons.forEach((W, i) => { if (W && W.whirl) { const n = player.spin[i].n; if (n >= W.stackMax) full = true; if (n > 0) any = true; } });
+  let full = false, any = false; whirlWs().forEach(([W, i]) => { { const n = player.spin[i].n; if (n >= W.stackMax) full = true; if (n > 0) any = true; } });
   return full ? 1 : any ? 0.5 : 0;
 }
 const vortexMove = () => { const v = vortexState(); return v === 1 ? 1 + UQX.vortex.moveFull / 100 : v === 0 ? 1 - UQX.vortex.moveNone / 100 : 1; };
@@ -352,7 +352,7 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
   lampGain('struck', STATS.lampOnStruck, 2);
   if (STATS.flag.vortexTreads && vortexState() === 1) d *= 1 - UQX.vortex.takenFull / 100; // 旋涡之履
   if (player.guardT > 0) d *= 1 - MECH.meleeGuardLess;
-  d *= 1 - Math.max(0, ...STATS.weapons.map((W, i) => W && W.whirl ? Math.min(WH.drCap, WH.drPerStack * player.spin[i].n) : 0)) / 100; // 旋身：每层当前旋转减伤，有上限
+  d *= 1 - Math.max(0, ...whirlWs().map(([W, i]) => Math.min(WH.drCap, WH.drPerStack * player.spin[i].n))) / 100; // 旋身：每层当前旋转减伤，有上限
   if (RUN.gd) RUN.gd[player.closeN > 0 ? 'hitC' : 'hitF'] += d / STATS.life; /* 模拟统计：贴身 / 不贴身时的承伤（按生命上限的比例） */
   if (STATS.flag.lampBlood && d > 0 && player.soul > 0) { const pay = Math.min(d * 0.3, player.soul * 4); player.soul -= pay / 4; d -= pay; } // tree-v3 以灯代血
   if (player.shield > 0) { const a = Math.min(player.shield, d); player.shield -= a; d -= a; fx({ t: 'shield', x: player.x, y: player.y }); }
@@ -421,7 +421,10 @@ function chainHit(W, first, from, chains) {
 }
 // 旋风的判定半径：武器范围，每层旋势 +rngPer%，再乘范围提高（符文、词条、天赋、独特）
 const whirlR = (W, n) => W.rng * (1 + n * WH.rngPer / 100) * Math.max(0.2, 1 + W.aoeInc / 100);
-const spinning = () => STATS.weapons.some((W, i) => W && W.whirl && player.spin[i].n > 0);
+/* 所有在打的技能：普攻（STATS.weapons，下标 i）+ 魂龛里的技能石（下标 W.wi）。旋风斩插在魂龛里时旋势 / 特效靠它 */
+const combatWs = () => { const a = []; (STATS.weapons || []).forEach((W, i) => { if (W) a.push([W, i]); }); (STATS.trigs || []).forEach(t => { if (t && t.on && t.ws) for (const W of t.ws) if (W.wi != null) a.push([W, W.wi]); }); return a; };
+const whirlWs = () => combatWs().filter(([W]) => W.whirl);
+const spinning = () => whirlWs().some(([W, i]) => player.spin[i].n > 0);
 const inRange = (W, r) => mobs.some(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2);
 function fire(W, i) {
   const px = player.x, py = player.y - 6;
@@ -597,7 +600,7 @@ function logic(dt) {
   if (player.guardT > 0) player.guardT -= dt;
   player.shield = Math.min(P.shield, player.shield + P.shieldRegen * lampShieldRegen() * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
   player.swing = player.swing.map(v => Math.max(0, v - dt));
-  player.orbitA += dt * 5 * (1 + 0.12 * Math.max(player.spin[0].n, player.spin[1].n)); // 旋转层数越高转得越快
+  player.orbitA += dt * 5 * (1 + 0.12 * Math.max(0, ...player.spin.map(s => s.n))); // 旋转层数越高转得越快
   if (!RUN) { player.life = P.life; player.shield = P.shield; player.soul = P.soulMax; return; }
   // 魂火：天梯里每秒自然回复；推关里是灯火，每秒燃烧，越深越快，只靠击杀回。转旋风的时候每秒另外消耗 whirl.soulPerSec
   const spin = spinning(), lad = RUN.mode === 'ladder';
@@ -637,7 +640,7 @@ function logic(dt) {
   }
   // 转旋风的时候：风暴之眼把身边的怪卷过来；旋风之心不断甩出小旋风
   if (spinning()) {
-    const wi = P.weapons.findIndex((W, i) => W && W.whirl && player.spin[i].n > 0), OW = P.weapons[wi], n = player.spin[wi].n;
+    const [OW, wi] = whirlWs().find(([W, i]) => player.spin[i].n > 0), n = player.spin[wi].n;
     if (P.flag.areaEye) { const pr = whirlR(OW, n) * RL.areaEye.pullR; for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy); if (d > 6 && d < pr) { m.x += dx / d * RL.areaEye.pull * dt; m.y += dy / d * RL.areaEye.pull * dt; } } }
     if (P.flag.whirlHeart && (player.devilT -= dt) <= 0) {
       player.devilT = WH.devilEvery * (n >= OW.stackMax ? WH.devilFullMul : 1);
@@ -665,6 +668,12 @@ function logic(dt) {
     }
     if (RUN.prog >= RUN.need - 1e-6) spawnBoss();
   }
+  // 旋转层数（普攻 + 魂龛里的旋风斩）：连续命中时每秒涨，decay 秒没命中清零；这里只管层数，不出手
+  for (const [W, i] of whirlWs()) {
+    const st = player.spin[i]; st.idle += dt;
+    if (st.idle >= WH.decay * (STATS.flag.spinDecay || 1)) { st.n = 0; st.g = 0; }
+    else if (st.n < W.stackMax && player.soul > 0 && (st.g += dt * WH.gainPerSec) >= 1) { st.g -= 1; st.n++; } // 魂火空了不再涨层
+  }
   // 武器
   P.weapons.forEach((W, i) => {
     if (!W || W.form === 'reflect') return;
@@ -678,11 +687,6 @@ function logic(dt) {
       const sp = player.dashT > 0 ? MECH.ramDashMul : clamp(Math.hypot(player.vx, player.vy) / P.speed, MECH.ramMinMul, 1);
       for (const m of mobs) if (!m.dead && m.rise <= 0.2 && m.ramT <= 0 && dist2(m, player) < (m.size + 7) ** 2) { hitMob(m, W, { mul: sp }); m.ramT = MECH.ramCd; fx({ t: 'hit', x: m.x, y: m.y - 4, el: 'kin' }); sfx('slash'); }
       return;
-    }
-    if (W.whirl) { // 旋转层数：连续命中时每秒涨，decay 秒没命中清零
-      const st = player.spin[i]; st.idle += dt;
-      if (st.idle >= WH.decay * (STATS.flag.spinDecay || 1)) { st.n = 0; st.g = 0; }
-      else if (st.n < W.stackMax && player.soul > 0 && (st.g += dt * WH.gainPerSec) >= 1) { st.g -= 1; st.n++; } // 魂火空了不再涨层
     }
     player.wcd[i] -= dt * pChillK();
     if (player.wcd[i] <= 0) { if (W.basic ? castAttack(W, i) : fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }

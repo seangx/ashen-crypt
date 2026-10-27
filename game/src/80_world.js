@@ -172,7 +172,7 @@ class World extends Phaser.Scene {
     if (!RUN) campFx(g, t, open);
     // 玩家
     const fr = (t * 4 | 0) % 2, bob = Math.round(Math.sin(t * 3) * 1);
-    { const wi = STATS.weapons.findIndex(w => w && w.whirl), n = wi >= 0 && RUN ? player.spin[wi].n : 0; this.spinRate = n > 0 ? 2 + 2 * n / STATS.weapons[wi].stackMax : 0; } // 每秒转几圈：旋势越高越快
+    { const e = RUN ? whirlWs().find(([w, i]) => player.spin[i].n > 0) : null, n = e ? player.spin[e[1]].n : 0; this.spinRate = n > 0 ? 2 + 2 * n / e[0].stackMax : 0; } // 每秒转几圈：旋势越高越快
     const sig = dollSig(S.equip);
     if (sig !== this.dollSig) { // 装备变了：重画纸娃娃
       this.dollSig = sig; this.dollN = (this.dollN || 0) + 1;
@@ -205,7 +205,7 @@ class World extends Phaser.Scene {
     // 投射物、环绕刃
     const pg = this.projG; pg.clear(); this.groundG.clear(); this.whirlG.clear(); if (this.glowG) this.glowG.clear();
     for (const p of projs) this.drawProj(pg, p, t);
-    STATS.weapons.forEach((W_, wi) => {
+    combatWs().forEach(([W_, wi]) => {
       if (!W_ || W_.form !== 'orbit') return;
       // 回旋骨刃：有旋势时人在转（刀光圈 + 风）；没有时每次砍中画一道横扫
       const n = W_.whirl ? player.spin[wi].n : 0, R = whirlR(W_, n);

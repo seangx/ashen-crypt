@@ -135,7 +135,7 @@ class MobileUI extends UI {
     set(this.hpT, String(Math.ceil(player.life))); set(this.defT, P.shield ? '+' + Math.ceil(player.shield) : '');
     const n = player.closeN || 0; set(this.gdT, !RUN || this.winId ? '' : n > 0 ? `贴 −${Math.round(Math.min(P.closeCap, n * P.closePer))}%` : player.farOK && P.farDR > 0 ? `远 −${P.farDR}%` : '');
     set(this.soulT, (RUN && TRIGS_RT.lampState !== 'dim' ? LST[TRIGS_RT.lampState].n.slice(0, 1) : '') + Math.round(sf * 100) + '%'); // 灯态：明 / 残（lamp-v2 §4） set(this.burnT, !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul)}/秒`);
-    const wi = P.weapons.findIndex(w => w && w.whirl); const sn = wi >= 0 ? player.spin[wi].n : 0; this.spinC.setVisible(sn > 0); if (sn > 0) set(this.spinT, String(sn));
+    const sn = RUN ? Math.max(0, ...whirlWs().map(([w, i]) => player.spin[i].n)) : 0; this.spinC.setVisible(sn > 0); if (sn > 0) set(this.spinT, String(sn));
     // 顶栏
     const L = RUN ? RUN.L : S.depth;
     const dl = RUN && RUN.mode === 'ladder' ? `天梯 ${L} 层 · 用时 ${mmss(RUN.t)}` : RUN && RUN.map ? `墓图 ${RUN.map.tier} 阶` : RUN ? `第 ${L} 层 · ${themeFor(L).n}` : `营地 · 下一趟第 ${descentStart()} 层`;
