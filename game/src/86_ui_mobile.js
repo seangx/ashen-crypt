@@ -233,7 +233,7 @@ class MobileUI extends UI {
   equipSlots(c, ox, oy, onClick, selFn) {
     const pos = { gem: [0, 0], core: [32, 0], wl: [0, 32], wr: [64, 32], hub: [0, 64], engine: [32, 64], shield: [64, 64] };
     const ghost = { gem: 'i_star', wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
-    for (const s of SLOTS) { if ((s.id === 'wr' && !unlocked('wr')) || (s.id === 'gem' && !unlocked('gems') && !S.equip.gem)) continue; const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); if (s.id === 'gem' && needShield()) { const r = this.add.rectangle(ox + x, oy + y, TOUCH, TOUCH).setOrigin(0).setStrokeStyle(2, 0xd04040); c.add(r); T(this, ox + x + 2, oy + y + 1, '需要盾牌', { size: 8, color: COL.bad, parent: c }); } } // 技能格：圣盾掷没装盾
+    for (const s of SLOTS) { if ((s.id === 'wr' && !unlocked('wr')) || s.id === 'gem') continue; const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); if (s.id === 'gem' && needShield()) { const r = this.add.rectangle(ox + x, oy + y, TOUCH, TOUCH).setOrigin(0).setStrokeStyle(2, 0xd04040); c.add(r); T(this, ox + x + 2, oy + y + 1, '需要盾牌', { size: 8, color: COL.bad, parent: c }); } } // 技能格：圣盾掷没装盾
   }
   /* 装备：竖屏原生（身上 + 属性 → 背包 → 选中物品的详情抽屉） */
   win_gear(c, w, h) {
@@ -249,7 +249,7 @@ class MobileUI extends UI {
     mkBtn(this, c, w - 90, 92, 38, 26, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
     if (unlocked('salvage')) mkBtn(this, c, w - 50, 92, 40, 26, '批量', () => this.openBulk(), { size: 8, style: 'n' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
-    stashTab = 0; if (unlocked('gems') || nGem) mkBtn(this, c, 40, 92, 84, 26, `技能宝石 ${nGem} ›`, () => { gemSeg = 'skill'; this.openWin('mods'); }, { size: 8, icon: 'i_sg_GemNova' }); // 技能宝石移到「宝石」页
+    stashTab = 0; if (unlocked('gems') || nGem) mkBtn(this, c, 40, 92, 84, 26, `技能宝石 ${nGem} ›`, () => { trigSel = 0; this.openWin('trig'); }, { size: 8, icon: 'i_sg_GemNova' }); // 技能宝石移到「宝石」页
     if (stashTab === 1) return this.gemPane(c, w, h, 122); // 技能石页：堆叠 + 筛选（87_gemrune_mobile.js）
     const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2);
     for (let i = 0; i < STASH_CAP; i++) {
@@ -269,7 +269,7 @@ class MobileUI extends UI {
     rect(this, 4, -4, w - 8, this.paneH, '#17111f', 0.97, p); rect(this, 4, -4, w - 8, 1, '#5a4a6a', 1, p);
     if (f.where === 'stash') {
       if (it.kind === 'off') B(0, '装副手', () => { equipItem(it, 'wr'); save(); this.refresh(); }, { style: 'w', disabled: !unlocked('wr') });
-      else B(0, it.kind === 'weapon' ? '装主手' : it.kind === 'gem' ? '装技能' : '装备', () => { equipItem(it); save(); this.refresh(); }, { style: 'w' });
+      else if (it.kind === 'gem') B(0, '去魂龛', () => this.openWin('trig'), { style: 'w' }); else B(0, it.kind === 'weapon' ? '装主手' : '装备', () => { equipItem(it); save(); this.refresh(); }, { style: 'w' });
       B(2, '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { style: 'n' });
     } else {
       B(0, '卸下', () => { unequip(f.slot); save(); this.refresh(); });
@@ -566,7 +566,8 @@ class MobileUI extends UI {
     const f = findItem(it.id), A = [], R = () => { save(); this.refresh(); }; it.isNew = false; if (!f) return A;
     if (f.where === 'stash') {
       if (it.kind === 'off') { if (unlocked('wr')) A.push({ l: '装副手', style: 'w', fn: () => { equipItem(it, 'wr'); R(); } }); }
-      else if (slotsFor(it)[0]) A.push({ l: it.kind === 'weapon' ? '装主手' : it.kind === 'gem' ? '装技能' : '装备', style: 'w', fn: () => { equipItem(it); R(); } });
+      else if (it.kind === 'gem') A.push({ l: '去魂龛', style: 'w', fn: () => this.openWin('trig') });
+      else if (slotsFor(it)[0]) A.push({ l: it.kind === 'weapon' ? '装主手' : '装备', style: 'w', fn: () => { equipItem(it); R(); } });
       A.push({ l: '拆解', fn: () => this.ask(`拆解 ${itemName(it)}？`, () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); R(); }, '拆解', '会变成词条碎片，不能撤销。') });
     } else {
       A.push({ l: '卸下', fn: () => { unequip(f.slot); R(); } });

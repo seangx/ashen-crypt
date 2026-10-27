@@ -102,7 +102,7 @@ Object.assign(MobileUI.prototype, {
       const ss = 30, lk = 6, k0 = T0.sock, rw = k0 * ss + (k0 - 1) * lk, sx = Math.round((w - rw) / 2), sy = y + 34, skills = T0.socks.filter(isSkill);
       const lg = this.add.graphics(); c.add(lg);
       for (let k = 0; k < k0; k++) {
-        const x = sx + k * (ss + lk), it = T0.socks[k], fits = isSupport(it) && skills.some(g => supportFits(it, g)), ok = gemPick && !it && trigCanSock(T0, k, gemPick);
+        const x = sx + k * (ss + lk), it = T0.socks[k], fits = isSupport(it) && skills.some(g => supportFits(it, g)), ok = gemPick && it !== gemPick && trigCanSock(T0, k, gemPick);
         if (k > 0) { const on = (isSupport(it) && fits) || (isSkill(it) && T0.socks.some(m => isSupport(m) && supportFits(m, it))); lg.fillStyle(on ? 0xffe36a : DK, 1).fillRect(x - lk - 1, sy + ss / 2 - 3, lk + 2, 6); }
         if (ok) { lg.fillStyle(0x7cf05a, 0.5).fillRoundedRect(x - 4, sy - 4, ss + 8, ss + 8, 10); }
         const g = this.add.graphics(); c.add(g);
@@ -116,7 +116,7 @@ Object.assign(MobileUI.prototype, {
         }
         zoneOn(this, c, x - 3, sy - 3, ss + 6, ss + 6, () => {
           if (gemPick) { if (trigCanSock(T0, k, gemPick)) { socketInto(T0, k, gemPick); gemPick = null; } else toast(isSkill(gemPick) && skills.length >= trigMaxSkills(T0) ? `最多 ${trigMaxSkills(T0)} 颗技能石` : isSkill(gemPick) && T0.c === 'always' ? '常驻只能插瘟疫光环、游雷、旋风斩' : '这里放不下'); }
-          else if (it) unsocketAt(T0, k); this.refresh();
+          else if (it) { this.gemDetail(it, { T0, k }); return; } else toast('点下面的宝石看详情再装备'); this.refresh();
         });
       }
       T_(this, c, w / 2, y + 74, t && !t.on ? '魂龛位暂停' : skills.length ? '⚔ ' + fmt(t ? t.dps : 0) + ' 秒伤' : '空 · 放一颗技能石', { size: 12, color: t && !t.on ? '#b9bfd6' : '#ffd23a' });
@@ -128,7 +128,7 @@ Object.assign(MobileUI.prototype, {
     // 宝石背包
     y = 206; const tabs = [['all', '全部'], ['skill', '技能'], ['sup', '辅助']];
     tabs.forEach(([v, nm], i) => mkBtn(this, c, 8 + i * 46, y, 44, 22, nm, () => { gemTab = v; gemPage = 0; gemPick = null; this.refresh(); }, { size: 8, style: gemTab === v ? 'w' : 'n' }));
-    T(this, w - 10, y + 6, gemPick ? '点亮孔放入·再点自动' : '点宝石选中', { size: 8, align: 'right', parent: c, color: gemPick ? '#7cf05a' : '#b9c2ea' });
+    T(this, w - 10, y + 6, gemPick ? '点亮起的孔放入·再点宝石取消' : '点宝石看详情', { size: 8, align: 'right', parent: c, color: gemPick ? '#7cf05a' : '#b9c2ea' });
     const gems = S.stash.filter(x => x.kind === 'gem').sort((a, b) => b.lvl - a.lvl), sups = S.mods.filter(m => !MOD_BY[m.mid].field).sort((a, b) => b.lvl - a.lvl);
     const list = gemTab === 'skill' ? gems : gemTab === 'sup' ? sups : [...gems, ...sups];
     const cs = TOUCH, cols = Math.floor((w - 12) / (cs + 2)), rows = Math.max(1, Math.floor((h - (y + 30) - 30) / (cs + 2))), per = cols * rows, pg = Math.max(1, Math.ceil(list.length / per)); gemPage = clamp(gemPage, 0, pg - 1);
@@ -137,9 +137,7 @@ Object.assign(MobileUI.prototype, {
       const x = gx + (i % cols) * (cs + 2), yy = y + 30 + Math.floor(i / cols) * (cs + 2), bad = gemPick && T0 && !T0.socks.some((_, k) => !T0.socks[k] && trigCanSock(T0, k, it));
       if (gemPick === it) { const g = this.add.graphics(); c.add(g); g.fillStyle(0xffffff, 1).fillRoundedRect(x - 3, yy - 3, cs + 6, cs + 6, 6); }
       const cell = mkCell(this, c, x, yy, it, { size: cs, direct: true, onClick: () => {
-        if (!T0) { toast('先放一个魂龛'); return; }
-        if (gemPick === it) { const k = autoInsert(T0, it); if (k < 0) toast(isSkill(it) && T0.socks.filter(isSkill).length >= trigMaxSkills(T0) ? `最多 ${trigMaxSkills(T0)} 颗技能石` : '没有空孔'); gemPick = null; }
-        else gemPick = it; this.refresh(); } });
+        if (gemPick === it) { gemPick = null; this.refresh(); return; } this.gemDetail(it, { T0 }); } });
       if (gemPick && gemPick !== it) cell.setAlpha(0.6);
       if (it.isNew) rect(this, x + 2, yy + 2, 4, 4, '#ff3b3b', 1, c);
     });

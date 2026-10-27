@@ -43,7 +43,7 @@ Object.assign(MobileUI.prototype, {
   },
   /* 符文页 */
   winSupport(c, w, h, oy = 0) {
-    const host = S.equip[modWeapon], hosts = ['gem', 'core', 'engine', 'hub'].filter(s => s !== 'gem' || unlocked('gems') || S.equip.gem), bw = Math.floor((w - 20) / hosts.length); this.sockR = [];
+    const host = S.equip[modWeapon], hosts = ['gem', 'core', 'engine', 'hub'].filter(s => s !== 'gem'), bw = Math.floor((w - 20) / hosts.length); this.sockR = [];
     hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 6 + oy, bw - 2, 28, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; runePage = 0; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
     let y = 40 + oy;
     if (!host) { T(this, 10, y + 4, '这个位置没有装备。', { size: 8, color: COL.faint, parent: c }); y += 20; }
@@ -145,7 +145,7 @@ Object.assign(MobileUI.prototype, {
   },
   /* 宝石页：技能宝石 / 辅助宝石 两段，各自的列表、筛选、镶嵌 / 装备、批量拆解 */
   win_mods(c, w, h) {
-    if (!unlocked('gems') && !S.equip.gem && !S.stash.some(g => g.kind === 'gem')) gemSeg = 'support';
+    if (modWeapon === 'gem' || !S.equip[modWeapon]) modWeapon = 'core'; return this.winSupport(c, w, h, 0); // 魂龛改版：旧主技能石段落在手机上隐藏（代码保留）
     const nG = S.stash.filter(g => g.kind === 'gem').length, hw = Math.floor((w - 22) / 2);
     [['skill', `技能宝石 ${nG}`, 'i_sg_GemNova'], ['support', `辅助宝石 ${S.mods.length}`, 'mod_Chain']].forEach(([k, n, ic], i) =>
       mkBtn(this, c, 10 + i * (hw + 2), 6, hw, 30, n, () => { gemSeg = k; runePage = 0; this.refresh(); }, { size: 8, icon: ic, style: gemSeg === k ? 's' : 'n' }));

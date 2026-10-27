@@ -272,9 +272,18 @@ function trigGemXp(x) {
 const STARTER_GEM = { melee: 'GemWhirl', bow: 'GemTaser', gun: 'GemFirepot', caster: 'GemMeteor' };
 function starterTrigs() {
   S.trigs = [null, null, null, null]; S.trigBag = [];
-  const wl = S.equip.wl, cat = wl ? WEAPONS[wl.b].cat : 'bow', T = newTrig('hit', { sock: 2 });
-  let gid = STARTER_GEM[cat] || 'GemTaser'; if (gid === 'GemWhirl') gid = 'GemStab';
+  const wl = S.equip.wl, cat = wl ? WEAPONS[wl.b].cat : 'bow', T = newTrig('cast', { sock: 2 });
+  let gid = STARTER_CAST[cat] || 'GemBolt'; if (!GEM_BY[gid]) gid = 'GemBolt';
   if (GEM_BY[gid]) T.socks[0] = newGem(gid, { sock: 0 });
-  S.trigs[0] = T; S.equip.gem = null; S.gemV = 3;
+  S.trigs[0] = T; S.equip.gem = null; S.gemV = 4;
+}
+const STARTER_CAST = { melee: 'GemStab', bow: 'GemBolt', gun: 'GemBolt', caster: 'GemBolt' }; // 初始魂龛：【出手时】+ 便宜的出手技能石
+/* gemV 3 → 4：老存档没有【出手时】魂龛就补一个（有空位放空位，否则进魂龛背包），宝石不动 */
+function castStarterFix() {
+  if ((S.gemV || 0) >= 4) return; S.gemV = 4;
+  if ([...S.trigs, ...S.trigBag].some(t => t && t.c === 'cast')) return;
+  const wl = S.equip.wl, cat = wl ? WEAPONS[wl.b].cat : 'bow', T = newTrig('cast', { sock: 2 }), gid = STARTER_CAST[cat] || 'GemBolt';
+  if (GEM_BY[gid]) T.socks[0] = newGem(gid, { sock: 0 });
+  const i = S.trigs.findIndex((t, k) => !t && k < trigSlots()); if (i >= 0) S.trigs[i] = T; else { S.trigs.unshift(T); const old = S.trigs.splice(4); S.trigBag.unshift(...old.filter(Boolean)); }
 }
 const migrateTrigs = () => starterTrigs();

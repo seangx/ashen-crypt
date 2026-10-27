@@ -54,7 +54,7 @@ function load(data) {
     S.offV = 1; }
   S.equip.gem ??= null;
   if (!S.gemV) { migrateGems(); S.gemV = 1; }
-  if ((S.gemV || 0) < 3) starterTrigs(); S.trigs ??= [null, null, null, null]; S.trigBag ??= [];
+  if ((S.gemV || 0) < 3) starterTrigs(); S.trigs ??= [null, null, null, null]; S.trigBag ??= []; castStarterFix();
   if (!S.legacyV) migrateLegacy(); delete S.chips;
 }
 // 遗留系统清理（spec-legacy-cleanup §4）：墓图、命盘、印记、体魄 / 时砂、铁骨 / 流沙力场。东西不凭空消失：退成碎片或换部位
