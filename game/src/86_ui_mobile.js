@@ -228,7 +228,9 @@ class MobileUI extends UI {
     c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, `难度 ${S.depth}`, { parent: c }); T(this, 16, y + 21, `最深纪录：第 ${S.maxDepth - 1} 层通关`, { size: 8, color: COL.dim, parent: c });
     mkBtn(this, c, w - 74, y + 4, 30, 28, '<', () => { if (S.depth > 1 && !RUN) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { disabled: RUN || S.depth <= 1 });
     mkBtn(this, c, w - 42, y + 4, 30, 28, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { disabled: RUN || S.depth >= S.maxDepth }); y += 50;
-    TW(this, 12, y, '只有一个操作：移动。武器自动攻击最近的敌人，没有冲刺和主动技能。', w - 24, { size: 8, color: COL.faint, parent: c });
+    TW(this, 12, y, '只有一个操作：移动。武器自动攻击最近的敌人，没有冲刺和主动技能。', w - 24, { size: 8, color: COL.faint, parent: c }); y += 30;
+    c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, '清除存档', { parent: c, color: '#ff6b5a' }); T(this, 16, y + 21, '删除全部进度，从第 1 层重新开始', { size: 8, color: COL.dim, parent: c });
+    mkBtn(this, c, w - 94, y + 7, 78, 22, '清除存档', () => this.ask('确定清除全部存档？', () => this.ask('最后确认：真的要清除吗？', () => wipeSave(), '确认清除', '进度、装备、宝石、设置全部删除，无法找回'), '确认清除', '此操作不可撤销'), { size: 8, style: 'r' });
   }
   equipSlots(c, ox, oy, onClick, selFn) {
     const pos = { gem: [0, 0], core: [32, 0], wl: [0, 32], wr: [64, 32], hub: [0, 64], engine: [32, 64], shield: [64, 64] };
@@ -639,4 +641,13 @@ class MobileUI extends UI {
   const lampLine = b => { const w = WEAPONS[b], v = weaponLamp(b); if (!w || !v) return null; return `每击回灯 ${v.toFixed(2)}（约 ${(v * Math.max(0.3, w.aps || 1.2)).toFixed(2)}/秒，每次出手算一次，残灯也回）`; };
   const _bl = baseLines; baseLines = function (it) { const out = _bl(it); if (it && it.kind === 'weapon') { const s = lampLine(it.b); if (s) out.push([s, '#b9a2ff']); } return out; };
   const _cl = compareLines; compareLines = function (it) { const out = _cl(it); if (it && it.kind === 'weapon' && out.length && out[0].t !== '已装备') { const cur = S.equip.wl, a = cur && cur.kind === 'weapon' ? weaponLamp(cur.b) * Math.max(0.3, WEAPONS[cur.b].aps || 1.2) : 0, w = WEAPONS[it.b], b = weaponLamp(it.b) * Math.max(0.3, (w && w.aps) || 1.2); if (Math.abs(b - a) >= 0.005) out.push({ t: `每秒回灯 ${a.toFixed(2)} → ${b.toFixed(2)}`, c: b >= a ? COL.good : COL.bad }); } return out; };
+}
+
+// 清除存档：清掉本游戏在 localStorage 里的所有键（存档、演示前备份、演示载入标记；设置存在存档里，一起清掉），之后不再写盘，刷新回到全新开局
+let SAVE_WIPED = false;
+{ const _save = save; save = function () { if (SAVE_WIPED) return; return _save.apply(this, arguments); }; }
+function wipeSave() {
+  SAVE_WIPED = true; // 先挡住自动存档（推关中每 10 秒存一次），再删键
+  try { const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(SAVE_KEY)) ks.push(k); } ks.forEach(k => localStorage.removeItem(k)); } catch (e) { }
+  location.reload();
 }
