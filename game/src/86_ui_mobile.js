@@ -390,6 +390,7 @@ class MobileUI extends UI {
     const g = r.gain;
     const note = lad && win && r.lad.tierUp.length ? [`晋升${LADDER_TIERS[r.lad.tierUp[r.lad.tierUp.length - 1]].n}：送每种铸符各 ${LD.tiers.firstGlyphs} 张`, COL.emberHi]
       : abd ? [lad ? '提前离开天梯：这一层不算通过，没有损失' : '提前返回：东西全部带走，没打完的这一层不算通过', COL.emberHi]
+      : lamp && r.ember ? [`带回：经验、碎片、符文、属性石、捡到的装备全部保留；这一层攒的装备折算 ${r.ember.items.length} 件${r.ember.pity ? ` · 余烬 ${r.ember.pity}：下个守关 Boss 宝箱多掉 ${r.ember.pity} 件` : ''}`, COL.emberHi]
       : emg ? [`护甲跌到 ${SOUL.returnHpNow}% 以下，带着全部东西撤回`, COL.emberHi]
       : back ? [`最后一层最低血量 ${Math.round(r.descent.minHp * 100)}%，打完守关 Boss 撤回，东西全部带走`, COL.emberHi]
       : lad ? [win ? `跳 ${r.lad.jump} 层，已解锁到第 ${S.ladder.unlocked} 层` : '天梯失败没有损失', COL.dim]

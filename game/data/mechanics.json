@@ -12,7 +12,19 @@
   "timeFlow": 0
  },
  "defense": {
-  "generic": {"_说明": "通用防御（design/spec-tree-defense.md §1）。控场 ctrlWeaken：攻击你的怪在出手那一刻处于冰缓/冻结/眩晕/致盲/击退中(knockMin 像素/秒)/时停减速，伤害 ×(1−控场%)；有控制就自带 ctrlBase%，上限 ctrlCap%。贴身：closeR 像素内敌人计数（普通 1、精英 2、Boss 3），减伤 = min(上限, 计数 × (closeBase + closePer))，上限 closeCapBase + closeCap，硬上限 closeHard。远离 farDR：farR 像素内没有敌人时减伤，上限 farCap。续航 shieldOnHit：每次命中回护盾上限的 ‰，每秒最多 sohCapPct%（持续伤害、地面效果不算命中）。大天赋参数在 rules.json：ironWall / ctrlPrison / drinkShield / loneWolf。", "ctrlBase": 10, "ctrlCap": 50, "knockMin": 12, "closeR": 40, "closeBase": 1.5, "closeCapBase": 30, "closeHard": 45, "farR": 60, "farCap": 40, "sohCapPct": 5},
+  "generic": {
+   "_说明": "通用防御（design/spec-tree-defense.md §1）。控场 ctrlWeaken：攻击你的怪在出手那一刻处于冰缓/冻结/眩晕/致盲/击退中(knockMin 像素/秒)/时停减速，伤害 ×(1−控场%)；有控制就自带 ctrlBase%，上限 ctrlCap%。贴身：closeR 像素内敌人计数（普通 1、精英 2、Boss 3），减伤 = min(上限, 计数 × (closeBase + closePer))，上限 closeCapBase + closeCap，硬上限 closeHard。远离 farDR：farR 像素内没有敌人时减伤，上限 farCap。续航 shieldOnHit：每次命中回护盾上限的 ‰，每秒最多 sohCapPct%（持续伤害、地面效果不算命中）。大天赋参数在 rules.json：ironWall / ctrlPrison / drinkShield / loneWolf。",
+   "ctrlBase": 10,
+   "ctrlCap": 50,
+   "knockMin": 12,
+   "closeR": 40,
+   "closeBase": 1.5,
+   "closeCapBase": 30,
+   "closeHard": 45,
+   "farR": 60,
+   "farCap": 40,
+   "sohCapPct": 5
+  },
   "_说明": "dodgeCap 闪避上限; hurtInvuln 受伤后的无敌时间; meleeGuardLess 近战命中后承伤总降（蛮力符文）; meleeGuardTime 持续秒数; leechHitCap 命中回生命：同一次挥砍（同一把武器同一帧）最多按几个敌人算，null 不限; leechCapPct 命中回生命每秒最多回生命上限的百分之几（令牌桶），null 不限。两者对所有来源（符文、装备词条、旋身）都生效; armorK / armorCap 护甲减伤 = 护甲 ÷ (护甲 + armorK × 这一下的伤害)，最多 armorCap%; bossKillLife 打掉守关 Boss 回生命上限的百分之几; affixes 防御词条族（格式同 whirl.affixes）",
   "leechHitCap": 3,
   "leechCapPct": 4,
@@ -279,7 +291,11 @@
   "devilSpeed": 70,
   "devilTurn": 3,
   "devilMax": 8,
-  "defKeys": ["meleec0_6", "guardc3_6"], "craftPref": [
+  "defKeys": [
+   "meleec0_6",
+   "guardc3_6"
+  ],
+  "craftPref": [
    "IncreasedKineticBaseDamage",
    "FlatKineticDamage",
    "IncreasedArmor",
@@ -305,7 +321,9 @@
    "ArmorOnHit",
    "Melee"
   ],
-  "gem": "GemWhirl", "cat": "melee", "treeKey": "meleec3_6",
+  "gem": "GemWhirl",
+  "cat": "melee",
+  "treeKey": "meleec3_6",
   "affixes": {
    "SpinCap": {
     "text": "【持续施放】叠层上限 +#",
@@ -432,12 +450,235 @@
   "drPerStack": 1,
   "drCap": 40
  },
- "shield": {"_说明": "圣盾掷（飞盾圣骑）流派（spec-bd-gear §4.2）。圣徽盾插圣盾掷符文后变成一把虚拟武器（STATS.shieldW，form shieldThrow，el pla，标签 Shield / Projectile / ProjectileCanChain / ProjectileCanPierce / Attack / Hit）：每 1/aps 秒（aps 1.2，吃攻速）朝最近的敌人扔一次，盾在飞时不再扔。单次伤害 = 盾的护甲（底子护甲 × (1 + 护甲提高%)）× 符文 throwK，再吃盾牌伤害% 和圣光伤害%（同一个提高池）。速度 speed × 投射物速度倍数；寿命 life × 投射物寿命倍数（同游雷）。无限穿透，同一敌人每 rehit 秒最多打一次；弹射 = 碰屏幕边反弹（符文 chain + 通用弹射），每弹一次之后的命中 +chainStepInc%（符文，和通用 chainStep 相加）。弹射用完再碰屏幕边或寿命到了就以 returnSpeed 飞回手上，回程不造成伤害。盾在手上时格挡（block）生效，飞出去时不算格挡（盾的护甲照常算）。每次命中回护盾上限的 shieldOnHit%。每次投掷消耗 soulPerThrow 灯火（不够就不扔），反弹过之后的每次命中返还 soulPerChain。回响圣盾（大天赋 echoShield，守备区，替换骨刺甲）：每次盾命中在命中点炸半径 echoR 像素的圣光爆（×echoMul，算范围）；有 Shield 标签的伤害 ×heartMore，其他武器 ×offhandMul，生命上限 −10%（天赋 more life 0.9）。estHits 只给秒伤估算用。", "aps": 1.2, "crit": 6, "range": 800, "speed": 220, "returnSpeed": 330, "life": 2.5, "rehit": 0.66, "shieldOnHit": 0.5, "soulPerThrow": 0.4, "soulPerChain": 0.06, "echoR": 24, "echoMul": 0.4, "heartMore": 1.8, "offhandMul": 0.5, "estHits": 3, "defKeys": ["guardc3_6", "guardc2_6"], "craftPref": ["ShieldDamage", "IncreasedArmor", "SparkChain", "ChainStep", "Block", "FlatArmor", "IncreasedPlasmaDamage", "IncreasedAttackSpeed", "ShieldOnHit", "CtrlWeaken", "PlasmaResistance", "ThermalResistance", "SoulLess", "SoulRegen", "FlatLife", "FlatDodge", "IncreasedBaseVelocity"], "runeOrder": ["ShieldThrow", "Chain"], "gem": "GemShield", "treeKey": "guardc1_6", "uniqueId": null, "base": "SigilShield", "slot": "shield"},
- "orb": {"_说明": "寒魄球（冰封球）流派（spec-bd-gear §4.3）。寒魄宝珠（form orb）每次出手朝怪最密的方向放冰球（1 + 投射物 +N 颗，扇形 fan°），速度 orbSpeed × 投射物速度倍数（含 projSlow，下限 ×0.2），寿命 orbLife × 持续时间（同游雷：持续时间 + 投射物持续时间，再乘缓流等），无限穿透，碰到的敌人每 contactTick 秒命中一次 ×contactMul；弹射 = 碰屏幕边反弹次数。寿命结束炸一圈冰环（半径 endR 像素，×endMul），插符文时再向四周爆 endShards（+ 派生 +N）片冰片（参考暗黑 2 冰封球的终爆新星）。插寒魄符文：每 emit 秒向四周放 shardDirs (+ 派生 +N) 片冰片（每次旋转 rot°，每片再随机偏 ±jitter°），每片 ×符文 shardMul，速度 shardSpeed、寿命 shardLife、不穿透，算投射物（吃投射物伤害，不吃投射物 +N），同屏最多 maxShards。每次施放消耗 soulPerCast（不够时放不带符文的冰球），冰片打中冻结敌人每片返还 refund，每次施放最多 refundCap。碎冰连锁（大天赋 shardChain，投射物区左上，替换幸运一击）：冰片命中再派生 scN 片（×scMul，只派生一层），有 Spawn 标签的武器 ×heartMore，其他武器 ×offhandMul，非寒霜伤害总降 20%。estHit 只给秒伤估算用（冰片命中率）。", "orbSpeed": 70, "orbLife": 1.8, "contactTick": 0.5, "contactMul": 1.0, "emit": 0.15, "shardDirs": 3, "rot": 67, "jitter": 18, "shardSpeed": 160, "shardLife": 0.45, "endR": 36, "endMul": 1.0, "endShards": 12, "fan": 34, "maxShards": 200, "scN": 2, "scMul": 0.5, "heartMore": 1.95, "offhandMul": 0.5, "soulPerCast": 0.6, "refund": 0.02, "refundCap": 0.4, "estHit": 0.25, "defKeys": ["lampc0_6", "guardc2_6"], "craftPref": ["SparkAdd", "IncreasedDuration", "ProjSlow", "SpawnAdd", "FrozenTaken", "FlatColdDamage", "IncreasedColdBaseDamage", "IncreasedBaseAttackSpeed", "FarDR", "CtrlWeaken", "ColdResistance", "ThermalResistance", "IncreasedArmor", "SoulLess", "SoulRegen", "IncreasedAttackSpeed", "FlatArmor", "FlatLife", "FlatDodge", "IncreasedBaseVelocity"], "runeOrder": ["FrostOrbRune", "AdditionalAttacks", "Persist", "AttackSpeed", "Chain", "Lethal"], "gem": "GemFrostOrb", "cat": "caster", "treeKey": "projc0_6", "uniqueId": null, "base": "FrostOrb"},
- "meteor": {"_说明": "陨火（陨石术）流派（spec-bd-gear §4.1）。坠星杖（form meteor）每次出手：选射程内敌人最多的点（aoe 半径内计数），按那群怪的平均速度 × 延迟预判，画红橙色预警圈（边缘随倒计时收缩），delay 秒后圈内一次命中，击退 knockPx 像素、眩晕 stun 秒（精英 / Boss ×stunBossMul）。插陨火符文：伤害 ×meteorMul，落地留火地（符文 ground），火地里的敌人伤害总降 groundWeaken。每次施放消耗 soulPerCast 灯火（不够时放不带符文的陨石），一次命中击杀 ≥refundKills 只返还 soulRefund。星坠雨（大天赋 starfall，范围区内左，替换光环）：每次落 sfN 颗，散布半径 = aoe × sfSpread，每颗 ×sfMul、范围 ×sfAoe、延迟 ×sfDelay；有 Delayed 标签的武器 ×heartMore，其他武器 ×offhandMul，移速 −10%（天赋 more）。estGround 只给秒伤估算（火地的额外倍数）。craftPref / runeOrder / treeKey / base 是 tools/sim.js、bis.js --build meteor 用的。", "delay": 1.0, "knockPx": 20, "stun": 0.5, "stunBossMul": 0.3, "groundWeaken": 0.15, "soulPerCast": 1.2, "soulRefund": 0.6, "refundKills": 3, "sfN": 3, "sfSpread": 0.8, "sfMul": 0.45, "sfAoe": 0.6, "sfDelay": 0.6, "heartMore": 2.0, "offhandMul": 0.5, "estGround": 0.5, "defKeys": ["lampc0_6", "guardc2_6"], "craftPref": ["DelayDamage", "AreaDamage2", "IncreasedArea", "FlatExplosiveDamage", "AilEffectExplosive", "IncreasedExplosiveBaseDamage", "IncreasedBaseAttackSpeed", "FarDR", "CtrlWeaken", "ExplosiveResistance", "ThermalResistance", "IncreasedArmor", "SoulLess", "SoulRegen", "IncreasedAttackSpeed", "FlatArmor", "FlatLife", "FlatDodge", "IncreasedBaseVelocity"], "runeOrder": ["Meteor", "AreaOfEffect", "AttackSpeed", "AdditionalAttacks", "Aftershock", "Lethal"], "gem": "GemMeteor", "cat": "caster", "treeKey": "areac0_6", "uniqueId": null, "base": "StarfallRod"},
- "nova": {"_说明": "霜环（冰霜新星）流派（spec-bd-gear §4.4）。霜环符文插在霜钟 / 圣钟（form nova）上：新星伤害 ×novaMul，每次命中叠 chillStacks 层冰缓，击退 knockPx 像素；插在圣钟上时元素改成寒霜。每次新星消耗 soulPerCast 灯火（不够时放普通的新星），每冻结一只返还 refund，每次最多 refundCap。碎冰（大天赋 shatter，范围区外右）：杀死冻结的敌人时尸体向四周放 shardN 片冰片（+ 派生 +N），每片 = 新星武器单次伤害 ×shardMul，速度 shardSpeed、寿命 shardLife 秒、不穿透，算派生和投射物；冰片本身不触发碎冰，但冰片打死的冻结敌人照样碎；同屏最多 maxShards 片。有 Nova 标签（或插了霜环符文）的武器 ×heartMore，其他武器 ×offhandMul，非寒霜伤害总降 20%（天赋的 more）。estShatter 只给秒伤估算用（碎冰的额外倍数）。craftPref / runeOrder / treeKey / base 是 tools/sim.js、bis.js --build nova 用的。", "soulPerCast": 0.3, "refund": 0.15, "refundCap": 0.9, "knockPx": 12, "shardN": 6, "shardMul": 0.35, "shardSpeed": 160, "shardLife": 0.45, "maxShards": 200, "heartMore": 1.8, "offhandMul": 0.5, "estShatter": 0.6, "defKeys": ["meleec0_6", "guardc2_6"], "craftPref": ["IncreasedArea", "FrozenTaken", "AilEffectCold", "FlatColdDamage", "ShieldRegen", "IncreasedColdBaseDamage", "IncreasedBaseAttackSpeed", "AreaDamage2", "CloseCap", "CtrlWeaken", "ColdResistance", "ThermalResistance", "IncreasedArmor", "SoulLess", "SoulRegen", "IncreasedAttackSpeed", "FlatArmor", "FlatLife", "FlatDodge", "IncreasedBaseVelocity"], "runeOrder": ["FrostNova", "AreaOfEffect", "AttackSpeed", "AdditionalAttacks", "ArmorOnHit", "Lethal"], "gem": "GemFrostNova", "cat": "caster", "treeKey": "areac3_6", "uniqueId": null, "base": "FrostBell"},
+ "shield": {
+  "_说明": "圣盾掷（飞盾圣骑）流派（spec-bd-gear §4.2）。圣徽盾插圣盾掷符文后变成一把虚拟武器（STATS.shieldW，form shieldThrow，el pla，标签 Shield / Projectile / ProjectileCanChain / ProjectileCanPierce / Attack / Hit）：每 1/aps 秒（aps 1.2，吃攻速）朝最近的敌人扔一次，盾在飞时不再扔。单次伤害 = 盾的护甲（底子护甲 × (1 + 护甲提高%)）× 符文 throwK，再吃盾牌伤害% 和圣光伤害%（同一个提高池）。速度 speed × 投射物速度倍数；寿命 life × 投射物寿命倍数（同游雷）。无限穿透，同一敌人每 rehit 秒最多打一次；弹射 = 碰屏幕边反弹（符文 chain + 通用弹射），每弹一次之后的命中 +chainStepInc%（符文，和通用 chainStep 相加）。弹射用完再碰屏幕边或寿命到了就以 returnSpeed 飞回手上，回程不造成伤害。盾在手上时格挡（block）生效，飞出去时不算格挡（盾的护甲照常算）。每次命中回护盾上限的 shieldOnHit%。每次投掷消耗 soulPerThrow 灯火（不够就不扔），反弹过之后的每次命中返还 soulPerChain。回响圣盾（大天赋 echoShield，守备区，替换骨刺甲）：每次盾命中在命中点炸半径 echoR 像素的圣光爆（×echoMul，算范围）；有 Shield 标签的伤害 ×heartMore，其他武器 ×offhandMul，生命上限 −10%（天赋 more life 0.9）。estHits 只给秒伤估算用。",
+  "aps": 1.2,
+  "crit": 6,
+  "range": 800,
+  "speed": 220,
+  "returnSpeed": 330,
+  "life": 2.5,
+  "rehit": 0.66,
+  "shieldOnHit": 0.5,
+  "soulPerThrow": 0.4,
+  "soulPerChain": 0.06,
+  "echoR": 24,
+  "echoMul": 0.4,
+  "heartMore": 1.8,
+  "offhandMul": 0.5,
+  "estHits": 3,
+  "defKeys": [
+   "guardc3_6",
+   "guardc2_6"
+  ],
+  "craftPref": [
+   "ShieldDamage",
+   "IncreasedArmor",
+   "SparkChain",
+   "ChainStep",
+   "Block",
+   "FlatArmor",
+   "IncreasedPlasmaDamage",
+   "IncreasedAttackSpeed",
+   "ShieldOnHit",
+   "CtrlWeaken",
+   "PlasmaResistance",
+   "ThermalResistance",
+   "SoulLess",
+   "SoulRegen",
+   "FlatLife",
+   "FlatDodge",
+   "IncreasedBaseVelocity"
+  ],
+  "runeOrder": [
+   "ShieldThrow",
+   "Chain"
+  ],
+  "gem": "GemShield",
+  "treeKey": "guardc1_6",
+  "uniqueId": null,
+  "base": "SigilShield",
+  "slot": "shield"
+ },
+ "orb": {
+  "_说明": "寒魄球（冰封球）流派（spec-bd-gear §4.3）。寒魄宝珠（form orb）每次出手朝怪最密的方向放冰球（1 + 投射物 +N 颗，扇形 fan°），速度 orbSpeed × 投射物速度倍数（含 projSlow，下限 ×0.2），寿命 orbLife × 持续时间（同游雷：持续时间 + 投射物持续时间，再乘缓流等），无限穿透，碰到的敌人每 contactTick 秒命中一次 ×contactMul；弹射 = 碰屏幕边反弹次数。寿命结束炸一圈冰环（半径 endR 像素，×endMul），插符文时再向四周爆 endShards（+ 派生 +N）片冰片（参考暗黑 2 冰封球的终爆新星）。插寒魄符文：每 emit 秒向四周放 shardDirs (+ 派生 +N) 片冰片（每次旋转 rot°，每片再随机偏 ±jitter°），每片 ×符文 shardMul，速度 shardSpeed、寿命 shardLife、不穿透，算投射物（吃投射物伤害，不吃投射物 +N），同屏最多 maxShards。每次施放消耗 soulPerCast（不够时放不带符文的冰球），冰片打中冻结敌人每片返还 refund，每次施放最多 refundCap。碎冰连锁（大天赋 shardChain，投射物区左上，替换幸运一击）：冰片命中再派生 scN 片（×scMul，只派生一层），有 Spawn 标签的武器 ×heartMore，其他武器 ×offhandMul，非寒霜伤害总降 20%。estHit 只给秒伤估算用（冰片命中率）。",
+  "orbSpeed": 70,
+  "orbLife": 1.8,
+  "contactTick": 0.5,
+  "contactMul": 1.0,
+  "emit": 0.15,
+  "shardDirs": 3,
+  "rot": 67,
+  "jitter": 18,
+  "shardSpeed": 160,
+  "shardLife": 0.45,
+  "endR": 36,
+  "endMul": 1.0,
+  "endShards": 12,
+  "fan": 34,
+  "maxShards": 200,
+  "scN": 2,
+  "scMul": 0.5,
+  "heartMore": 1.95,
+  "offhandMul": 0.5,
+  "soulPerCast": 0.6,
+  "refund": 0.02,
+  "refundCap": 0.4,
+  "estHit": 0.25,
+  "defKeys": [
+   "lampc0_6",
+   "guardc2_6"
+  ],
+  "craftPref": [
+   "SparkAdd",
+   "IncreasedDuration",
+   "ProjSlow",
+   "SpawnAdd",
+   "FrozenTaken",
+   "FlatColdDamage",
+   "IncreasedColdBaseDamage",
+   "IncreasedBaseAttackSpeed",
+   "FarDR",
+   "CtrlWeaken",
+   "ColdResistance",
+   "ThermalResistance",
+   "IncreasedArmor",
+   "SoulLess",
+   "SoulRegen",
+   "IncreasedAttackSpeed",
+   "FlatArmor",
+   "FlatLife",
+   "FlatDodge",
+   "IncreasedBaseVelocity"
+  ],
+  "runeOrder": [
+   "FrostOrbRune",
+   "AdditionalAttacks",
+   "Persist",
+   "AttackSpeed",
+   "Chain",
+   "Lethal"
+  ],
+  "gem": "GemFrostOrb",
+  "cat": "caster",
+  "treeKey": "projc0_6",
+  "uniqueId": null,
+  "base": "FrostOrb"
+ },
+ "meteor": {
+  "_说明": "陨火（陨石术）流派（spec-bd-gear §4.1）。坠星杖（form meteor）每次出手：选射程内敌人最多的点（aoe 半径内计数），按那群怪的平均速度 × 延迟预判，画红橙色预警圈（边缘随倒计时收缩），delay 秒后圈内一次命中，击退 knockPx 像素、眩晕 stun 秒（精英 / Boss ×stunBossMul）。插陨火符文：伤害 ×meteorMul，落地留火地（符文 ground），火地里的敌人伤害总降 groundWeaken。每次施放消耗 soulPerCast 灯火（不够时放不带符文的陨石），一次命中击杀 ≥refundKills 只返还 soulRefund。星坠雨（大天赋 starfall，范围区内左，替换光环）：每次落 sfN 颗，散布半径 = aoe × sfSpread，每颗 ×sfMul、范围 ×sfAoe、延迟 ×sfDelay；有 Delayed 标签的武器 ×heartMore，其他武器 ×offhandMul，移速 −10%（天赋 more）。estGround 只给秒伤估算（火地的额外倍数）。craftPref / runeOrder / treeKey / base 是 tools/sim.js、bis.js --build meteor 用的。",
+  "delay": 1.0,
+  "knockPx": 20,
+  "stun": 0.5,
+  "stunBossMul": 0.3,
+  "groundWeaken": 0.15,
+  "soulPerCast": 1.2,
+  "soulRefund": 0.6,
+  "refundKills": 3,
+  "sfN": 3,
+  "sfSpread": 0.8,
+  "sfMul": 0.45,
+  "sfAoe": 0.6,
+  "sfDelay": 0.6,
+  "heartMore": 2.0,
+  "offhandMul": 0.5,
+  "estGround": 0.5,
+  "defKeys": [
+   "lampc0_6",
+   "guardc2_6"
+  ],
+  "craftPref": [
+   "DelayDamage",
+   "AreaDamage2",
+   "IncreasedArea",
+   "FlatExplosiveDamage",
+   "AilEffectExplosive",
+   "IncreasedExplosiveBaseDamage",
+   "IncreasedBaseAttackSpeed",
+   "FarDR",
+   "CtrlWeaken",
+   "ExplosiveResistance",
+   "ThermalResistance",
+   "IncreasedArmor",
+   "SoulLess",
+   "SoulRegen",
+   "IncreasedAttackSpeed",
+   "FlatArmor",
+   "FlatLife",
+   "FlatDodge",
+   "IncreasedBaseVelocity"
+  ],
+  "runeOrder": [
+   "Meteor",
+   "AreaOfEffect",
+   "AttackSpeed",
+   "AdditionalAttacks",
+   "Aftershock",
+   "Lethal"
+  ],
+  "gem": "GemMeteor",
+  "cat": "caster",
+  "treeKey": "areac0_6",
+  "uniqueId": null,
+  "base": "StarfallRod"
+ },
+ "nova": {
+  "_说明": "霜环（冰霜新星）流派（spec-bd-gear §4.4）。霜环符文插在霜钟 / 圣钟（form nova）上：新星伤害 ×novaMul，每次命中叠 chillStacks 层冰缓，击退 knockPx 像素；插在圣钟上时元素改成寒霜。每次新星消耗 soulPerCast 灯火（不够时放普通的新星），每冻结一只返还 refund，每次最多 refundCap。碎冰（大天赋 shatter，范围区外右）：杀死冻结的敌人时尸体向四周放 shardN 片冰片（+ 派生 +N），每片 = 新星武器单次伤害 ×shardMul，速度 shardSpeed、寿命 shardLife 秒、不穿透，算派生和投射物；冰片本身不触发碎冰，但冰片打死的冻结敌人照样碎；同屏最多 maxShards 片。有 Nova 标签（或插了霜环符文）的武器 ×heartMore，其他武器 ×offhandMul，非寒霜伤害总降 20%（天赋的 more）。estShatter 只给秒伤估算用（碎冰的额外倍数）。craftPref / runeOrder / treeKey / base 是 tools/sim.js、bis.js --build nova 用的。",
+  "soulPerCast": 0.3,
+  "refund": 0.15,
+  "refundCap": 0.9,
+  "knockPx": 12,
+  "shardN": 6,
+  "shardMul": 0.35,
+  "shardSpeed": 160,
+  "shardLife": 0.45,
+  "maxShards": 200,
+  "heartMore": 1.8,
+  "offhandMul": 0.5,
+  "estShatter": 0.6,
+  "defKeys": [
+   "meleec0_6",
+   "guardc2_6"
+  ],
+  "craftPref": [
+   "IncreasedArea",
+   "FrozenTaken",
+   "AilEffectCold",
+   "FlatColdDamage",
+   "ShieldRegen",
+   "IncreasedColdBaseDamage",
+   "IncreasedBaseAttackSpeed",
+   "AreaDamage2",
+   "CloseCap",
+   "CtrlWeaken",
+   "ColdResistance",
+   "ThermalResistance",
+   "IncreasedArmor",
+   "SoulLess",
+   "SoulRegen",
+   "IncreasedAttackSpeed",
+   "FlatArmor",
+   "FlatLife",
+   "FlatDodge",
+   "IncreasedBaseVelocity"
+  ],
+  "runeOrder": [
+   "FrostNova",
+   "AreaOfEffect",
+   "AttackSpeed",
+   "AdditionalAttacks",
+   "ArmorOnHit",
+   "Lethal"
+  ],
+  "gem": "GemFrostNova",
+  "cat": "caster",
+  "treeKey": "areac3_6",
+  "uniqueId": null,
+  "base": "FrostBell"
+ },
  "spark": {
-  "_说明": "游雷（电球）流派（规格 design/spec-spark.md、design/spec-pierce-chain.md；2026-10-24 用户定稿：寿命按本地方案，穿透保持无限穿透，弹射是指弹屏幕边缘）。游雷符文：插在雷灵（form proj + wander）上，每次出手朝目标扇形放出一串游雷，数量 = 符文的 sparkN + 投射物数量（相加，照流放之路；投射物 +N 来自词条、天赋、百骨冠）；每颗伤害 = 武器单发 × 符文的 sparkMul。轨迹是固定的正弦波：沿出手方向直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，不追踪、不随机。速度 = 武器弹速 × speedMul；寿命 life 秒 × (1 + 持续时间提高% + 投射物持续时间提高%) × 缓流等符文总增，寿命到了就消失（反弹不补寿命），弹速决定这段时间飞多远；同屏最多 maxAlive 颗，超出时最老的消失。弹射 = 中心线碰到当前屏幕边（视野去掉顶部状态栏，左右各留 10 像素）镜面反射的次数，每反弹一次耗 1 次弹射、之后的伤害 ×chainMul，反弹后继续走波形；弹射用完再碰到屏幕边就飞出去消失。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、织雷之心、雷冠）。穿透是布尔的：有任何穿透来源（basePierce、穿刺符文、穿透词条）就无限穿透，同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）；没有穿透时打中一个敌人就消失。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每反弹一次之后的命中伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，数值在 rules.json chainCrown）：反弹过的游雷打中的敌人感电；第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉的不再分叉、不弹射）。estLeg / estLegHit / estRehit 只给秒伤估算用：一趟屏幕约 estLeg 像素，每多一趟按 estLegHit 估多打的命中，穿透时飞在屏幕里每多 1 秒按 estRehit 估重复命中。chainR / chainLife 已不用（投射物不再在敌人之间转向）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",  "life": 3.5,
+  "_说明": "游雷（电球）流派（规格 design/spec-spark.md、design/spec-pierce-chain.md；2026-10-24 用户定稿：寿命按本地方案，穿透保持无限穿透，弹射是指弹屏幕边缘）。游雷符文：插在雷灵（form proj + wander）上，每次出手朝目标扇形放出一串游雷，数量 = 符文的 sparkN + 投射物数量（相加，照流放之路；投射物 +N 来自词条、天赋、百骨冠）；每颗伤害 = 武器单发 × 符文的 sparkMul。轨迹是固定的正弦波：沿出手方向直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，不追踪、不随机。速度 = 武器弹速 × speedMul；寿命 life 秒 × (1 + 持续时间提高% + 投射物持续时间提高%) × 缓流等符文总增，寿命到了就消失（反弹不补寿命），弹速决定这段时间飞多远；同屏最多 maxAlive 颗，超出时最老的消失。弹射 = 中心线碰到当前屏幕边（视野去掉顶部状态栏，左右各留 10 像素）镜面反射的次数，每反弹一次耗 1 次弹射、之后的伤害 ×chainMul，反弹后继续走波形；弹射用完再碰到屏幕边就飞出去消失。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、织雷之心、雷冠）。穿透是布尔的：有任何穿透来源（basePierce、穿刺符文、穿透词条）就无限穿透，同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）；没有穿透时打中一个敌人就消失。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每反弹一次之后的命中伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，数值在 rules.json chainCrown）：反弹过的游雷打中的敌人感电；第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉的不再分叉、不弹射）。estLeg / estLegHit / estRehit 只给秒伤估算用：一趟屏幕约 estLeg 像素，每多一趟按 estLegHit 估多打的命中，穿透时飞在屏幕里每多 1 秒按 estRehit 估重复命中。chainR / chainLife 已不用（投射物不再在敌人之间转向）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
+  "life": 3.5,
   "rehit": 0.66,
   "speedMul": 1.1,
   "fan": 1.3,
@@ -448,7 +689,10 @@
   "shockGain": 2,
   "forkN": 2,
   "forkMul": 0.6,
-  "defKeys": ["lampc0_6"], "craftPref": [
+  "defKeys": [
+   "lampc0_6"
+  ],
+  "craftPref": [
    "IncreasedElectricBaseDamage",
    "FlatElectricDamage",
    "SparkAdd",
@@ -477,7 +721,9 @@
    "RapidProjectiles",
    "AttackSpeed"
   ],
-  "gem": "GemSpark", "cat": "bow", "treeKey": "proj8",
+  "gem": "GemSpark",
+  "cat": "bow",
+  "treeKey": "proj8",
   "uniqueId": "StormCrown",
   "base": "Zapper",
   "affixes": {
@@ -670,12 +916,12 @@
     ]
    }
   },
-  "burn": 2,
-  "burnPerFloor": 0.1,
+  "burn": 0.55,
+  "burnPerFloor": 0.07,
   "onKill": {
    "normal": 1,
    "elite": 8,
-   "boss": 30
+   "boss": 40
   },
   "deathKeep": 50,
   "nextFloorDelay": 1.6,
@@ -685,195 +931,417 @@
   "revisitKillMul": 1.5,
   "returnHp": 30,
   "returnHpMelee": null,
-  "returnHpNow": 12
+  "returnHpNow": 12,
+  "ladderBurn": 2,
+  "ladderBurnPerFloor": 0.1,
+  "pushCostMul": 0.55,
+  "lampoutCacheKeep": 0.5,
+  "lampPityMax": 3,
+  "_灯火平衡_10-27": "手机试玩第 1 层灯火燃尽：第 1 层约 60 秒，旧燃烧 2.1/秒≈130 + 初始魂龛技能消耗≈95，击杀只回≈75。推关燃烧 2+0.1×层 → 0.55+0.07×层，推关技能消耗 ×0.55，Boss 回灯 30→40；天梯仍用 ladderBurn / ladderBurnPerFloor（原值）且技能消耗不打折。灯火燃尽（推关）：这一层攒下的装备（本应进 Boss 宝箱）按 lampoutCacheKeep 折算带回（至少 1 件）；一层都没打通时余烬 +1（最多 lampPityMax），下一个守关 Boss 宝箱每点余烬多掉 1 件。"
  },
  "tags": {
   "_说明": "通用标签词条（规格 design/spec-tags.md）。aoeInc 范围提高%：对有 AoE 标签的武器的爆炸 / 光环半径和旋风判定半径生效；durInc 持续时间提高%：小旋风、游雷、玩家留在地上的效果存在更久。projSpd 投射物速度提高%（武器 / 核心 / 枢纽）：投射物飞得更快，游雷寿命不变所以飞得更远、在屏幕里来回更多趟；projDur 投射物持续时间提高%（武器 / 枢纽）：投射物（含游雷，和持续时间提高相加）存在更久，普通投射物射程随之变长。格式同 whirl.affixes",
   "affixes": {
-   "IncreasedArea": {"text": "范围提高 #%", "stat": "aoeInc", "type": "S", "on": ["core", "hub", "weapon"], "tag": "AoE", "grp": "IncreasedArea", "tiers": [[[4, 8], 1000, 1, 999], [[9, 14], 700, 15, 999], [[15, 22], 400, 35, 999], [[23, 30], 150, 65, 999]]},
-   "IncreasedProjectileSpeed": {"text": "投射物速度提高 #%", "stat": "projSpd", "type": "S", "on": ["weapon", "core", "hub"], "tag": "Projectile", "grp": "IncreasedProjectileSpeed", "tiers": [[[5, 10], 1000, 1, 999], [[11, 18], 700, 15, 999], [[19, 27], 400, 35, 999], [[28, 36], 150, 65, 999]]},
-   "IncreasedProjectileDuration": {"text": "投射物持续时间提高 #%", "stat": "projDur", "type": "S", "on": ["weapon", "hub"], "tag": "Projectile", "grp": "IncreasedProjectileDuration", "tiers": [[[6, 12], 1000, 1, 999], [[13, 20], 700, 15, 999], [[21, 30], 400, 35, 999], [[31, 40], 150, 65, 999]]},
-   "IncreasedDuration": {"text": "持续时间提高 #%", "stat": "durInc", "type": "S", "on": ["core", "hub", "engine"], "grp": "IncreasedDuration", "tiers": [[[5, 10], 1000, 1, 999], [[11, 18], 700, 15, 999], [[19, 28], 400, 35, 999], [[29, 40], 150, 65, 999]]}
+   "IncreasedArea": {
+    "text": "范围提高 #%",
+    "stat": "aoeInc",
+    "type": "S",
+    "on": [
+     "core",
+     "hub",
+     "weapon"
+    ],
+    "tag": "AoE",
+    "grp": "IncreasedArea",
+    "tiers": [
+     [
+      [
+       4,
+       8
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       9,
+       14
+      ],
+      700,
+      15,
+      999
+     ],
+     [
+      [
+       15,
+       22
+      ],
+      400,
+      35,
+      999
+     ],
+     [
+      [
+       23,
+       30
+      ],
+      150,
+      65,
+      999
+     ]
+    ]
+   },
+   "IncreasedProjectileSpeed": {
+    "text": "投射物速度提高 #%",
+    "stat": "projSpd",
+    "type": "S",
+    "on": [
+     "weapon",
+     "core",
+     "hub"
+    ],
+    "tag": "Projectile",
+    "grp": "IncreasedProjectileSpeed",
+    "tiers": [
+     [
+      [
+       5,
+       10
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       11,
+       18
+      ],
+      700,
+      15,
+      999
+     ],
+     [
+      [
+       19,
+       27
+      ],
+      400,
+      35,
+      999
+     ],
+     [
+      [
+       28,
+       36
+      ],
+      150,
+      65,
+      999
+     ]
+    ]
+   },
+   "IncreasedProjectileDuration": {
+    "text": "投射物持续时间提高 #%",
+    "stat": "projDur",
+    "type": "S",
+    "on": [
+     "weapon",
+     "hub"
+    ],
+    "tag": "Projectile",
+    "grp": "IncreasedProjectileDuration",
+    "tiers": [
+     [
+      [
+       6,
+       12
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       13,
+       20
+      ],
+      700,
+      15,
+      999
+     ],
+     [
+      [
+       21,
+       30
+      ],
+      400,
+      35,
+      999
+     ],
+     [
+      [
+       31,
+       40
+      ],
+      150,
+      65,
+      999
+     ]
+    ]
+   },
+   "IncreasedDuration": {
+    "text": "持续时间提高 #%",
+    "stat": "durInc",
+    "type": "S",
+    "on": [
+     "core",
+     "hub",
+     "engine"
+    ],
+    "grp": "IncreasedDuration",
+    "tiers": [
+     [
+      [
+       5,
+       10
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       11,
+       18
+      ],
+      700,
+      15,
+      999
+     ],
+     [
+      [
+       19,
+       28
+      ],
+      400,
+      35,
+      999
+     ],
+     [
+      [
+       29,
+       40
+      ],
+      150,
+      65,
+      999
+     ]
+    ]
+   }
   }
  },
- "uniq": {"_说明": "第 5 步的新独特（spec-bd-gear §5）用到的固定数值；随机数值在 uniques.json", "delayStep": 0.1, "echoR": 24, "autoNovaEvery": 0.5, "iceGround": {"dur": 1.5, "chillPerSec": 2, "rMul": 0.7}, "vortex": {"moveFull": 30, "takenFull": 10, "moveNone": 20}, "coffinShield": 1, "winterSpeed": 0.3, "winterEmit": 1.5, "crownMul": 0.5, "crownN": 2, "martyrChainMul": 2, "doomDodge": 14},
+ "uniq": {
+  "_说明": "第 5 步的新独特（spec-bd-gear §5）用到的固定数值；随机数值在 uniques.json",
+  "delayStep": 0.1,
+  "echoR": 24,
+  "autoNovaEvery": 0.5,
+  "iceGround": {
+   "dur": 1.5,
+   "chillPerSec": 2,
+   "rMul": 0.7
+  },
+  "vortex": {
+   "moveFull": 30,
+   "takenFull": 10,
+   "moveNone": 20
+  },
+  "coffinShield": 1,
+  "winterSpeed": 0.3,
+  "winterEmit": 1.5,
+  "crownMul": 0.5,
+  "crownN": 2,
+  "martyrChainMul": 2,
+  "doomDodge": 14
+ },
  "implicit": {
-   "_说明": "武器底子的隐性倾向（spec-bd-gear §6）：不占词条位，显示在底子属性下面。fx 键见 40_stats.js applyImplicit",
-   "Cannon": {
-     "fx": {
-       "pierce": 1
-     },
-     "t": "穿透"
+  "_说明": "武器底子的隐性倾向（spec-bd-gear §6）：不占词条位，显示在底子属性下面。fx 键见 40_stats.js applyImplicit",
+  "Cannon": {
+   "fx": {
+    "pierce": 1
    },
-   "Railgun": {
-     "fx": {
-       "pierce": 1,
-       "projSpd": 30
-     },
-     "t": "穿透；投射物速度提高 30%"
+   "t": "穿透"
+  },
+  "Railgun": {
+   "fx": {
+    "pierce": 1,
+    "projSpd": 30
    },
-   "Zapper": {
-     "fx": {
-       "chain": 1
-     },
-     "t": "弹射 +1（碰屏幕边反弹）"
+   "t": "穿透；投射物速度提高 30%"
+  },
+  "Zapper": {
+   "fx": {
+    "chain": 1
    },
-   "Shuriken": {
-     "fx": {
-       "projDur": 20
-     },
-     "t": "投射物持续时间提高 20%"
+   "t": "弹射 +1（碰屏幕边反弹）"
+  },
+  "Shuriken": {
+   "fx": {
+    "projDur": 20
    },
-   "TurbineBlades": {
-     "fx": {
-       "aoeInc": 15
-     },
-     "t": "范围提高 15%"
+   "t": "投射物持续时间提高 20%"
+  },
+  "TurbineBlades": {
+   "fx": {
+    "aoeInc": 15
    },
-   "PlasmaNova": {
-     "fx": {
-       "aoeInc": 10
-     },
-     "t": "范围提高 10%"
+   "t": "范围提高 15%"
+  },
+  "PlasmaNova": {
+   "fx": {
+    "aoeInc": 10
    },
-   "Rocket": {
-     "fx": {
-       "inc": 15
-     },
-     "t": "范围伤害提高 15%"
+   "t": "范围提高 10%"
+  },
+  "Rocket": {
+   "fx": {
+    "inc": 15
    },
-   "FlameThrower": {
-     "fx": {
-       "dotInc": 20
-     },
-     "t": "持续伤害提高 20%"
+   "t": "范围伤害提高 15%"
+  },
+  "FlameThrower": {
+   "fx": {
+    "dotInc": 20
    },
-   "Orbitron": {
-     "fx": {
-       "spawn": 1
-     },
-     "t": "派生 +1（螺旋弹第一次打中时分出一颗，×0.5）"
+   "t": "持续伤害提高 20%"
+  },
+  "Orbitron": {
+   "fx": {
+    "spawn": 1
    },
-   "Blastgun": {
-     "fx": {
-       "inc": 15
-     },
-     "t": "投射物伤害提高 15%"
+   "t": "派生 +1（螺旋弹第一次打中时分出一颗，×0.5）"
+  },
+  "Blastgun": {
+   "fx": {
+    "inc": 15
    },
-   "BlastMine": {
-     "fx": {
-       "inc": 20
-     },
-     "t": "延迟伤害提高 20%"
+   "t": "投射物伤害提高 15%"
+  },
+  "BlastMine": {
+   "fx": {
+    "inc": 20
    },
-   "PlasmaMine": {
-     "fx": {
-       "inc": 20
-     },
-     "t": "延迟伤害提高 20%"
+   "t": "延迟伤害提高 20%"
+  },
+  "PlasmaMine": {
+   "fx": {
+    "inc": 20
    },
-   "StormMine": {
-     "fx": {
-       "inc": 20
-     },
-     "t": "延迟伤害提高 20%"
+   "t": "延迟伤害提高 20%"
+  },
+  "StormMine": {
+   "fx": {
+    "inc": 20
    },
-   "ShrapnelMine": {
-     "fx": {
-       "inc": 20
-     },
-     "t": "延迟伤害提高 20%"
+   "t": "延迟伤害提高 20%"
+  },
+  "ShrapnelMine": {
+   "fx": {
+    "inc": 20
    },
-   "WasteMine": {
-     "fx": {
-       "inc": 20
-     },
-     "t": "延迟伤害提高 20%"
+   "t": "延迟伤害提高 20%"
+  },
+  "WasteMine": {
+   "fx": {
+    "inc": 20
    },
-   "Spikes": {
-     "fx": {
-       "inc": 20
-     },
-     "t": "近战伤害提高 20%"
+   "t": "延迟伤害提高 20%"
+  },
+  "Spikes": {
+   "fx": {
+    "inc": 20
    },
-   "Hullbreaker": {
-     "fx": {
-       "inc": 20
-     },
-     "t": "近战伤害提高 20%"
+   "t": "近战伤害提高 20%"
+  },
+  "Hullbreaker": {
+   "fx": {
+    "inc": 20
    },
-   "Laser": {
-     "fx": {
-       "rangeInc": 15
-     },
-     "t": "射程提高 15%"
+   "t": "近战伤害提高 20%"
+  },
+  "Laser": {
+   "fx": {
+    "rangeInc": 15
    },
-   "Taser": {
-     "fx": {
-       "ail": {
-         "ele": 0.1
-       }
-     },
-     "t": "感电几率 +10%"
+   "t": "射程提高 15%"
+  },
+  "Taser": {
+   "fx": {
+    "ail": {
+     "ele": 0.1
+    }
    },
-   "PlutoniumBar": {
-     "fx": {
-       "ail": {
-         "nuc": 0.1
-       }
-     },
-     "t": "瘟疫异常几率 +10%"
+   "t": "感电几率 +10%"
+  },
+  "PlutoniumBar": {
+   "fx": {
+    "ail": {
+     "nuc": 0.1
+    }
    },
-   "SporeBlaster": {
-     "fx": {
-       "critInc": 20
-     },
-     "t": "暴击率提高 20%"
+   "t": "瘟疫异常几率 +10%"
+  },
+  "SporeBlaster": {
+   "fx": {
+    "critInc": 20
    },
-   "FlameSlinger": {
-     "fx": {
-       "aspd": 10
-     },
-     "t": "攻击速度提高 10%"
+   "t": "暴击率提高 20%"
+  },
+  "FlameSlinger": {
+   "fx": {
+    "aspd": 10
    },
-   "Thorns": {
-     "fx": {
-       "knock": 1
-     },
-     "t": "命中击退"
+   "t": "攻击速度提高 10%"
+  },
+  "Thorns": {
+   "fx": {
+    "knock": 1
    },
-   "PlasmaBlaster": {
-     "fx": {
-       "critDmg": 20
-     },
-     "t": "暴击伤害 +20%"
+   "t": "命中击退"
+  },
+  "PlasmaBlaster": {
+   "fx": {
+    "critDmg": 20
    },
-   "PlasmaCutter": {
-     "fx": {
-       "pierceMore": 1.15
-     },
-     "t": "穿透后的命中伤害总增 15%"
+   "t": "暴击伤害 +20%"
+  },
+  "PlasmaCutter": {
+   "fx": {
+    "pierceMore": 1.15
    },
-   "FrostBell": {
-     "fx": {
-       "ail": {
-         "cold": 0.1
-       }
-     },
-     "t": "冰缓几率 +10%"
+   "t": "穿透后的命中伤害总增 15%"
+  },
+  "FrostBell": {
+   "fx": {
+    "ail": {
+     "cold": 0.1
+    }
    },
-   "StarfallRod": {
-     "fx": {
-       "bossInc": 15
-     },
-     "t": "对 Boss 伤害提高 15%"
+   "t": "冰缓几率 +10%"
+  },
+  "StarfallRod": {
+   "fx": {
+    "bossInc": 15
    },
-   "FrostOrb": {
-     "fx": {
-       "projSlow": 10
-     },
-     "t": "投射物速度降低 10%（寒魄球更慢、更久）"
-   }
+   "t": "对 Boss 伤害提高 15%"
+  },
+  "FrostOrb": {
+   "fx": {
+    "projSlow": 10
+   },
+   "t": "投射物速度降低 10%（寒魄球更慢、更久）"
+  }
  },
  "gear": {
   "_说明": "装备词条改版（规格 design/spec-bd-gear.md §2、§3）。affixes 格式同 whirl.affixes。stat：inc:proj / inc:aoe / inc:melee 只对带对应标签的武器进“提高”池；delayInc / delayAdd / spawnAdd / shieldDmg 给第 4 步的新流派（现在没有带 Delayed / Spawn / Shield 标签的武器，所以 DelayDamage、SpawnAdd、ShieldDamage 暂时 off=true 不掉落）；projSlow 投射物速度 ×(1 − projSlow%)，下限 ×projSlowMin；frozenTaken 打冻结敌人时伤害按提高% 结算；chainStep 每次弹射伤害 +%（和织雷之心相加）；block 装着盾牌时护甲 ×(1 + block%)；critChance 暴击率提高%；moveInc 移动速度提高%（和基础移动速度提高相加）；burnLess 推关灯火燃烧降低%（最多 burnLessCap%）；soulKillInc 击杀回灯火提高%；ailEff:元素 异常效果提高%（碎骨伤害、余震伤害、灼烧累积、感电减抗、致盲减伤、疫病伤害、冰缓减速和冻结时长）；pen:元素 穿抗%（计算怪物抗性时减去）。hubResW：法阵上掷出六元素抗性 / 抗性上限时权重 ×hubResW（§3.1，抗性只出在法阵和盾牌）。migrate：老存档按 id 映射（§3.4），档位按在族里的比例换算，换不过去的词条删掉并返还 1 点锻造潜力。",
@@ -910,11 +1378,170 @@
    ]
   },
   "affixes": {
-      "trigSlot": { "text": "魂龛位 +#", "stat": "trigSlotAff", "type": "S", "on": ["weapon", "hub"], "grp": "TrigSlot", "tiers": [[[1, 1], 60, 40, 999]] },
-   "CtrlWeaken": {"text": "受控敌人对你的伤害降低 #%", "stat": "ctrlWeaken", "type": "S", "on": ["hub"], "grp": "CtrlWeaken", "tiers": [[[5, 8], 1000, 8, 999], [[9, 13], 600, 30, 999], [[14, 20], 250, 60, 999]]},
-   "CloseCap": {"text": "贴身减伤上限 +#%", "stat": "closeCap", "type": "S", "on": ["core"], "grp": "CloseCap", "tiers": [[[5, 8], 1000, 10, 999], [[9, 14], 500, 40, 999]]},
-   "FarDR": {"text": "身边没有敌人时受到的伤害降低 #%", "stat": "farDR", "type": "S", "on": ["engine"], "grp": "FarDR", "tiers": [[[6, 10], 1000, 6, 999], [[11, 16], 600, 25, 999], [[17, 24], 250, 55, 999]]},
-   "ShieldOnHit": {"text": "命中回护盾上限的 #‰", "stat": "shieldOnHit", "type": "S", "on": ["shield"], "grp": "ShieldOnHit", "tiers": [[[1, 2], 1000, 6, 999], [[3, 4], 600, 25, 999], [[5, 7], 250, 55, 999]]},
+   "trigSlot": {
+    "text": "魂龛位 +#",
+    "stat": "trigSlotAff",
+    "type": "S",
+    "on": [
+     "weapon",
+     "hub"
+    ],
+    "grp": "TrigSlot",
+    "tiers": [
+     [
+      [
+       1,
+       1
+      ],
+      60,
+      40,
+      999
+     ]
+    ]
+   },
+   "CtrlWeaken": {
+    "text": "受控敌人对你的伤害降低 #%",
+    "stat": "ctrlWeaken",
+    "type": "S",
+    "on": [
+     "hub"
+    ],
+    "grp": "CtrlWeaken",
+    "tiers": [
+     [
+      [
+       5,
+       8
+      ],
+      1000,
+      8,
+      999
+     ],
+     [
+      [
+       9,
+       13
+      ],
+      600,
+      30,
+      999
+     ],
+     [
+      [
+       14,
+       20
+      ],
+      250,
+      60,
+      999
+     ]
+    ]
+   },
+   "CloseCap": {
+    "text": "贴身减伤上限 +#%",
+    "stat": "closeCap",
+    "type": "S",
+    "on": [
+     "core"
+    ],
+    "grp": "CloseCap",
+    "tiers": [
+     [
+      [
+       5,
+       8
+      ],
+      1000,
+      10,
+      999
+     ],
+     [
+      [
+       9,
+       14
+      ],
+      500,
+      40,
+      999
+     ]
+    ]
+   },
+   "FarDR": {
+    "text": "身边没有敌人时受到的伤害降低 #%",
+    "stat": "farDR",
+    "type": "S",
+    "on": [
+     "engine"
+    ],
+    "grp": "FarDR",
+    "tiers": [
+     [
+      [
+       6,
+       10
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       11,
+       16
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       17,
+       24
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
+   "ShieldOnHit": {
+    "text": "命中回护盾上限的 #‰",
+    "stat": "shieldOnHit",
+    "type": "S",
+    "on": [
+     "shield"
+    ],
+    "grp": "ShieldOnHit",
+    "tiers": [
+     [
+      [
+       1,
+       2
+      ],
+      1000,
+      6,
+      999
+     ],
+     [
+      [
+       3,
+       4
+      ],
+      600,
+      25,
+      999
+     ],
+     [
+      [
+       5,
+       7
+      ],
+      250,
+      55,
+      999
+     ]
+    ]
+   },
    "ProjDamage": {
     "text": "投射物伤害提高 #%",
     "stat": "inc:proj",
@@ -1983,26 +2610,301 @@
  "offhand": {
   "_说明": "副手（右手槽 wr，kind off）：没有独立技能，只强化主手技能。底材和隐性效果在 data/items.json 的 offhand。weaponAffixes：武器上非局部的词条（攻速、范围、投射物、暴击……）也能掷在副手上。affixes 是副手专属词条：offMore 主手技能伤害总增%，offAspd 主手攻速总增%，extra 投射物 +N。migrate：旧存档右手的武器放回背包，并按主手标签送一件普通副手（starterByTag 按顺序匹配，都不中用 fallback）。",
   "weaponAffixes": true,
-  "starterByTag": [["Projectile", "BoneQuiver"], ["AoE", "AshCenser"]],
+  "starterByTag": [
+   [
+    "Projectile",
+    "BoneQuiver"
+   ],
+   [
+    "AoE",
+    "AshCenser"
+   ]
+  ],
   "fallback": "SoulSource",
   "affixes": {
-   "OffSkillMore": { "text": "主手技能伤害总增 #%", "stat": "offMore", "type": "P", "on": ["off"], "grp": "OffSkillMore", "tiers": [[[4, 7], 1000, 1, 999], [[8, 12], 600, 20, 999], [[13, 18], 250, 45, 999], [[19, 25], 80, 70, 999]] },
-   "OffSkillSpeed": { "text": "主手技能攻速总增 #%", "stat": "offAspd", "type": "S", "on": ["off"], "grp": "OffSkillSpeed", "tiers": [[[3, 5], 1000, 1, 999], [[6, 9], 500, 25, 999], [[10, 14], 150, 55, 999]] },
-   "OffExtraProj": { "text": "投射物 +#", "stat": "extra", "type": "P", "on": ["off"], "tag": "Projectile", "grp": "OffExtraProj", "tiers": [[[1, 1], 120, 30, 999]] },
-   "CritDamage": { "text": "暴击伤害 +#%", "stat": "critDmgG", "type": "S", "on": ["off", "core"], "grp": "CritDamage", "tiers": [[[15, 25], 1000, 10, 999], [[26, 40], 600, 35, 999], [[41, 60], 250, 65, 999]], "_说明": "spec-legacy-cleanup §2.3：原印记上的暴击伤害搬到副手和头冠" },
-   "MoreDotTag": { "text": "带【持续伤害】标签的技能伤害总增 #%", "stat": "dotTagMore", "type": "S", "on": ["core"], "grp": "MoreDotTag", "tiers": [[[5, 8], 1000, 20, 999], [[9, 12], 400, 50, 999]], "_说明": "原印记的持续伤害总增" }
+   "OffSkillMore": {
+    "text": "主手技能伤害总增 #%",
+    "stat": "offMore",
+    "type": "P",
+    "on": [
+     "off"
+    ],
+    "grp": "OffSkillMore",
+    "tiers": [
+     [
+      [
+       4,
+       7
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       8,
+       12
+      ],
+      600,
+      20,
+      999
+     ],
+     [
+      [
+       13,
+       18
+      ],
+      250,
+      45,
+      999
+     ],
+     [
+      [
+       19,
+       25
+      ],
+      80,
+      70,
+      999
+     ]
+    ]
+   },
+   "OffSkillSpeed": {
+    "text": "主手技能攻速总增 #%",
+    "stat": "offAspd",
+    "type": "S",
+    "on": [
+     "off"
+    ],
+    "grp": "OffSkillSpeed",
+    "tiers": [
+     [
+      [
+       3,
+       5
+      ],
+      1000,
+      1,
+      999
+     ],
+     [
+      [
+       6,
+       9
+      ],
+      500,
+      25,
+      999
+     ],
+     [
+      [
+       10,
+       14
+      ],
+      150,
+      55,
+      999
+     ]
+    ]
+   },
+   "OffExtraProj": {
+    "text": "投射物 +#",
+    "stat": "extra",
+    "type": "P",
+    "on": [
+     "off"
+    ],
+    "tag": "Projectile",
+    "grp": "OffExtraProj",
+    "tiers": [
+     [
+      [
+       1,
+       1
+      ],
+      120,
+      30,
+      999
+     ]
+    ]
+   },
+   "CritDamage": {
+    "text": "暴击伤害 +#%",
+    "stat": "critDmgG",
+    "type": "S",
+    "on": [
+     "off",
+     "core"
+    ],
+    "grp": "CritDamage",
+    "tiers": [
+     [
+      [
+       15,
+       25
+      ],
+      1000,
+      10,
+      999
+     ],
+     [
+      [
+       26,
+       40
+      ],
+      600,
+      35,
+      999
+     ],
+     [
+      [
+       41,
+       60
+      ],
+      250,
+      65,
+      999
+     ]
+    ],
+    "_说明": "spec-legacy-cleanup §2.3：原印记上的暴击伤害搬到副手和头冠"
+   },
+   "MoreDotTag": {
+    "text": "带【持续伤害】标签的技能伤害总增 #%",
+    "stat": "dotTagMore",
+    "type": "S",
+    "on": [
+     "core"
+    ],
+    "grp": "MoreDotTag",
+    "tiers": [
+     [
+      [
+       5,
+       8
+      ],
+      1000,
+      20,
+      999
+     ],
+     [
+      [
+       9,
+       12
+      ],
+      400,
+      50,
+      999
+     ]
+    ],
+    "_说明": "原印记的持续伤害总增"
+   }
   }
  },
  "gems": {
   "_说明": "技能石（spec-skill-gems）：主手类别和对口标签、对口倍率、技能石槽数权重、掉落占比（和符文同一次判定）、打磨。pow / spd：主手底子在类别内的伤害、攻速系数（默认 1，同类别底子只靠品质、暴击、隐性和词条区分）。unarmed：没拿主手时按这个底子算。retired：停止掉落的底子（w → 0，只为老存档保留）",
-  "affinity": 1.2, "sockW": [1000, 800, 600, 300, 100], "dropShare": 0.3, "maxSock": 5, "polishCost": 5, "qMax": 20, "dropQ": [0, 10], "unarmed": "Cannon", "socketDrop": 4,
+  "affinity": 1.2,
+  "sockW": [
+   1000,
+   800,
+   600,
+   300,
+   100
+  ],
+  "dropShare": 0.3,
+  "maxSock": 5,
+  "polishCost": 5,
+  "qMax": 20,
+  "dropQ": [
+   0,
+   10
+  ],
+  "unarmed": "Cannon",
+  "socketDrop": 4,
   "cats": {
-   "melee": { "n": "近战", "tags": ["Melee"], "bases": ["TurbineBlades", "Hullbreaker", "Spikes", "Thorns"] },
-   "bow": { "n": "弩", "tags": ["Projectile"], "bases": ["Cannon", "Railgun", "Taser", "Shuriken", "Zapper"] },
-   "caster": { "n": "法器", "tags": ["AoE", "Nova", "Delayed", "DoT"], "bases": ["StarfallRod", "PlasmaNova", "FrostOrb", "Laser", "FrostBell", "PlutoniumBar", "FlameThrower", "BlastMine", "PlasmaMine", "StormMine", "ShrapnelMine", "WasteMine"] },
-   "gun": { "n": "铳", "tags": ["Projectile"], "bases": ["Blastgun", "SporeBlaster", "Rocket", "FlameSlinger", "Orbitron", "PlasmaBlaster", "PlasmaCutter"] }
+   "melee": {
+    "n": "近战",
+    "tags": [
+     "Melee"
+    ],
+    "bases": [
+     "TurbineBlades",
+     "Hullbreaker",
+     "Spikes",
+     "Thorns"
+    ]
+   },
+   "bow": {
+    "n": "弩",
+    "tags": [
+     "Projectile"
+    ],
+    "bases": [
+     "Cannon",
+     "Railgun",
+     "Taser",
+     "Shuriken",
+     "Zapper"
+    ]
+   },
+   "caster": {
+    "n": "法器",
+    "tags": [
+     "AoE",
+     "Nova",
+     "Delayed",
+     "DoT"
+    ],
+    "bases": [
+     "StarfallRod",
+     "PlasmaNova",
+     "FrostOrb",
+     "Laser",
+     "FrostBell",
+     "PlutoniumBar",
+     "FlameThrower",
+     "BlastMine",
+     "PlasmaMine",
+     "StormMine",
+     "ShrapnelMine",
+     "WasteMine"
+    ]
+   },
+   "gun": {
+    "n": "铳",
+    "tags": [
+     "Projectile"
+    ],
+    "bases": [
+     "Blastgun",
+     "SporeBlaster",
+     "Rocket",
+     "FlameSlinger",
+     "Orbitron",
+     "PlasmaBlaster",
+     "PlasmaCutter"
+    ]
+   }
   },
-  "retired": ["Thorns", "Taser", "Shuriken", "Zapper", "FrostBell", "PlutoniumBar", "FlameThrower", "BlastMine", "PlasmaMine", "StormMine", "ShrapnelMine", "WasteMine", "Rocket", "FlameSlinger", "Orbitron", "PlasmaBlaster", "PlasmaCutter"],
-  "pow": {}, "spd": {}
+  "retired": [
+   "Thorns",
+   "Taser",
+   "Shuriken",
+   "Zapper",
+   "FrostBell",
+   "PlutoniumBar",
+   "FlameThrower",
+   "BlastMine",
+   "PlasmaMine",
+   "StormMine",
+   "ShrapnelMine",
+   "WasteMine",
+   "Rocket",
+   "FlameSlinger",
+   "Orbitron",
+   "PlasmaBlaster",
+   "PlasmaCutter"
+  ],
+  "pow": {},
+  "spd": {}
  }
 }

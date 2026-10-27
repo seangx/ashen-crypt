@@ -247,6 +247,7 @@ function kill(m) {
     const BL = PROG.bossLoot; RUN.prepFrom = RUN.gain ? RUN.gain.items.length : 0; // 整备面板列出的宝箱装备从这里开始
     const n = Math.round(BL.items * (1 + LX.iiq / 100));
     for (let i = 0; i < n; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir, true) }, 1);
+    const pity = S.lampPity || 0; if (pity) { S.lampPity = 0; for (let i = 0; i < pity; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir, true) }, 1); } /* 余烬：灯火燃尽攒下的补偿 */
     const c = Math.round((RUN.cache || 0) * BL.cacheMul); RUN.cache = 0; // 这一层攒下的装备（倍数补偿撤回 / 灯灭时没打到 Boss 的那部分）
     for (let i = 0; i < c; i++) dropThing(m, { kind: 'item', item: rollItem(L, LX.iir) }, 1);
     fx({ t: 'chest', x: m.x, y: m.y, n: n + c });
@@ -602,7 +603,7 @@ function logic(dt) {
   const spin = spinning(), lad = RUN.mode === 'ladder';
   if (!RUN.ending && !RUN.next) {
     const rv = !lad && RUN.base < RUN.descent.prevMax; // 重温已经打过的层
-    const net = -(SOUL.burn + (lad ? RUN.L : RUN.base) * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
+    const net = -(lad ? (SOUL.ladderBurn ?? SOUL.burn) + RUN.L * (SOUL.ladderBurnPerFloor ?? SOUL.burnPerFloor) : SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1) - (spin ? WH.soulPerSec * (1 - P.soulLess) : 0);
     player.soul = clamp(player.soul + net * dt, 0, P.soulMax);
     if (P.lifeRegen && player.life > 0) player.life = Math.min(P.life, player.life + P.lifeRegen * dt); // gear-v2：每秒回生命
     if (P.flag.returnLight && !RUN.rlUsed && player.soul < P.soulMax * 0.1) { RUN.rlUsed = 1; player.soul = P.soulMax * P.flag.returnLight / 100; if (G.ui) G.ui.banner('归光 · 灯火复燃', COL.emberHi); } // 归光（每局一次）
@@ -951,6 +952,10 @@ function finishRun() {
   if (r.result === 'win' && r.map) S.stats.maps++;
   if (r.mode !== 'ladder' && r.descent.floors && !S.auto.lock) S.depth = S.maxDepth; // 最深层在每层通过时已经更新
   if (r.mode !== 'ladder' && r.result === 'dead') deathLoss(r);
+  if (r.mode !== 'ladder' && r.result === 'lampout') { // 灯火燃尽补偿：这一层攒的装备按比例带回（至少 1 件）；一层没通还给余烬，下个 Boss 宝箱多掉
+    const n = Math.max(1, Math.ceil((r.cache || 0) * (SOUL.lampoutCacheKeep ?? 0.5))); r.ember = { items: [], pity: 0 };
+    for (let i = 0; i < n; i++) { const it = rollItem(r.L, LX.iir); addItem(it); r.gain.items.push(it); r.ember.items.push(it); }
+    if (!r.descent.floors) S.lampPity = Math.min(SOUL.lampPityMax ?? 3, (S.lampPity || 0) + 1); r.ember.pity = S.lampPity || 0; }
   if (salvRules().on && unlocked('salvage')) r.salv = autoSalvage(r.gain.items); // 分解祭坛：带回的装备按规则拆成碎片
   LX = lootFx(null);
   autoAfterRun(r);

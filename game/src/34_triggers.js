@@ -171,7 +171,7 @@ function trigFire(i, o = {}) {
     TRIGS_RT.castSlot = i; const ok = fire(W, W0.wi); any = ok || any;
     if (ok && (W0.cont || W0.form === 'orbit') && t.T.c !== 'always' && !o.sus) { const SU = TRIGS_RT.sus || (TRIGS_RT.sus = []), d = t.cast ? 0.4 : (TRG.sustain || 2); const ex = SU.find(x => x.wi === W0.wi); if (ex) ex.t = d; else SU.push({ i, W, wi: W0.wi, t: d, cd: 1 / (W0.aps || 1) }); } // 持续型：响应放一次持续 2 秒（出手 0.4 秒）
     if (ok && A.extra && rnd() * 100 < Math.min(TRG.affCap.extra, A.extra)) fire(W, W0.wi);
-    if (ok && RUN) { if (fx.lifeCost) player.life = Math.max(1, player.life - player.life * fx.lifeCost); else player.soul = Math.max(0, player.soul - W0.cost); }
+    if (ok && RUN) { if (fx.lifeCost) player.life = Math.max(1, player.life - player.life * fx.lifeCost); else player.soul = Math.max(0, player.soul - W0.cost * (RUN.mode === 'ladder' ? 1 : (SOUL.pushCostMul ?? 1))); }
   }
   TRIGS_RT.castSlot = -1;
   if (!any) return false;
