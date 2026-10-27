@@ -917,8 +917,9 @@
    }
   },
   "burn": 0.55,
-  "burnPerFloor": 0.07,
-  "onKill": {
+  "burnPerFloor": 0.09,
+  "hitLamp": { "_说明": "武器基础回灯：普攻（不是技能宝石）命中回灯火，每次出手只算一次（穿透 / 范围不叠），间隔至少 gap ÷ 攻速 秒。每击回 = perSec × 类别系数 ÷ 攻速，所以各类武器每秒回灯大致相同。灯火低于 lampFloor 也照样回，用来从残灯里恢复。乘“魂火回复提高”。", "perSec": 0.25, "gap": 0.8, "cat": { "melee": 1.15, "bow": 1, "gun": 1, "caster": 0.95 } },
+    "onKill": {
    "normal": 1,
    "elite": 8,
    "boss": 40

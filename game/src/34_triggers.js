@@ -87,9 +87,11 @@ function basicProc(eq) { const it = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : n
 const gemCost = g => { const C = TSK[g.b] || { cost: [1, 1] }, t = clamp((g.lvl - 1) / Math.max(1, MOD_MAX - 1), 0, 1); return C.cost[0] + (C.cost[1] - C.cost[0]) * t; };
 
 /* 属性计算：每个生效栏位 → 被触发技能的武器数值 + 充能参数 */
+// 武器基础回灯：每击回多少灯火（按攻速反比，各类武器每秒回灯大致相同）
+function weaponLamp(b) { const w = WEAPONS[b], H = SOUL.hitLamp; if (!w || !H) return 0; return Math.round(H.perSec * (H.cat[w.cat] ?? 1) / Math.max(0.3, w.aps || 1.2) * 1000) / 1000; }
 function trigStats(P, eq) {
-  P.trigs = []; const n = trigSlots(), W0 = P.weapons[0];
-  if (W0) { for (const o of [W0.min, W0.max]) if (o) for (const e in o) o[e] *= TRG.basicMul; W0.dps *= TRG.basicMul; W0.proc = basicProc(eq); W0.atk = 1; }
+  P.trigs = []; const n = trigSlots(), W0 = P.weapons[0]; P.lampHit = 0;
+  if (W0) { for (const o of [W0.min, W0.max]) if (o) for (const e in o) o[e] *= TRG.basicMul; W0.dps *= TRG.basicMul; W0.proc = basicProc(eq); W0.atk = 1; const b = eq.wl && eq.wl.kind === 'weapon' ? eq.wl.b : null, w = b && WEAPONS[b]; P.lampHit = W0.lampHit = b ? weaponLamp(b) : 0; P.lampGap = W0.lampGap = SOUL.hitLamp ? SOUL.hitLamp.gap / Math.max(0.3, (w && w.aps) || 1.2) : 1; }
   let castDps = W0 ? W0.dps : 0, respDps = 0;
   (S.trigs || []).forEach((T, i) => {
     if (!T) return; const C = TCOND[T.c], fx = trigFx(T), A = T.affs || {}, on = i < n, cast = C.kind === 'cast';

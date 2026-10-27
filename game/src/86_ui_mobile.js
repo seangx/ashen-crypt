@@ -633,3 +633,10 @@ class MobileUI extends UI {
 
 // 手机：每次开打都先走过场（自动循环、天梯、出发按钮都经过 startRun）
 { const raw = startRun; startRun = function (L) { if (G.ui && G.ui.loadGo && !G.ui.loadC) return G.ui.loadGo(() => raw(L)); if (G.ui && G.ui.loadC) return; return raw(L); }; }
+
+// 武器基础回灯（手机版显示）：武器详情加「每击回灯 X」，对比加回灯变化
+{
+  const lampLine = b => { const w = WEAPONS[b], v = weaponLamp(b); if (!w || !v) return null; return `每击回灯 ${v.toFixed(2)}（约 ${(v * Math.max(0.3, w.aps || 1.2)).toFixed(2)}/秒，每次出手算一次，残灯也回）`; };
+  const _bl = baseLines; baseLines = function (it) { const out = _bl(it); if (it && it.kind === 'weapon') { const s = lampLine(it.b); if (s) out.push([s, '#b9a2ff']); } return out; };
+  const _cl = compareLines; compareLines = function (it) { const out = _cl(it); if (it && it.kind === 'weapon' && out.length && out[0].t !== '已装备') { const cur = S.equip.wl, a = cur && cur.kind === 'weapon' ? weaponLamp(cur.b) * Math.max(0.3, WEAPONS[cur.b].aps || 1.2) : 0, w = WEAPONS[it.b], b = weaponLamp(it.b) * Math.max(0.3, (w && w.aps) || 1.2); if (Math.abs(b - a) >= 0.005) out.push({ t: `每秒回灯 ${a.toFixed(2)} → ${b.toFixed(2)}`, c: b >= a ? COL.good : COL.bad }); } return out; };
+}

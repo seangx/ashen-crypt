@@ -127,6 +127,7 @@ function hitMob(m, W, o = {}) {
   if (m.dead) return 0;
   const cm = W.cont ? 1 : rollCrit(W); const crit = cm > 1;
   trigHit(W, crit);
+  if (W.atk && STATS.lampHit && RUN) { const t = RUN.t || 0; if (t >= (player.lampHitT || 0) || t < (player.lampHitT || 0) - 5) { player.lampHitT = t + STATS.lampGap; const g = STATS.lampHit * (STATS.soulGainMul || 1); player.soul = Math.min(STATS.soulMax, player.soul + g); RUN.lampHit = (RUN.lampHit || 0) + g; } } // 武器出手命中回灯：普攻和出手时技能（替这一下普攻放出的）都算，每次出手只算一次；其他触发的技能不回；残灯也回
   let mul = (o.mul || 1) * cm * lampMore();
   if (m.boss) mul *= W.bossMore;
   if (W.perDashInc) mul *= 1 + W.perDashInc * Math.floor(player.dash);
