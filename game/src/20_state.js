@@ -55,6 +55,7 @@ function load(data) {
   S.equip.gem ??= null;
   if (!S.gemV) { migrateGems(); S.gemV = 1; }
   if ((S.gemV || 0) < 3) starterTrigs(); S.trigs ??= [null, null, null, null]; S.trigBag ??= []; castStarterFix();
+  { const n = trigClampSkills(); if (n) { const tell = () => G.ui ? toast(`魂龛改版：一个魂龛只放 1 颗技能石，多的 ${n} 颗回背包`, COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1800); } } // 一个魂龛一颗技能石
   if (!S.legacyV) migrateLegacy(); delete S.chips;
 }
 // 遗留系统清理（spec-legacy-cleanup §4）：墓图、命盘、印记、体魄 / 时砂、铁骨 / 流沙力场。东西不凭空消失：退成碎片或换部位

@@ -178,8 +178,7 @@
   4,
   5
  ],
- "maxSkills": 2,
- "split": 0.7,
+ "maxSkills": 1,
  "fit": 1.2,
  "fitCond": {
   "GemStab": "cast",
@@ -567,10 +566,10 @@
    "c": "block",
    "sock": 5,
    "fx": {
-    "maxSkills": 3,
+    "maxSkills": 2,
     "split": 0.85
    },
-   "d": "可以插 3 颗技能石，分流只 −15%"
+   "d": "可插 2 颗技能石，同放时分流只 −15%"
   },
   {
    "k": "rotate",

@@ -15,7 +15,7 @@ const trigFx = T => (trigU(T) || {}).fx || {};
 const trigName = T => trigU(T) ? trigU(T).n : TCOND[T.c].n;
 const trigKindN = c => TCOND[c].kind === 'cast' ? '出手' : '响应';
 const trigMaxSkills = T => trigFx(T).maxSkills || (trigFx(T).rotate ? 2 : TRG.maxSkills);
-const trigSplit = T => trigFx(T).split || TRG.split;
+const trigSplit = T => trigFx(T).split || 1; // 只有双子这类独特会两颗技能石同放；普通魂龛一颗技能石，没有通用分流
 const trigTier = ilvl => TRG.tierIlvl.filter(l => ilvl >= l).length; // 1–5
 const TRIG_RAR_N = ['普通', '魔法', '稀有', '独特'];
 const trigAffText = (k, v) => { const A = TAF[k]; if (!A) return ''; return A.n.replace('{v}', v).replace('{w}', Math.round(A.w ? A.w[0] + (A.w[1] - A.w[0]) * (v - A.r[0]) / Math.max(1e-9, A.r[1] - A.r[0]) : 0)); };
@@ -46,7 +46,7 @@ const gearTrigSlot = () => Object.values(S.equip).some(it => it && (it.trigSlot 
 const lvTrigSlots = () => 1 + TRG.slotLv.filter(l => S.level >= l).length;
 const trigSlots = () => Math.min(TRG.maxSlots, lvTrigSlots() + gearTrigSlot());
 const trigSlotLock = i => i < lvTrigSlots() ? null : i === lvTrigSlots() && gearTrigSlot() ? null : i < 3 ? `Lv${TRG.slotLv[i - 1]}` : 'Lv35+装';
-// 插孔规则：常驻只能插常驻类；圣盾掷要盾；技能石数上限
+// 插孔规则：常驻只能插常驻类；圣盾掷要盾；每个魂龛只能 1 颗技能石（双子 2 / 轮转 2），其余孔放辅助石
 function trigCanSock(T, k, x) {
   if (!T || k >= T.sock) return false; if (!x) return true;
   if (isSkill(x)) {
@@ -64,6 +64,15 @@ function socketInto(T, k, x) {
   x.isNew = false; T.socks[k] = x; refreshStats(); save(); return true;
 }
 function unsocketAt(T, k, quiet) { const x = T.socks[k]; if (!x) return; T.socks[k] = null; if (isSkill(x)) S.stash.unshift(x); else S.mods.unshift(x); if (!quiet) { refreshStats(); save(); } }
+/* 读档整理：魂龛里的技能石超过上限（旧版每个魂龛 2 颗 / 双子 3 颗）→ 保留最左边的，多出来的退回背包；返回退回的数量 */
+function trigClampSkills() {
+  let n = 0;
+  for (const T of [...(S.trigs || []), ...(S.trigBag || [])]) {
+    if (!T || !T.socks) continue; const max = trigMaxSkills(T); let keep = 0;
+    T.socks.forEach((g, k) => { if (!isSkill(g)) return; if (++keep > max) { T.socks[k] = null; S.stash.unshift(g); n++; } });
+  }
+  return n;
+}
 function autoInsert(T, x) { for (let k = 0; k < T.sock; k++) if (!T.socks[k] && trigCanSock(T, k, x)) return socketInto(T, k, x) ? k : -1; return -1; }
 function equipTrig(slot, T) {
   const old = S.trigs[slot]; S.trigBag = S.trigBag.filter(x => x !== T);

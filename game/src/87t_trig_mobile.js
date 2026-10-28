@@ -96,7 +96,7 @@ Object.assign(MobileUI.prototype, {
     else {
       T(this, 14, y + 6, trigName(T0), { parent: c, color: '#ffffff', shadowColor: '#1a1426' }); T(this, 14 + textW(trigName(T0)) + 6, y + 8, TRIG_RAR_N[T0.rar] + ' · ' + T0.sock + ' 孔', { size: 8, parent: c, color: '#' + (RAR_C[T0.rar] || 0).toString(16).padStart(6, '0') });
       const ib = this.add.container(w - 30, y + 4); c.add(ib); bub(this, ib, 0, 0, 16, 16, 0x6fc8ff, { r: 8 }); T_(this, ib, 8, 3, 'i', { size: 8 });
-      zoneOn(this, c, w - 36, y, 28, 26, () => this.ask('魂龛规则', () => {}, '知道了', `【${trigKindN(T0.c)}】${TCOND[T0.c].n}：${TCOND[T0.c].d}。\n【出手】魂龛轮到时替换这一次出手（左边优先）；【响应】魂龛满了立刻额外放。\n技能石每次施放耗灯火，辅助石加倍率；灯火低于 10% 只放底技能。\n最多 ${trigMaxSkills(T0)} 颗技能石，两颗时各 −30%。技能石推荐底子一致时 +20%。\n常驻只能插瘟疫光环、游雷、旋风斩。`));
+      zoneOn(this, c, w - 36, y, 28, 26, () => this.ask('魂龛规则', () => {}, '知道了', `【${trigKindN(T0.c)}】${TCOND[T0.c].n}：${TCOND[T0.c].d}。\n【出手】魂龛轮到时替换这一次出手（左边优先）；【响应】魂龛满了立刻额外放。\n技能石每次施放耗灯火，辅助石加倍率；灯火低于 10% 只放底技能。\n每个魂龛只能放 ${trigMaxSkills(T0)} 颗技能石，其余孔放辅助石${trigMaxSkills(T0) > 1 ? (trigFx(T0).rotate ? '（轮转：两颗轮流放，不分流）' : `（${trigU(T0).n}：两颗同时放，各 −${Math.round((1 - trigSplit(T0)) * 100)}%）`) : ''}。想换技能石：点宝石 → 装备，会换下现在这颗。技能石推荐底子一致时 +20%。\n常驻只能插瘟疫光环、游雷、旋风斩。`));
       mkBtn(this, c, w - 74, y + 4, 40, 18, '换', () => { tbagSel = null; this.openWin('tbag'); }, { size: 8 });
       if (trigCanAddSock(T0)) mkBtn(this, c, w - 124, y + 4, 46, 18, `开孔${S.glyphs && S.glyphs.socket || 0}`, () => { const r = trigAddSock(T0); toast(r); this.refresh(); }, { size: 8, disabled: !(S.glyphs && S.glyphs.socket > 0) });
       const ss = 30, lk = 6, k0 = T0.sock, rw = k0 * ss + (k0 - 1) * lk, sx = Math.round((w - rw) / 2), sy = y + 34, skills = T0.socks.filter(isSkill);
@@ -115,7 +115,7 @@ Object.assign(MobileUI.prototype, {
           T(this, x + ss - 1, sy + ss - 8, String(it.lvl || 1), { size: 'num', align: 'right', parent: c, color: '#ffe066' });
         }
         zoneOn(this, c, x - 3, sy - 3, ss + 6, ss + 6, () => {
-          if (gemPick) { if (trigCanSock(T0, k, gemPick)) { socketInto(T0, k, gemPick); gemPick = null; } else toast(isSkill(gemPick) && skills.length >= trigMaxSkills(T0) ? `最多 ${trigMaxSkills(T0)} 颗技能石` : isSkill(gemPick) && T0.c === 'always' ? '常驻只能插瘟疫光环、游雷、旋风斩' : '这里放不下'); }
+          if (gemPick) { if (trigCanSock(T0, k, gemPick)) { socketInto(T0, k, gemPick); gemPick = null; } else toast(isSkill(gemPick) && skills.length >= trigMaxSkills(T0) ? `一个魂龛只能 ${trigMaxSkills(T0)} 颗技能石，点已装的那颗来替换` : isSkill(gemPick) && T0.c === 'always' ? '常驻只能插瘟疫光环、游雷、旋风斩' : '这里放不下'); }
           else if (it) { this.gemDetail(it, { T0, k }); return; } else toast('点下面的宝石看详情再装备'); this.refresh();
         });
       }

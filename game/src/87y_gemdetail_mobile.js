@@ -10,7 +10,7 @@ Object.assign(MobileUI.prototype, {
       lines.push([`${it.lvl || 1} 级 · 品质 ${it.q || 0}% · ${FORM_N[G.form] || '技能石'}`, '#ffe066']);
       for (const [t, c] of gemLines(it)) if (t && !/主手 ×|现在的主手|需要盾牌|经验/.test(t)) lines.push([t, c]);
       lines.push([`施放耗灯：${gemCost(it).toFixed(1)} / 次`, '#ffb347']);
-      lines.push([`插在：任意魂龛的孔（每个魂龛最多 ${T0 ? trigMaxSkills(T0) : 1} 颗技能石）${G.form ? '' : ''}`, '#b9c2ea']);
+      lines.push([`插在：任意魂龛的孔（每个魂龛只能 ${T0 ? trigMaxSkills(T0) : 1} 颗技能石，再装会换下旧的）${G.form ? '' : ''}`, '#b9c2ea']);
     } else {
       const host = T0 && T0.socks.find(isSkill);
       for (const l of modTip(it)) if (l && l.t && !/^插在|经验/.test(l.t)) lines.push([l.t, l.c || '#e0e4f0']);
@@ -36,6 +36,14 @@ Object.assign(MobileUI.prototype, {
   },
   gemEquip(it, T0) {
     if (!T0) { toast('这一位还没有魂龛，先放一个'); return; }
+    if (isSkill(it)) { // 一个魂龛一颗技能石（双子 2）：已经满了就直接换下最左边那颗，旧的回背包
+      const cur = T0.socks.map((g, k) => isSkill(g) ? k : -1).filter(k => k >= 0);
+      if (cur.length >= trigMaxSkills(T0)) {
+        const k = cur[0], old = T0.socks[k];
+        if (!trigCanSock(T0, k, it)) { toast(T0.c === 'always' ? '常驻只能插瘟疫光环、游雷、旋风斩' : '这个魂龛放不下'); return; }
+        socketInto(T0, k, it); sfx('click'); toast(`换下${gemNm(old)}，装上${gemNm(it)}`, COL.emberHi); gemPick = null; this.refresh(); return;
+      }
+    }
     const empty = []; for (let k = 0; k < T0.sock; k++) if (!T0.socks[k] && trigCanSock(T0, k, it)) empty.push(k);
     if (empty.length) { socketInto(T0, empty[0], it); sfx('click'); toast(`已装进第 ${empty[0] + 1} 孔`); gemPick = null; this.refresh(); return; }
     const any = T0.socks.some((_, k) => trigCanSock(T0, k, it));
