@@ -54,9 +54,10 @@ function computeStats(eq = S.equip) {
   P.armorOut = P.armor; // 盾扔出去时没有格挡
   if (FL.martyrArmor && eq.shield) P.armorOut = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) - qv(baseOf(eq.shield).armor || 0, eq.shield.q) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100))); // 殉道者之盾：盾在飞时不算盾的护甲
   const blk = (A.block || 0) + (TA.block || 0); P.blk = eq.shield ? Math.min(75, blk + G2D.shieldBlock) : 0; P.blockVal = eq.shield ? Math.round((G2D.blockBase + G2D.blockPerIlvl * (eq.shield.ilvl || 1)) * (1 + (A.blockValInc || 0) / 100)) : 0; // defense-v3：格挡几率 + 格挡值（挡住时减去格挡值）
-  P.shield = Math.round((PLAYER.shield + (base.deflect || 0) + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
+  P.shield = Math.round((PLAYER.shield + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
   P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0) + (TA.shieldRegenPct || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
-  P.life = Math.max(1, Math.round((PLAYER.life + PLAYER.lifePerLevel * ((S.level || 1) - 1) + (A.life || 0) + (TA.life || 0)) * (1 + ((A.lifeInc || 0) + (TA.lifeInc || 0)) / 100) * (TM.life ?? 1))); // 天赋代价可以是生命总降
+  // 护盾只从词条来（堆生存的一个方向）；底子原来的护盾值改算成生命
+  P.life = Math.max(1, Math.round((PLAYER.life + PLAYER.lifePerLevel * ((S.level || 1) - 1) + (base.deflect || 0) * (MECH.baseShieldToLife ?? 1) + (A.life || 0) + (TA.life || 0)) * (1 + ((A.lifeInc || 0) + (TA.lifeInc || 0)) / 100) * (TM.life ?? 1))); // 天赋代价可以是生命总降
   P.dodgeCap = MECH.dodgeCap;
   P.dodge = 0; // defense-v3：闪避删除
   P.maxRes = PLAYER.maxRes; P.maxResE = {}; P.res = {};
