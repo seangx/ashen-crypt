@@ -23,9 +23,9 @@
  },
  "shatter": {
   "_说明": "拆解：每条词条给 perAffix 个对应碎片，档位（从最低档数 1 起）≥ bonusTier 的再多给 bonus 个",
-  "perAffix": 2,
+  "perAffix": 7,
   "bonusTier": 3,
-  "bonus": 1
+  "bonus": 2
  },
  "glyphs": {
   "_说明": "铸符。hope 希望符：加词条或升档时附带，hopeChance 几率这次不扣潜力；chaos 混沌符：升档时附带，升档后换成同类型（前缀或后缀）里随机的另一条，档位不变；refine 洗练符：同档重随数值；strip 剥离符：随机去掉一条",
