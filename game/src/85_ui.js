@@ -266,7 +266,10 @@ class UI extends Phaser.Scene {
     const g = this.dashG; g.clear();
     for (let i = 0; i < P.dashMax; i++) { const f = clamp(player.dash - i, 0, 1), x = 7 + i * 9, y = H - 74; g.fillStyle(0x0b080e, 1).fillRect(x, y, 7, 7); g.fillStyle(f >= 1 ? 0xc08aff : 0x2a1e3a, 1).fillRect(x + 1, y + 1, 5, 5); if (f >= 1) g.fillStyle(0xe6c8ff, 1).fillRect(x + 1, y + 1, 5, 1); else g.fillStyle(0xc08aff, 1).fillRect(x + 1, y + 6 - Math.round(f * 5), 5, Math.round(f * 5)); }
     const wi = P.weapons.findIndex(w => w && w.whirl), sw = P.weapons[wi]; // 旋转层数（看第一把带旋身的武器）
-    this.spinC.setVisible(!!sw && !!RUN);
+    const orbsOn = !(this.winId && this.winBig); // 大窗口会盖住两个球的上半截：干脆收起，状态改在窗口标题旁显示
+    this.hpOrb.setVisible(orbsOn); this.soulOrb.setVisible(orbsOn); g.setVisible(orbsOn);
+    if (this.winId && this.runPlaqT && this.runPlaqT.active && RUN) { const pt = `任务进行中 · 生命 ${Math.round(player.life / STATS.life * 100)}% · 灯火 ${Math.round(player.soul / STATS.soulMax * 100)}%`; if (this.runPlaqT.text !== pt) this.runPlaqT.setText(pt).setTint(hex(player.life / STATS.life < 0.35 ? COL.bad : COL.dim)); }
+    this.spinC.setVisible(!!sw && !!RUN && orbsOn);
     if (sw) { const sp = player.spin[wi].n, spt = `${sp}`; if (this.spinT.text !== spt) this.spinT.setText(spt).setTint(hex(sp >= sw.stackMax ? COL.emberHi : COL.text)); }
     const L = RUN ? RUN.L : S.depth;
     const dl = ladderBusy() ? `天梯 ${L} 层${(RUN.mods || []).length ? ' · ' + RUN.mods.map(x => LAD_AFF_BY[x.k].s).join(' ') : ''} · ${mmss(Math.max(0, RUN.limit - RUN.t))}` : RUN ? `第 ${L} 层 · ${themeFor(L).n}` : `营地 · 下一趟从第 ${descentStart()} 层出发`;
@@ -301,7 +304,7 @@ class UI extends Phaser.Scene {
     this.aiBtn.setLabel(S.auto.ai ? '自动' : '手动'); this.aiBtn.lab.setTint(hex(S.auto.ai ? COL.good : COL.dim));
     this.lockBtn.setLabel(S.auto.lock ? '锁层' : '推层'); this.lockBtn.lab.setTint(hex(S.auto.lock ? COL.emberHi : COL.text));
     this.updateAuto();
-    this.sndBtn.lab.setTint(hex(S.settings.sound ? COL.text : COL.faint));
+    { const sl = S.settings.sound ? '音' : '静'; if (this.sndBtn.lab.text !== sl) this.sndBtn.setLabel(sl); this.sndBtn.lab.setTint(hex(S.settings.sound ? COL.text : COL.faint)); }
   }
   buildTitle() {
     const c = this.titleC;
@@ -451,6 +454,7 @@ class UI extends Phaser.Scene {
     if (!this.winId) { this.decoId = null; return; }
     if (!this.dimR) { this.dimR = rect(this, 0, TOP_H, W, BOT_Y - TOP_H, COL.ink, 0.6).setDepth(90).setInteractive(); this.dimR.on('pointerup', () => { if (this.winId !== 'summary' && this.winId !== 'prep') this.closeWin(); }); }
     const [w, h] = { summary: [372, 176], depart: [300, 134], notice: [340, 190], prep: [372, 170], bulk: [372, 200] }[this.winId] || [470, 210];
+    this.winBig = h >= 200; this.runPlaqT = null;
     const x = Math.round((W - w) / 2), y = TOP_H + Math.round((BOT_Y - TOP_H - h) / 2);
     const c = this.add.container(x, y).setDepth(100); this.winC = c;
     const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[this.winId] || 'f_win'; // 装备皮革、铁砧石板、其余铁框
@@ -461,7 +465,9 @@ class UI extends Phaser.Scene {
     if (title) {
       const pw = textW(title) + 44; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: COL.emberHi, align: 'center', parent: c });
       mkBtn(this, c, w - 20, 4, 15, 14, 'x', () => this.closeWin(), { size: 8, tip: [{ t: '关闭  [Esc]', s: 8 }] });
-      if (RUN && ['gear', 'mods', 'craft', 'tree'].includes(this.winId)) { const hs = '任务进行中 · 修改立即生效', hw = textW(hs, 8) + 8, hx = Math.round(w / 2 + pw / 2 + 6); c.add(nine(this, hx, -3, hw, 13, 'f_plaque')); T(this, hx + 4, -1, hs, { size: 8, color: COL.dim, parent: c }); }
+      if (this.winBig && RUN && !RUN.prep) { // 任务进行中：窗口挡住了血球和灯火瓶，在标题旁实时显示（updateHud 里刷新）
+        const hs = '任务进行中 · 生命 100% · 灯火 100%', hw = textW(hs, 8) + 8, hx = Math.round(w / 2 + pw / 2 + 6); c.add(nine(this, hx, -3, hw, 13, 'f_plaque')); this.runPlaqT = T(this, hx + 4, -1, '', { size: 8, color: COL.dim, parent: c });
+        if (['gear', 'mods', 'craft', 'tree'].includes(this.winId)) { const z = this.add.zone(hx, -3, hw, 13).setOrigin(0).setInteractive(); c.add(z); z.on('pointerover', () => showTip([{ t: '任务进行中', c: COL.emberHi }, { t: '这里的修改立即生效，战斗不会暂停。', s: 8 }])); z.on('pointerout', hideTip); } }
     }
     if (anim) { c.setScale(0.96).setAlpha(0.6); this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 90, ease: 'Quad.easeOut' }); }
   }
@@ -483,14 +489,15 @@ class UI extends Phaser.Scene {
       rect(this, 44, 46, 24, 24, '#120c18', 1, c); const im = img(this, 44 + 12 - DOLL_W / 2, 46 + 24 - DOLL_H, 'doll_ui', c); im.setCrop(DOLL_W / 2 - 12, 0, 24, DOLL_H); }
     const P = STATS;
     const rows = [['预计秒伤', fmt(P.dps), COL.emberHi], ['生命', fmt(P.life), '#ff8a7a'], ['护盾', `${fmt(P.shield)}（每秒 +${r1(P.shieldRegen)}）`, '#bfe0ff'], ['护甲', `${fmt(P.armor)}（减伤 ${Math.round(armorDr(P.armor, typicalHit(S.depth)) * 100)}%）`], ['闪避', P.dodge + '%'], ['冲刺槽', String(P.dashMax)],
-      ['通用防御', `控${P.ctrlWeaken} 贴${r1(P.closePer)}/${P.closeCap} 远${P.farDR}${P.shieldOnHit ? ' 续' + r1(P.shieldOnHit) + '‰' : ''}`, '#bfe0ff']]; /* 原“属性”行（体魄 / 时砂已从天赋树拿掉），悬停看四种通用防御 */
-    const az = rect(this, 8, 154, 124, 9, '#000', 0, c).setInteractive();
+      ['通用', `控${P.ctrlWeaken} 贴${r1(P.closePer)}/${P.closeCap} 远${P.farDR}${P.shieldOnHit ? ' 续' + r1(P.shieldOnHit) + '‰' : ''}`, '#bfe0ff']]; /* 原“属性”行（体魄 / 时砂已从天赋树拿掉），悬停看四种通用防御 */
+    const az = rect(this, 8, 98 + 6 * 9, 124, 9, '#000', 0, c).setInteractive();
     az.on('pointerover', () => showTip([{ t: '通用防御（各自相乘）', c: COL.emberHi }, ...[P.ctrlWeaken > 0 && `控场：受控敌人伤害降低 ${P.ctrlWeaken}%（上限 ${P.ctrlCap}%）`, P.closePer > 0 && `贴身：每个贴身敌人减伤 ${r1(P.closePer)}%（上限 ${P.closeCap}%；精英算 2、Boss 算 3）`, P.farDR > 0 && `远离：身边 ${MECH.generic.farR} 像素没有敌人时减伤 ${P.farDR}%`, P.shieldOnHit > 0 && `续航：命中回护盾 ${r1(P.shieldOnHit)}‰（每秒上限 ${P.sohCap}%）`, `${ATTR_N.energy} ${P.energy}：灯火上限和护盾都吃`].filter(Boolean).map(t => ({ t, s: 8 }))])); az.on('pointerout', hideTip);
-    rows.forEach(([a, b, col], i) => { const y = 99 + i * 9.5 | 0; T(this, 10, y, a, { size: 8, color: COL.dim, parent: c }); T(this, 128, y, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); });
-    T(this, 10, 164, '抗性', { size: 8, color: COL.dim, parent: c });
-    ELEM.forEach((e, i) => T(this, 10 + i * 20, 175, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
-    T(this, 10, 186, `上限 ${P.maxRes}%`, { size: 8, color: COL.faint, parent: c });
-    const rz = rect(this, 8, 162, 124, 34, '#000', 0, c).setInteractive();
+    rows.forEach(([a, b, col], i) => { const y = 99 + i * 9; T(this, 10, y, a, { size: 8, color: COL.dim, parent: c }); T(this, 128, y, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); });
+    // 抗性：一行标签 + 六个按元素上色的数值（悬停看名字），达到上限的标亮
+    rect(this, 10, 163, 118, 1, '#4a3b2a', 0.6, c);
+    T(this, 10, 167, '抗性', { size: 8, color: COL.dim, parent: c }); T(this, 128, 167, `上限 ${P.maxRes}%`, { size: 8, color: COL.faint, align: 'right', parent: c });
+    ELEM.forEach((e, i) => { const v = P.res[e], cx = 10 + i * 20; T(this, cx, 178, String(v), { size: 8, color: ELEM_C[e], parent: c }); rect(this, cx, 188, 14, 2, ELEM_C[e], v >= P.maxRes ? 1 : 0.35, c); });
+    const rz = rect(this, 8, 165, 124, 28, '#000', 0, c).setInteractive();
     rz.on('pointerover', () => showTip([{ t: '抗性', c: COL.emberHi }, ...ELEM.map(e => ({ t: `${ELEM_N[e]} ${P.res[e]}%`, c: ELEM_C[e], s: 8 })), { t: `按百分比减少对应元素的伤害，上限 ${P.maxRes}%。`, s: 8 }])); rz.on('pointerout', hideTip);
     // 背包
     T(this, 140, 6, `背包 ${S.stash.length}/${STASH_CAP}`, { size: 8, color: COL.dim, parent: c });
@@ -594,7 +601,10 @@ class UI extends Phaser.Scene {
     const X = 316, adv = unlocked('craftAdv');
     const done = msg => { craftLog.unshift(msg); sfx('craft'); refreshStats(); save(); this.refresh(); };
     // 铸符数量和附带开关
-    GLYPHS.forEach((g, i) => T(this, X + i * 30, 6, `${g.n.slice(0, 1)} ${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: c }));
+    { const gw = Math.floor((w - 24 - X) / GLYPHS.length); // 在右上角关闭按钮左边均分，不压到按钮
+      GLYPHS.forEach((g, i) => { const n = glyphN(g.id), gx = X + i * gw, t = T(this, gx, 6, `${g.n.slice(0, 1)}${n}`, { size: 8, color: n ? g.c : COL.faint, parent: c });
+        const z = this.add.zone(gx - 1, 4, gw - 1, 12).setOrigin(0).setInteractive(); c.add(z);
+        z.on('pointerover', () => { t.setTint(hex(COL.emberHi)); showTip([{ t: `${g.n} ×${n}`, c: g.c }]); }); z.on('pointerout', () => { t.setTint(hex(n ? g.c : COL.faint)); hideTip(); }); }); }
     if (useHope && !glyphN('hope')) useHope = false; if (useChaos && !glyphN('chaos')) useChaos = false;
     if (unlocked('glyph')) mkBtn(this, c, X, 18, 72, 14, useHope ? '附带希望符' : '不带希望符', () => { useHope = !useHope; this.refresh(); }, { size: 8, style: useHope ? 's' : 'n', disabled: !glyphN('hope'), tip: [{ t: '希望符', c: GLYPH_BY.hope.c }, { t: `加词条或升档时附带一张：${Math.round(CRAFT.glyphs.hopeChance * 100)}% 几率这次不扣潜力。`, s: 8 }] });
     if (unlocked('glyph')) mkBtn(this, c, X + 76, 18, 72, 14, useChaos ? '附带混沌符' : '不带混沌符', () => { useChaos = !useChaos; this.refresh(); }, { size: 8, style: useChaos ? 's' : 'n', disabled: !glyphN('chaos'), tip: [{ t: '混沌符', c: GLYPH_BY.chaos.c }, { t: '升档时附带一张：升档后这条词条换成同类型（前缀或后缀）里随机的另一条，档位不变。', s: 8 }] });
@@ -750,7 +760,8 @@ class UI extends Phaser.Scene {
     let lx = lx0 + 7;
     [['s', '普通'], ['n', '稀有'], ['k', '传奇'], ['sock', '印记槽']].forEach(([kd, n]) => {
       treeNodeGfx(lg, { kind: kd, c: '#7fc8ff', b: 2, add: {}, icon: 'none' }, lx, ly + 6, kd === 'k' ? 4 : kd === 'n' ? 3 : kd === 'sock' ? 3 : 1, true, 1);
-      T(this, lx + 6, ly + 1, n, { size: 8, color: COL.dim, parent: c }); lx += 13 + textW(n, 8) + 6;
+      const r = kd === 'k' ? 9 : kd === 'n' || kd === 'sock' ? 7 : 5; // 传奇节点带光芒，文字要让得更开
+      T(this, lx + r, ly + 1, n, { size: 8, color: COL.dim, parent: c }); lx += r + textW(n, 8) + 10;
     });
     mkBtn(this, c, VR - 32, h - 18, 14, 14, '-', () => zoom(1 / 1.25), { size: 8, tip: [{ t: '缩小', s: 8 }] });
     mkBtn(this, c, VR - 17, h - 18, 14, 14, '+', () => zoom(1.25), { size: 8, tip: [{ t: '放大', s: 8 }] });
@@ -771,8 +782,8 @@ class UI extends Phaser.Scene {
       TREE_TAGS.forEach((t, i) => mkBtn(this, c, 7 + (i % 3) * 26, 60 + Math.floor(i / 3) * 13, 25, 12, t.n, () => { U.tag = U.tag === t.n ? null : t.n; this.refresh(); }, { size: 8, style: U.tag === t.n ? 's' : 'n' }));
       const py = 60 + Math.ceil(TREE_TAGS.length / 3) * 13 + 2;
       T(this, 8, py, '构筑预设', { size: 8, color: COL.dim, parent: c });
-      [['spark', '游雷'], ['whirl', '旋风斩'], ['nova', '霜环'], ['meteor', '陨火'], ['orb', '寒魄'], ['shield', '圣盾']].forEach(([id, n], i) => mkBtn(this, c, 7 + i * 40, py + 11, 38, 13, n, () => { U.preset = U.preset === id ? null : id; this.refresh(); }, { size: 8, style: U.preset === id ? 's' : 'n', tip: [{ t: `${n}的毕业天赋：在盘上用蓝圈标出来`, s: 8 }] }));
-      let cy = py + 27;
+      [['spark', '游雷'], ['whirl', '旋风斩'], ['nova', '霜环'], ['meteor', '陨火'], ['orb', '寒魄'], ['shield', '圣盾']].forEach(([id, n], i) => mkBtn(this, c, 7 + (i % 2) * 40, py + 11 + (i >> 1) * 14, 38, 13, n, () => { U.preset = U.preset === id ? null : id; this.refresh(); }, { size: 8, style: U.preset === id ? 's' : 'n', tip: [{ t: `${n}的毕业天赋：在盘上用蓝圈标出来`, s: 8 }] }));
+      let cy = py + 11 + 3 * 14 + 2; // 预设两列三行
       if (pre) {
         const left = [...pre].filter(id => !S.tree.includes(id) && TREE.nodes[id]).length;
         mkBtn(this, c, 7, cy, 78, 13, left ? `按预设点亮 (${left})` : '预设已点满', () => {
@@ -819,12 +830,19 @@ class UI extends Phaser.Scene {
     mkBtn(this, c, 12, 100, 92, 22, busy ? '进行中' : queued ? '已排队' : '挑战', () => ladderChallenge(ladPick), { style: 'w', disabled: !!(busy || queued), tip: () => [{ t: `挑战天梯第 ${ladPick} 层`, c: COL.emberHi }, { t: RUN && !busy ? '当前这局打完后开始。' : '马上开始。', s: 8 }, { t: '不消耗任何东西；失败没有损失。', s: 8, c: COL.dim }] });
     mkBtn(this, c, 108, 100, 48, 22, L.chain ? '连打 开' : '连打 关', () => { L.chain = !L.chain; save(); this.refresh(); }, { size: 8, style: L.chain ? 's' : 'n', tip: [{ t: '连打', c: COL.emberHi }, { t: '开着时，成功后接着打新的最高层；失败后回到推层。关着时只打一次。', s: 8 }] });
     const R = LD.run, J = LD.jumps.list;
-    const desc = TW(this, 12, 128, `怪物等级 = 层数，怪和精英更多。攒满 ${ladderNeed(ladPick)} 点（精英 ${R.eliteP} 点）出守关 Boss，限时 ${mmss(R.timeLimit)}；剩 ${J[0][0]} 秒以上跳 ${J[0][1]} 层，${J[1][0]} 秒以上跳 ${J[1][1]} 层。宝箱：装备、碎片、铸符，${LD.reward.exaltedFrom} 层起可能出溢彩。新段位首次送每种铸符各 ${LD.tiers.firstGlyphs} 张。`, 150, { size: 8, color: COL.dim, parent: c });
-    let dy = 128 + desc.h + 2;
-    if (!LD.run.mobDrops) dy += TW(this, 12, dy, '天梯里的怪物不掉落，只有通关宝箱。', 150, { size: 8, color: COL.emberHi, parent: c }).h + 2;
-    const lm = ladderMods(ladPick); // 这一层的词缀：同一层每次一样
-    T(this, 12, dy, lm.length ? `第 ${ladPick} 层词缀（宝箱 +${lm.length * LD.mods.items} 件、碎片 +${Math.round(lm.length * LD.mods.shards * 100)}%）` : `第 ${LD.mods.every} 层起每 ${LD.mods.every} 层多 1 条词缀`, { size: 8, color: lm.length ? '#ff9a8a' : COL.faint, parent: c }); dy += 11;
-    for (const x of lm) { T(this, 16, dy, '· ' + ladModText(x), { size: 8, color: '#ff9a8a', parent: c }); dy += 10; }
+    const ruleTxt = `怪物等级 = 层数，怪和精英更多。攒满 ${ladderNeed(ladPick)} 点（精英 ${R.eliteP} 点）出守关 Boss，限时 ${mmss(R.timeLimit)}；剩 ${J[0][0]} 秒以上跳 ${J[0][1]} 层，${J[1][0]} 秒以上跳 ${J[1][1]} 层。宝箱：装备、碎片、铸符，${LD.reward.exaltedFrom} 层起可能出溢彩。新段位首次送每种铸符各 ${LD.tiers.firstGlyphs} 张。`;
+    // 这一层的词缀放左栏（每层不同，挑层时最该看）；通用规则收进底部的悬停说明，不再挤出窗口
+    const lm = ladderMods(ladPick); let dy = 130; // 同一层每次一样
+    T(this, 12, dy, lm.length ? `第 ${ladPick} 层词缀` : `第 ${LD.mods.every} 层起每 ${LD.mods.every} 层多 1 条词缀`, { size: 8, color: lm.length ? '#ff9a8a' : COL.faint, parent: c });
+    if (lm.length) T(this, 156, dy, `宝箱 +${lm.length * LD.mods.items} 件 · 碎片 +${Math.round(lm.length * LD.mods.shards * 100)}%`, { size: 8, color: COL.good, align: 'right', parent: c });
+    dy += 12;
+    const room = Math.max(1, Math.floor((h - 30 - dy) / 10));
+    lm.slice(0, room).forEach(x => { dy += TW(this, 16, dy, '· ' + ladModText(x), 140, { size: 8, color: '#ff9a8a', parent: c }).h; });
+    if (lm.length > room) T(this, 16, dy, `另 ${lm.length - room} 条，悬停下方说明查看`, { size: 8, color: COL.faint, parent: c });
+    const ry = h - 18, rl = T(this, 12, ry, '规则说明（悬停查看）', { size: 8, color: COL.dim, parent: c });
+    const rz = this.add.zone(10, ry - 2, textW('规则说明（悬停查看）', 8) + 6, 13).setOrigin(0).setInteractive(); c.add(rz);
+    rz.on('pointerover', () => { rl.setTint(hex(COL.emberHi)); showTip([{ t: '天梯规则', c: COL.emberHi }, { t: ruleTxt, s: 8 }, ...(!LD.run.mobDrops ? [{ t: '天梯里的怪物不掉落，只有通关宝箱。', s: 8, c: COL.emberHi }] : []), ...lm.map(x => ({ t: '· ' + ladModText(x), s: 8, c: '#ff9a8a' }))]); });
+    rz.on('pointerout', () => { rl.setTint(hex(COL.dim)); hideTip(); });
     // 各元素最好成绩
     rect(this, 166, 8, 1, h - 16, '#33293f', 1, c);
     T(this, 174, 10, '各元素最好', { size: 8, color: COL.emberHi, parent: c });

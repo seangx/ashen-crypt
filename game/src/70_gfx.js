@@ -186,18 +186,22 @@ const MC = document.createElement('canvas').getContext('2d');
 let MW = {};
 const charW = (ch, s) => MW[s + ch] ??= (MC.font = fontCss(s), MC.measureText(ch).width);
 function textW(str, s = 12) { let w = 0; for (const ch of String(str)) w += charW(ch, s); return Math.ceil(w); }
+// 换行单位：连续的数字 / 拉丁字母（含小数点、冒号、百分号、区间号等）算一个词，不从中间拆开；汉字一字一个
+const WRAP_RUN = /[（「“]*(?:[0-9A-Za-z.:%‰+\-–—×/~#']+[，。、：；！？）」”%‰]*|[^\s]?[，。、：；！？）」”]+|.)/gu; // 左括号粘住后面的字，右括号和标点粘住前面的字
 function wrapText(str, maxW, s = 12) {
   const out = [];
   for (const para of String(str).split('\n')) {
     let line = '', w = 0;
-    for (const ch of para) {
-      const a = charW(ch, s);
+    for (const tok of para.match(WRAP_RUN) || []) {
+      const a = textW(tok, s);
       if (w + a > maxW && line) {
-        // 中文标点不放行首
-        if ('，。、：；！？）」”'.includes(ch)) { line += ch; w += a; continue; }
-        out.push(line); line = ''; w = 0; if (ch === ' ') continue;
+        if (a > maxW) { // 单个词比整行还宽：只能逐字拆
+          for (const ch of tok) { const b = charW(ch, s); if (w + b > maxW && line) { out.push(line.trimEnd()); line = ''; w = 0; } line += ch; w += b; }
+          continue;
+        }
+        out.push(line.trimEnd()); line = ''; w = 0; if (tok === ' ') continue;
       }
-      line += ch; w += a;
+      line += tok; w += a;
     }
     out.push(line);
   }
