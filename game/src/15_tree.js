@@ -10,11 +10,12 @@ const TREE_CLUSTERS = DATA.tree.clusters;
 const TREE_BRIDGE = DATA.tree.bridge;
 const TREE_RING = DATA.tree.ring;
 const TREE_TEXT = {
+  ailNative: v => `本源异常几率 +${Math.round(v * 100)}%`, flatInc: v => `附加伤害提高 ${v}%`, addFx: v => `附加特效效果 +${v}%`, resoInc: v => `元素共鸣每个 +${v}%`, eliteDR: v => `精英伤害降低 ${v}%`, meleeDR: v => `近战伤害降低 ${v}%`, rangedDR: v => `远程伤害降低 ${v}%`, lifeRegen: v => `每秒回复 ${v} 生命`, lampMax: v => `灯火上限 +${v}`, emberStep: v => `残灯时移速 +${v}%、伤害 +${v}%`, // tree-v3
   armor: v => `护甲 +${v}`, armorInc: v => `护甲提高 ${v}%`, deflect: v => `护盾 +${v}`, deflectInc: v => `护盾提高 ${v}%`, dodge: v => `闪避 +${v}`,
   mass: v => `${ATTR_N.mass} +${v}`, energy: v => `${ATTR_N.energy} +${v}`, time: v => `${ATTR_N.time} +${v}`,
   massInc: v => `${ATTR_N.mass}提高 ${v}%`, energyInc: v => `${ATTR_N.energy}提高 ${v}%`, timeInc: v => `${ATTR_N.time}提高 ${v}%`,
   aspd: v => `攻击速度提高 ${v}%`, aoeInc: v => `范围提高 ${v}%`, areaInc: v => `范围武器伤害提高 ${v}%`, dotInc: v => `持续伤害提高 ${v}%`, dashRegen: v => `冲刺回复${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`, velocity: v => `移动速度提高 ${v}%`,
-  dashMax: v => `冲刺槽 +${v}`, critInc: v => `暴击率提高 ${v}%`, critDmg: v => `暴击伤害 ${v >= 0 ? '+' : ''}${v}%`, 'res:all': v => `全部抗性 ${v >= 0 ? '+' : ''}${v}%`, 'inc:all': v => `全部伤害提高 ${v}%`,
+  dashMax: v => `冲刺槽 +${v}`, critInc: v => `暴击率提高 ${v}%`, critDmg: v => `暴击伤害 ${v >= 0 ? '+' : ''}${v}%`, 'res:all': v => `全抗 ${v >= 0 ? '+' : ''}${v}`, 'inc:all': v => `全部伤害提高 ${v}%`,
   projSpd: v => `投射物速度提高 ${v}%`, projDur: v => `投射物持续时间提高 ${v}%`, bossInc: v => `对 Boss 伤害总增 ${v}%`, chain: v => `弹射 +${v}（投射物碰到屏幕边反弹的次数，用完就飞出屏幕；闪电链类的瞬发电弧则是在敌人之间连锁）`, projAdd: v => `投射物 +${v}`, durInc: v => `持续时间提高 ${v}%`, pierce: () => '投射物无限穿透', double: v => `${v}% 几率造成双倍伤害`,
   /* 通用防御（spec-tree-defense §1）和新标签属性：和装备上同名词条相加 */
   ctrlWeaken: v => `控场：受控敌人对你的伤害降低 ${v}%`, closePer: v => `贴身：每个贴身敌人减伤 +${v}%`, closeCap: v => `贴身减伤上限 +${v}%`, farDR: v => `远离：身边没有敌人时受到的伤害降低 ${v}%`, shieldOnHit: v => `续航：命中回护盾上限的 ${v}‰`,
@@ -22,7 +23,7 @@ const TREE_TEXT = {
   burnLess: v => `灯火燃烧降低 ${v}%`, soulKillInc: v => `击杀回灯火提高 ${v}%`, moveInc: v => `移动速度提高 ${v}%`,
 };
 const INC_N = { proj: '投射物', melee: '近战', engine: '遁靴' };
-const treeText = (k, v) => k.startsWith('inc:') && k !== 'inc:all' ? `${INC_N[k.slice(4)] || ELEM_N[k.slice(4)]}伤害提高 ${v}%` : k.startsWith('ail:') ? `${AIL[k.slice(4)].n}几率 +${Math.round(v * 100)}%` : k.startsWith('res:') && k !== 'res:all' ? `${ELEM_N[k.slice(4)]}抗性 +${v}%` : TREE_TEXT[k](v);
+const treeText = (k, v) => k.startsWith('inc:') && k !== 'inc:all' ? `${INC_N[k.slice(4)] || ELEM_N[k.slice(4)]}伤害提高 ${v}%` : k.startsWith('ail:') ? `${AIL[k.slice(4)].n}几率 +${Math.round(v * 100)}%` : k.startsWith('res:') && k !== 'res:all' ? `${ELEM_N[k.slice(4)]}抗性 +${v}` : TREE_TEXT[k] ? TREE_TEXT[k](v) : `${k} +${v}`;
 // 改规则的效果文字：{参数} 取 data/rules.json 里这条规则的参数，{v} 是天赋或装备给的数值，{别的规则.参数} 引用别的规则
 const RULES = DATA.rules; RULES.whirl = DATA.mechanics.whirl; RULES.spark = DATA.mechanics.spark; RULES.nova = DATA.mechanics.nova; RULES.meteor = DATA.mechanics.meteor; RULES.orb = DATA.mechanics.orb; RULES.shield = DATA.mechanics.shield; // {whirl.参数} 引用 mechanics.json 的 whirl
 const ruleText = (k, v) => { const R = RULES[k]; return R && R.text ? R.text.replace(/\{(\w+)(?:\.(\w+))?\}/g, (m, a, b) => b ? RULES[a][b] : a === 'v' ? v : R[a]) : null; };
@@ -31,7 +32,7 @@ const MORE_N = { 'dmg:hit': '命中伤害', 'dmg:nonEle': '闪电以外的伤害
 for (const e of ELEM) MORE_N['dmg:' + e] = ELEM_N[e] + '伤害';
 const moreText = (k, v) => k === 'dashMax' ? `冲刺槽 ${v}（至少 1）` : `${MORE_N[k] || k}${v >= 1 ? '总增' : '总降'} ${Math.round(Math.abs(v - 1) * 100)}%`;
 // 大型节点的说明：规则 → 附加 → 代价，按数值自动生成
-const keyText = K => [...Object.entries(K.flag || {}).map(([k, v]) => ruleText(k, v)), ...Object.entries(K.add || {}).map(([k, v]) => treeText(k, v)), ...Object.entries(K.more || {}).map(([k, v]) => moreText(k, v))].filter(Boolean).join('；');
+const keyText = K => K.d || [...Object.entries(K.flag || {}).map(([k, v]) => ruleText(k, v)), ...Object.entries(K.add || {}).map(([k, v]) => treeText(k, v)), ...Object.entries(K.more || {}).map(([k, v]) => moreText(k, v))].filter(Boolean).join('；');
 
 // 生成节点和连线：世界坐标以起点为原点，天赋窗口里可以拖动和缩放
 const TREE = { nodes: {}, edges: [] };
@@ -78,7 +79,9 @@ const SOCK_ADD = { melee: { 'inc:melee': 8 }, area: { areaInc: 8 }, proj: { 'inc
       const ids = [`${pre}${i}a`, `sk${sk}`, `${pre}${i}b`];
       [[-dOff, r], [0, r + 4], [dOff, r]].forEach(([o, rr], k) => {
         const [x, y] = pos(a + o, rr);
-        if (k === 1) node(ids[1], { kind: 's', b: -1, x, y, add: SOCK_ADD[B.id] || {}, c: '#57e0d0' }); // 原印记槽：改成小节点，给这一区标签提高 8%（id 不变）
+        const BK = pre === 'br' && DATA.tree.bridgeKey && DATA.tree.bridgeKey[i];
+        if (k === 1 && BK) node(ids[1], BK.k ? { kind: 'k', b: -1, x, y, n: BK.n, add: {}, flag: BK.flag, d: BK.d, c: '#57e0d0' } : { kind: 'n', b: -1, x, y, n: BK.n, add: BK.add, c: '#57e0d0' }); // system-v2 §6：元素基石 / 天赋
+        else if (k === 1) node(ids[1], { kind: 's', b: -1, x, y, add: SOCK_ADD[B.id] || {}, c: '#57e0d0' }); // 原印记槽：改成小节点，给这一区标签提高 8%（id 不变）
         else node(ids[k], { kind: 's', b: -1, x, y, add, c: '#b8afc4' });
       });
       link(from, ids[0]); link(ids[0], ids[1]); link(ids[1], ids[2]); link(ids[2], to);
@@ -111,11 +114,10 @@ function treeStats(ids = S.tree, eq = S.equip) {
   const A = (k, v) => add[k] = (add[k] || 0) + v, M = (k, v) => more[k] = (more[k] ?? 1) * v;
   const uniqueRules = it => { const u = UNIQUE_BY[it.u]; if (!u) return; u.rules.forEach(([k], i) => { const v = it.uv[i];
     if (['energyInc', 'rangeInc', 'dodge', 'velocity', 'dashMax', 'armorInc', 'shieldRegenPct'].includes(k)) A(k, v);
-    else if (k === 'energyAdd') A('energy', v); else if (k === 'aspdLessAll') M('aspd', 1 - v / 100); else if (k === 'resAll') A('res:all', v);
+    else if (k === 'energyAdd') A('energy', v); else if (k === 'aspdLessAll') M('aspd', 1 - v / 100); else if (k === 'resAll') A('res:all', v); else if (k === 'rangedDRU') A('rangedDR', v); else if (k === 'rangedSpike') flag.rangedSpike = 1;
     else if (k === 'critLess') M('crit', 1 - v / 100); else if (k === 'armorLess') M('armor', 1 - v / 100); else if (k === 'shockMul') flag.shockMul = (flag.shockMul || 1) * (1 + v / 100);
-    else if (k === 'dodgeCap') flag.dodgeCap = (flag.dodgeCap || 0) + v;
     else if (k === 'spinDecay') flag.spinDecay = (flag.spinDecay || 1) * (1 - v / 100);
-    else if (['blindAura', 'shockAura', 'dodgeSpikes', 'multicrit', 'finale', 'splitEnd'].includes(k)) flag[k] = 1;
+    else if (['blindAura', 'shockAura', 'multicrit', 'finale', 'splitEnd'].includes(k)) flag[k] = 1;
     // 标签式独特（规格 design/spec-tags.md），数值在 rules.json
     else if (k === 'areaEye') { flag.areaEye = 1; A('aoeInc', RULES.areaEye.aoeInc); }
     else if (k === 'projLess') M('dmg:proj', 1 - v / 100);
@@ -132,7 +134,11 @@ function treeStats(ids = S.tree, eq = S.equip) {
     else if (k === 'echoCrown') flag.echoCrown = Math.max(flag.echoCrown || 0, v / 100); else if (k === 'chainLess') A('chain', -v);
     else if (k === 'frozenTaken') A('frozenTaken', v); else if (k === 'projSlowU') A('projSlow', v);
     else if (k === 'autoNova') flag.autoNova = Math.max(flag.autoNova || 0, v / 100); else if (k === 'moveLess') M('speed', 1 - v / 100);
-    else if (k === 'freezeDur') A('freezeDur', v); else if (k === 'fireResLess') A('res:exp', -v); }); };
+    else if (k === 'freezeDur') A('freezeDur', v); else if (k === 'fireResLess') A('res:exp', -v);
+    // system-v2 §6 元素 / lamp-v2 灯火 / tree-v3 新独特
+    else if (k === 'burnKeepU') flag.burnKeep = 1; else if (k === 'whirlHeart') { flag.whirlHeart = 1; flag.nonMeleeLess = 30; } else if (k === 'aegisBurst') flag.echoShield = 1;
+    else if (k === 'frostCoffin') { flag.frostCoffin = Math.max(flag.frostCoffin || 0, v); A('freezeDur', v); }
+    else flag[k] = Math.max(flag[k] || 0, v || 1); }); }; // 其余规则：直接当旗标
   // 誓约：一正一负，“总增 / 总降”是独立乘区
   const oathRules = it => { const o = OATH_BY[it.oath]; if (!o) return; for (const [k, v] of Object.entries(o.fx)) {
     if (['chainStep', 'projAdd', 'delayAdd', 'aoeInc', 'soulKillInc'].includes(k)) A(k, v);

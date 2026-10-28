@@ -161,7 +161,7 @@ function makeGlyph(col) {
 // 模组图标：按类别上色的宝石
 function modColor(m) {
   const a = MOD_BY[m.id] || m; if (a.field) return '#57e0d0';
-  const el = { Debris: 'kin', Kinetic: 'kin', SteamHammer: 'kin', Aftershock: 'exp', Inferno: 'exp', Shock: 'ele', Electric: 'ele', Blind: 'pla', Plasma: 'pla', Radiation: 'nuc', Agony: 'nuc' }[a.id];
+  const el = { Debris: 'kin', Kinetic: 'kin', SteamHammer: 'kin', ConvKin: 'kin', ConvExp: 'exp', ConvEle: 'ele', ConvCold: 'cold', ConvPla: 'pla', ConvNuc: 'nuc', Aftershock: 'exp', Inferno: 'exp', Shock: 'ele', Electric: 'ele', Blind: 'pla', Plasma: 'pla', Radiation: 'nuc', Agony: 'nuc' }[a.id];
   if (el) return ELEM_C[el];
   if (['Pierce', 'Chain', 'Split', 'Boomerang', 'RapidProjectiles', 'Range'].includes(a.id)) return '#c08aff';
   if (['Rigor', 'Lethal', 'DeathThreshold', 'Purity', 'Thermal'].includes(a.id)) return '#ffd75e';

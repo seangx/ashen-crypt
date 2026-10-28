@@ -35,7 +35,7 @@ async function start(data) {
   game = new Phaser.Game({
     type: Phaser.AUTO, parent: 'game', width: W * Z, height: H * Z, pixelArt: true, roundPixels: true, backgroundColor: '#0d0a12',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }, banner: false, disableContextMenu: true,
-    input: { activePointers: 2 }, scene: [Boot, World, UI],
+    input: { activePointers: 2 }, scene: [Boot, World, MOBILE ? MobileUI : UI],
   });
 }
 window.__ash = { needShield, ulk, setPrepOff: v => { PREP_OFF = v; }, setUnlockAll: v => { if (v === 'ev') UNLOCK_EV = true; else UNLOCK_ALL = v; if (v && !S.equip.wr) { const o = guaranteeOff(1); o.rar = 0; o.q = 0; o.affs = []; S.equip.wr = o; refreshStats(); } }, checkUnlocks, GEMS, GEM_BY, newGem, gemPolish, gemSocket, feedGem, skillItem, defEhp, armorDr, typicalHit, setHelp: i => { helpTopic = i; }, loadDemo, restoreBackup, LAD, ladderChallenge, unlocked, DATA_HASH, TREE, treeCanAlloc, DATA, AUTO, autoDriving, BOSSES, lootFx, get LX() { return LX; }, newUnique, UNIQUES, treeStats, modActive, newMod, weaponStats, MOBS, BOSS, WEAPONS, ARMORS, get zones() { return zones; }, get meteors() { return meteors; }, get S() { return S; }, startRun, logic, get RUN() { return RUN; }, mouse, player, computeStats, rollItem, newItem, applyDie: null, salvage, craftAdd, craftUp, craftRefine, craftStrip, addWhy, upWhy, canAdd, AFF, AFF_BY, makeExalted, craftFuse, fuseWhy, feedRune, rollShard, craftable, craftTop, addTier, get STATS() { return STATS; }, refreshStats, get mobs() { return mobs; }, get projs() { return projs; }, equipItem, itemValue, G, findItem, tryDash, save };

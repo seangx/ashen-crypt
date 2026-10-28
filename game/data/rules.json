@@ -35,8 +35,6 @@
   "kite": { "moveMore": 25, "stillLess": 25, "text": "移动时伤害总增 {moveMore}%；站着不动时伤害总降 {stillLess}%" },
   "afterDash": { "more": 50, "dur": 2, "text": "冲刺后 {dur} 秒内伤害总增 {more}%" },
   "timeStop": { "r": 60, "slow": 80, "dur": 1.5, "text": "冲刺时身边的敌人减速 {slow}%，持续 {dur} 秒" },
-  "dodgeSpikes": { "r": 30, "shieldPct": 50, "text": "闪避时骨刺刺穿身边的敌人（伤害等于护盾上限的 {shieldPct}%）" },
-  "dodgeCap": { "text": "闪避上限 +{v}" },
   "multicrit": { "text": "多重暴击不再衰减" },
   "finale": { "text": "火油罐飞到尽头时也会爆炸" },
   "splitEnd": { "text": "可分裂的投射物飞到尽头时也会分裂" },

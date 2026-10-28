@@ -20,6 +20,7 @@ function buildTextures(sc) {
   for (const k in SPR.icons) add('i_' + k, SPR.icons[k]);
   for (const k of ['anvil', 'star', 'book', 'ladder']) add('i_' + k, sprite(ART[k]));
   add('i_soulf', sprite(ART.soulf)); add('cursor', sprite(ART.cursor, '#0d0a12')); add('up', sprite(ART.up.map(r => r.replace(/g/g, 'm')), '#0d0a12'));
+  add('lorb', cvs(7, 7, x => { px(x, '#5a0a14', 1, 0, 5, 7); px(x, '#5a0a14', 0, 1, 7, 5); px(x, '#e0283c', 1, 1, 5, 5); px(x, '#ff9a9a', 2, 2, 2, 2); })); // 生命球
   add('shard', SPR.shard); for (const g of GLYPHS) add('glyph_' + g.id, SPR.glyphs[g.id]);
   add('dust', DUST_ICON); add('soul', SOUL_ICON); add('glow', GLOW);
   add('px', cvs(1, 1, x => px(x, '#fff', 0, 0)));
@@ -247,7 +248,8 @@ function mkBtn(sc, parent, x, y, w, h, label, onClick, o = {}) {
   let lx = o.labelX ?? w / 2;
   if (o.icon) { const ic = img(sc, o.iconX ?? 4, Math.round((h - sc.textures.get(o.icon).getSourceImage().height) / 2), o.icon, c); if (o.iconScale) ic.setScale(o.iconScale); lx = o.labelX ?? (w / 2 + 6); }
   const lab = T(sc, lx, Math.round(h / 2), label, { size: o.size || 12, color: o.color || (style === 'w' ? '#2a1306' : COL.text), shadow: style !== 'w', align: o.labelX !== undefined ? 'left' : 'center', valign: 'middle', parent: c });
-  const zone = sc.add.zone(0, 0, w, h).setOrigin(0).setInteractive(); c.add(zone);
+  const pw = MOBILE ? Math.max(0, (TOUCH - w) / 2) : 0, ph = MOBILE ? Math.max(0, (TOUCH - h) / 2) : 0; // 手机：点击区至少 TOUCH 见方
+  const zone = sc.add.zone(-pw, -ph, w + pw * 2, h + ph * 2).setOrigin(0).setInteractive(); c.add(zone);
   c.disabled = !!o.disabled;
   const labCol = hex(o.color || (style === 'w' ? '#2a1306' : COL.text));
   c.setDisabled = d => { if (c.disabled === d && c.inited) return; c.inited = true; c.disabled = d; bg.setVisible(!d); bgd.setVisible(d); bgh.setVisible(false); lab.setTint(d ? hex(COL.faint) : labCol); };
@@ -300,8 +302,24 @@ function mkCell(sc, parent, x, y, it, o = {}) {
   const zone = sc.add.zone(0, 0, s, s).setOrigin(0).setInteractive(); c.add(zone);
   zone.on('pointerover', () => { hl.setFillStyle(0xffffff, 0.12); if (o.onHover) o.onHover(it); else if (it) showTip({ item: it }); else if (o.tip) showTip(o.tip); });
   zone.on('pointerout', () => { hl.setFillStyle(0xffffff, 0); if (o.onOut) o.onOut(it); else hideTip(); });
-  zone.on('pointerup', () => { if (o.onClick) { sfx('click'); o.onClick(it); } });
+  if (o.onDown) zone.on('pointerdown', p => o.onDown(it, p));
+  zone.on('pointerup', () => {
+    // 手机：点一下就出详情（操作按钮在弹窗里）；选物品用的格子（o.direct）保持点一下就选中
+    if (MOBILE && it && !o.direct && sc.showDetail) { if (sc.drag && sc.drag.moved) return; sfx('click'); return sc.showDetail(it, o.host, o.acts ? o.acts(it) : o.onClick ? [{ l: o.actL || '选中', style: 'w', fn: () => o.onClick(it) }] : []); }
+    if (o.onClick) { sfx('click'); o.onClick(it); }
+  });
   return c;
+}
+// 手机长按：按住 450ms 不动触发；触发后吞掉这次松手的点击
+function longPress(sc, zone, fn) {
+  zone.on('pointerdown', p => { sc.lpFired = false; clearTimeout(sc.lpT); const x = p.x, y = p.y;
+    sc.lpT = setTimeout(() => { sc.lpT = null; if (p.isDown && Math.hypot(p.x - x, p.y - y) < 10 && zone.scene && !(sc.drag && sc.drag.moved)) { sc.lpFired = true; hideTip(); fn(); } }, 450); });
+  zone.on('pointerout', () => { clearTimeout(sc.lpT); sc.lpT = null; });
+}
+function affDetail(x, acts) {
+  const a = AFF_BY[x.k], v = (a.tiers[x.t] || [])[0] || [], n = a.tiers.length, rg = a.pair ? `${v[0]}–${v[1]} 到 ${v[2]}–${v[3]}` : v.join(' – ');
+  G.ui && G.ui.showLines && G.ui.showLines([{ t: affName(a), c: COL.emberHi }, { t: `${tierLabel(x)} · 第 ${x.t + 1} 档（共 ${n} 档）· ${a.type === 'P' ? '前缀' : '后缀'}`, s: 8, c: COL.dim }, { t: affText(x), c: '#efe2b6' },
+    ...(v.length ? [{ t: `本档数值范围：${rg}`, s: 8 }] : []), { t: `碎片 ${shardN(x.k)} 个`, s: 8, c: COL.faint }], acts);
 }
 function isUpgrade(it) {
   const slot = slotsFor(it)[0]; if (!slot) return false; const eq = S.equip[slot]; if (eq === it || Object.values(S.equip).includes(it)) return false;
@@ -321,23 +339,23 @@ const SCONCES = [{ x: 90, y: 38 }, { x: 240, y: 38 }, { x: 390, y: 38 }];
 function seeded(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
 function drawBackground(x, theme, seed) {
   const R = seeded(seed); const rp = a => a[Math.floor(R() * a.length)];
-  x.clearRect(0, 0, W, H);
-  x.fillStyle = theme.wallM; x.fillRect(0, 0, W, FLOOR_Y);
+  x.clearRect(0, 0, VW, VH);
+  x.fillStyle = theme.wallM; x.fillRect(0, 0, VW, FLOOR_Y);
   for (let row = 0; row < 10; row++) {
     const off = row % 2 ? 6 : 0;
-    for (let bx = -12; bx < W; bx += 12) {
+    for (let bx = -12; bx < VW; bx += 12) {
       x.fillStyle = rp(theme.wall); x.fillRect(bx + off + 1, row * 6 + 1, 11, 5);
       x.fillStyle = 'rgba(255,255,255,.06)'; x.fillRect(bx + off + 1, row * 6 + 1, 11, 1);
       if (R() < 0.12) { x.fillStyle = theme.wallM; x.fillRect(bx + off + 3 + (R() * 6 | 0), row * 6 + 2, 1, 2); }
     }
   }
   const gr = x.createLinearGradient(0, TOP_H, 0, FLOOR_Y); gr.addColorStop(0, 'rgba(0,0,0,.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
-  x.fillStyle = gr; x.fillRect(0, 0, W, FLOOR_Y);
-  x.fillStyle = theme.mortar; x.fillRect(0, FLOOR_Y - 2, W, 2);
-  x.fillStyle = theme.mortar; x.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
-  for (let ty = FLOOR_Y; ty < H; ty += 14) {
+  x.fillStyle = gr; x.fillRect(0, 0, VW, FLOOR_Y);
+  x.fillStyle = theme.mortar; x.fillRect(0, FLOOR_Y - 2, VW, 2);
+  x.fillStyle = theme.mortar; x.fillRect(0, FLOOR_Y, VW, VH - FLOOR_Y);
+  for (let ty = FLOOR_Y; ty < VH; ty += 14) {
     const off = ((ty - FLOOR_Y) / 14) % 2 ? 9 : 0;
-    for (let tx = -18; tx < W; tx += 18) {
+    for (let tx = -18; tx < VW; tx += 18) {
       x.fillStyle = rp(theme.floor); x.fillRect(tx + off, ty, 17, 13);
       x.fillStyle = 'rgba(255,255,255,.05)'; x.fillRect(tx + off, ty, 17, 1);
       x.fillStyle = 'rgba(0,0,0,.18)'; x.fillRect(tx + off, ty + 12, 17, 1);
@@ -345,22 +363,22 @@ function drawBackground(x, theme, seed) {
       if (R() < 0.18) { x.fillStyle = theme.mortar; let cx = tx + off + 3 + R() * 10, cy = ty + 2 + R() * 8; for (let n = 0; n < 6; n++) { x.fillRect(cx | 0, cy | 0, 1, 1); cx += R() < 0.5 ? 1 : 0; cy += R() < 0.6 ? 1 : 0; } }
     }
   }
-  x.fillStyle = 'rgba(0,0,0,.4)'; x.fillRect(0, FLOOR_Y, W, 3);
+  x.fillStyle = 'rgba(0,0,0,.4)'; x.fillRect(0, FLOOR_Y, VW, 3);
   for (let n = 0; n < 60; n++) {
-    const px_ = R() * W | 0, py = FLOOR_Y + 4 + (R() * (FIELD_B - FLOOR_Y - 6) | 0);
+    const px_ = R() * VW | 0, py = FLOOR_Y + 4 + (R() * (FIELD_B - FLOOR_Y - 6) | 0);
     if (theme === THEMES[0] || theme === THEMES[3]) { x.fillStyle = R() < 0.5 ? theme.acc : theme.acc2; x.fillRect(px_, py, 1 + (R() * 3 | 0), 1); x.fillRect(px_ + 1, py - 1, 1, 1); }
     else if (theme === THEMES[2]) { if (R() < 0.5) { x.fillStyle = theme.acc; let cx = px_, cy = py; for (let i = 0; i < 5; i++) { x.fillRect(cx, cy, 1, 1); cx += 1; cy += R() < 0.5 ? 1 : -1; } } }
     else { x.fillStyle = theme.acc2; x.fillRect(px_, py, 3, 1); x.fillStyle = theme.acc; x.fillRect(px_, py + 1, 1, 1); x.fillRect(px_ + 2, py + 1, 1, 1); }
   }
   for (let n = 0; n < 9; n++) {
-    const px_ = 10 + R() * (W - 20) | 0, py = FLOOR_Y + 10 + (R() * (FIELD_B - FLOOR_Y - 18) | 0);
+    const px_ = 10 + R() * (VW - 20) | 0, py = FLOOR_Y + 10 + (R() * (FIELD_B - FLOOR_Y - 18) | 0);
     if (R() < 0.5) x.drawImage(SPR.skull, px_, py); else { x.fillStyle = '#b9ad94'; x.fillRect(px_, py, 5, 1); x.fillStyle = '#ece3cb'; x.fillRect(px_ - 1, py - 1, 1, 1); x.fillRect(px_ + 5, py - 1, 1, 1); x.fillRect(px_ - 1, py + 1, 1, 1); x.fillRect(px_ + 5, py + 1, 1, 1); }
   }
   for (const [cx, cy] of [[14, FLOOR_Y + 6], [462, FLOOR_Y + 8], [12, FIELD_B - 12], [464, FIELD_B - 14]]) { x.fillStyle = '#e8dcc0'; x.fillRect(cx, cy, 2, 4); x.fillRect(cx + 3, cy + 1, 2, 3); x.fillStyle = '#9a8f78'; x.fillRect(cx, cy + 3, 5, 1); }
   for (const s of SCONCES) { x.fillStyle = '#2a2016'; x.fillRect(s.x - 2, s.y, 5, 2); x.fillStyle = '#5a4630'; x.fillRect(s.x - 1, s.y + 2, 3, 4); x.fillRect(s.x, s.y + 6, 1, 2); }
-  const vg = x.createRadialGradient(W / 2, (FLOOR_Y + FIELD_B) / 2, 90, W / 2, (FLOOR_Y + FIELD_B) / 2, 300);
+  const vg = x.createRadialGradient(VW / 2, (FLOOR_Y + FIELD_B) / 2, 90, VW / 2, (FLOOR_Y + FIELD_B) / 2, 300);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)');
-  x.fillStyle = vg; x.fillRect(0, 0, W, H);
+  x.fillStyle = vg; x.fillRect(0, 0, VW, VH);
 }
 
 /* ---------- 无限场地：可平铺的地砖 + 按区块随机的装饰 ---------- */
@@ -418,13 +436,13 @@ function drawChunkDecor(x, theme, seed) {
 }
 // 屏幕暗角（固定在屏幕上）
 function drawVignette(x) {
-  x.clearRect(0, 0, W, H); const cy = (TOP_H + BOT_Y) / 2;
+  x.clearRect(0, 0, W, H); const cy = SCR_CY;
   const vg = x.createRadialGradient(W / 2, cy, 90, W / 2, cy, 300); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)');
   x.fillStyle = vg; x.fillRect(0, 0, W, H);
 }
 
 /* ---------- 光照（低分辨率 + 抖动） ---------- */
-const LW = 240, LHt = 135;
+const LW = Math.ceil((MOBILE ? Math.max(W, VW) : W) / 2), LHt = Math.ceil(H / 2); // 半分辨率光照图，盖住整个屏幕
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + .5) / 16);
 let lightImg = null;
 function renderLight(lctx, lights, ambient, fog) {

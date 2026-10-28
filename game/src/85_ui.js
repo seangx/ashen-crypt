@@ -49,6 +49,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
     }
     T(sc, it.sock * 13 + 3, cy + 3, hub ? `升级槽 ${it.sock}` : `符文槽 ${it.sock}`, { size: 8, color: COL.faint, parent: c }); cy += 15;
   }
+  if (typeof stoneOf === 'function' && it.stones && it.stones.some(Boolean)) ln('属性石：' + it.stones.filter(Boolean).map(s => { const S0 = stoneOf(s.sid), f = stoneFx(it, s); return `${S0.n}${s.t}阶${f ? ` ${STAT_N2[f[0]] || f[0]} +${f[1]}` : ''}`; }).join('；'), '#9be05a'); // gear-v2 §7：详情里显示已镶的属性石
   if (it.affs.length) { rect(sc, 0, cy + 1, w, 1, '#3a3049', 1, c); cy += 4; }
   it.affs.forEach((x, i) => {
     const a = AFF_BY[x.k]; const ex = exTier(a, x.t), top = !ex && x.t === craftTop(a), hi = a.tiers.length - x.t <= 3;
@@ -57,10 +58,13 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
     if (o.selAff === i) { const sh = rect(sc, -2, cy - 1, w + 4, 12, COL.ember, 0.18, c); c.sendToBack(sh); }
     const t = TW(sc, 16, cy, affText(x), w - 16, { color: it.rar === 1 ? '#a9c4ff' : '#efe2b6', parent: c });
     if (o.pick) {
-      const z = sc.add.zone(-2, cy - 1, w + 4, t.h + 1).setOrigin(0).setInteractive(); c.add(z);
-      const hl = rect(sc, -2, cy - 1, w + 4, t.h + 1, COL.cyan, 0.12, c); c.sendToBack(hl);
+      const rh = MOBILE ? Math.max(t.h + 1, TOUCH) : t.h + 1;
+      if (MOBILE && rh > t.h + 1) { const d = (rh - t.h - 1) / 2; t.y += d; c.list.slice(-3).forEach(g => { if (g !== t && g.y >= cy - 2) g.y += d; }); }
+      const z = sc.add.zone(-2, cy - 1, w + 4, rh).setOrigin(0).setInteractive(); c.add(z);
+      const hl = rect(sc, -2, cy - 1, w + 4, rh, COL.cyan, 0.12, c); c.sendToBack(hl);
       z.on('pointerover', () => hl.setFillStyle(hex(COL.cyan), 0.3)); z.on('pointerout', () => hl.setFillStyle(hex(COL.cyan), 0.12));
-      z.on('pointerup', () => o.pick(i));
+      z.on('pointerup', () => { if (MOBILE) return affDetail(x, [{ l: '选中这条', style: 'w', fn: () => o.pick(i) }]); o.pick(i); });
+      if (MOBILE) cy += rh - 1 - t.h;
     }
     cy += t.h;
   });
@@ -72,7 +76,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   return { c, h: cy };
 }
 const DASH_N = { step: '冲刺：纯位移', warp: '冲刺：瞬移到落点并炸开', trail: '冲刺：沿途留下火痕', burst: '冲刺结束：向四周炸开', storm: '冲刺结束：向附近敌人放连锁雷', vortex: '冲刺结束：留下吸住敌人的漩涡', nova: '冲刺：在起点爆炸' };
-const FORM_N = { proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人', reflect: '受到攻击时伤害周围敌人' };
+const FORM_N = { orb: '缓慢飞行的法球，沿途向四周放出碎片', meteor: '从天而降砸向敌人', proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人', reflect: '受到攻击时伤害周围敌人' };
 const r1 = v => Math.round(v * 10) / 10;
 // 底材行：按品质的固有数值
 function gemLines(g) { // 技能石：形态、倍率、标签、并进来的形态符文
@@ -85,6 +89,22 @@ function gemLines(g) { // 技能石：形态、倍率、标签、并进来的形
   out.push(['标签：' + gemTags(g).filter(t => TAG_N[t] && t !== 'Weapon').map(t => TAG_N[t]).join(' '), COL.faint]);
   if (g.lvl < MOD_MAX) out.push([`经验 ${fmt(g.xp)} / ${fmt(MOD_XP[g.lvl - 1])}（装备时吃击杀经验）`, COL.faint]);
   return out;
+}
+function helpPages() {
+  return [
+      ['操作', '亡魂跟着鼠标移动，两只手上的武器会自动攻击射程内最近的敌人。空格、Shift 或右键冲刺：冲刺时无敌，遁靴还会在冲刺时触发效果。回车开始任务，数字键 1–7 打开窗口；每升一级得 1 个天赋点。'],
+      ['伤害', '伤害先算固定附加（武器底材和“附加 X–Y 伤害”），再乘“提高”（同类全部相加后乘一次），最后乘“总增”（每一条单独连乘）。武器上的词条只作用于那把武器。'],
+      ['元素', '物理：碎骨，在周围炸开。火焰：余震，按比例再命中几次，并累积灼烧。闪电：感电，叠层降低全部抗性。圣光：致盲，3 秒内敌人伤害降低。瘟疫：疫病，4 秒内造成命中伤害的一部分，可叠加。'],
+      ['符文', '技能石、头冠和遁靴有符文槽。符文只在满足条件的技能上生效，例如穿刺符文要技能能穿透。法阵的升级槽里的符文会随击杀获得经验并升级（最高 20 级），力场符文只在法阵里生效。'],
+      ['铁砧', `铁砧用词条碎片改装备。加词条：有空位时花 1 个该词条的碎片，从比物品等级允许的最高档低几档的地方开始。升一档：花 1 个该词条的碎片。每次都会扣“锻造潜力”，扣到 0 就不能再改了。最高两档（溢彩）做不出来，只从天梯宝箱里出。拆解装备、打怪都能得到碎片。洗数值和移除要用铸符，铸符主要从天梯宝箱里出。稀有度跟着词条数变：1–2 条罕见，3–4 条稀有。`],
+      ['技能石', '技能由身上的技能石决定：它定下技能的形态（投射物、光束、新星……）和元素。主手武器只给数值：伤害、攻速、暴击和词条，类别对口（近战 / 弓 / 法器 / 枪）时伤害再 ×1.2。符文插在技能石的符文槽里。技能石装备时吃击杀经验升级（最高 20 级）；打磨花 5 个词条碎片 +1% 品质；开孔符给技能石 +1 个符文槽。'],
+      ['天梯', `通关第 ${PROG.unlocks.ladder.depth} 层后开放。天梯的怪物等级等于层数，怪更多、精英更多。第 15 层起每 15 层多 1 条随机词缀（同一层每次一样），每条让宝箱多 1 件装备、碎片多 20%。打满进度后守关 Boss 出现，限时内击败它就通过，剩的时间越多跳的层越多。通过后开宝箱，并记下用时和配装。死亡或超时没有损失。可以随时手动接管。`],
+      ['灯火', `推关是一趟往下走：从最深层往回退 ${SOUL.startBack} 层出发（锁层时从锁定的层出发），每层打满进度、打掉守关 Boss 后直接进入下一层。灯火（护甲条下的紫色细条）进入时是满的，每秒燃烧，越深烧得越快；推关中不会自然回复，只靠击杀补（Boss 补得最多）。灯火烧完就平安返回，这一趟捡到的全部带走；最深层附近的某一层打得太险（最低血量低于 ${SOUL.returnHp}%），打完那层的 Boss 也会自动撤回；最深层附近护甲一旦跌到 ${SOUL.returnHpNow}% 以下，会立刻紧急撤回，同样全部带走；阵亡的话，捡到的装备、符文、词条碎片每件有 ${SOUL.deathKeep}% 几率保住。旋风斩等流派技能也从同一条里扣。天梯里不燃烧。`],
+      ['营地', `营地是主页：一趟结束后回到这里。点地窖入口出发（可以选层、锁层），点储物箱、天赋石像、符文台打开对应的窗口；铁砧和分解祭坛在通关第 ${PROG.unlocks.craft.depth} 层后清出来，天梯石碑在通关第 ${PROG.unlocks.ladder.depth} 层后清出来，天梯从石碑出发。自动刷时在营地停留 ${CAMP.idleStay} 秒再出发。分解祭坛：每次回营地，按规则把带回的装备拆成词条碎片（默认分解普通、罕见，保留稀有；物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的全部分解；带收藏词条的留下）。独特、传奇、溢彩装备和技能石永远不自动分解。`],
+      ['防御', '护甲就是生命。灵障先吸收伤害，2 秒没受伤就开始回复。抗性按百分比减伤，有上限。闪避直接躲开一次攻击。'],
+      ['已解锁', (S.unlockLog || []).length ? S.unlockLog.map(([id, t]) => `${new Date(t).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}  ${(PROG.unlocks[id] || {}).hint || id}`).join('\n') : '还没有新解锁的系统。往下走，新东西会一样样出现。'],
+      ['存档', '毕业存档：旋风斩成型，100 级，最深层开满，天梯打到 70 层左右；两把回旋骨刃插旋身符文，头冠是风暴之眼，旋风之心已点。游雷毕业存档：100 级，两把雷灵插 20 级游雷符文，每串 18 颗游雷，头冠是雷冠，织雷之心已点，天梯 63 层。载入前会把你现在的进度备份一份，之后可以一键恢复（只备份第一次载入前的进度）。正在打的一趟会作废。'],
+    ];
 }
 function baseLines(it) {
   const b = baseOf(it), q = it.q, out = [], dim = '#b8afc4';
@@ -103,7 +123,7 @@ function baseLines(it) {
     return out; }
   if (it.kind === 'weapon' || it.kind === 'engine') {
     if (it.kind === 'engine') { out.push([DASH_N[b.dash], COL.cyan]); out.push([`移动推力 ${ENGINE_THRUST[q]}` + (b.thrustInc ? `，移动速度提高 ${qv(b.thrustInc, q)}%` : ''), dim]); }
-    else out.push([FORM_N[b.form], COL.dim]);
+    else if (FORM_N[b.form]) out.push([FORM_N[b.form], COL.dim]);
     if (b.min) { const [mn, mx] = weaponBase(b, q); out.push([`${ELEM_N[b.el]}伤害 ${fmt(mn)}–${fmt(mx)}${b.cont ? ' / 秒' : ''}`, ELEM_C[b.el]]); }
     if (b.aura) out.push([`每秒 ${qv(b.aura, q)} ${ELEM_N[b.el]}伤害`, ELEM_C[b.el]]);
     const p = [];
@@ -262,10 +282,10 @@ class UI extends Phaser.Scene {
     const dt = P.shield ? '+' + Math.ceil(player.shield) : ''; if (this.defT.text !== dt) this.defT.setText(dt);
     const n = player.closeN || 0, gt = !RUN ? '' : n > 0 ? `贴 −${Math.round(Math.min(P.closeCap, n * P.closePer))}%` : player.farOK && P.farDR > 0 ? `远 −${P.farDR}%` : ''; if (this.gdT.text !== gt) { this.gdT.setText(gt); this.gdT.setTint(hex(n > 0 ? '#e8dcc0' : '#9fd0ff')); }
     const st = Math.round(sf * 100) + '%'; if (this.soulT.text !== st) this.soulT.setText(st);
-    const bt = !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + RUN.base * SOUL.burnPerFloor) * P.burnMul)}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
+    const bt = !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + lampBurnL(RUN.base)) * P.burnMul)}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
     const g = this.dashG; g.clear();
     for (let i = 0; i < P.dashMax; i++) { const f = clamp(player.dash - i, 0, 1), x = 7 + i * 9, y = H - 74; g.fillStyle(0x0b080e, 1).fillRect(x, y, 7, 7); g.fillStyle(f >= 1 ? 0xc08aff : 0x2a1e3a, 1).fillRect(x + 1, y + 1, 5, 5); if (f >= 1) g.fillStyle(0xe6c8ff, 1).fillRect(x + 1, y + 1, 5, 1); else g.fillStyle(0xc08aff, 1).fillRect(x + 1, y + 6 - Math.round(f * 5), 5, Math.round(f * 5)); }
-    const wi = P.weapons.findIndex(w => w && w.whirl), sw = P.weapons[wi]; // 旋转层数（看第一把带旋身的武器）
+    const [sw, wi] = (RUN && whirlWs().sort((a, b) => player.spin[b[1]].n - player.spin[a[1]].n)[0]) || [null, -1]; // 旋转层数（看第一把带旋身的武器）
     const orbsOn = !(this.winId && this.winBig); // 大窗口会盖住两个球的上半截：干脆收起，状态改在窗口标题旁显示
     this.hpOrb.setVisible(orbsOn); this.soulOrb.setVisible(orbsOn); g.setVisible(orbsOn);
     if (this.winId && this.runPlaqT && this.runPlaqT.active && RUN) { const pt = `任务进行中 · 生命 ${Math.round(player.life / STATS.life * 100)}% · 灯火 ${Math.round(player.soul / STATS.soulMax * 100)}%`; if (this.runPlaqT.text !== pt) this.runPlaqT.setText(pt).setTint(hex(player.life / STATS.life < 0.35 ? COL.bad : COL.dim)); }
@@ -443,6 +463,7 @@ class UI extends Phaser.Scene {
     const tabs = [['gear', '装备'], ['mods', '符文'], ['tree', '天赋'], ['craft', '铁砧'], ['bulk', '拆解']].filter(([id]) => unlocked(id === 'bulk' ? 'salvage' : id)), bh = mob ? 40 : 18, tw = Math.floor((w - 24 - (tabs.length - 1) * 4) / Math.max(1, tabs.length));
     tabs.forEach(([id, n], i) => mkBtn(this, c, 12 + i * (tw + 4), y, tw, bh, n, () => id === 'bulk' ? this.openBulk() : this.openWin(id)));
     y += bh + 6;
+    if (mob && S.reelsPending && S.reelsPending.length) { mkBtn(this, c, 12, y, w - 24, bh, `骸骨轮盘 ×${S.reelsPending.length} · 现在开`, () => { R.cd = false; this.openWin('reels'); }, { style: 'w' }); y += bh + 6; } // 手机：整备页直接开轮盘
     const by = mob ? Math.max(y + 18, h - bh - 12) : h - bh - 10, half = Math.floor((w - 28) / 2);
     this.prepCdT = T(this, w / 2, by - 14, this.prepCdText(), { size: 8, color: COL.emberHi, align: 'center', parent: c });
     mkBtn(this, c, 12, by, half, bh, '返回营地', () => prepReturn(), { style: 'r' });
@@ -725,7 +746,7 @@ class UI extends Phaser.Scene {
       const out = []; let x = id; while (x && !on(x)) { out.push(x); x = prev[x]; } return out;
     };
     draw();
-    const pick = () => { let best = null, bd = 1e9; const lx = mouse.x - c.x, ly = mouse.y - c.y; if (!inV(lx, ly)) return null; for (const id in TREE.nodes) { const nd = TREE.nodes[id]; const d = (sx(nd.x) - lx) ** 2 + (sy(nd.y) - ly) ** 2, r = rad(nd) + 3; if (d < r * r && d < bd) { bd = d; best = id; } } return best; };
+    const pick = () => { let best = null, bd = 1e9; const lx = mouse.x - c.x, ly = mouse.y - c.y; if (!inV(lx, ly)) return null; for (const id in TREE.nodes) { const nd = TREE.nodes[id]; const d = (sx(nd.x) - lx) ** 2 + (sy(nd.y) - ly) ** 2, r = rad(nd) + (MOBILE ? 9 : 3); if (d < r * r && d < bd) { bd = d; best = id; } } return best; };
     const RAR = { s: ['普通 · 小节点', '#dfe8ff'], n: ['稀有 · 中节点', COL.cyan], k: ['传奇 · 大型节点', COL.emberHi], start: ['起点', COL.emberHi] };
     const tipFor = id => {
       if (fog(id)) return [{ t: '迷雾', c: COL.dim }, { t: '点亮相邻的节点后，雾会散开', s: 8, c: COL.faint }];
@@ -746,12 +767,20 @@ class UI extends Phaser.Scene {
     z.on('pointerup', () => {
       const d = drag; drag = null; if (d && d.moved) return;
       const id = pick(); if (!id) return; const nd = TREE.nodes[id];
+      if (MOBILE) { // 手机：点节点出详情，点亮 / 退回 / 取下在弹窗里
+        setHov(id); hideTip(); const L = tipFor(id).slice(0, -1), R = () => { refreshStats(); save(); this.refresh(); };
+        const a = treeCanAlloc(id) ? { l: '点亮', style: 'w', fn: () => { S.tree.push(id); treeFogReveal(id); sfx('craft'); R(); } }
+          : on(id) && nd.kind !== 'start' && treeCanRefund(id) ? { l: '退回', fn: () => { treeKeep(S.tree.filter(x => x !== id)); R(); } } : null;
+        if (!a) L.push({ t: tipFor(id).slice(-1)[0].t.replace('点击', ''), s: 8, c: COL.dim });
+        return this.showLines(L, a ? [a] : []);
+      }
       if (treeCanAlloc(id)) { S.tree.push(id); treeFogReveal(id); sfx('craft'); }
       else if (on(id) && treeCanRefund(id)) treeKeep(S.tree.filter(x => x !== id));
       else return;
       refreshStats(); save(); this.refresh();
     });
     const zoom = f => { V.z = clamp(V.z * f, 0.5, 2.5); draw(); };
+    this.treeZoom = f => { drag = null; zoom(f); }; // 手机双指缩放
     z.on('wheel', (p, dx, dy) => zoom(dy > 0 ? 1 / 1.15 : 1.15));
     // ---- 底部：图例 + 缩放 ----
     const ly = h - 17, lx0 = VL + 2;
@@ -870,20 +899,7 @@ class UI extends Phaser.Scene {
   }
   /* 手册 */
   win_help(c) {
-    const pages = [
-      ['操作', '亡魂跟着鼠标移动，两只手上的武器会自动攻击射程内最近的敌人。空格、Shift 或右键冲刺：冲刺时无敌，遁靴还会在冲刺时触发效果。回车开始任务，数字键 1–7 打开窗口；每升一级得 1 个天赋点。'],
-      ['伤害', '伤害先算固定附加（武器底材和“附加 X–Y 伤害”），再乘“提高”（同类全部相加后乘一次），最后乘“总增”（每一条单独连乘）。武器上的词条只作用于那把武器。'],
-      ['元素', '物理：碎骨，在周围炸开。火焰：余震，按比例再命中几次，并累积灼烧。闪电：感电，叠层降低全部抗性。圣光：致盲，3 秒内敌人伤害降低。瘟疫：疫病，4 秒内造成命中伤害的一部分，可叠加。'],
-      ['符文', '技能石、头冠和遁靴有符文槽。符文只在满足条件的技能上生效，例如穿刺符文要技能能穿透。法阵的升级槽里的符文会随击杀获得经验并升级（最高 20 级），力场符文只在法阵里生效。'],
-      ['铁砧', `铁砧用词条碎片改装备。加词条：有空位时花 1 个该词条的碎片，从比物品等级允许的最高档低几档的地方开始。升一档：花 1 个该词条的碎片。每次都会扣“锻造潜力”，扣到 0 就不能再改了。最高两档（溢彩）做不出来，只从天梯宝箱里出。拆解装备、打怪都能得到碎片。洗数值和移除要用铸符，铸符主要从天梯宝箱里出。稀有度跟着词条数变：1–2 条罕见，3–4 条稀有。`],
-      ['技能石', '技能由身上的技能石决定：它定下技能的形态（投射物、光束、新星……）和元素。主手武器只给数值：伤害、攻速、暴击和词条，类别对口（近战 / 弓 / 法器 / 枪）时伤害再 ×1.2。符文插在技能石的符文槽里。技能石装备时吃击杀经验升级（最高 20 级）；打磨花 5 个词条碎片 +1% 品质；开孔符给技能石 +1 个符文槽。'],
-      ['天梯', `通关第 ${PROG.unlocks.ladder.depth} 层后开放。天梯的怪物等级等于层数，怪更多、精英更多。第 15 层起每 15 层多 1 条随机词缀（同一层每次一样），每条让宝箱多 1 件装备、碎片多 20%。打满进度后守关 Boss 出现，限时内击败它就通过，剩的时间越多跳的层越多。通过后开宝箱，并记下用时和配装。死亡或超时没有损失。可以随时手动接管。`],
-      ['灯火', `推关是一趟往下走：从最深层往回退 ${SOUL.startBack} 层出发（锁层时从锁定的层出发），每层打满进度、打掉守关 Boss 后直接进入下一层。灯火（护甲条下的紫色细条）进入时是满的，每秒燃烧，越深烧得越快；推关中不会自然回复，只靠击杀补（Boss 补得最多）。灯火烧完就平安返回，这一趟捡到的全部带走；最深层附近的某一层打得太险（最低血量低于 ${SOUL.returnHp}%），打完那层的 Boss 也会自动撤回；最深层附近护甲一旦跌到 ${SOUL.returnHpNow}% 以下，会立刻紧急撤回，同样全部带走；阵亡的话，捡到的装备、符文、词条碎片每件有 ${SOUL.deathKeep}% 几率保住。旋风斩等流派技能也从同一条里扣。天梯里不燃烧。`],
-      ['营地', `营地是主页：一趟结束后回到这里。点地窖入口出发（可以选层、锁层），点储物箱、天赋石像、符文台打开对应的窗口；铁砧和分解祭坛在通关第 ${PROG.unlocks.craft.depth} 层后清出来，天梯石碑在通关第 ${PROG.unlocks.ladder.depth} 层后清出来，天梯从石碑出发。自动刷时在营地停留 ${CAMP.idleStay} 秒再出发。分解祭坛：每次回营地，按规则把带回的装备拆成词条碎片（默认分解普通、罕见，保留稀有；物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的全部分解；带收藏词条的留下）。独特、传奇、溢彩装备和技能石永远不自动分解。`],
-      ['防御', '护甲就是生命。灵障先吸收伤害，2 秒没受伤就开始回复。抗性按百分比减伤，有上限。闪避直接躲开一次攻击。'],
-      ['已解锁', (S.unlockLog || []).length ? S.unlockLog.map(([id, t]) => `${new Date(t).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}  ${(PROG.unlocks[id] || {}).hint || id}`).join('\n') : '还没有新解锁的系统。往下走，新东西会一样样出现。'],
-      ['存档', '毕业存档：旋风斩成型，100 级，最深层开满，天梯打到 70 层左右；两把回旋骨刃插旋身符文，头冠是风暴之眼，旋风之心已点。游雷毕业存档：100 级，两把雷灵插 20 级游雷符文，每串 18 颗游雷，头冠是雷冠，织雷之心已点，天梯 63 层。载入前会把你现在的进度备份一份，之后可以一键恢复（只备份第一次载入前的进度）。正在打的一趟会作废。'],
-    ];
+    const pages = helpPages();
     pages.forEach(([n], i) => mkBtn(this, c, 10, 6 + i * 16, 70, 15, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
     const [n, txt] = pages[helpTopic];
     T(this, 92, 10, n, { color: COL.emberHi, parent: c });
