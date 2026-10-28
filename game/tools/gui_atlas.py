@@ -17,6 +17,16 @@ PICK = {  # frame name -> source path (without extension)
   'nav_gear': ('Icon_ItemIcons/128/ItemIcon_Gear_Sword', 48, True), 'nav_trig': ('Icon_ItemIcons/128/ItemIcon_Gem_Diamond_Purple', 48, True),
   'nav_battle': ('Icon_ItemIcons/128/ItemIcon_Battle', 64, True), 'nav_tree': ('Icon_ItemIcons/128/ItemIcon_Book_1_Purple', 48, True),
   'nav_craft': ('Icon_PictoIcons/128/PictoIcon_Blacksmith', 48, False), 'nav_lock': ('Icon_PictoIcons/128/PictoIcon_Lock_1', 24, False),
+  # 界面小图标（白色线性图标，运行时染色；32px = 16 逻辑像素的 2 倍）
+  'ic_setting': ('Icon_PictoIcons/128/PictoIcon_Setting', 32, False), 'ic_trophy': ('Icon_PictoIcons/128/PictoIcon_Trophy_1', 32, False),
+  'ic_diamond': ('Icon_PictoIcons/128/PictoIcon_Diamond', 32, False), 'ic_crystal': ('Icon_PictoIcons/128/PictoIcon_Crystal', 32, False),
+  'ic_book': ('Icon_PictoIcons/128/PictoIcon_Book_1', 32, False), 'ic_recycle': ('Icon_PictoIcons/128/PictoIcon_Recycle', 32, False),
+  'ic_temple': ('Icon_PictoIcons/128/PictoIcon_Temple', 32, False), 'ic_chest': ('Icon_PictoIcons/128/PictoIcon_Chest', 32, False),
+  'ic_layer': ('Icon_PictoIcons/128/PictoIcon_Layer_1', 32, False), 'ic_skull': ('Icon_PictoIcons/128/PictoIcon_Skull', 32, False),
+  'ic_time': ('Icon_PictoIcons/128/PictoIcon_Stopwatch_1', 32, False), 'ic_exp': ('Icon_PictoIcons/128/PictoIcon_Star_1', 32, False),
+  'ic_prev': ('Icon_PictoIcons/128/PictoIcon_Page_Prev', 32, False), 'ic_next': ('Icon_PictoIcons/128/PictoIcon_Page_Next', 32, False),
+  'ic_plus': ('Icon_PictoIcons/128/PictoIcon_Plus_1', 32, False), 'ic_down': ('Icon_PictoIcons/128/PictoIcon_Arrow_Down', 32, False),
+  'ic_again': ('Icon_PictoIcons/128/PictoIcon_Again_1', 32, False), 'ic_pause': ('Icon_PictoIcons/128/PictoIcon_Pause_1', 32, False),
 }
 ims = {}
 for k, p in PICK.items():

@@ -398,16 +398,16 @@ class MobileUI extends UI {
       : lad ? [win ? `跳 ${r.lad.jump} 层，已解锁到第 ${S.ladder.unlocked} 层` : '天梯失败没有损失', COL.dim]
       : r.descent.floors ? [`打通到第 ${r.descent.from + r.descent.floors - 1} 层 · 最深纪录第 ${S.maxDepth - 1} 层`, COL.good] : null;
     const floors = lad ? `${r.L}` : r.descent.from === r.base ? `${r.base}` : `${r.descent.from}–${r.base}`;
-    const cols = [['i_ladder', floors, '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
+    const cols = [['i_ladder', floors, '层', 'ic_layer', 0xf2c46a], ['skull', String(r.kills), '击杀', 'ic_skull', 0xe9e0c9], ['torch', mmss(r.t), '用时', 'ic_time', 0x9fd8ff], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验', 'ic_exp', 0x8fd0ff], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片', 'ic_crystal', 0x9fd8ff]];
     const kept = g.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it));
     const extra = [...g.mods.map(m => ['mod_' + m.mid, '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n])];
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
     let y = 20;
     if (note) { const t = TW(this, 12, y, note[0], w - 24, { size: 8, color: note[1], parent: c }); y += t.h + 8; }
     const cw = Math.floor((w - 24) / 3);
-    cols.forEach(([ic, v, l], i) => { const cx = 12 + (i % 3) * cw + cw / 2, yy = y + (i / 3 | 0) * 50, s2 = this.textures.get(ic).getSourceImage();
+    cols.forEach(([ic, v, l, gf, gt], i) => { const cx = 12 + (i % 3) * cw + cw / 2, yy = y + (i / 3 | 0) * 50, s2 = this.textures.get(ic).getSourceImage();
       c.add(nine(this, 12 + (i % 3) * cw + 2, yy, cw - 4, 46, 'f_slot', 3));
-      img(this, Math.round(cx - s2.width / 2), yy + 4, ic, c); T(this, cx, yy + 22, v, { align: 'center', color: i === 3 ? COL.xp : COL.text, parent: c }); T(this, cx, yy + 35, l, { size: 8, color: COL.dim, align: 'center', parent: c }); });
+      sumIcon(this, cx, yy + 4, ic, gf, gt, c); T(this, cx, yy + 22, v, { align: 'center', color: i === 3 ? COL.xp : COL.text, parent: c }); T(this, cx, yy + 35, l, { size: 8, color: COL.dim, align: 'center', parent: c }); });
     y += Math.ceil(cols.length / 3) * 50 + 6;
     T(this, 12, y, `带回的装备 ${kept.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
     const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q).slice(0, MCOLS * 2), st = TOUCH;
@@ -420,9 +420,9 @@ class MobileUI extends UI {
     if (!lad && r.lost) { const t = TW(this, 12, y, `阵亡：捡到的东西每件 ${SOUL.deathKeep}% 几率保住，这次丢了装备 ${r.lost.items} 件、符文 ${r.lost.mods} 个、碎片 ${r.lost.shards} 个。`, w - 24, { size: 8, color: COL.bad, parent: c }); y += t.h; }
     else if (!win) TW(this, 12, y, '失败不会丢掉已经捡起的东西。地上没捡的会消失。', w - 24, { size: 8, color: COL.faint, parent: c });
     const hw = Math.floor((w - 28) / 2);
-    mkBtn(this, c, 12, h - 74, hw, 28, '装备', () => { this.closeWin(); this.openWin('gear'); }, { size: 8, icon: 'i_w_crossbow', iconX: 8, labelX: 30 });
-    mkBtn(this, c, 16 + hw, h - 74, hw, 28, '铁砧', () => { this.closeWin(); this.openWin('craft'); }, { size: 8, icon: 'i_anvil', iconX: 8, labelX: 30, disabled: !unlocked('craft') });
-    mkBtn(this, c, 12, h - 42, w - 24, 30, lad ? '再打天梯' : `再下行 · ${descentStart()} 层`, () => { this.closeWin(); if (lad) ladderChallenge(S.ladder.unlocked); else startRun(); }, { style: 'w', icon: 'torch', iconX: 10, labelX: 30 });
+    mkBtn(this, c, 12, h - 74, hw, 28, '装备', () => { this.closeWin(); this.openWin('gear'); }, { size: 8, icon: 'i_w_crossbow', gicon: GI.equip, iconX: 8, labelX: 30 });
+    mkBtn(this, c, 16 + hw, h - 74, hw, 28, '铁砧', () => { this.closeWin(); this.openWin('craft'); }, { size: 8, icon: 'i_anvil', gicon: GI.craft, iconX: 8, labelX: 30, disabled: !unlocked('craft'), locked: !unlocked('craft'), whyDisabled: `铁砧：${unlockText('craft')}` });
+    mkBtn(this, c, 12, h - 42, w - 24, 30, lad ? '再打天梯' : `再下行 · ${descentStart()} 层`, () => { this.closeWin(); if (lad) ladderChallenge(S.ladder.unlocked); else startRun(); }, { style: 'w', icon: 'torch', gicon: GI.down, iconX: 10, labelX: 30 });
   }
   /* 地窖入口：竖屏原生 */
   win_depart(c, w, h) {
@@ -511,7 +511,7 @@ class MobileUI extends UI {
     const items = [['ladder', '天梯', 'i_ladder'], ['settings', '设置', null], ['mods', '辅助宝石', 'mod_Chain'], ['stones', '属性石 · 镶嵌与合成', 'shard'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['depart', '地窖入口 · 选层', 'torch']];
     items.forEach(([id, n, ic], i) => {
       const y = 20 + i * 40, open = !MENU.some(m => m.id === id) || unlocked(id);
-      mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, iconX: 10, labelX: 34, disabled: !open || (RUN && id === 'depart'), locked: !open, whyDisabled: open ? '任务进行中' : `${n}：${unlockText(id)}` });
+      mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, gicon: GI[id], iconX: 10, labelX: 34, disabled: !open || (RUN && id === 'depart'), locked: !open, whyDisabled: open ? '任务进行中' : `${n}：${unlockText(id)}` });
     });
     T(this, w / 2, 20 + items.length * 40 + 6, RUN ? '任务进行中 · 装备、天赋等修改立即生效' : '营地', { size: 8, color: COL.dim, align: 'center', parent: c });
   }
@@ -526,7 +526,7 @@ class MobileUI extends UI {
     const c = this.campC; c.removeAll(true); const bw = Math.floor((W - 16) / 3);
     c.add(nine(this, 4, 0, W - 8, 92, 'f_win', 6));
     T(this, W / 2, 5, `营地 · 下一趟第 ${descentStart()} 层`, { size: 8, color: COL.emberHi, align: 'center', parent: c });
-    F.forEach(([id, n, ic], i) => mkBtn(this, c, 8 + (i % 3) * bw, 18 + (i / 3 | 0) * 34, bw - 2, 30, n, () => { if (!ok(id)) return toast(`${n}：${unlockText(id)}`); this.openWin(id); }, { size: 8, icon: ic, iconX: 3, labelX: 21, disabled: !ok(id), locked: !ok(id), whyDisabled: `${n}：${unlockText(id)}` }));
+    F.forEach(([id, n, ic], i) => mkBtn(this, c, 8 + (i % 3) * bw, 18 + (i / 3 | 0) * 34, bw - 2, 30, n, () => { if (!ok(id)) return toast(`${n}：${unlockText(id)}`); this.openWin(id); }, { size: 8, icon: ic, gicon: GI[id], iconX: 3, labelX: 21, disabled: !ok(id), locked: !ok(id), whyDisabled: `${n}：${unlockText(id)}` }));
   }
   /* --- 触屏细节：双指缩放天赋图、符文拖进槽、长按看详情 --- */
   buildTouch() {
