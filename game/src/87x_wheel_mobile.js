@@ -1,7 +1,7 @@
 /* =========================================================
    手机：骸骨轮盘 → 大转盘（Sean：只出一件，所以用转盘不用老虎机）。
    每次里程碑：8 格候选（独特 = 金色），转一次只得 1 件；同标签候选权重更高（第一次 ×5，之后 ×3）。
-   希望符 = 重转；放弃 = 15 词条碎片。桌面版仍是原来的三选一。
+   希望符 = 重转；放弃 = 15 词条碎片。2% 三连：另外再亮两格，三件全给（用户 10-29 定）。桌面版仍是原来的三选一。
    ========================================================= */
 const WHEEL_N = 8;
 function wheelRoll(p) {
@@ -12,12 +12,13 @@ function wheelRoll(p) {
   while (out.length < WHEEL_N) { const cand = pool.filter(x => !out.includes(x)); if (!cand.length) break; out.push(wpick(cand, c => c.w)); }
   for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
   const bonus = p.floor <= REEL.every ? 5 : 3, idx = out.map((_, i) => i);
-  const win = wpick(idx, i => out[i].w * (hit(out[i]) ? bonus : 1));
-  p.wheel = { opts: out.map(x => x.tu ? newUniqueTrig(x.tu, p.ilvl) : newUnique(x.id, p.ilvl)), tag: out.map(hit), win, spun: 0 };
+  const win = wpick(idx, i => out[i].w * (hit(out[i]) ? bonus : 1)), extra = [];
+  if (rnd() < REEL.jackpot) { const rest = idx.filter(i => i !== win); for (let k = 0; k < 2 && rest.length; k++) extra.push(rest.splice(Math.floor(rnd() * rest.length), 1)[0]); } // 三连：再给两格
+  p.wheel = { opts: out.map(x => x.tu ? newUniqueTrig(x.tu, p.ilvl) : newUnique(x.id, p.ilvl)), tag: out.map(hit), win, extra, spun: 0 };
   save(); return p.wheel;
 }
 function wheelCur() { const p = (S.reelsPending || [])[0]; if (!p) return null; if (!p.wheel) wheelRoll(p); return p; }
-function wheelTake() { const p = wheelCur(); if (!p) return null; const it = p.wheel.opts[p.wheel.win]; reelGive(it); S.reelsPending.shift(); refreshStats(); save(); return it; }
+function wheelTake() { const p = wheelCur(); if (!p) return null; const W = p.wheel, it = W.opts[W.win]; reelGive(it); for (const i of W.extra || []) reelGive(W.opts[i]); S.reelsPending.shift(); refreshStats(); save(); return it; }
 function wheelReroll() { const p = wheelCur(); if (!p || !(S.glyphs && S.glyphs.hope > 0)) return false; S.glyphs.hope--; p.wheel = null; wheelCur(); return true; }
 const wheelIcon = (sc, it) => { const k = it.kind === 'trig' ? 'i_star' : 'i_' + iconOf(it); return sc.textures.exists(k) ? k : 'i_star'; };
 const wheelName = it => it.kind === 'trig' ? trigName(it) : itemName(it);
@@ -51,7 +52,7 @@ Object.assign(MobileUI.prototype, {
       g.fillStyle(DK, 1).fillCircle(cx, cy, R + 16); g.fillStyle(0xb8741a, 1).fillCircle(cx, cy, R + 12); g.fillStyle(0xffd23a, 1).fillCircle(cx, cy, R + 9); g.fillStyle(DK, 1).fillCircle(cx, cy, R + 3);
       for (let i = 0; i < n; i++) { const a0 = rot + i * seg; g.fillStyle(segC(i), 1).slice(cx, cy, R, a0, a0 + seg, false).fillPath(); g.fillStyle(0xffffff, 0.16).slice(cx, cy, R * 0.97, a0 + 0.04, a0 + seg - 0.04, false).fillPath(); g.fillStyle(segC(i), 1).slice(cx, cy, R * 0.72, a0, a0 + seg, false).fillPath(); }
       if (sp > 0.15) for (let k = 1; k <= 3; k++) for (let i = 0; i < n; i++) { const a0 = rot + i * seg - k * A.w * 0.012; g.fillStyle(segC(i), 0.22 * sp).slice(cx, cy, R, a0, a0 + seg, false).fillPath(); } // 动态模糊
-      if (A.phase !== 'idle' && A.phase !== 'spin') { const a0 = rot + Wh.win * seg; g.fillStyle(0xffffff, 0.3 + 0.25 * Math.sin(now / 80)).slice(cx, cy, R, a0, a0 + seg, false).fillPath(); }
+      if (A.phase !== 'idle' && A.phase !== 'spin') for (const wi of [Wh.win, ...(Wh.extra || [])]) { const a0 = rot + wi * seg; g.fillStyle(0xffffff, 0.3 + 0.25 * Math.sin(now / 80)).slice(cx, cy, R, a0, a0 + seg, false).fillPath(); }
       for (let i = 0; i < n; i++) { const a0 = rot + i * seg; g.lineStyle(4, DK, 1).lineBetween(cx, cy, cx + Math.cos(a0) * R, cy + Math.sin(a0) * R);
         const am = a0 + seg / 2, ir = R * 0.66; icons[i].setPosition(cx + Math.cos(am) * ir, cy + Math.sin(am) * ir).setAlpha(sp > 0.5 ? 0.55 : 1).setVisible(!(A.pop && i === Wh.win));
         if (stars[i]) stars[i].setPosition(cx + Math.cos(am - seg * 0.3) * R * 0.9, cy + Math.sin(am - seg * 0.3) * R * 0.9 - 8).setAlpha(sp > 0.5 ? 0.3 : 1); }
@@ -100,7 +101,7 @@ Object.assign(MobileUI.prototype, {
     draw(this.time.now);
     const by = cy + R + 34, bw = Math.floor((w - 28) / 2), hope = (S.glyphs && S.glyphs.hope) || 0;
     if (A.phase === 'idle') {
-      T_(this, c, w / 2, by - 10, '8 件独特转出 1 件 · ★ = 和你技能同标签（更容易中）', { size: 8, color: '#d8def5' });
+      T_(this, c, w / 2, by - 10, `8 件独特转出 1 件 · ★ 同标签更容易中 · ${Math.round(REEL.jackpot * 100)}% 三连全拿`, { size: 8, color: '#d8def5' });
       mkBtn(this, c, 14, by + 6, w - 28, 44, '转！', () => { A.phase = 'spin'; A.t0 = this.time.now; A.dur = 4200; A.r0 = A.rot; const tgt = -Math.PI / 2 - (Wh.win + 0.5) * seg + (rnd() - 0.5) * seg * 0.6;
         A.r1 = tgt + Math.ceil((A.r0 - tgt) / PI2) * PI2 + PI2 * 7; A.tick = Math.floor((A.r0 + Math.PI / 2) / seg); sfx('chest'); this.refresh(); }, { style: 'w', size: 12 });
       mkBtn(this, c, 14, by + 58, bw, 30, `放弃（+${REEL.skipShards} 碎片）`, () => { reelSkip(); this.wh = null; toast(`碎片 +${REEL.skipShards}`); if (S.reelsPending.length) this.refresh(); else this.closeWin(); }, { size: 8, style: 'r' });
@@ -111,16 +112,17 @@ Object.assign(MobileUI.prototype, {
       const it = Wh.opts[Wh.win], tw = it.kind === 'trig', nm = wheelName(it);
       const halo = this.add.graphics(); c.add(halo); halo.fillStyle(0xffd23a, 0.25).fillCircle(0, 0, 58); halo.fillStyle(0xfff0a0, 0.3).fillCircle(0, 0, 44); halo.lineStyle(4, 0xffe27a, 1).strokeEllipse(0, -64, 64, 14); halo.lineStyle(2, 0xffffff, 0.8).strokeEllipse(0, -64, 56, 10);
       const k = wheelIconC(this, it, 38); c.add(k); k.setScale(2.5);
-      halo.setPosition(cx, A.hy); k.setPosition(cx, A.hy);
-      this.tweens.add({ targets: [k, halo], y: A.hy - 6, yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut' });
+      halo.setPosition(cx, A.hy); k.setPosition(cx, A.hy); const jx = Wh.extra || [], side = jx.map((i, s) => { const q = wheelIconC(this, Wh.opts[i], 38); c.add(q); q.setScale(1.6).setPosition(cx + (s ? 1 : -1) * 92, A.hy + 10); return q; });
+      this.tweens.add({ targets: [k, halo, ...side], y: '-=6', yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut' });
       const cw = w - 28, x = 14, y = cy + R * 0.42, chh = by - y - 4;
       bub(this, c, x, y, cw, chh, 0x4f5d9a, { r: 12, ring: 0xffa31a });
-      T_(this, c, w / 2, y + 8, nm, { size: textW(nm, 12) <= cw - 16 ? 12 : 8, color: '#ffd23a' });
+      const nmAll = jx.length ? '三连！' + [nm, ...jx.map(i => wheelName(Wh.opts[i]))].join(' · ') : nm;
+      T_(this, c, w / 2, y + 8, nmAll, { size: textW(nmAll, 12) <= cw - 16 ? 12 : 8, color: '#ffd23a' });
       T_(this, c, w / 2, y + 28, `${tw ? '魂龛' : KIND_N[it.kind] || it.kind} · ${it.ilvl} 级 · 独特${Wh.tag[Wh.win] ? '   ★ 同标签' : ''}`, { size: 8, color: '#e0e4f0' });
       const lines = (tw ? [`【${trigKindN(it.c)}】${TCOND[it.c].n}`, trigU(it).d] : ruleLines(it)).flatMap(l => wrapText(l, cw - 24, 8));
       const mx = Math.max(1, Math.floor((chh - 50) / 13)), L = lines.length > mx ? [...lines.slice(0, mx - 1), lines[mx - 1].slice(0, -1) + '…'] : lines;
       T(this, x + 12, y + 44, L.join('\n'), { size: 8, color: '#b6f09a', parent: c });
-      mkBtn(this, c, 14, by + 6, w - 28, 44, '收下', () => { wheelTake(); this.wh = null; toast(`${nm} 进背包了`, '#ffd23a'); if (S.reelsPending.length) this.refresh(); else this.closeWin(); }, { style: 'w', size: 12 });
+      mkBtn(this, c, 14, by + 6, w - 28, 44, jx.length ? '全拿（3 件）' : '收下', () => { wheelTake(); this.wh = null; toast(jx.length ? '三件都进背包了' : `${nm} 进背包了`, '#ffd23a'); if (S.reelsPending.length) this.refresh(); else this.closeWin(); }, { style: 'w', size: 12 });
       mkBtn(this, c, 14, by + 58, bw, 30, `重转（希望符 ${hope}）`, () => { if (wheelReroll()) { this.wh = null; this.refresh(); } else toast('没有希望符'); }, { size: 8, disabled: !hope });
       mkBtn(this, c, 14 + bw, by + 58, bw, 30, `放弃（+${REEL.skipShards} 碎片）`, () => { reelSkip(); this.wh = null; toast(`碎片 +${REEL.skipShards}`); if (S.reelsPending.length) this.refresh(); else this.closeWin(); }, { size: 8, style: 'r' });
     }
