@@ -221,6 +221,7 @@
  "bag": { "_说明": "背包上限；解锁分解祭坛后默认自动分解普通、比当前怪物等级低 magicBelow 以上的魔法魂龛", "cap": 60, "magicBelow": 15 },
  "salvage": [1, 2, 5, 15], "_salvage说明": "分解给碎片：普通 / 魔法 / 稀有 / 独特",
  "craft": { "_说明": "魂龛打造（高级铁砧解锁）：碎片从最多的那种开始扣。reforge 重铸 [基础, 每级稀有度加]；reroll 改一条（每个最多 max 次）；tierUp 升阶（吃掉一个同底子同稀有度的魂龛）；polish 打磨品质 +step（上限 max%）；重随孔数用重铸符", "reforge": [3, 3], "reroll": { "cost": 2, "max": 3 }, "tierUp": { "cost": 5 }, "polish": { "cost": 2, "step": [1, 3], "max": 20 } },
+ "darkMobSpd": 15, "_darkMobSpd说明": "lamp-v2 §5.6：光圈外的普通怪移速 +15%",
  "gemGap": 0.25, "_gemGap说明": "防循环：每颗技能石最快 0.25 秒放一次（spec §6 第 4 条）",
  "basic": {
   "melee": [
@@ -613,6 +614,7 @@
    "more": 25,
    "crit": 5,
    "taken": 20,
+   "rarity": 25,
    "lightMin": 50,
    "lightMax": 180
   }

@@ -250,10 +250,11 @@ function kill(m) {
   else if (m.boss) {
     const BL = PROG.bossLoot; RUN.prepFrom = RUN.gain ? RUN.gain.items.length : 0; // 整备面板列出的宝箱装备从这里开始
     const n = Math.round(BL.items * (1 + LX.iiq / 100));
-    for (let i = 0; i < n; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir, true) }, 1);
+    const emR = TRIGS_RT.lampState === 'ember' ? LST.ember.rarity || 0 : 0; // lamp-v2 §4：残灯时掉落稀有度 +25%
+    for (let i = 0; i < n; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir + emR, true) }, 1);
     const pity = S.lampPity || 0; if (pity) { S.lampPity = 0; for (let i = 0; i < pity; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir, true) }, 1); } /* 余烬：灯火燃尽攒下的补偿 */
     const c = Math.round((RUN.cache || 0) * BL.cacheMul); RUN.cache = 0; // 这一层攒下的装备（倍数补偿撤回 / 灯灭时没打到 Boss 的那部分）
-    for (let i = 0; i < c; i++) dropThing(m, { kind: 'item', item: rollItem(L, LX.iir) }, 1);
+    for (let i = 0; i < c; i++) dropThing(m, { kind: 'item', item: rollItem(L, LX.iir + emR) }, 1);
     fx({ t: 'chest', x: m.x, y: m.y, n: n + c });
     for (let i = 0; i < BL.shards; i++) shardDrop();
     for (let i = 0; i < BL.runes; i++) dropRune(m, L + BL.runeIlvlBonus);
@@ -744,7 +745,7 @@ function logic(dt) {
     let want = m.d.ai === 'ranged' ? (d > m.d.rng * 0.8 ? 1 : d < m.d.rng * 0.5 ? -1 : 0) : 1;
     if (m.boss && m.d.pat === 'ring' && m.t % PAT.ring.chargeEvery > PAT.ring.chargeFrom) want = PAT.ring.chargeSpeed; // 骸骨领主冲锋
     if (m.boss && m.d.pat === 'blink') want = d < PAT.blink.keepAway ? PAT.blink.awaySpeed : PAT.blink.nearSpeed;
-    const ck = chillK(m), sl = (m.slowT > 0 ? 1 - RL.timeStop.slow / 100 : 1) * ck; m.vx = dx / d * m.spd * want * sl; m.vy = dy / d * m.spd * want * sl;
+    const ck = chillK(m), sl = (m.slowT > 0 ? 1 - RL.timeStop.slow / 100 : 1) * ck; const dk = !m.elite && !m.boss && d > lampLightR() ? 1 + (TRG.darkMobSpd || 0) / 100 : 1; m.vx = dx / d * m.spd * want * sl * dk; m.vy = dy / d * m.spd * want * sl * dk; // lamp-v2 §5.6：光圈外的普通怪更快
     m.x += (m.vx + m.kx) * dt; m.y += (m.vy + m.ky) * dt;
     const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd;
     m.atkCd -= dt * ck; m.cd -= dt * ck; // 冰缓也降攻速
@@ -771,7 +772,7 @@ function logic(dt) {
     dp.age += dt;
     if (dp.z > 0 || dp.vz > 0) { dp.vz -= 260 * dt; dp.z += dp.vz * dt; dp.x += dp.vx * dt; dp.y += dp.vy * dt; if (dp.z <= 0) { dp.z = 0; dp.vz = Math.abs(dp.vz) > 30 ? -dp.vz * 0.35 : 0; dp.vx *= .5; dp.vy *= .5; } }
     const dx = player.x - dp.x, dy = player.y - dp.y, dl = Math.hypot(dx, dy);
-    if (dp.age > 0.5 && (dl < P.pickup || dp.mag || (dp.kind === 'orb' && dl < 60))) { dp.mag = true; const sp = 200 * dt; if (dl < 5) { collect(dp); dp.done = true; } else { dp.x += dx / dl * Math.min(sp, dl); dp.y += dy / dl * Math.min(sp, dl); } }
+    if (dp.age > 0.5 && (dl < P.pickup * (TRIGS_RT.lampState === 'bright' ? 1 + LST.bright.pickup / 100 : 1) || dp.mag || (dp.kind === 'orb' && dl < 60))) { dp.mag = true; const sp = 200 * dt; if (dl < 5) { collect(dp); dp.done = true; } else { dp.x += dx / dl * Math.min(sp, dl); dp.y += dy / dl * Math.min(sp, dl); } }
   }
   drops = drops.filter(d => !d.done);
 }
