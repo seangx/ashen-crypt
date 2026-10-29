@@ -1,5 +1,7 @@
 # 手机版验收清单
 
+状态：**大部分已实现**（2026-10-29 对照代码核对）。墓图台已下线，营地现在是 5 个设施；“视野 跟随 / 全景”已删；战斗 HUD 后来改成下移进导航区（fee9c80）。拆解在装备页仍是“3 秒内连点两次”确认，没改成弹窗。
+
 ## 打开方式
 - 构建：`cd game && python3 tools/build.py`，产物是 `game/ashen-crypt-mobile.html`（桌面版：`game/ashen-crypt.html`）。
 - 用手机浏览器打开，或在桌面 Chrome 的 DevTools 设备模式下以 390x844 / 360x780 打开。

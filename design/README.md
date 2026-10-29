@@ -49,6 +49,7 @@
 **待定（要拍板）**：倍率、触发系数和防御常数等模拟定（sim / bis 还不支持魂龛搭配）；生命球回不回灯火；残灯受伤 +20% 会不会让后期大量阵亡；轮盘三连头奖、重转用什么；批量拆解产出公式。
 
 ## 其他
+- 手机专项文档：[mobile-acceptance.md](mobile-acceptance.md)（验收清单，大部分已实现）、[review-open-design.md](review-open-design.md)（界面审查，部分暂缓）、[spec-gem-rune-ux.md](spec-gem-rune-ux.md)（宝石页交互，已实现）。
 - `mockups-v5/`：手机竖屏界面的定稿效果图（`index.html?p=…`）。
 - `tables/现有内容总表.xlsx`：**现在代码里**的装备、技能石、辅助符文、词条、独特、誓约、铸符，用来对照。重新生成：`cd game && python3 tools/build.py`，然后 `node design/tables/dump.js`（输出 content.json），再 `python3 design/tables/mkxlsx.py`。
 - 模拟工具在 `game/tools/`（sim.js、bis.js），不在 design 下。

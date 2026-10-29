@@ -634,7 +634,7 @@ class MobileUI extends UI {
 }
 
 // 手机：每次开打都先走过场（自动循环、天梯、出发按钮都经过 startRun）
-{ const raw = startRun; startRun = function (L) { if (G.ui && G.ui.loadGo && !G.ui.loadC) return G.ui.loadGo(() => raw(L)); if (G.ui && G.ui.loadC) return; return raw(L); }; }
+{ const raw = startRun; startRun = function (L) { if (!G.fx) return raw(L); /* 无头模拟（sim.js）：不播过场，否则同步循环里回调永远等不到 */ if (G.ui && G.ui.loadGo && !G.ui.loadC) return G.ui.loadGo(() => raw(L)); if (G.ui && G.ui.loadC) return; return raw(L); }; }
 
 // 武器基础回灯（手机版显示）：武器详情加「每击回灯 X」，对比加回灯变化
 {
