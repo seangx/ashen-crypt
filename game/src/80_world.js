@@ -198,7 +198,7 @@ class World extends Phaser.Scene {
     const bar = this.barG; bar.clear();
     for (const m of mobs) this.syncMob(m, bar, t);
     for (const dp of drops) this.syncDrop(dp, t);
-    for (const [ent, o] of this.spr) if (o.seen !== this.frame) { o.img.destroy(); o.sh && o.sh.destroy(); o.cs && o.cs.destroy(); this.spr.delete(ent); }
+    for (const [ent, o] of this.spr) if (o.seen !== this.frame) { o.img.destroy(); o.sh && o.sh.destroy(); o.cs && o.cs.destroy(); o.lab && o.lab.destroy(); this.spr.delete(ent); }
     // 掉落光柱
     const lg = this.lootG; lg.clear();
     for (const dp of drops) if ((dp.kind === 'item' && dp.item.rar > 0) || dp.kind === 'map') this.beam(lg, dp, t);
@@ -371,6 +371,7 @@ class World extends Phaser.Scene {
     else o.img.clearTint();
     o.sh.setPosition(sx, sy + 1).setScale(m.boss ? 2 : 1, 1);
     if (frz) { const hw = (w >> 1) + 1; bar.fillStyle(0xe8fbff, 0.9); for (let i = -hw; i <= hw; i += 2) bar.fillRect(Math.round(sx + i), Math.round(sy - ((i * 7 + 13) % 3)), 1, 2); bar.fillStyle(0x9fe3ff, 0.7).fillRect(Math.round(sx - hw), Math.round(sy), hw * 2 + 1, 1); } // 冻结：脚下一圈冰凌
+    if (m.ax && m.ax.length && !m.dead) { if (!o.lab) o.lab = T(this, 0, 0, `${eliteName(m)} ${m.d.n || ''}`, { size: 8, color: EAF_BY[m.ax[0]].c, align: 'center' }).setDepth(71); o.lab.setPosition(Math.round(sx - o.lab.width / 2), Math.round(sy - h - 18)).setVisible(!dark); } // 精英名字前面显示词缀（defense-v3 §8.3）
     if (m.ax && m.ax.length) { const n = m.ax.length, bx = Math.round(sx - n * 2), by = Math.round(sy - h - 8); for (let k = 0; k < n; k++) { bar.fillStyle(0x120c18, 1).fillRect(bx + k * 4 - 1, by - 1, 4, 4); bar.fillStyle(parseInt(EAF_BY[m.ax[k]].c.slice(1), 16), 1).fillRect(bx + k * 4, by, 2, 2); } } // 精英词缀：头顶一排彩点
     if (m.hp < m.max && !m.boss) {
       const bw = m.elite ? 14 : 10; const bx = Math.round(sx - (bw >> 1)), by = Math.round(sy - h - 3);
