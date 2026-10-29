@@ -42,7 +42,7 @@ function startRun(L) {
 function nextFloor() {
   RUN.base++; RUN.L++; RUN.bossD = bossFor(RUN.L); RUN.descent.minHp = 1; RUN.prog = 0; RUN.boss = null; RUN.next = 0;
   RUN.need = Math.round(killNeed(RUN.base) * (1 + (RUN.mob.need || 0) / 100)); RUN.spawnT = PROG.run.spawnFirst;
-  mobs = []; projs = []; zones = []; drops = []; meteors = [];
+  mobs = []; projs = []; zones = []; drops = []; meteors = []; spawnOil();
   if (G.ui) G.ui.banner(`第 ${RUN.base} 层`, COL.emberHi);
 }
 // 阵亡：这一趟拾取的装备、符文、碎片每件按 soul.deathKeep 的几率保留
@@ -53,11 +53,13 @@ function deathLoss(r) {
   for (const k in g.shardK) for (let i = 0; i < g.shardK[k]; i++) if (!keep() && (S.shards[k] || 0) > 0) { S.shards[k]--; lost.shards++; }
   r.lost = lost;
 }
+// 灯油罐（lamp-v2 §5.2）：每层散落几个，走过去打碎回灯火
+function spawnOil() { const O = TRG.oil; if (!O || !RUN) return; for (let i = 0, n = ri(...O.n); i < n; i++) { let x, y, k = 0; do { x = rf(F.x0 + 20, F.x1 - 20); y = rf(F.y0 + 14, F.y1 - 10); } while (++k < 10 && Math.hypot(x - player.x, y - player.y) < 60); drops.push({ kind: 'oil', x, y, z: 0, vz: 0, vx: 0, vy: 0, age: 1 }); } }
 function arenaReset() {
   mobs = []; projs = []; drops = []; zones = []; meteors = [];
   player.x = 240; player.y = 150; player.vx = player.vy = 0; player.chill = 0; player.chillT = 0; player.wcd = Array(14).fill(0); trigReset(); camSnap(); if (typeof AUTO !== 'undefined') AUTO.anchor = null;
   player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.swing = Array(14).fill(0); player.devilT = 0; player.soul = STATS.soulMax; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
-  resetPlayer();
+  resetPlayer(); spawnOil();
   sfx('start');
 }
 const fieldActive = () => !MOBILE && RUN && (mouse.on || mouse.touch) && !(G.ui && G.ui.winId) && mouse.y > TOP_H && mouse.y < BOT_Y;
@@ -277,6 +279,7 @@ function dropThing(m, o, burst) { const a = burst ? rf(0, Math.PI * 2) : 0, sp =
 function collect(dp) {
   const g = RUN && RUN.gain;
   if (dp.kind === 'item') { addItem(dp.item); g && g.items.push(dp.item); if (G.ui) G.ui.feedItem(dp.item); }
+  else if (dp.kind === 'oil') { player.soul = Math.min(STATS.soulMax, player.soul + STATS.soulMax * TRG.oil.pct / 100); fx({ t: 'text', x: player.x, y: player.y - 20, s: '+灯火', c: '#ffd36a' }); fx({ t: 'ring', x: dp.x, y: dp.y, r: 10, el: 'exp' }); }
   else if (dp.kind === 'orb') { if (!healBlocked()) player.life = Math.min(STATS.life, player.life + STATS.life * 0.2); fx({ t: 'text', x: player.x, y: player.y - 20, s: '+生命', c: '#ff8a7a' }); }
   else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; unlockEvent('gainShard'); if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
   else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; unlockEvent('gainGlyph'); if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
