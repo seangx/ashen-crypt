@@ -116,7 +116,7 @@ Object.assign(MobileUI.prototype, {
           T(this, x + ss - 1, sy + ss - 8, String(it.lvl || 1), { size: 'num', align: 'right', parent: c, color: '#ffe066' });
         }
         zoneOn(this, c, x - 3, sy - 3, ss + 6, ss + 6, () => {
-          if (gemPick) { if (trigCanSock(T0, k, gemPick)) { socketInto(T0, k, gemPick); gemPick = null; } else toast(isSkill(gemPick) && skills.length >= trigMaxSkills(T0) ? `最多 ${trigMaxSkills(T0)} 颗技能石` : isSkill(gemPick) && T0.c === 'always' ? '常驻只能插瘟疫光环、游雷、旋风斩' : '这里放不下'); }
+          if (gemPick) { if (trigCanSock(T0, k, gemPick)) { socketInto(T0, k, gemPick); gemPick = null; } else toast(isSkill(gemPick) && skills.length >= trigMaxSkills(T0) ? `最多 ${trigMaxSkills(T0)} 颗技能石` : isSkill(gemPick) && T0.c === 'always' ? '常驻只能插瘟疫光环、游雷、旋风斩（戴永冬法阵时还有新星、霜环）' : '这里放不下'); }
           else if (it) { this.gemDetail(it, { T0, k }); return; } else toast('点下面的宝石看详情再装备'); this.refresh();
         });
       }
@@ -154,9 +154,9 @@ Object.assign(MobileUI.prototype, {
     if (unlocked('salvage')) mkBtn(this, c, w - 104, y - 8, 96, 20, `自动分解：${S.trigAuto === false ? '关' : '开'}`, () => { S.trigAuto = S.trigAuto === false; if (trigAutoOn()) { const r = trigBagTidy(S.maxDepth || 1); if (r.k) toast(`自动分解 ${r.k} 个，碎片 +${r.n}`); } save(); this.refresh(); }, { size: 8, style: S.trigAuto === false ? 'n' : 'w' });
     y += 18;
     const s = 40, cols = Math.floor((w - 12) / (s + 6)), gx = Math.round((w - cols * (s + 6)) / 2);
-    bag.slice(0, cols * 3).forEach((T0, i) => { const x = gx + (i % cols) * (s + 6), yy = y + Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
+    const ents = trigBagStacks(bag); ents.slice(0, cols * 3).forEach(({ T: T0, n: cnt }, i) => { const x = gx + (i % cols) * (s + 6), yy = y + Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (cnt > 1) T(this, x + s - 2, yy + s - 10, '×' + cnt, { size: 8, align: 'right', parent: c, color: '#ffe066' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
     if (!bag.length) T_(this, c, w / 2, y + 20, '还没有别的魂龛 · 打怪会掉', { size: 8, color: '#b9c2ea' });
-    y += Math.max(1, Math.ceil(Math.min(bag.length, cols * 3) / cols)) * (s + 14) + 10;
+    y += Math.max(1, Math.ceil(Math.min(ents.length, cols * 3) / cols)) * (s + 14) + 10;
     const N = tbagSel && bag.includes(tbagSel) ? tbagSel : null; if (!N) { mkBtn(this, c, w / 2 - 40, h - 40, 80, 28, '返回', () => this.openWin('trig'), {}); if (cur) mkBtn(this, c, 8, h - 40, 70, 28, '卸下', () => { unequipTrig(trigSel); this.openWin('trig'); }, { size: 8 }); return; }
     // 对比：临时把当前的宝石按顺序搬进新触发器算秒伤
     const before = STATS.dps, keep = S.trigs[trigSel]; const tmp = { ...N, socks: Array(N.sock).fill(null) };

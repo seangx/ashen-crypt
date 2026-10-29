@@ -25,9 +25,10 @@ function newUniqueTrig(k, ilvl) { const u = TRIG_U[k]; const T = newTrig(u.c, { 
 const trigSockCap = T => TRG.sockCap[Math.min(T.rar, 2)];
 function trigCanAddSock(T) { return T && !T.u && T.rar < 3 && T.sock < trigSockCap(T); }
 function trigAddSock(T) { if (!trigCanAddSock(T)) return '这个魂龛不能再开孔'; if (!(S.glyphs && S.glyphs.socket > 0)) return '没有开孔符（天梯宝箱掉）'; S.glyphs.socket--; T.sock++; T.socks.push(null); refreshStats(); save(); return `开孔成功：${T.sock} 孔`; }
+function rollSock(rar, ilvl) { const sw = TRG.sockW[Math.min(rar, TRG.sockW.length - 1)], ws = sw.slice(1); if (rar >= 2 && trigTier(ilvl || 1) >= 4) ws[ws.length - 1] *= TRG.sockT4Mul || 1; return sw[0] + wpick(ws.map((w, i) => i), i => ws[i]); }
 function newTrig(c, o = {}) {
-  const rar = o.rar ?? 0, sw = TRG.sockW[Math.min(rar, TRG.sockW.length - 1)];
-  const sock = o.sock || sw[0] + wpick(sw.slice(1).map((w, i) => i), i => sw[i + 1]);
+  const rar = o.rar ?? 0;
+  const sock = o.sock || rollSock(rar, o.ilvl);
   return { id: S.nextId++, kind: 'trig', c, rar, ilvl: o.ilvl || 1, q: o.q || 0, sock, socks: Array(sock).fill(null), affs: o.affs || {}, isNew: !!o.isNew };
 }
 const trigAffPool = (c, rar) => { const M = TCOND[c].mode; return Object.keys(TAF).filter(k => (!TAF[k].rare || rar >= 2) && !(k === 'cap' && M !== 'charge') && !(k === 'gap' && M !== 'timer') && !(k === 'gain' && M !== 'charge') && !(k === 'lowThr' && c !== 'low')); };
@@ -57,11 +58,13 @@ const gearTrigSlot = () => Object.values(S.equip).some(it => it && (it.trigSlot 
 const lvTrigSlots = () => 1 + TRG.slotLv.filter(l => S.level >= l).length;
 const trigSlots = () => Math.min(TRG.maxSlots, lvTrigSlots() + gearTrigSlot());
 const trigSlotLock = i => i < lvTrigSlots() ? null : i === lvTrigSlots() && gearTrigSlot() ? null : i < 3 ? `Lv${TRG.slotLv[i - 1]}` : 'Lv35+装';
+// 常驻能插的技能石：瘟疫光环、游雷、旋风斩；戴着永冬法阵时新星、霜环也能常驻（每 0.5 秒脉冲，uniques-audit）
+const AUTO_NOVA = ['GemNova', 'GemFrostNova'], alwaysOk = b => TRG.alwaysOnly.includes(b) || (AUTO_NOVA.includes(b) && !!(typeof STATS !== 'undefined' && STATS.flag && STATS.flag.autoNova));
 // 插孔规则：常驻只能插常驻类；圣盾掷要盾；技能石数上限
 function trigCanSock(T, k, x) {
   if (!T || k >= T.sock) return false; if (!x) return true;
   if (isSkill(x)) {
-    if (T.c === 'always' && !TRG.alwaysOnly.includes(x.b)) return false;
+    if (T.c === 'always' && !alwaysOk(x.b)) return false;
     const n = T.socks.filter((s, i) => i !== k && isSkill(s)).length; return n < trigMaxSkills(T);
   }
   return isSupport(x) && !MOD_BY[x.mid].field;
@@ -85,6 +88,8 @@ function swapTrigs(a, b) { const t = S.trigs[a]; S.trigs[a] = S.trigs[b]; S.trig
 const trigYield = T => TRG.salvage[T.u ? 3 : Math.min(2, T.rar)];
 function salvageTrig(T, quiet) { if (!S.trigBag.includes(T)) return 0; for (const g of T.socks) if (g) { if (isSkill(g)) S.stash.unshift(g); else S.mods.unshift(g); } S.trigBag = S.trigBag.filter(x => x !== T); const n = trigYield(T); for (let i = 0; i < n; i++) { const k = rollShard(Math.max(1, S.maxDepth || 1)); S.shards[k] = (S.shards[k] || 0) + 1; } if (!quiet) save(); return n; }
 // 捡到魂龛后整理背包：自动分解普通、比当前低 15 级以上的魔法；超过 60 个时从最差的开始分解（新捡的、独特不动）
+// 背包显示：普通魂龛同底子、同阶、同孔数叠成一格（spec §10）
+function trigBagStacks(bag) { const out = [], by = {}; for (const T of bag) { if (T.rar === 0 && !T.u) { const k = `${T.c}|${trigTier(T.ilvl)}|${T.sock}`; if (by[k]) { by[k].n++; continue; } out.push(by[k] = { T, n: 1 }); } else out.push({ T, n: 1 }); } return out; }
 const trigAutoOn = () => S.trigAuto !== false && typeof unlocked === 'function' && unlocked('salvage');
 function trigBagTidy(L) {
   const B = TRG.bag; let n = 0, k = 0;
@@ -119,7 +124,7 @@ function trigCraft(T, op, arg) {
   else if (op === 'reroll') { const ks = Object.keys(T.affs), k = ks.includes(arg) ? arg : pick(ks), pool = trigAffPool(T.c, T.rar).filter(x => !(x in T.affs)); delete T.affs[k]; const nk = pool.length ? pick(pool) : k; T.affs[nk] = trigAffRoll(nk, T.ilvl); T.rr = (T.rr || 0) + 1; msg = `改一条：${trigAffText(nk, T.affs[nk])}`; }
   else if (op === 'tierUp') { const mate = trigTierUpMates(T).includes(arg) ? arg : trigTierUpMates(T).sort((a, b) => a.ilvl - b.ilvl)[0]; for (const g of mate.socks) if (g) { if (isSkill(g)) S.stash.unshift(g); else S.mods.unshift(g); } S.trigBag = S.trigBag.filter(x => x !== mate); T.ilvl = TRG.tierIlvl[trigTier(T.ilvl)]; for (const k in T.affs) T.affs[k] = trigAffRoll(k, T.ilvl); msg = `升阶：T${trigTier(T.ilvl)}`; }
   else if (op === 'polish') { T.q = Math.min(TCR.polish.max, (T.q || 0) + ri(...TCR.polish.step)); msg = `打磨：品质 ${T.q}%`; }
-  else if (op === 'resock') { const sw = TRG.sockW[Math.min(T.rar, 2)], n = sw[0] + wpick(sw.slice(1).map((w, i) => i), i => sw[i + 1]); for (let k = n; k < T.sock; k++) if (T.socks[k]) unsocketAt(T, k, true); T.socks = T.socks.slice(0, n); while (T.socks.length < n) T.socks.push(null); T.sock = n; msg = `重随孔数：${n} 孔`; }
+  else if (op === 'resock') { const n = rollSock(T.rar, T.ilvl); for (let k = n; k < T.sock; k++) if (T.socks[k]) unsocketAt(T, k, true); T.socks = T.socks.slice(0, n); while (T.socks.length < n) T.socks.push(null); T.sock = n; msg = `重随孔数：${n} 孔`; }
   refreshStats(); save(); return msg;
 }
 
@@ -145,6 +150,7 @@ function trigStats(P, eq) {
     if (!T) return; const C = TCOND[T.c], fx = trigFx(T), A = T.affs || {}, on = i < n, cast = C.kind === 'cast';
     const skills = T.socks.filter(isSkill), sups = T.socks.filter(isSupport), FT = P.flag || {}, costMul = (FT.rapid ? 1.25 : 1) * (FT.chainCharge && !cast ? 1.3 : 1) * (FT.auraPower && T.c === 'always' ? 1.5 : 1) * sups.reduce((m, s) => { const c = TRG.supCost[s.mid] || TRG.defCost; return m * (eq.wl && eq.wl.u === 'Slotfather' && c > 1 ? 1 + (c - 1) / 2 : c); }, 1) /* 符文教父：辅助石消耗倍率超过 1 的部分减半 */ * (1 - ((A.costLess || 0) + (P.raw.costLess || 0) + ((IMPL[eq.wl && eq.wl.b] && implFx(eq.wl).costLess) || 0)) / 100);
     const ws = []; if (on) skills.forEach((g, j) => {
+      if (T.c === 'always' && !TRG.alwaysOnly.includes(g.b) && !(AUTO_NOVA.includes(g.b) && P.flag && P.flag.autoNova)) return; // 永冬法阵摘了：常驻里的新星不放
       const sl = A.supLv ? sups.map(m => ({ ...m, lvl: Math.min(MOD_MAX, (m.lvl || 1) + 1) })) : sups;
       const g2 = { ...g, mods: sl.filter(m => supportFits(m, g)), sock: sups.length }, sh = GEM_BY[g.b].form === 'shieldThrow'; // 圣盾掷：盾变成虚拟武器，没拿盾就不放
       const sk = sh ? null : skillItem({ ...eq, gem: g2 }), W = sh ? shieldWeapon(eq.shield, P, g2) : sk && weaponStats(sk, P); if (!W) return;

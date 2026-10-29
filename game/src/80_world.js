@@ -358,8 +358,10 @@ class World extends Phaser.Scene {
     const rise = m.rise > 0 ? Math.round(h * clamp(m.rise / 0.45, 0, 1)) : 0;
     o.img.setPosition(sx, sy + 1 + rise).setDepth(ySort(sy)).setFlipX(m.face < 0);
     if (rise) o.img.setCrop(0, 0, w, h - rise); else if (o.img.isCropped) o.img.setCrop();
-    // 异常着色
+    // 异常着色；光圈外的普通怪压成暗剪影（lamp-v2 §3：只看得见轮廓，眼睛那点红光在剪影上还能看出来）
+    const dark = RUN && !m.boss && !m.elite && dist2(m, player) > lampLightR() ** 2;
     if (m.fl > 0) o.img.clearTint();
+    else if (dark) o.img.setTint(0x2c2840);
     else if (frz) o.img.clearTint();
     else if (m.chill > 0) o.img.setTint(m.chill >= 6 ? 0x8fd0ff : 0xc4ecff); // 冰缓：越深越蓝
     else if (m.shock && (t * 8 | 0) % 2) o.img.setTint(0xa8dcff);
