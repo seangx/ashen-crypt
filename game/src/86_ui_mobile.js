@@ -253,7 +253,7 @@ class MobileUI extends UI {
     mkBtn(this, c, w - 90, 91, 38, 28, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
     mkBtn(this, c, w - 50, 91, 40, 28, '批量', () => this.openBulk(), { size: 8, style: 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
-    stashTab = 0; { const gok = unlocked('gems') || nGem; mkBtn(this, c, 40, 92, 84, 26, `技能宝石 ${nGem} ›`, () => { trigSel = 0; this.openWin('trig'); }, { size: 8, icon: 'i_sg_GemNova', disabled: !gok, locked: !gok, whyDisabled: `技能宝石：${unlockText('gems')}` }); } // 技能宝石移到「宝石」页
+    stashTab = 0; // 技能石都在魂龛页管理，装备页不再放入口（用户 10-29）
     if (stashTab === 1) return this.gemPane(c, w, h, 122); // 技能石页：堆叠 + 筛选（87_gemrune_mobile.js）
     const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2);
     for (let i = 0; i < STASH_CAP; i++) {
