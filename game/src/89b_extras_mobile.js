@@ -53,7 +53,10 @@ const QUAL_TINT = ['#8a8f9e', '#9aa0ae', '#c9cfdc', '#7cd06a', '#5ee05a', '#4fb8
     _uh.call(this);
     const P = STATS, hf = clamp(player.life / P.life, 0, 1), df = P.shield > 0 ? clamp(player.shield / P.shield, 0, 1) : 0, sf = clamp(player.soul / P.soulMax, 0, 1);
     const lad = RUN && RUN.mode === 'ladder', blink = RUN && !lad && sf < SOUL.lowWarn && (G.time * 4 | 0) % 2;
-    const bt = !RUN ? '' : lad ? `+${r1(P.soulRegen)}/秒` : `−${r1((SOUL.burn + lampBurnL(RUN.base)) * P.burnMul)}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
+    // lamp-v2 §5.0：显示实际净消耗（燃烧 + 技能消耗 − 回灯，3 秒平滑）；不到 1 分钟灯灭时改成倒计时
+    if (RUN) { const now = G.time, ls = this.lampS; if (!ls || ls.run !== RUN) this.lampS = { run: RUN, t: now, v: player.soul, net: null }; else if (now - ls.t >= 0.25) { const d = (player.soul - ls.v) / (now - ls.t), k = Math.min(1, (now - ls.t) / 3); ls.net = ls.net == null ? d : ls.net + (d - ls.net) * k; ls.t = now; ls.v = player.soul; } }
+    const net = RUN && this.lampS && this.lampS.net != null ? this.lampS.net : null, left = net != null && net < -0.05 ? player.soul / -net : Infinity;
+    const bt = !RUN ? '' : net == null ? `−${r1((SOUL.burn + lampBurnL(RUN.base)) * P.burnMul)}/秒` : left < 60 ? `剩${Math.ceil(left)}秒` : `${net >= 0 ? '+' : '−'}${r1(Math.abs(net))}/秒`; if (this.burnT.text !== bt) this.burnT.setText(bt);
     const o = this.hpOrb, key = [Math.round(hf * 46), Math.round(df * 40), Math.round(sf * 46), player.soul <= 0, blink].join(); if (o.splitKey === key) return; o.splitKey = key;
     const g = o.g, { cx, cy, r } = ORB, ri = r - 2.5; g.clear();
     const liquid = (f, side, liq, hi, dark) => { const top = Math.round(cy + ri - f * 2 * ri);
