@@ -311,6 +311,15 @@ function itemValue(it) {
 const armorDr = (A, hit) => A > 0 ? Math.min(MECH.armorCap / 100, A / (A + MECH.armorK * Math.max(1e-9, hit))) : 0;
 // 这一层普通怪一下的平均伤害（怪海按 horde.dmg 缩）
 function typicalHit(L) { const ms = Object.values(MOBS); return ms.reduce((x, m) => x + m.dmg, 0) / ms.length * monDmg(L) * PROG.run.horde.dmg; }
+/* defense-v3 §4 面板：坚韧 = (生命 + 护盾) ÷ [(1 − 护甲减伤)(1 − 平均抗性减伤)(1 − 平均条件减伤)]，
+   抗性按这一层出现的怪物元素加权、条件减伤按近战 / 远程怪的比例加权；恢复 = 每秒回复 + 护盾回复 + 预计命中回复 + 预计击杀回复 */
+function defMix(L) { const ms = Object.entries(MOBS).filter(([k, m]) => !k.startsWith('_') && m.hp && L >= (m.minL || 1)), W = ms.reduce((s, [, m]) => s + (m.w || 1), 0) || 1, el = {}; let ranged = 0;
+  for (const [, m] of ms) { el[m.el || 'kin'] = (el[m.el || 'kin'] || 0) + (m.w || 1) / W; if (m.ai === 'ranged') ranged += (m.w || 1) / W; } return { el, ranged }; }
+function toughness(n, L = monLv()) {
+  const X = defMix(L), res = Object.entries(X.el).reduce((s, [e, w]) => s + w * resDrL((n.res || {})[e] || 0, L), 0), cond = (1 - X.ranged) * (n.meleeDR || 0) / 100 + X.ranged * (n.rangedDR || 0) / 100;
+  return (n.life + (n.shield || 0)) / Math.max(0.02, (1 - armorDrL(n.armor || 0, L)) * (1 - res) * (1 - cond));
+}
+function recovery(n) { const W0 = n.weapons && n.weapons[0], hit = (n.weapons || []).reduce((s, W) => s + (W && W.armorOnHit ? W.armorOnHit * (W.aps || 1) : 0), 0); return (n.lifeRegen || 0) + (n.shieldRegen || 0) + hit + (n.lifeOnKill || 0) * 1.2; } // 击杀按每秒 1.2 只估
 // 有效生命（换装估值、模拟共用）：(生命 + 护盾 + 护盾每秒回复 × 5) ÷ (1 − 护甲减伤 − 额外减伤)
 function defEhp(n, L, extraDr = 0) {
   const keep = (1 - armorDr(n.armor, typicalHit(L))) * (1 - extraDr);

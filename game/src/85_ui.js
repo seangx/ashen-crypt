@@ -166,7 +166,7 @@ function compareLines(it) {
   const out = [];
   const d = (a, b, n) => { const p = a ? (b / a - 1) * 100 : b > 0 ? 100 : 0; if (Math.abs(b - a) < 0.5) return null; return { t: `${n} ${fmt(a)} → ${fmt(b)}（${p >= 0 ? '+' : ''}${p.toFixed(0)}%）`, c: b >= a ? COL.good : COL.bad }; };
   out.push(d(base.dps, next.dps, `装备到${SLOTS.find(s => s.id === slot).n}后秒伤`) || { t: `装备到${SLOTS.find(s => s.id === slot).n}：秒伤不变`, c: COL.dim });
-  for (const [k, n] of [['armor', '护甲'], ['shield', '护盾']]) { const l = d(base[k], next[k], n); if (l) out.push(l); }
+  for (const [a, b, n] of [[toughness(base), toughness(next), '坚韧'], [recovery(base), recovery(next), '恢复']]) { const l = d(a, b, n); if (l) out.push(l); } // defense-v3 §4：对比秒伤 / 坚韧 / 恢复
   return out;
 }
 function modTip(m, host) {

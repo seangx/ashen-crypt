@@ -362,6 +362,7 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
   if (STATS.flag.vortexTreads && vortexState() === 1) d *= 1 - UQX.vortex.takenFull / 100; // 旋涡之履
   if (player.guardT > 0) d *= 1 - MECH.meleeGuardLess;
   d *= 1 - Math.max(0, ...whirlWs().map(([W, i]) => Math.min(WH.drCap, WH.drPerStack * player.spin[i].n))) / 100; // 旋身：每层当前旋转减伤，有上限
+  hurtLog(d, el, src); // defense-v3 §8.4 受伤来源
   if (RUN.gd) RUN.gd[player.closeN > 0 ? 'hitC' : 'hitF'] += d / STATS.life; /* 模拟统计：贴身 / 不贴身时的承伤（按生命上限的比例） */
   if (STATS.flag.lampBlood && d > 0 && player.soul > 0) { const pay = Math.min(d * 0.3, player.soul * 4); player.soul -= pay / 4; d -= pay; } // tree-v3 以灯代血
   if (player.shield > 0) { const k = eliteShieldMul(src), a = Math.min(player.shield, d * k); player.shield -= a; d -= a / k; fx({ t: 'shield', x: player.x, y: player.y }); } // 破盾：打护盾 ×2
@@ -787,7 +788,7 @@ function slamStep(m, dt, bl) {
     m.slam.t -= dt; if (m.slam.t > 0) return;
     const s = m.slam; m.slam = null;
     fx({ t: 'slam', x: s.x, y: s.y, r: s.r });
-    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m), { melee: 1, elite: m.elite || m.boss, ax: m.ax }); }
+    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m), { melee: 1, slam: 1, elite: m.elite || m.boss, ax: m.ax }); }
     return;
   }
   m.slamCd = (m.slamCd ?? C.every * rf(0.5, 1)) - dt;
@@ -795,7 +796,7 @@ function slamStep(m, dt, bl) {
 }
 // Boss 招式：每个 Boss 一套
 function bossAct(m, aim, bl) {
-  const shot = (a, v, k) => projs.push({ enemy: true, x: m.x, y: m.y - 8, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: PROG.monsterAttack.shotLife, dmg: m.dmg * k * bl, ck: ctrlK(m), el: m.el });
+  const shot = (a, v, k) => projs.push({ enemy: true, boss: 1, x: m.x, y: m.y - 8, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: PROG.monsterAttack.shotLife, dmg: m.dmg * k * bl, ck: ctrlK(m), el: m.el });
   const B = PAT[m.d.pat];
   switch (m.d.pat) {
     case 'ring': m.cd = B.cd; for (let k = 0; k < B.shots; k++) shot(k / B.shots * Math.PI * 2 + m.t, B.shotSpd, B.shotDmg); break;
@@ -894,7 +895,7 @@ function stepProjs(dt) {
   for (const p of projs) {
     if (p.enemy) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
-      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el, p.ck || 1, { ranged: 1, elite: p.elite, ax: p.ax }) && p.chill) chillPlayer(p.chill); p.dead = true; }
+      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el, p.ck || 1, { ranged: 1, elite: p.elite, ax: p.ax, boss: p.boss, aff: p.aff }) && p.chill) chillPlayer(p.chill); p.dead = true; }
       if (p.pool && (p.dead || p.life <= 0)) { zones.push({ enemy: true, x: p.x, y: p.y + 6, r: p.pool.r, t: p.pool.dur, tickT: p.pool.tick, dmg: p.pool.dmg, ck: p.ck, el: p.el }); p.pool = null; p.dead = true; }
     } else if (p.orb) { stepOrb(p, dt);
     } else if (p.sthrow) { stepThrow(p, dt);

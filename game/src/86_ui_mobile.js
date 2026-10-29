@@ -243,7 +243,7 @@ class MobileUI extends UI {
     { const cv = dollCanvas(S.equip, 0); if (this.textures.exists('doll_ui')) this.textures.remove('doll_ui'); this.textures.addCanvas('doll_ui', cv);
       rect(this, 42, 38, 30, 30, '#120c18', 1, c); const im = img(this, 42 + 15 - DOLL_W / 2, 38 + 30 - DOLL_H, 'doll_ui', c); im.setCrop(DOLL_W / 2 - 15, 0, 30, DOLL_H); }
     const P = STATS;
-    [['出手秒伤', fmt(P.castDps || P.dps), COL.emberHi], ['响应秒伤', fmt(P.respDps || 0), '#ffb36a'], ['最缺', elemNeed(P), COL.cyan], ['生命', fmt(P.life), '#ff8a7a'], ['护盾', `${fmt(P.shield)} +${r1(P.shieldRegen)}/秒`, '#bfe0ff'], ['护甲', `${fmt(P.armor)} 减伤${Math.round(armorDr(P.armor, typicalHit(S.depth)) * 100)}%`], ['附加特效', elemFxName(P), P.addEl ? ELEM_C[P.addEl] : COL.faint]]
+    [['出手秒伤', fmt(P.castDps || P.dps), COL.emberHi], ['响应秒伤', fmt(P.respDps || 0), '#ffb36a'], ['坚韧 / 恢复', `${fmt(toughness(P))} / ${fmt(recovery(P))}每秒`, '#ffd0a0'], ['最缺', elemNeed(P), COL.cyan], ['生命 / 护盾', `${fmt(P.life)} / ${fmt(P.shield)}`, '#ff8a7a'], ['护甲', `${fmt(P.armor)} 减伤${Math.round(armorDrL(P.armor, monLv()) * 100)}%`], ['附加特效', elemFxName(P), P.addEl ? ELEM_C[P.addEl] : COL.faint]]
       .forEach(([a, b, col], i) => { T(this, 112, 13 + i * 9, a, { size: 8, color: COL.dim, parent: c }); T(this, w - 10, 13 + i * 9, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); }); // 双行面板（system-v2 §5）
     T(this, 112, 78, '抗性', { size: 8, color: COL.dim, parent: c });
     ELEM.forEach((e, i) => T(this, 134 + i * 20, 78, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
@@ -404,6 +404,7 @@ class MobileUI extends UI {
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
     let y = 20;
     if (note) { const t = TW(this, 12, y, note[0], w - 24, { size: 8, color: note[1], parent: c }); y += t.h + 8; }
+    { const ht = hurtTop(r); if (ht) { const t = TW(this, 12, y, '受伤：' + ht, w - 24, { size: 8, color: '#ffb0a0', parent: c }); y += t.h + 6; } } // defense-v3 §8.4
     const cw = Math.floor((w - 24) / 3);
     cols.forEach(([ic, v, l], i) => { const cx = 12 + (i % 3) * cw + cw / 2, yy = y + (i / 3 | 0) * 50, s2 = this.textures.get(ic).getSourceImage();
       c.add(nine(this, 12 + (i % 3) * cw + 2, yy, cw - 4, 46, 'f_slot', 3));

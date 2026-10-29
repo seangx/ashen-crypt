@@ -27,14 +27,14 @@ function eliteStep(m, dt, d, dx, dy, bl) {
     const c = m.chg; c.t -= dt;
     if (c.wind > 0) { c.wind -= dt; if (c.wind <= 0) fx({ t: 'ring', x: m.x, y: m.y - 4, r: 10, el: m.el || 'kin' }); return; }
     m.x += c.vx * dt; m.y += c.vy * dt;
-    if (!c.hit && dist2(m, player) < (m.size + 8) ** 2) { c.hit = 1; const F = EAF_BY.charge.fx; if (hurtPlayer(m.dmg * F.mul * bl, m.el, ctrlK(m), { melee: 1, elite: 1, ax: m.ax })) { const ux = player.x - m.x, uy = player.y - m.y, l = Math.hypot(ux, uy) || 1; player.x = clamp(player.x + ux / l * F.knock, ARENA.x0, ARENA.x1); player.y = clamp(player.y + uy / l * F.knock * 0.6, ARENA.y0, ARENA.y1); } /* 击退（不出场地） */ }
+    if (!c.hit && dist2(m, player) < (m.size + 8) ** 2) { c.hit = 1; const F = EAF_BY.charge.fx; if (hurtPlayer(m.dmg * F.mul * bl, m.el, ctrlK(m), { melee: 1, elite: 1, aff: 1, ax: m.ax })) { const ux = player.x - m.x, uy = player.y - m.y, l = Math.hypot(ux, uy) || 1; player.x = clamp(player.x + ux / l * F.knock, ARENA.x0, ARENA.x1); player.y = clamp(player.y + uy / l * F.knock * 0.6, ARENA.y0, ARENA.y1); } /* 击退（不出场地） */ }
     if (c.t <= 0) m.chg = null; return;
   }
   for (const id of m.ax) {
     const F = EAF_BY[id].fx; if (!F.every) continue;
     if ((m.axT[id] -= dt) > 0) continue; m.axT[id] = F.every;
     if (id === 'charge' && d < F.range) { const s = m.spd * F.spd; m.chg = { wind: F.windup, t: F.windup + F.dur, vx: dx / d * s, vy: dy / d * s }; fx({ t: 'text', x: m.x, y: m.y - 16, s: '冲锋', c: EAF_BY.charge.c }); }
-    else if (id === 'barrage') { const a0 = Math.atan2(dy, dx), MA = PROG.monsterAttack, fan = F.fan * Math.PI / 180; for (let k = 0; k < F.n; k++) { const a = a0 + (k - (F.n - 1) / 2) * fan / Math.max(1, F.n - 1); projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: MA.shotLife, dmg: m.dmg * F.dmg * bl, ck: ctrlK(m), elite: 1, el: m.el, ax: m.ax }); } }
+    else if (id === 'barrage') { const a0 = Math.atan2(dy, dx), MA = PROG.monsterAttack, fan = F.fan * Math.PI / 180; for (let k = 0; k < F.n; k++) { const a = a0 + (k - (F.n - 1) / 2) * fan / Math.max(1, F.n - 1); projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: MA.shotLife, dmg: m.dmg * F.dmg * bl, ck: ctrlK(m), elite: 1, aff: 1, el: m.el, ax: m.ax }); } }
     else if (id === 'summon') { const kids = mobs.filter(n => !n.dead && n.sumBy === m).length; for (let k = 0; k < Math.min(F.n, F.max - kids); k++) { const a = rf(0, Math.PI * 2), c = spawnMob(pickMob(RUN.L), { x: m.x + Math.cos(a) * 16, y: m.y + Math.sin(a) * 10, noElite: 1 }); c.sumBy = m; } if (F.n) fx({ t: 'ring', x: m.x, y: m.y - 4, r: 18, el: 'nuc' }); }
   }
 }
@@ -45,9 +45,19 @@ const eliteShieldMul = src => src && src.ax && src.ax.includes('breaker') ? EAF_
 function eliteTaken(m, amt, small) {
   if (!m.ax) return amt; let f;
   if (m.wallOn && (f = eaf(m, 'wall'))) amt *= 1 - f.less / 100;
-  if (!small && (f = eaf(m, 'mirror')) && STATS.life) hurtPlayer(Math.min(amt * f.pct / 100, STATS.life * f.cap / 100), 'kin', 1, { elite: 1 });
+  if (!small && (f = eaf(m, 'mirror')) && STATS.life) hurtPlayer(Math.min(amt * f.pct / 100, STATS.life * f.cap / 100), 'kin', 1, { elite: 1, mirror: 1 });
   return amt;
 }
 // 精英死了：元素魂留地面
 function eliteDie(m) { for (const id of m.ax || []) { const g = EAF_BY[id].fx.ground; if (g) zones.push({ enemy: true, x: m.x, y: m.y, r: g.r, t: g.dur, tickT: g.tick, tick: g.tick, dmg: m.dmg * g.pct, ck: 1, el: EAF_BY[id].fx.el }); } }
 const healBlocked = () => RUN && player.blightT > RUN.t; // 枯血
+
+/* 受伤来源统计（defense-v3 §8.4）：每次受伤按 来源 × 元素 记下护盾前的伤害，结算时给占比最大的一项和一句建议 */
+const HURT_CAT = src => !src ? '地面效果' : src.mirror ? '镜反' : src.slam ? '重击红圈' : src.boss ? 'Boss 招式' : src.aff ? '精英招式' : src.ranged ? '远程' : '近战';
+function hurtLog(d, el, src) { if (!RUN || d <= 0) return; const H = RUN.hurt || (RUN.hurt = {}), k = HURT_CAT(src) + '|' + (el || 'kin'); H[k] = (H[k] || 0) + d; }
+function hurtTop(r) {
+  const H = r && r.hurt; if (!H) return null; const tot = Object.values(H).reduce((s, v) => s + v, 0); if (tot <= 0) return null;
+  const [k, v] = Object.entries(H).sort((a, b) => b[1] - a[1])[0], [cat, el] = k.split('|'), L = r.L || monLv(), P = STATS;
+  const tip = cat === '近战' || cat === '精英招式' ? `近战伤害降低 ${Math.round(P.meleeDR || 0)}%` : cat === '远程' ? `远程伤害降低 ${Math.round(P.rangedDR || 0)}%` : cat === '重击红圈' ? `冲刺槽 ${P.dashMax || 1}：躲红圈靠冲刺，多带冲刺槽或冲刺回复` : cat === '地面效果' ? '地面效果：精英死后的元素地面别久站' : cat === '镜反' ? '镜反精英：别硬打，先清别的' : '';
+  return `${Math.round(v / tot * 100)}% 伤害来自${ELEM_N[el]}·${cat}：${ELEM_N[el]}抗性 ${(P.res || {})[el] || 0}（减伤 ${Math.round(resDrL((P.res || {})[el] || 0, L) * 100)}%）${tip ? '，' + tip : ''}`;
+}
