@@ -280,7 +280,7 @@ function collect(dp) {
   const g = RUN && RUN.gain;
   if (dp.kind === 'item') { addItem(dp.item); g && g.items.push(dp.item); if (G.ui) G.ui.feedItem(dp.item); }
   else if (dp.kind === 'oil') { player.soul = Math.min(STATS.soulMax, player.soul + STATS.soulMax * TRG.oil.pct / 100); fx({ t: 'text', x: player.x, y: player.y - 20, s: '+灯火', c: '#ffd36a' }); fx({ t: 'ring', x: dp.x, y: dp.y, r: 10, el: 'exp' }); }
-  else if (dp.kind === 'orb') { if (!healBlocked()) player.life = Math.min(STATS.life, player.life + STATS.life * 0.2); fx({ t: 'text', x: player.x, y: player.y - 20, s: '+生命', c: '#ff8a7a' }); }
+  else if (dp.kind === 'orb') { if (!healBlocked()) player.life = Math.min(STATS.life, player.life + STATS.life * 0.2); if (RUN) player.soul = Math.min(STATS.soulMax, player.soul + STATS.soulMax * (SOUL.orbLamp ?? 3) / 100); /* 生命球也回 3% 灯火（用户 10-29 定） */ fx({ t: 'text', x: player.x, y: player.y - 20, s: '+生命', c: '#ff8a7a' }); }
   else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; unlockEvent('gainShard'); if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
   else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; unlockEvent('gainGlyph'); if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
 
