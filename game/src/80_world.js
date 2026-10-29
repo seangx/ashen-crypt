@@ -369,6 +369,7 @@ class World extends Phaser.Scene {
     else o.img.clearTint();
     o.sh.setPosition(sx, sy + 1).setScale(m.boss ? 2 : 1, 1);
     if (frz) { const hw = (w >> 1) + 1; bar.fillStyle(0xe8fbff, 0.9); for (let i = -hw; i <= hw; i += 2) bar.fillRect(Math.round(sx + i), Math.round(sy - ((i * 7 + 13) % 3)), 1, 2); bar.fillStyle(0x9fe3ff, 0.7).fillRect(Math.round(sx - hw), Math.round(sy), hw * 2 + 1, 1); } // 冻结：脚下一圈冰凌
+    if (m.ax && m.ax.length) { const n = m.ax.length, bx = Math.round(sx - n * 2), by = Math.round(sy - h - 8); for (let k = 0; k < n; k++) { bar.fillStyle(0x120c18, 1).fillRect(bx + k * 4 - 1, by - 1, 4, 4); bar.fillStyle(parseInt(EAF_BY[m.ax[k]].c.slice(1), 16), 1).fillRect(bx + k * 4, by, 2, 2); } } // 精英词缀：头顶一排彩点
     if (m.hp < m.max && !m.boss) {
       const bw = m.elite ? 14 : 10; const bx = Math.round(sx - (bw >> 1)), by = Math.round(sy - h - 3);
       bar.fillStyle(0x120c18, 1).fillRect(bx - 1, by - 1, bw + 2, 3); bar.fillStyle(0x4a1c22, 1).fillRect(bx, by, bw, 1); bar.fillStyle(0xff5a4a, 1).fillRect(bx, by, Math.max(1, Math.round(bw * m.hp / m.max)), 1);

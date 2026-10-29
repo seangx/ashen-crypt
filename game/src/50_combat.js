@@ -70,11 +70,12 @@ function spawnMob(type, o = {}) {
   const d = o.d || MOBS[type] || BOSS; const L = RUN.L; const mx = RUN.mob || {};
   const rp = o.x == null ? ringPoint() : null; // 默认刷在视野外一圈
   const x = o.x ?? rp.x, y = o.y ?? rp.y;
-  const elite = !o.boss && rnd() < ELITE.chance * (RUN.eliteMul || 1) * (1 + (mx.elite || 0) / 100);
+  const elite = !o.boss && !o.noElite && rnd() < ELITE.chance * (RUN.eliteMul || 1) * (1 + (mx.elite || 0) / 100);
   const HD = o.boss ? null : PROG.run.horde; // 怪海：普通怪更多更脆
   const hp = d.hp * monHp(L) * (elite ? ELITE.hp : 1) * (1 + (mx.mobHp || 0) / 100) * (HD ? HD.hp : 1);
   const m = { type, d, x, y, hp, max: hp, dmg: d.dmg * monDmg(L) * (elite ? ELITE.dmg : 1) * (1 + (mx.mobDmg || 0) / 100) * (HD ? HD.dmg : 1), spd: d.spd * (elite ? ELITE.spd : 1) * (1 + (mx.mobSpd || 0) / 100), size: d.size + (elite ? ELITE.size : 0), res: Object.fromEntries(ELEM.map(e => [e, ((d.res || {})[e] || 0) + (mx.mobRes || 0)])), el: d.el,
     elite, boss: !!o.boss, rise: o.boss ? 0.8 : 0.4, atkCd: 1, cd: rf(0.5, d.cd || 2), fl: 0, shock: 0, shockT: 0, chill: 0, chillT: 0, frzT: 0, frzImm: 0, blindT: 0, blindK: 0, burn: 0, burnT: 0, rad: [], after: [], t: 0, face: 1, vx: 0, vy: 0, kx: 0, ky: 0, ramT: 0, fat: 0 };
+  if (elite) rollEliteAffixes(m); // defense-v3 §8.3 精英词缀
   mobs.push(m); return m;
 }
 function spawnBoss() {
@@ -202,6 +203,7 @@ function ailment(m, e, d, W, o) {
 function damage(m, amt, el, crit, small) {
   if (m.dead || amt <= 0) return;
   if (STATS.fullLampDmg && player.soul >= STATS.soulMax * 0.9) amt *= 1 + STATS.fullLampDmg / 100; // gear-v2：满灯伤害
+  if (m.ax) amt = eliteTaken(m, amt, small); // 精英词缀：坚壁、镜反
   if (!small) { if (STATS.flag.lightEater) lampGain('eat', 0.3, STATS.flag.lightEater); lampGain('hit', STATS.lampOnHit, 2); if (crit) lampGain('crit', STATS.lampOnCrit, 3); }
   const crowd = mobs.length > 15 && !m.boss && !m.elite; // 怪海里的普通怪：不白闪、不飘数字，只留刀痕和击退
   m.hp -= amt; if (!small && !crowd && !(m.flCd > 0)) { m.fl = 0.06; m.flCd = 0.45; } // 受击白闪限频：连续挨打不会一直发白
@@ -219,7 +221,7 @@ function shatter(m) {
 }
 function kill(m) {
   if (m.dead) return;
-  m.dead = true; S.stats.kills++; trigKill(m);
+  m.dead = true; S.stats.kills++; trigKill(m); if (m.ax && RUN) eliteDie(m);
   fx({ t: 'die', x: m.x, y: m.y, boss: m.boss, elite: m.elite, type: m.type });
   sfx(m.boss ? 'bossdie' : 'kill');
   if (!RUN) return;
@@ -229,7 +231,7 @@ function kill(m) {
   if (!m.boss) RUN.prog += (RUN.mode === 'ladder' ? (m.elite ? LD.run.eliteP : LD.run.normalP) : 1) * hk;
   player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * lampGainMul(RUN.base) * (RUN.mode !== 'ladder' && RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
   deathRules(m);
-  if (STATS.lifeOnKill) player.life = Math.min(STATS.life, player.life + STATS.lifeOnKill * hk); // gear-v2：击杀回生命
+  if (STATS.lifeOnKill && !healBlocked()) player.life = Math.min(STATS.life, player.life + STATS.lifeOnKill * hk); // gear-v2：击杀回生命
   if (STATS.flag.shatter && m.frzT > 0) shatter(m); // 碎冰：冻结的敌人死了碎成冰片（冰片打死的冻结敌人也照样碎）
   const mm = manualMul();
   const xp = m.d.xp * (m.elite ? ELITE.xp : 1) * monXp(RUN.L) * (1 + LX.xp / 100) * mm * hk;
@@ -273,7 +275,7 @@ function dropThing(m, o, burst) { const a = burst ? rf(0, Math.PI * 2) : 0, sp =
 function collect(dp) {
   const g = RUN && RUN.gain;
   if (dp.kind === 'item') { addItem(dp.item); g && g.items.push(dp.item); if (G.ui) G.ui.feedItem(dp.item); }
-  else if (dp.kind === 'orb') { player.life = Math.min(STATS.life, player.life + STATS.life * 0.2); fx({ t: 'text', x: player.x, y: player.y - 20, s: '+生命', c: '#ff8a7a' }); }
+  else if (dp.kind === 'orb') { if (!healBlocked()) player.life = Math.min(STATS.life, player.life + STATS.life * 0.2); fx({ t: 'text', x: player.x, y: player.y - 20, s: '+生命', c: '#ff8a7a' }); }
   else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; unlockEvent('gainShard'); if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
   else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; unlockEvent('gainGlyph'); if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
 
@@ -358,8 +360,9 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
   d *= 1 - Math.max(0, ...whirlWs().map(([W, i]) => Math.min(WH.drCap, WH.drPerStack * player.spin[i].n))) / 100; // 旋身：每层当前旋转减伤，有上限
   if (RUN.gd) RUN.gd[player.closeN > 0 ? 'hitC' : 'hitF'] += d / STATS.life; /* 模拟统计：贴身 / 不贴身时的承伤（按生命上限的比例） */
   if (STATS.flag.lampBlood && d > 0 && player.soul > 0) { const pay = Math.min(d * 0.3, player.soul * 4); player.soul -= pay / 4; d -= pay; } // tree-v3 以灯代血
-  if (player.shield > 0) { const a = Math.min(player.shield, d); player.shield -= a; d -= a; fx({ t: 'shield', x: player.x, y: player.y }); }
+  if (player.shield > 0) { const k = eliteShieldMul(src), a = Math.min(player.shield, d * k); player.shield -= a; d -= a / k; fx({ t: 'shield', x: player.x, y: player.y }); } // 破盾：打护盾 ×2
   if (d > 0 && FL.absorb) player.shield = Math.min(STATS.shield, player.shield + d * RL.absorb.pct / 100); // 圣盾：扣到生命的一部分转成护盾
+  eliteOnHurt(src); // 噬光
   if (d > 0) { player.life -= d; trigStruck(d); player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); hurtFeedback(d); }
   // 荆棘甲：受击时伤害周围
   for (const W of STATS.weapons) if (W && W.thorns > 0) { const r = MECH.thornsR || 56; fx({ t: 'ring', x: player.x, y: player.y - 4, r, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (r + m.size) ** 2) hitMob(m, W, { mul: W.thorns / 100 }); } // 荆棘符文
@@ -628,7 +631,7 @@ function logic(dt) {
     const rv = !lad && RUN.base < RUN.descent.prevMax; // 重温已经打过的层
     const net = -(lad ? (SOUL.ladderBurn ?? SOUL.burn) + lampBurnL(RUN.L, SOUL.ladderBurnPerFloor ?? SOUL.burnPerFloor) : SOUL.burn + lampBurnL(RUN.base)) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1) - (spin && P.weapons.some(W => W && W.whirl) ? WH.soulPerSec * (1 - P.soulLess) : 0); // 魂龛里的旋风斩已按 cost 每秒付灯火，不再重复扣
     player.soul = clamp(player.soul + net * dt, 0, P.soulMax);
-    if (P.lifeRegen && player.life > 0) player.life = Math.min(P.life, player.life + P.lifeRegen * dt); // gear-v2：每秒回生命
+    if (P.lifeRegen && player.life > 0 && !healBlocked()) player.life = Math.min(P.life, player.life + P.lifeRegen * dt); // gear-v2：每秒回生命
     if (P.flag.returnLight && !RUN.rlUsed && player.soul < P.soulMax * 0.1) { RUN.rlUsed = 1; player.soul = P.soulMax * P.flag.returnLight / 100; if (G.ui) G.ui.banner('归光 · 灯火复燃', COL.emberHi); } // 归光（每局一次）
     if (player.soul <= 0) player.soulEmpty += dt;
     if (lad && player.soul <= 0) { RUN.result = 'timeout'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('灯灭'); } // 天梯：灯灭即失败（lamp-v2 §6）
@@ -746,12 +749,12 @@ function logic(dt) {
     const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd;
     m.atkCd -= dt * ck; m.cd -= dt * ck; // 冰缓也降攻速
     const MA = PROG.monsterAttack;
-    if (d < m.size + MA.touch && m.atkCd <= 0) { hurtPlayer(m.dmg * bl, m.el, ctrlK(m), { melee: 1, elite: m.elite || m.boss }); m.atkCd = MA.meleeCd; }
-    slamStep(m, dt * ck, bl);
+    if (d < m.size + MA.touch && m.atkCd <= 0) { hurtPlayer(m.dmg * bl, m.el, ctrlK(m), { melee: 1, elite: m.elite || m.boss, ax: m.ax }); m.atkCd = MA.meleeCd; }
+    slamStep(m, dt * ck, bl); if (m.ax) eliteStep(m, dt * ck, d, dx, dy, bl);
     if (m.boss && m.cd <= 0) bossAct(m, Math.atan2(dy, dx), bl);
     else if (m.d.ai === 'ranged' && m.cd <= 0) {
       m.cd = m.d.cd; const lt = m.d.lead ? d / MA.shotSpd * m.d.lead : 0, a = Math.atan2(player.y + player.vy * lt - m.y, player.x + player.vx * lt - m.x); // lead：按角色速度预判落点
-      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, ck: ctrlK(m), elite: m.elite || m.boss, el: m.el, chill: m.d.chill, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
+      projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, ck: ctrlK(m), elite: m.elite || m.boss, ax: m.ax, el: m.el, chill: m.d.chill, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
     }
   }
   // 互相推开
@@ -780,7 +783,7 @@ function slamStep(m, dt, bl) {
     m.slam.t -= dt; if (m.slam.t > 0) return;
     const s = m.slam; m.slam = null;
     fx({ t: 'slam', x: s.x, y: s.y, r: s.r });
-    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m), { melee: 1, elite: m.elite || m.boss }); }
+    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m), { melee: 1, elite: m.elite || m.boss, ax: m.ax }); }
     return;
   }
   m.slamCd = (m.slamCd ?? C.every * rf(0.5, 1)) - dt;
@@ -887,7 +890,7 @@ function stepProjs(dt) {
   for (const p of projs) {
     if (p.enemy) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
-      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el, p.ck || 1, { ranged: 1, elite: p.elite }) && p.chill) chillPlayer(p.chill); p.dead = true; }
+      if ((p.x - player.x) ** 2 + (p.y - player.y + 6) ** 2 < 36) { if (hurtPlayer(p.dmg, p.el, p.ck || 1, { ranged: 1, elite: p.elite, ax: p.ax }) && p.chill) chillPlayer(p.chill); p.dead = true; }
       if (p.pool && (p.dead || p.life <= 0)) { zones.push({ enemy: true, x: p.x, y: p.y + 6, r: p.pool.r, t: p.pool.dur, tickT: p.pool.tick, dmg: p.pool.dmg, ck: p.ck, el: p.el }); p.pool = null; p.dead = true; }
     } else if (p.orb) { stepOrb(p, dt);
     } else if (p.sthrow) { stepThrow(p, dt);

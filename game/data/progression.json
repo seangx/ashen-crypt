@@ -68,7 +68,10 @@
   "dmg": 1.5,
   "spd": 1.1,
   "size": 1,
-  "xp": 4
+  "xp": 4,
+  "_affixes说明": "defense-v3 §8.3 精英词缀：生成精英时按权重抽 count 个（层数 ≥ from 的才进池，元素魂最多一个）；n 显示名，c 头顶小点的颜色。层数：推层按 base，天梯按层数",
+  "count": [[1, 1], [30, 2], [60, 3]],
+  "affixes": [{"id": "exp", "n": "炎魂", "w": 3, "from": 1, "c": "#ff8a3d", "fx": {"el": "exp", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "cold", "n": "霜魂", "w": 3, "from": 1, "c": "#9fe3ff", "fx": {"el": "cold", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "ele", "n": "雷魂", "w": 3, "from": 1, "c": "#7fc8ff", "fx": {"el": "ele", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "pla", "n": "圣魂", "w": 3, "from": 1, "c": "#ffe27a", "fx": {"el": "pla", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "nuc", "n": "疫魂", "w": 3, "from": 1, "c": "#8fe05a", "fx": {"el": "nuc", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "kin", "n": "骨魂", "w": 3, "from": 1, "c": "#e9e0c9", "fx": {"el": "kin", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "drain", "n": "噬光", "w": 8, "from": 3, "c": "#ffb84a", "fx": {"lamp": 3}}, {"id": "breaker", "n": "破盾", "w": 7, "from": 6, "c": "#c0c8ff", "fx": {"shieldMul": 2}}, {"id": "blight", "n": "枯血", "w": 6, "from": 8, "c": "#b04a5a", "fx": {"r": 120}}, {"id": "charge", "n": "冲锋", "w": 8, "from": 10, "c": "#ff5a4a", "fx": {"every": 5, "windup": 0.5, "dur": 0.45, "spd": 4, "mul": 1.5, "knock": 40, "range": 160}}, {"id": "barrage", "n": "弹幕", "w": 8, "from": 12, "c": "#e07aff", "fx": {"every": 4, "n": 5, "fan": 70, "dmg": 0.35}}, {"id": "wall", "n": "坚壁", "w": 6, "from": 15, "c": "#a0a0a0", "fx": {"less": 50, "r": 80}}, {"id": "summon", "n": "召魂", "w": 6, "from": 18, "c": "#7f8ac0", "fx": {"every": 6, "n": 4, "max": 12}}, {"id": "mirror", "n": "镜反", "w": 5, "from": 25, "c": "#ffffff", "fx": {"pct": 10, "cap": 4}}]
  },
  "monsters": {
   "_说明": "1 级数值，按 monsterScaling 成长。w 刷出权重; minL 从第几层开始出现; ai chase 近身 / ranged 远程（rng 射程, cd 射击间隔）; res 抗性 %; el 伤害元素 kin 物理 exp 火焰 pla 圣光 ele 闪电 nuc 瘟疫 cold 寒霜; chill 弹打中角色时叠几层冰缓; lead 远程瞄准时按角色当前速度预判落点（预判 = 弹飞到的时间 × 角色速度 × lead）; pool 弹落地或打中时留下的火圈 {r 半径, dur 持续秒, tick 结算间隔, dmg 每次伤害占怪伤害的比例}",
