@@ -30,17 +30,28 @@ function newTrig(c, o = {}) {
   const sock = o.sock || sw[0] + wpick(sw.slice(1).map((w, i) => i), i => sw[i + 1]);
   return { id: S.nextId++, kind: 'trig', c, rar, ilvl: o.ilvl || 1, q: o.q || 0, sock, socks: Array(sock).fill(null), affs: o.affs || {}, isNew: !!o.isNew };
 }
+const trigAffPool = (c, rar) => { const M = TCOND[c].mode; return Object.keys(TAF).filter(k => (!TAF[k].rare || rar >= 2) && !(k === 'cap' && M !== 'charge') && !(k === 'gap' && M !== 'timer') && !(k === 'gain' && M !== 'charge') && !(k === 'lowThr' && c !== 'low')); };
+const trigAffRoll = (k, ilvl) => { const A = TAF[k], t = (trigTier(ilvl) - 1) / 4, v = A.r[0] + (A.r[1] - A.r[0]) * t * rf(0.8, 1); return A.dec ? Math.round(v * 10) / 10 : Math.round(v); };
 function rollTrigAffs(c, rar, ilvl) {
-  const affs = {}, t = (trigTier(ilvl) - 1) / 4, nA = rar === 0 ? 0 : rar === 1 ? ri(1, 2) : ri(3, 4), M = TCOND[c].mode;
-  const pool = Object.keys(TAF).filter(k => (!TAF[k].rare || rar >= 2) && !(k === 'cap' && M !== 'charge') && !(k === 'gap' && M !== 'timer') && !(k === 'gain' && M !== 'charge') && !(k === 'lowThr' && c !== 'low'));
-  for (let i = 0; i < nA && pool.length; i++) { const k = pool.splice(ri(0, pool.length - 1), 1)[0], A = TAF[k], v = A.r[0] + (A.r[1] - A.r[0]) * t * rf(0.8, 1); affs[k] = A.dec ? Math.round(v * 10) / 10 : Math.round(v); }
+  const affs = {}, nA = rar === 0 ? 0 : rar === 1 ? ri(1, 2) : ri(3, 4), pool = trigAffPool(c, rar);
+  for (let i = 0; i < nA && pool.length; i++) { const k = pool.splice(ri(0, pool.length - 1), 1)[0]; affs[k] = trigAffRoll(k, ilvl); }
   return affs;
 }
-function rollTrigDrop(ilvl) {
+// o.pref：偏好的底子（权重 × prefMul，首领用）；o.minRar：保底稀有度（天梯每 20 层）
+function rollTrigDrop(ilvl, o = {}) {
   if (ilvl >= TRG.uniqueIlvl && rnd() < TRG.uniqueChance) return newUniqueTrig(pick(Object.keys(TRIG_U)), ilvl);
-  const c = wpick(Object.keys(TRG.condW), k => TRG.condW[k]), rar = wpick([0, 1, 2], i => TRG.rarW[i]);
+  const D = TRG.drop, c = wpick(Object.keys(TRG.condW), k => TRG.condW[k] * ((o.pref || []).includes(k) ? D.bossPrefMul : 1)), rar = Math.max(o.minRar || 0, wpick([0, 1, 2], i => TRG.rarW[i]));
   return newTrig(c, { rar, ilvl, affs: rollTrigAffs(c, rar, ilvl), isNew: true });
 }
+/* spec-trigger-slots §10 掉落：普通怪 0.3%、精英 4%（怪海按数量摊薄）；首领必掉 1 个、25% 再 1 个，偏好 2 种底子；天梯每 5 层 1 个、每 20 层保底稀有 */
+function bossTrigPref(bid) { // 每个首领固定偏好 2 种底子（按名字散列，手册里可以查）
+  const ks = Object.keys(TRG.condW).filter(k => k !== 'always'); let h = 0; for (const ch of String(bid || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const i = h % ks.length; let j = (h >>> 8) % (ks.length - 1); if (j >= i) j++;
+  return [ks[i], ks[j]];
+}
+const mobTrigChance = m => m.elite ? TRG.drop.elite : TRG.drop.normal;
+function bossTrigs(bid, L) { const D = TRG.drop, pref = bossTrigPref(bid), out = []; for (let i = 0; i < D.bossN; i++) out.push(rollTrigDrop(L, { pref })); if (rnd() < D.bossExtra) out.push(rollTrigDrop(L, { pref })); return out; }
+function ladderTrigs(N) { const D = TRG.drop; return N > 0 && N % D.ladderEvery === 0 ? [rollTrigDrop(N, { minRar: N % D.ladderRareEvery === 0 ? 2 : 0 })] : []; }
 // 栏位：开局 1，Lv15 / Lv35 各 +1；装备最多再 +1（主手 / 法阵的 trigSlot 词条，或独特自带）
 const gearTrigSlot = () => Object.values(S.equip).some(it => it && (it.trigSlot || (it.affs || []).some(a => a && a.k === 'trigSlot'))) ? 1 : 0;
 const lvTrigSlots = () => 1 + TRG.slotLv.filter(l => S.level >= l).length;
@@ -51,7 +62,6 @@ function trigCanSock(T, k, x) {
   if (!T || k >= T.sock) return false; if (!x) return true;
   if (isSkill(x)) {
     if (T.c === 'always' && !TRG.alwaysOnly.includes(x.b)) return false;
-    if (GEM_BY[x.b].form === 'shieldThrow') return false;
     const n = T.socks.filter((s, i) => i !== k && isSkill(s)).length; return n < trigMaxSkills(T);
   }
   return isSupport(x) && !MOD_BY[x.mid].field;
@@ -72,8 +82,46 @@ function equipTrig(slot, T) {
 }
 function unequipTrig(slot) { const T = S.trigs[slot]; if (!T) return; S.trigs[slot] = null; S.trigBag.unshift(T); refreshStats(); save(); }
 function swapTrigs(a, b) { const t = S.trigs[a]; S.trigs[a] = S.trigs[b]; S.trigs[b] = t; trigReset(); refreshStats(); save(); } // 拖动调顺序（出手优先级按位置）
-const trigYield = T => 1 + T.rar * 2 + Math.floor(T.ilvl / 20);
-function salvageTrig(T) { if (!S.trigBag.includes(T)) return 0; for (const g of T.socks) if (g) { if (isSkill(g)) S.stash.unshift(g); else S.mods.unshift(g); } S.trigBag = S.trigBag.filter(x => x !== T); const n = trigYield(T); for (let i = 0; i < n; i++) { const k = rollShard(Math.max(1, S.maxDepth || 1)); S.shards[k] = (S.shards[k] || 0) + 1; } save(); return n; }
+const trigYield = T => TRG.salvage[T.u ? 3 : Math.min(2, T.rar)];
+function salvageTrig(T, quiet) { if (!S.trigBag.includes(T)) return 0; for (const g of T.socks) if (g) { if (isSkill(g)) S.stash.unshift(g); else S.mods.unshift(g); } S.trigBag = S.trigBag.filter(x => x !== T); const n = trigYield(T); for (let i = 0; i < n; i++) { const k = rollShard(Math.max(1, S.maxDepth || 1)); S.shards[k] = (S.shards[k] || 0) + 1; } if (!quiet) save(); return n; }
+// 捡到魂龛后整理背包：自动分解普通、比当前低 15 级以上的魔法；超过 60 个时从最差的开始分解（新捡的、独特不动）
+const trigAutoOn = () => S.trigAuto !== false && typeof unlocked === 'function' && unlocked('salvage');
+function trigBagTidy(L) {
+  const B = TRG.bag; let n = 0, k = 0;
+  if (trigAutoOn()) for (const T of [...S.trigBag]) if (!T.u && (T.rar === 0 || (T.rar === 1 && T.ilvl < (L || 1) - B.magicBelow))) { n += salvageTrig(T, true); k++; }
+  if (S.trigBag.length > B.cap) { const bad = S.trigBag.filter(T => !T.u).sort((a, b) => a.rar - b.rar || a.ilvl - b.ilvl); while (S.trigBag.length > B.cap && bad.length) { n += salvageTrig(bad.shift(), true); k++; } }
+  return { n, k };
+}
+
+/* ---------- 魂龛打造（spec-trigger-slots §10，高级铁砧解锁）：重铸、改一条、升阶、打磨、重随孔数 ---------- */
+const TCR = TRG.craft;
+function spendShards(n) { if (shardTotal() < n) return false; for (let i = 0; i < n; i++) { let bk = null; for (const k in S.shards) if (S.shards[k] > 0 && (!bk || S.shards[k] > S.shards[bk])) bk = k; S.shards[bk]--; } return true; } // 从最多的那种碎片开始扣
+const trigOpCost = (T, op) => op === 'reforge' ? TCR.reforge[0] + T.rar * TCR.reforge[1] : TCR[op].cost;
+const trigTierUpMates = T => S.trigBag.filter(x => x !== T && !x.u && x.c === T.c && x.rar === T.rar);
+function trigCraftWhy(T, op) {
+  if (!T) return '先选一个魂龛'; if (!unlocked('craftAdv')) return `推到第 ${PROG.unlocks.craftAdv.depth} 层解锁`;
+  if (T.u && op !== 'polish') return '独特魂龛只能打磨';
+  if (op === 'reforge' && !T.rar) return '普通魂龛没有词条';
+  if (op === 'reroll' && !Object.keys(T.affs || {}).length) return '没有词条';
+  if (op === 'reroll' && (T.rr || 0) >= TCR.reroll.max) return `每个最多改 ${TCR.reroll.max} 次`;
+  if (op === 'tierUp' && trigTier(T.ilvl) >= TRG.tierIlvl.length) return '已经是最高阶';
+  if (op === 'tierUp' && !trigTierUpMates(T).length) return '背包里要有一个同底子、同稀有度的魂龛';
+  if (op === 'polish' && (T.q || 0) >= TCR.polish.max) return `品质已满 ${TCR.polish.max}%`;
+  if (op === 'resock') return (S.glyphs.resock || 0) > 0 ? null : '没有重铸符（天梯宝箱掉）';
+  if (shardTotal() < trigOpCost(T, op)) return `碎片不够（要 ${trigOpCost(T, op)}）`;
+  return null;
+}
+function trigCraft(T, op, arg) {
+  const why = trigCraftWhy(T, op); if (why) return why;
+  if (op === 'resock') S.glyphs.resock--; else spendShards(trigOpCost(T, op));
+  let msg = '';
+  if (op === 'reforge') { T.affs = rollTrigAffs(T.c, T.rar, T.ilvl); msg = '重铸：词条已重随'; }
+  else if (op === 'reroll') { const ks = Object.keys(T.affs), k = ks.includes(arg) ? arg : pick(ks), pool = trigAffPool(T.c, T.rar).filter(x => !(x in T.affs)); delete T.affs[k]; const nk = pool.length ? pick(pool) : k; T.affs[nk] = trigAffRoll(nk, T.ilvl); T.rr = (T.rr || 0) + 1; msg = `改一条：${trigAffText(nk, T.affs[nk])}`; }
+  else if (op === 'tierUp') { const mate = trigTierUpMates(T).includes(arg) ? arg : trigTierUpMates(T).sort((a, b) => a.ilvl - b.ilvl)[0]; for (const g of mate.socks) if (g) { if (isSkill(g)) S.stash.unshift(g); else S.mods.unshift(g); } S.trigBag = S.trigBag.filter(x => x !== mate); T.ilvl = TRG.tierIlvl[trigTier(T.ilvl)]; for (const k in T.affs) T.affs[k] = trigAffRoll(k, T.ilvl); msg = `升阶：T${trigTier(T.ilvl)}`; }
+  else if (op === 'polish') { T.q = Math.min(TCR.polish.max, (T.q || 0) + ri(...TCR.polish.step)); msg = `打磨：品质 ${T.q}%`; }
+  else if (op === 'resock') { const sw = TRG.sockW[Math.min(T.rar, 2)], n = sw[0] + wpick(sw.slice(1).map((w, i) => i), i => sw[i + 1]); for (let k = n; k < T.sock; k++) if (T.socks[k]) unsocketAt(T, k, true); T.socks = T.socks.slice(0, n); while (T.socks.length < n) T.socks.push(null); T.sock = n; msg = `重随孔数：${n} 孔`; }
+  refreshStats(); save(); return msg;
+}
 
 /* 底技能：主手类别 → 虚拟技能石（等级随角色等级），倍率 0.7 × 对口 1.2；触发系数 = 24 ÷ 主手基础攻速 */
 function basicGem(eq) {
@@ -98,14 +146,15 @@ function trigStats(P, eq) {
     const skills = T.socks.filter(isSkill), sups = T.socks.filter(isSupport), FT = P.flag || {}, costMul = (FT.rapid ? 1.25 : 1) * (FT.chainCharge && !cast ? 1.3 : 1) * (FT.auraPower && T.c === 'always' ? 1.5 : 1) * sups.reduce((m, s) => m * (TRG.supCost[s.mid] || TRG.defCost), 1) * (1 - ((A.costLess || 0) + (P.raw.costLess || 0) + ((IMPL[eq.wl && eq.wl.b] && implFx(eq.wl).costLess) || 0)) / 100);
     const ws = []; if (on) skills.forEach((g, j) => {
       const sl = A.supLv ? sups.map(m => ({ ...m, lvl: Math.min(MOD_MAX, (m.lvl || 1) + 1) })) : sups;
-      const g2 = { ...g, mods: sl.filter(m => supportFits(m, g)), sock: sups.length }, sk = skillItem({ ...eq, gem: g2 }); if (!sk) return;
-      const W = weaponStats(sk, P), blT = A.burnLamp || (FT.burnSoul ? 1 : 0), bl = blT ? TAF.burnLamp.w[0] + (TAF.burnLamp.w[1] - TAF.burnLamp.w[0]) * (blT - 1) / 2 : 0; // tree-v3 燃魂：所有魂龛带 T1 燃灯
+      const g2 = { ...g, mods: sl.filter(m => supportFits(m, g)), sock: sups.length }, sh = GEM_BY[g.b].form === 'shieldThrow'; // 圣盾掷：盾变成虚拟武器，没拿盾就不放
+      const sk = sh ? null : skillItem({ ...eq, gem: g2 }), W = sh ? shieldWeapon(eq.shield, P, g2) : sk && weaponStats(sk, P); if (!W) return;
+      const blT = A.burnLamp || (FT.burnSoul ? 1 : 0), bl = blT ? TAF.burnLamp.w[0] + (TAF.burnLamp.w[1] - TAF.burnLamp.w[0]) * (blT - 1) / 2 : 0; // tree-v3 燃魂：所有魂龛带 T1 燃灯
       const mul = (1 + ((A.dmg || 0) + (fx.dmg || 0) + bl + (P.trigDmg || 0)) / 100) * (1 + (T.q || 0) / 100) * (skills.length > 1 && !fx.rotate ? trigSplit(T) : 1) * (TRG.fitCond[g.b] === T.c ? TRG.fit : 1) * (FT.heavyHit && cast ? 1.4 : 1) * (FT.focus ? (cast ? 1.5 : 0.7) : 1) * (FT.auraPower && T.c === 'always' ? 1.4 : 1); // tree-v3：重击、专精、常驻之力
       for (const o of [W.min, W.max]) if (o) for (const e in o) o[e] *= mul;
       if (W.auraDps) W.auraDps *= mul; W.dps *= mul;
       const aoe = (A.aoe || 0) + (fx.aoe || 0); if (aoe) { W.aoeInc = (W.aoeInc || 0) + aoe; if (W.aoeR) W.aoeR *= 1 + aoe / 100; if (T.c === 'always' && W.rng) W.rng *= 1 + aoe / 100; }
       if (A.crit) W.crit += A.crit / 100; if (fx.alwaysCrit) W.crit = Math.max(W.crit, 1);
-      const Sk = TSK[g.b] || {}; W.proc = Sk.proc ?? 5; W.atk = cast ? 1 : 0;
+      const Sk = TSK[g.b] || {}; W.proc = (Sk.proc ?? 5) * (W.procMul || 1); // 多重投射：每发触发系数 ×0.6 W.atk = cast ? 1 : 0;
       W.cost = (T.c === 'always' ? gemCost(g) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul * (TRG.skillCostMul || 1) * ((cast || T.c === 'hit' || T.c === 'crit') ? TRG.castCostMul || 1 : 1) + blT;
       W.trigSlot = i + 1; W.trigMul = mul; W.ailEffT = A.ailEff || 0; W.wi = TRIG_BASE + i * TRIG_PER + j; ws.push(W);
     });
@@ -147,7 +196,7 @@ function trigRate(T, C, P, cap, N, fx, A) {
 
 /* ---------- 战斗 ---------- */
 const TRIGS_RT = { ch: [0, 0, 0, 0], st: [0, 0, 0, 0], cg: [0, 0, 0, 0], gap: [0, 0, 0, 0], tm: [0, 0, 0, 0], flash: [0, 0, 0, 0], stack: [0, 0, 0, 0], stackT: [0, 0, 0, 0], rot: [0, 0, 0, 0], fired: [], later: [], stillT: 0, lampState: 'dim', n: [0, 0, 0, 0] };
-function trigReset() { Object.assign(TRIGS_RT, { ch: [0, 0, 0, 0], st: [0, 0, 0, 0], cg: [0, 0, 0, 0], gap: [0, 0, 0, 0], tm: [0, 0, 0, 0], flash: [0, 0, 0, 0], stack: [0, 0, 0, 0], stackT: [0, 0, 0, 0], rot: [0, 0, 0, 0], fired: [], later: [], stillT: 0, n: [0, 0, 0, 0] }); }
+function trigReset() { Object.assign(TRIGS_RT, { ch: [0, 0, 0, 0], st: [0, 0, 0, 0], cg: [0, 0, 0, 0], gap: [0, 0, 0, 0], tm: [0, 0, 0, 0], flash: [0, 0, 0, 0], stack: [0, 0, 0, 0], stackT: [0, 0, 0, 0], rot: [0, 0, 0, 0], fired: [], later: [], stillT: 0, n: [0, 0, 0, 0], last: {} }); }
 // 灯态（lamp-v2 §4）：明灯 ≥ 70%、残灯 < 30%；只在下行时生效
 const LST = TRG.lampStates;
 function lampState() { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax || (STATS.flag && STATS.flag.lampChain)) return 'dim'; /* 灯链：始终「暗」 */ const f = player.soul / STATS.soulMax, F = STATS.flag || {}; // tree-v3：将熄之焰、长明改阈值
@@ -163,14 +212,15 @@ const lampOk = () => typeof RUN === 'undefined' || !RUN || player.soul >= STATS.
 function trigFire(i, o = {}) {
   const t = STATS.trigs && STATS.trigs[i]; if (!t || !t.on || !t.ws.length) return false;
   const fx = trigFx(t.T), now = G.time || 0; TRIGS_RT.fired = TRIGS_RT.fired.filter(x => now - x < 1);
-  if (!t.cast && TRIGS_RT.fired.length >= TRG.capPerSec) return false;
+  if (TRIGS_RT.fired.length >= TRG.capPerSec) return false;
   if (!fx.lifeCost && !lampOk()) return false;
   let list = t.ws; if (fx.rotate && list.length > 1) { list = [list[TRIGS_RT.rot[i] % list.length]]; }
+  const LT = TRIGS_RT.last || (TRIGS_RT.last = {}); list = list.filter(W => !(now - (LT[W.wi] ?? -9) < TRG.gemGap)); if (!list.length) return false; // 每颗技能石最快 gemGap 秒一次
   const mulSt = fx.stack ? 1 + TRIGS_RT.stack[i] * fx.stack / 100 : 1, A = t.T.affs || {};
   let any = false;
   for (const W0 of list) {
     const W = mulSt !== 1 ? { ...W0, min: scaleDmg(W0.min, mulSt), max: scaleDmg(W0.max, mulSt) } : W0;
-    TRIGS_RT.castSlot = i; const ok = fire(W, W0.wi); any = ok || any;
+    TRIGS_RT.castSlot = i; const ok = fire(W, W0.wi); any = ok || any; if (ok) LT[W0.wi] = now;
     if (ok && (W0.cont || W0.form === 'orbit') && t.T.c !== 'always' && !o.sus) { const SU = TRIGS_RT.sus || (TRIGS_RT.sus = []), d = t.cast ? 0.4 : (TRG.sustain || 2); const ex = SU.find(x => x.wi === W0.wi); if (ex) ex.t = d; else SU.push({ i, W, wi: W0.wi, t: d, cd: 1 / (W0.aps || 1) }); } // 持续型：响应放一次持续 2 秒（出手 0.4 秒）
     if (ok && A.extra && rnd() * 100 < Math.min(TRG.affCap.extra, A.extra)) fire(W, W0.wi);
     if (ok && RUN) { if (fx.lifeCost) player.life = Math.max(1, player.life - player.life * fx.lifeCost); else player.soul = Math.max(0, player.soul - W0.cost * (RUN.mode === 'ladder' ? 1 : (SOUL.pushCostMul ?? 1))); }
@@ -180,7 +230,7 @@ function trigFire(i, o = {}) {
   if (fx.rotate) TRIGS_RT.rot[i]++;
   if (fx.stack) { TRIGS_RT.stack[i] = Math.min(fx.stackMax, TRIGS_RT.stack[i] + 1); TRIGS_RT.stackT[i] = fx.stackT; }
   if (A.lampOn && RUN) player.soul = Math.min(STATS.soulMax, player.soul + A.lampOn);
-  if (!t.cast) TRIGS_RT.fired.push(now); TRIGS_RT.flash[i] = 0.25; TRIGS_RT.n[i] = (TRIGS_RT.n[i] || 0) + 1;
+  TRIGS_RT.fired.push(now); TRIGS_RT.flash[i] = 0.25; TRIGS_RT.n[i] = (TRIGS_RT.n[i] || 0) + 1;
   if (fx.echo && !o.echo) { for (let j = i + 1; j < 4; j++) if (STATS.trigs[j] && STATS.trigs[j].on && STATS.trigs[j].ws.length) { trigFire(j, { echo: 1 }); break; } }
   if (fx.again && !o.again) TRIGS_RT.later.push({ i, t: 1 });
   return true;
@@ -219,8 +269,8 @@ function trigHit(W, crit) {
   });
 }
 function trigKill(m) {
-  if (!RUN || !STATS.trigs) return; const P = TCOND.kill.per, v = m.boss ? P[2] : m.elite ? P[1] : P[0];
-  liveTrigs((t, i) => { if (t.T.c === 'kill') trigCharge(i, v); if (m.elite && trigFx(t.T).eliteKill) trigFire(i); });
+  if (!RUN || !STATS.trigs) return; const P = TCOND.kill.per, v = m.boss ? P[2] : m.elite ? P[1] : P[0], src = m.lastSlot ? STATS.trigs[m.lastSlot - 1] : null, own = src && src.T.c === 'kill';
+  liveTrigs((t, i) => { if (t.T.c === 'kill' && !own) trigCharge(i, v); if (m.elite && trigFx(t.T).eliteKill) trigFire(i); });
 }
 function trigStruck(lost) {
   if (!RUN || !STATS.trigs || lost <= 0) return; const pct = lost / STATS.life * 100;
@@ -267,7 +317,7 @@ function trigProgress(i) {
 }
 function trigGemXp(x) {
   let up = false;
-  for (const T of S.trigs || []) if (T) for (const g of T.socks) if (isSkill(g) && g.lvl < MOD_MAX) { g.xp += x; const L = modLevelOf(g.xp); if (L > g.lvl) { g.lvl = L; up = true; if (G.ui) G.ui.feed(`${GEM_BY[g.b].n} ${g.lvl} 级`, COL.cyan, 'i_' + iconOf(g)); } }
+  for (const T of S.trigs || []) if (T) for (const g of T.socks) if ((isSkill(g) || isSupport(g)) && g.lvl < MOD_MAX) { g.xp = (g.xp || 0) + x; const L = modLevelOf(g.xp); if (L > g.lvl) { g.lvl = L; up = true; if (G.ui) G.ui.feed(`${isSkill(g) ? GEM_BY[g.b].n : MOD_BY[g.mid].n} ${g.lvl} 级`, COL.cyan, isSkill(g) ? 'i_' + iconOf(g) : 'mod_' + g.mid); } }
   return up;
 }
 /* 新存档（system-v2 §9 #0）：送一个普通【出手】“命中时”魂龛 2 孔 + 一颗按主手类别的技能石 */

@@ -201,7 +201,13 @@ const MOD_D = {
   Range: f => `射程提高 ${f.rangeInc}%`,
   Knockback: f => `命中击退敌人，击退造成的伤害总增 ${Math.round((f.knockMore - 1) * 100)}%`,
   Debris: f => `${AIL.kin.n}几率 +${Math.round(f.ail.kin * 100)}%，${AIL.kin.n}伤害总增 ${Math.round((f.debrisMore - 1) * 100)}%`,
-  Aftershock: f => `命中 ${Math.round(f.afterCh * 100)}% 几率余震：以 60% 伤害再结算一次（任意元素）；额外获得 ${Math.round(f.gain.exp * 100)}% 伤害作为火焰伤害`,
+  Aftershock: f => `命中 ${Math.round(f.afterCh * 100)}% 几率余震：以 60% 伤害再结算一次（不分元素）`,
+  MultiProj: f => `投射物 +${f.extra}，伤害总降 ${Math.round((1 - f.more) * 100)}%；每发触发系数 ×${f.procMul}`,
+  Ignite: f => `${AIL.exp.n}几率 +${Math.round(f.ail.exp * 100)}%，${AIL.exp.n}伤害总增 ${Math.round((f.burnMore - 1) * 100)}%`,
+  Frostbite: f => `${AIL.cold.n}几率 +${Math.round(f.ail.cold * 100)}%，冻结时间 +${f.freezeInc}%`,
+  LampSaver: f => `伤害总降 ${Math.round((1 - f.more) * 100)}%，灯火消耗倍率 ×${TRG_SUPCOST('LampSaver')}`,
+  Burnwick: f => `伤害总增 ${Math.round((f.more - 1) * 100)}%，灯火消耗倍率 ×${TRG_SUPCOST('Burnwick')}`,
+  EmberEdge: f => `残灯时伤害总增 ${Math.round((f.emberMore - 1) * 100)}%；明灯时伤害总降 ${Math.round((1 - f.brightLess) * 100)}%`,
   ConvKin: f => `本源元素转为物理（本源异常一起换成碎骨），伤害 +${f.convMore}%`, ConvExp: f => `本源元素转为火焰（本源异常换成灼烧），伤害 +${f.convMore}%`, ConvEle: f => `本源元素转为闪电（本源异常换成感电），伤害 +${f.convMore}%`,
   ConvCold: f => `本源元素转为寒霜（本源异常换成冰缓），伤害 +${f.convMore}%`, ConvPla: f => `本源元素转为圣光（本源异常换成致盲），伤害 +${f.convMore}%`, ConvNuc: f => `本源元素转为瘟疫（本源异常换成疫病），伤害 +${f.convMore}%`,
   Shock: f => `${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%，额外获得 ${Math.round(f.gain.ele * 100)}% 伤害作为闪电伤害`,
@@ -237,9 +243,10 @@ const MOD_D = {
   Energy: f => `${ATTR_N.energy}提高 ${f.energyInc}%`,
   Time: f => `${ATTR_N.time}提高 ${f.timeInc}%`,
 };
+const TRG_SUPCOST = id => (DATA.triggers.supCost || {})[id] ?? DATA.triggers.defCost;
 const MODS = DATA.runes.list.map(r => ({ id: r.id, n: r.n, field: r.field, req: r.req, w: r.w, fit: r.field ? undefined : fitOf(r.fit),
   fx: L => { const f = specAt(r.fx, L); if (f.thermalGain != null) f.gain = { exp: f.thermalGain / 4, pla: f.thermalGain / 4, ele: f.thermalGain / 4, cold: f.thermalGain / 4 }; return f; }, d: MOD_D[r.id] }));
-for (const m of MODS) { const a = ASTRO.mods[m.id]; m.req = a ? a.req : (m.req || 1); m.w = a ? a.w : (m.w ?? 450); if (FORM_GEM[m.id]) m.w = 0; } // 形态符文并进技能石，不再掉落
+for (const m of MODS) { const a = ASTRO.mods[m.id]; m.req = a ? a.req : (m.req || 1); m.w = a ? a.w : (m.w ?? 450); if (FORM_GEM[m.id] || (DATA.runes.retired || []).includes(m.id)) m.w = 0; } // 形态符文并进技能石、skills.md §3 删掉的符文，不再掉落
 const MOD_BY = Object.fromEntries(MODS.map(m => [m.id, m]));
 const MOD_MAX = LOOT.runeDrop.maxLevel;
 const MOD_XP = ASTRO.modXp; // 累计经验门槛（原作配置）

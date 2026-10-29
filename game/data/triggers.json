@@ -217,7 +217,11 @@
  "store": 1,
  "lampFloor": 0.1, "skillCostMul": 1.5, "castCostMul": 2.0, "_castCostMul说明": "武器攻速压缩后出手 / 命中类触发次数约降到 1/2.75（又因为过量伤害浪费变少，只补到 2 倍），非常驻（非 always）技能每次消耗再乘这个数，灯火消耗速度和上一版持平", "_skillCostMul说明": "所有技能石灯火消耗统一乘这个数（宝石之间的相对平衡不变），让灯火成为施放的真实约束",
  "sustain": 2,
- "dropShare": 0.12,
+ "drop": { "_说明": "spec-trigger-slots §10：normal / elite 每只怪的几率（怪海按数量摊薄）；首领必掉 bossN 个，bossExtra 几率再 1 个，偏好 2 种底子（权重 ×bossPrefMul）；天梯每 ladderEvery 层 1 个，每 ladderRareEvery 层保底稀有", "normal": 0.003, "elite": 0.04, "bossN": 1, "bossExtra": 0.25, "bossPrefMul": 4, "ladderEvery": 5, "ladderRareEvery": 20 },
+ "bag": { "_说明": "背包上限；解锁分解祭坛后默认自动分解普通、比当前怪物等级低 magicBelow 以上的魔法魂龛", "cap": 60, "magicBelow": 15 },
+ "salvage": [1, 2, 5, 15], "_salvage说明": "分解给碎片：普通 / 魔法 / 稀有 / 独特",
+ "craft": { "_说明": "魂龛打造（高级铁砧解锁）：碎片从最多的那种开始扣。reforge 重铸 [基础, 每级稀有度加]；reroll 改一条（每个最多 max 次）；tierUp 升阶（吃掉一个同底子同稀有度的魂龛）；polish 打磨品质 +step（上限 max%）；重随孔数用重铸符", "reforge": [3, 3], "reroll": { "cost": 2, "max": 3 }, "tierUp": { "cost": 5 }, "polish": { "cost": 2, "step": [1, 3], "max": 20 } },
+ "gemGap": 0.25, "_gemGap说明": "防循环：每颗技能石最快 0.25 秒放一次（spec §6 第 4 条）",
  "basic": {
   "melee": [
    "GemStab",
@@ -345,7 +349,7 @@
   "Range": 1.1,
   "Knockback": 1.1,
   "Aftershock": 1.3,
-  "Agony": 1.3
+  "Agony": 1.3, "MultiProj": 1.4, "Ignite": 1.2, "Frostbite": 1.2, "LampSaver": 0.6, "Burnwick": 2.0, "EmberEdge": 1.2
  },
  "affs": {
   "gain": {

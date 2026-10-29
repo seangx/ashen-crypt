@@ -66,6 +66,7 @@ function ladderWin(m) {
   for (const g of GLYPHS_DROP) if (rnd() * 100 < R.glyphBase + N * R.glyphPerN) dropThing(m, { kind: 'glyph', id: g.id });
   if (N >= OATH.glyphLadder && rnd() * 100 < OATH.glyphDrop) dropThing(m, { kind: 'glyph', id: 'oath' }); // 立誓符
   if (rnd() * 100 < GEMC.socketDrop) dropThing(m, { kind: 'glyph', id: 'socket' }); // 开孔符（技能石 +1 槽）
+  for (const T of ladderTrigs(N)) dropThing(m, { kind: 'trig', trig: T }); // 每 5 层一个魂龛，每 20 层保底稀有
   L.unlocked = Math.max(L.unlocked, N + jump);
   if (N > L.best || (N === L.best && RUN.t < L.bestTime)) { L.best = N; L.bestTime = Math.round(RUN.t * 10) / 10; }
   const tierUp = [];

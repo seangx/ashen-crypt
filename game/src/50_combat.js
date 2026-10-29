@@ -125,10 +125,10 @@ function rollCrit(W) {
 // o: { mul, noDebris, after }
 function hitMob(m, W, o = {}) {
   if (m.dead) return 0;
-  const cm = W.cont ? 1 : rollCrit(W); const crit = cm > 1;
+  const cm = W.cont ? 1 : rollCrit(W); const crit = cm > 1; m.lastSlot = W.trigSlot || 0;
   trigHit(W, crit);
   if (W.atk && STATS.lampHit && RUN) { const t = RUN.t || 0; if (t >= (player.lampHitT || 0) || t < (player.lampHitT || 0) - 5) { player.lampHitT = t + STATS.lampGap; const g = STATS.lampHit * (STATS.soulGainMul || 1) * lampGainMul(RUN.base); player.soul = Math.min(STATS.soulMax, player.soul + g); RUN.lampHit = (RUN.lampHit || 0) + g; } } // 武器出手命中回灯：普攻和出手时技能（替这一下普攻放出的）都算，每次出手只算一次；其他触发的技能不回；残灯也回
-  let mul = (o.mul || 1) * cm * lampMore();
+  let mul = (o.mul || 1) * cm * lampMore() * (TRIGS_RT.lampState === 'ember' ? W.emberMore || 1 : TRIGS_RT.lampState === 'bright' ? W.brightLess || 1 : 1); // 残焰符文
   if (m.boss) mul *= W.bossMore;
   if (W.perDashInc) mul *= 1 + W.perDashInc * Math.floor(player.dash);
   if (W.doubleChance && rnd() < W.doubleChance) mul *= 2;
@@ -178,7 +178,7 @@ function chillOn(m, n, W) {
   if (m.dead || m.frzT > 0) return;
   if (m.frzImm > 0) { m.chill = Math.min(MECH.chillMax - 1, m.chill + n); m.chillT = MECH.chillDur; return; } // 免疫期：照常冰缓，但叠不到冻结
   m.chill = Math.min(MECH.chillMax, m.chill + n); m.chillT = MECH.chillDur;
-  if (m.chill >= MECH.chillMax) { m.frzT = MECH.freezeDur * chillEff() * (STATS.freezeMul || 1) * (m.boss || m.elite ? MECH.freezeBossMul : 1); if (STATS.flag.coffin) player.shield = Math.min(STATS.shield, player.shield + STATS.shield * UQX.coffinShield / 100); m.slam = null; m.chill = 0; m.chillT = 0; if (RUN) { RUN.freezes = (RUN.freezes || 0) + 1; if (RUN.dmg) RUN.dmg.fz = (RUN.dmg.fz || 0) + 1; } fx({ t: 'freeze', x: m.x, y: m.y - m.size }); }
+  if (m.chill >= MECH.chillMax) { m.frzT = MECH.freezeDur * chillEff() * (STATS.freezeMul || 1) * (1 + ((W && W.freezeInc) || 0) / 100) * (m.boss || m.elite ? MECH.freezeBossMul : 1); if (STATS.flag.coffin) player.shield = Math.min(STATS.shield, player.shield + STATS.shield * UQX.coffinShield / 100); m.slam = null; m.chill = 0; m.chillT = 0; if (RUN) { RUN.freezes = (RUN.freezes || 0) + 1; if (RUN.dmg) RUN.dmg.fz = (RUN.dmg.fz || 0) + 1; } fx({ t: 'freeze', x: m.x, y: m.y - m.size }); }
 }
 // 角色被寒霜怪打中：叠冰缓（移速、攻速降低），不会被冻结
 function chillPlayer(n) { player.chill = Math.min(MECH.playerChillMax, (player.chill || 0) + n); player.chillT = MECH.chillDur; }
@@ -191,7 +191,7 @@ function ailment(m, e, d, W, o) {
       const r = W.debrisR || MECH.debrisR * UNIT; if (mobs.length <= 15 || rnd() < 0.15) fx({ t: 'ring', x: m.x, y: m.y - 4, r, el: 'kin' }); // 怪海里碎骨圈只偶尔画
       for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < r * r) { damage(n, mitigate(n, 'kin', d * MECH.debrisPct * W.debrisMore * ailEff('kin')), 'kin', false, true); if (n.dead && STATS.flag.debrisChain && (o.depth || 0) < RL.debrisChain.depth) ailment(n, 'kin', d, W, { ...o, depth: (o.depth || 0) + 1 }); }
       break; }
-    case 'exp': m.burn += d * MECH.burnFromFire * ailEff('exp'); break; // 火焰本源异常：灼烧
+    case 'exp': m.burn += d * MECH.burnFromFire * ailEff('exp') * (W.burnMore || 1); break; // 火焰本源异常：灼烧
     case 'ele': m.shock = Math.min(MECH.shockMax, m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)); // 织雷之心：游雷一次叠两层
       m.shockT = MECH.shockDur; break;
     case 'pla': m.blindT = MECH.blindDur; m.blindK = Math.min(MECH.blindMax, MECH.blindLess * W.blindMore * ailEff('pla')); break;
@@ -241,6 +241,7 @@ function kill(m) {
   if (rnd() < DROP.item * mult * (1 + (LX.iiq + (STATS.findInc || 0)) / 100)) RUN.cache = (RUN.cache || 0) + 1; // 战斗中不掉装备：记进这一层的 Boss 宝箱，打掉 Boss 一次掉出来
   if (rnd() < DROP.shard * mult * (1 + LX.dice / 100)) shardDrop();
   if (rnd() < DROP.mod * mult * (1 + LX.runes / 100)) dropRune(m, L);
+  if (rnd() < mobTrigChance(m) * mult) dropThing(m, { kind: 'trig', trig: rollTrigDrop(L) }); // 魂龛：普通 0.3%、精英 4%
   if (rnd() < STONES.dropChance * mult * (1 + (STATS.findInc || 0) / 100)) { const st = rollStone(L); (S.stones = S.stones || []).unshift(st); if (RUN.gain) RUN.gain.stones = (RUN.gain.stones || 0) + 1; if (G.ui && G.ui.feed) G.ui.feed(`${stoneOf(st.sid).n} ${st.t} 阶`, stoneOf(st.sid).c); } // gear-v2 §7：属性石直接进背包
   if (m.boss) player.life = Math.min(STATS.life, player.life + STATS.life * MECH.bossKillLife / 100); // 打掉守关 Boss 回一截生命
   if (m.boss && RUN.mode === 'ladder') ladderWin(m);
@@ -254,6 +255,7 @@ function kill(m) {
     fx({ t: 'chest', x: m.x, y: m.y, n: n + c });
     for (let i = 0; i < BL.shards; i++) shardDrop();
     for (let i = 0; i < BL.runes; i++) dropRune(m, L + BL.runeIlvlBonus);
+    for (const T of bossTrigs(RUN.bossD && RUN.bossD.id, L + BL.ilvlBonus)) dropThing(m, { kind: 'trig', trig: T }, 1); // 首领必掉魂龛，偏好 2 种底子
     S.stats.bosses++; RUN.descent.floors++; (RUN.descent.mins = RUN.descent.mins || []).push([RUN.base, Math.round(RUN.descent.minHp * 100), RUN.base >= RUN.descent.prevMax - 1]); // 每层最低血量（模拟用）
     if (RUN.base >= S.maxDepth && RUN.base < PROG.run.maxDepth) S.maxDepth = RUN.base + 1;
     if (RUN.mode !== 'ladder' && RUN.base >= (S.maxDepth || 1) - 1) reelMilestone(RUN.base); // 骸骨轮盘：新纪录的 5 的倍数层
@@ -266,7 +268,7 @@ function kill(m) {
   }
 }
 // 符文掉落判定：gems.dropShare 的几率换成技能石（spec-skill-gems §3.4）
-function dropRune(m, L, burst) { if (rnd() < TRG.dropShare) return dropThing(m, { kind: 'trig', trig: rollTrigDrop(L) }, burst); if (rnd() < GEMC.dropShare && unlocked('gems')) dropThing(m, { kind: 'item', item: rollGemDrop(L) }, burst); else dropThing(m, { kind: 'mod', mod: rollModDrop(L) }, burst); }
+function dropRune(m, L, burst) { if (rnd() < GEMC.dropShare && unlocked('gems')) dropThing(m, { kind: 'item', item: rollGemDrop(L) }, burst); else dropThing(m, { kind: 'mod', mod: rollModDrop(L) }, burst); }
 function dropThing(m, o, burst) { const a = burst ? rf(0, Math.PI * 2) : 0, sp = burst ? rf(40, 90) : 0; drops.push({ ...o, x: m.x + rf(-6, 6), y: m.y + rf(-4, 4), z: 6, vz: burst ? rf(90, 130) : rf(50, 80), vx: burst ? Math.cos(a) * sp : rf(-30, 30), vy: burst ? Math.sin(a) * sp * .6 : rf(-14, 14), age: 0 }); if ((o.kind === 'item' && o.item.rar >= 2) || o.kind === 'glyph') sfx('rare'); }
 function collect(dp) {
   const g = RUN && RUN.gain;
@@ -275,7 +277,7 @@ function collect(dp) {
   else if (dp.kind === 'shard') { S.shards[dp.k] = (S.shards[dp.k] || 0) + 1; unlockEvent('gainShard'); if (g) { g.shards++; const K = g.shardK || (g.shardK = {}); K[dp.k] = (K[dp.k] || 0) + 1; } }
   else if (dp.kind === 'glyph') { S.glyphs[dp.id]++; unlockEvent('gainGlyph'); if (g) g.glyphs[dp.id] = (g.glyphs[dp.id] || 0) + 1; if (G.ui) G.ui.feed(GLYPH_BY[dp.id].n, GLYPH_BY[dp.id].c, 'glyph_' + dp.id); }
 
-  else if (dp.kind === 'trig') { S.trigBag.unshift(dp.trig); unlockEvent('gotTrig'); if (G.ui) G.ui.feed('魂龛 · ' + trigName(dp.trig), COL.emberHi); }
+  else if (dp.kind === 'trig') { S.trigBag.unshift(dp.trig); unlockEvent('gotTrig'); const r = trigBagTidy(RUN ? RUN.L : 1), gone = !S.trigBag.includes(dp.trig); if (G.ui) G.ui.feed('魂龛 · ' + trigName(dp.trig) + (gone ? '（自动分解）' : ''), gone ? COL.dim : COL.emberHi); if (g && r.n) g.shards += r.n; }
   else if (dp.kind === 'mod') { S.mods.push(dp.mod); unlockEvent('pickRune'); g && g.mods.push(dp.mod); if (G.ui) G.ui.feed(MOD_BY[dp.mod.mid].n, COL.cyan, 'mod_' + dp.mod.mid); }
   fx({ t: 'pick', x: dp.x, y: dp.y, kind: dp.kind });
   sfx(dp.kind === 'shard' || dp.kind === 'glyph' ? 'die' : 'pick');
@@ -436,6 +438,10 @@ function fire(W, i) {
     case 'aura': { // 瘟疫光环插在魂龛：常驻的由下面的光环循环每 auraTick 结算，这里不出手；其他魂龛触发一次 = 结算 1 秒的量
       const t = W.trigSlot && STATS.trigs && STATS.trigs[W.trigSlot - 1]; if (t && t.mode === 'always') return true;
       auraHit(W, 1 / MECH.auraTick); return true;
+    }
+    case 'shieldThrow': { // 圣盾掷插在魂龛：朝最近的敌人扔盾，盾飞回来之前不能再扔
+      if (projs.some(p => p.sthrow && !p.dead)) return false; const t = nearest(px, py + 1, W.rng); if (!t) return false;
+      const a = Math.atan2(t.y - 5 - py, t.x - px); projs.push({ W, sthrow: 1, x: px, y: py, a, vx: Math.cos(a) * W.thSpd, vy: Math.sin(a) * W.thSpd, life: W.thLife, age: 0, el: 'pla', r: 6, sch: W.chain, bn: 0, touch: new Map(), hit: new Set(), mul: 1 }); sfx('shoot'); return true;
     }
     case 'ram': { // 冲撞（冲刺时触发）：撞身边一圈，按冲刺倍率
       const r = 18; let hits = 0;

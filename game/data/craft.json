@@ -57,7 +57,7 @@
     "c": "#c0392b",
     "special": 1
    },
-   { "id": "socket", "n": "开孔符", "c": "#7fe0c0", "special": 1, "_说明": "spec-skill-gems：技能石 +1 槽（上限 5）；天梯宝箱 gems.socketDrop% 掉一个" }
+   {"id": "resock", "n": "重铸符", "c": "#f0a860", "_说明": "魂龛：在稀有度范围内重随孔数（孔变少时多出来的宝石退回背包）"}, { "id": "socket", "n": "开孔符", "c": "#7fe0c0", "special": 1, "_说明": "spec-skill-gems：技能石 +1 槽（上限 5）；天梯宝箱 gems.socketDrop% 掉一个" }
   ]
  },
  "fuse": {

@@ -136,7 +136,7 @@ function weaponStats(it, P, isEngine) {
   const tags = itemTags(it), has = t => tags.includes(t);
   const W = { it, b, key: b.key, form: isEngine ? 'engine' : b.form, el: b.el, tags, cont: !!b.cont, min: {}, max: {}, ail: {}, runes: [],
     pierce: qv(b.pierce || 0, q), chain: qv(b.chain || 0, q), split: qv(b.split || 0, q), ret: b.ret || 0, extra: qv(b.extra || 0, q), extraChance: 0,
-    pierceMore: 1, chainInc: 0, splitInc: 0, knock: b.knock || 0, more: 1, dotMore: 1, debrisMore: 1, blindMore: 1, radMore: 1, doubleChance: 0,
+    pierceMore: 1, chainInc: 0, splitInc: 0, knock: b.knock || 0, more: 1, dotMore: 1, debrisMore: 1, blindMore: 1, radMore: 1, doubleChance: 0, procMul: 1, burnMore: 1, freezeInc: 0, emberMore: 1, brightLess: 1,
     armorOnHit: 0, thorns: 0, dashOnHit: 0, cull: 0, perDashInc: 0, bossMore: b.bossMore ? 1 + qv(b.bossMore, q) / 10 : 1 };
   const TA = P.tree.add, TM = P.tree.more, UW = (UNIQUE_BY[it.u] || {}).when, U = k => UW && !has(UW) ? 0 : uval(it, k); // when：技能石有这个标签，独特规则才生效
   const IM = it.kind === 'weapon' && !it.th && (!it.fb || it.gem) && IMPL[it.b] ? implFx(it) : {}; // 底子的隐性倾向
@@ -195,7 +195,8 @@ function weaponStats(it, P, isEngine) {
     for (const k of ['pierce', 'chain', 'split', 'extra', 'extraChance', 'chainInc', 'splitInc', 'armorOnHit', 'dashOnHit', 'cull', 'perDashInc', 'doubleChance']) if (fx[k]) W[k] += fx[k];
     if (fx.ret) W.ret = 1;
     if (fx.knock) W.knock = 1;
-    for (const k of ['pierceMore', 'debrisMore', 'blindMore', 'radMore']) if (fx[k]) W[k] *= fx[k];
+    for (const k of ['pierceMore', 'debrisMore', 'blindMore', 'radMore', 'procMul', 'burnMore', 'emberMore', 'brightLess']) if (fx[k]) W[k] *= fx[k]; // 多重投射、灼烧、残焰
+    if (fx.freezeInc) W.freezeInc += fx.freezeInc; // 霜咬
     if (fx.knockMore) W.more *= fx.knockMore;
     if (fx.meleeMore) W.more *= fx.meleeMore;
     if (fx.engineMore && isEngine) W.more *= 1 + fx.engineMore / 100;

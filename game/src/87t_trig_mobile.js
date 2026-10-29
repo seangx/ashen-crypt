@@ -6,7 +6,7 @@ MNAV.splice(0, MNAV.length,
   { id: 'gear', n: '装备', ic: 'i_w_crossbow' }, { id: 'trig', n: '魂龛', ic: null }, { id: 'battle', n: '战斗', ic: 'torch' },
   { id: 'tree', n: '天赋', ic: 'i_star' }, { id: 'craft', n: '铁砧', ic: 'i_anvil' });
 const DK = 0x1a1426, CY = 0xffc83a; // 弹壳风：粗深色描边、亮黄选中
-let trigSel = 0, gemPick = null, gemTab = 'all', gemPage = 0, tbagSel = null;
+let trigSel = 0, gemPick = null, gemTab = 'all', gemPage = 0, tbagSel = null, tcraftAff = null;
 const hx = s => typeof s === 'number' ? s : parseInt(String(s).slice(1), 16);
 function bub(sc, c, x, y, w, h, fill, o = {}) { // 圆角粗描边 3D 块
   const g = sc.add.graphics(); c.add(g); const r = o.r ?? 7;
@@ -48,7 +48,7 @@ Object.assign(MobileUI.prototype, {
     });
   },
   navDraw() {
-    const cur = this.winId && MNAV.some(m => m.id === this.winId) ? this.winId : this.winId === 'tbag' ? 'trig' : this.winId === 'ladder' ? 'battle' : this.winId ? null : 'battle';
+    const cur = this.winId && MNAV.some(m => m.id === this.winId) ? this.winId : this.winId === 'tbag' || this.winId === 'tcraft' ? 'trig' : this.winId === 'ladder' ? 'battle' : this.winId ? null : 'battle';
     for (const b of this.navs) {
       const id = b.m.id, on = !MENU.some(m => m.id === id) || unlocked(id), sel = id === cur, w = b.w, g = b.bg; g.clear();
       if (sel) { g.fillStyle(DK, 1).fillRoundedRect(1, -12, w - 2, NAV_H + 6, 9); g.fillStyle(id === 'battle' ? 0xff9a3a : CY, 1).fillRoundedRect(3, -10, w - 6, NAV_H + 1, 7); g.fillStyle(0xffffff, 0.45).fillRoundedRect(5, -8, w - 10, 7, 4); g.fillStyle(0xc46a00, 0.6).fillRect(5, NAV_H - 14, w - 10, 4); }
@@ -98,6 +98,7 @@ Object.assign(MobileUI.prototype, {
       const ib = this.add.container(w - 30, y + 4); c.add(ib); bub(this, ib, 0, 0, 16, 16, 0x6fc8ff, { r: 8 }); T_(this, ib, 8, 3, 'i', { size: 8 });
       zoneOn(this, c, w - 36, y, 28, 26, () => this.ask('魂龛规则', () => {}, '知道了', `【${trigKindN(T0.c)}】${TCOND[T0.c].n}：${TCOND[T0.c].d}。\n【出手】魂龛轮到时替换这一次出手（左边优先）；【响应】魂龛满了立刻额外放。\n技能石每次施放耗灯火，辅助石加倍率；灯火低于 10% 只放底技能。\n最多 ${trigMaxSkills(T0)} 颗技能石，两颗时各 −30%。技能石推荐底子一致时 +20%。\n常驻只能插瘟疫光环、游雷、旋风斩。`));
       mkBtn(this, c, w - 74, y + 4, 40, 18, '换', () => { tbagSel = null; this.openWin('tbag'); }, { size: 8 });
+      if (unlocked('craftAdv')) mkBtn(this, c, w - 74, y + 40, 40, 18, '打造', () => { tcraftAff = null; this.openWin('tcraft'); }, { size: 8 });
       if (trigCanAddSock(T0)) mkBtn(this, c, w - 124, y + 4, 46, 18, `开孔${S.glyphs && S.glyphs.socket || 0}`, () => { const r = trigAddSock(T0); toast(r); this.refresh(); }, { size: 8, disabled: !(S.glyphs && S.glyphs.socket > 0) });
       const ss = 30, lk = 6, k0 = T0.sock, rw = k0 * ss + (k0 - 1) * lk, sx = Math.round((w - rw) / 2), sy = y + 34, skills = T0.socks.filter(isSkill);
       const lg = this.add.graphics(); c.add(lg);
@@ -147,7 +148,9 @@ Object.assign(MobileUI.prototype, {
   /* 触发器背包 / 掉落对比：点一个 → 当前 vs 新（孔数、秒伤变化），只有 分解 / 替换 */
   win_tbag(c, w, h) {
     const cur = S.trigs[trigSel], bag = S.trigBag; let y = 14;
-    T_(this, c, w / 2, y, `第 ${trigSel + 1} 位 · 背包 ${bag.length} 个`, { size: 8, color: '#b9c2ea' }); y += 16;
+    T(this, 10, y - 4, `第 ${trigSel + 1} 位 · 背包 ${bag.length}/${TRG.bag.cap}`, { size: 8, parent: c, color: '#b9c2ea' });
+    if (unlocked('salvage')) mkBtn(this, c, w - 104, y - 8, 96, 20, `自动分解：${S.trigAuto === false ? '关' : '开'}`, () => { S.trigAuto = S.trigAuto === false; if (trigAutoOn()) { const r = trigBagTidy(S.maxDepth || 1); if (r.k) toast(`自动分解 ${r.k} 个，碎片 +${r.n}`); } save(); this.refresh(); }, { size: 8, style: S.trigAuto === false ? 'n' : 'w' });
+    y += 18;
     const s = 40, cols = Math.floor((w - 12) / (s + 6)), gx = Math.round((w - cols * (s + 6)) / 2);
     bag.slice(0, cols * 3).forEach((T0, i) => { const x = gx + (i % cols) * (s + 6), yy = y + Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
     if (!bag.length) T_(this, c, w / 2, y + 20, '还没有别的魂龛 · 打怪会掉', { size: 8, color: '#b9c2ea' });
@@ -168,6 +171,26 @@ Object.assign(MobileUI.prototype, {
     mkBtn(this, c, 88, y, w - 98, 30, '替换', () => { equipTrig(trigSel, N); tbagSel = null; this.openWin('trig'); }, { style: 'w' });
     mkBtn(this, c, w / 2 - 40, h - 36, 80, 26, '返回', () => this.openWin('trig'), { size: 8 });
     if (cur) mkBtn(this, c, 8, h - 36, 60, 26, '卸下', () => { unequipTrig(trigSel); this.openWin('trig'); }, { size: 8 });
+  },
+  /* 魂龛打造（spec-trigger-slots §10，高级铁砧）：重铸、改一条（先点词条）、升阶、打磨、重随孔数 */
+  win_tcraft(c, w, h) {
+    const T0 = S.trigs[trigSel]; if (!T0) { this.openWin('trig'); return; }
+    let y = 10; bub(this, c, 6, y, w - 12, 64, 0x4f5d9a, { r: 10 }); trigTile(this, c, 14, y + 8, 48, T0);
+    T(this, 70, y + 8, trigName(T0), { parent: c, color: '#ffffff', shadowColor: '#1a1426' });
+    T(this, 70, y + 26, `${TRIG_RAR_N[T0.rar]} · T${trigTier(T0.ilvl)} · ${T0.sock} 孔 · 品质 ${T0.q || 0}%`, { size: 8, parent: c, color: '#e0e4f0' });
+    T(this, 70, y + 40, `碎片 ${shardTotal()} · 重铸符 ${S.glyphs.resock || 0} · 已改 ${T0.rr || 0}/${TRG.craft.reroll.max}`, { size: 8, parent: c, color: '#b9c2ea' });
+    y += 74; const ks = Object.keys(T0.affs || {}).filter(k => TAF[k]);
+    if (!ks.length) T_(this, c, w / 2, y + 4, T0.u ? '独特：' + wrapText(trigU(T0).d, w - 24, 8)[0] : '没有词条', { size: 8, color: '#b9c2ea' });
+    ks.forEach((k, i) => { const yy = y + i * 24, sel = tcraftAff === k; bub(this, c, 10, yy, w - 20, 20, sel ? 0xffd23a : 0x2c3460, { r: 6, flat: 1 }); T(this, 18, yy + 6, trigAffText(k, T0.affs[k]), { size: 8, parent: c, color: sel ? '#1a1426' : '#9fe08a' }); zoneOn(this, c, 10, yy, w - 20, 20, () => { tcraftAff = sel ? null : k; this.refresh(); }); });
+    y += Math.max(1, ks.length) * 24 + 8;
+    const ops = [['reforge', '重铸', '重随全部词条'], ['reroll', '改一条', tcraftAff ? '换掉选中的词条' : '换掉随机一条（可先点词条）'], ['tierUp', '升阶', '吃掉 1 个同底子同稀有度的魂龛'], ['polish', '打磨', `品质 +${TRG.craft.polish.step.join('–')}%`], ['resock', '重随孔数', '用重铸符']];
+    for (const [op, nm, d] of ops) {
+      const why = trigCraftWhy(T0, op), cost = op === 'resock' ? '重铸符 1' : `碎片 ${trigOpCost(T0, op)}`;
+      mkBtn(this, c, 10, y, 88, 28, nm, () => { const r = trigCraft(T0, op, op === 'reroll' ? tcraftAff : null); toast(r); if (op === 'reroll') tcraftAff = null; this.refresh(); }, { size: 8, style: why ? 'n' : 'w', disabled: !!why });
+      T(this, 106, y + 4, cost + ' · ' + d, { size: 8, parent: c, color: '#e0e4f0' }); if (why) T(this, 106, y + 16, why, { size: 8, parent: c, color: '#ff8a7a' });
+      y += 34;
+    }
+    mkBtn(this, c, w / 2 - 40, h - 36, 80, 28, '返回', () => this.openWin('trig'), { size: 8 });
   },
   /* 骸骨轮盘（unique-reels.md）：三张独特卡，点一张 = 选；重转（希望符）、放弃（+15 碎片）。第一版没有转轮动画，开窗时卡片依次亮起 */
   win_reels(c, w, h) {
