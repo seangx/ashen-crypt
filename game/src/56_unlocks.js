@@ -51,3 +51,20 @@ const treeGrp = id => { const m = /^(.+c\d+)_\d+$/.exec(id); return m ? m[1] : n
 function treeFogAdd(s, id) { const N = TREE.nodes[id]; if (!N) return; s.add(id); for (const nb of [id, ...N.nb]) { s.add(nb); const g = treeGrp(nb); if (g) for (const k in TREE.nodes) if (k.startsWith(g + '_')) s.add(k); } }
 function treeFogReveal(id) { if (!Array.isArray(S.treeSeen)) return; const s = new Set(S.treeSeen); treeFogAdd(s, id); S.treeSeen = [...s]; }
 const treeFogged = id => !UNLOCK_ALL && Array.isArray(S.treeSeen) && !S.treeSeen.includes(id);
+
+/* system-v2 §8 成长四段：营地“当前目标”横幅。按阶段给 3 个具体目标，横幅显示第一个没完成的；只做提示，不给奖励 */
+function stageGoals() {
+  const D = Math.max(0, (S.maxDepth || 1) - 1), Lb = (S.ladder && S.ladder.best) || 0, trigs = (S.trigs || []).filter(Boolean);
+  const twoGems = trigs.some(T => T.socks.filter(isSkill).length >= 2), maxTier = Math.max(0, ...[...trigs, ...(S.trigBag || [])].map(T => trigTier(T.ilvl)));
+  const st3 = (S.stones || []).some(x => x.t >= 3) || Object.values(S.equip).some(it => it && (it.stones || []).some(x => x && x.t >= 3));
+  const uTrig = trigs.some(T => T.u), slot4 = trigSlots() >= 4;
+  const S4 = [
+    { n: '开荒', goals: [[`推到第 10 层（现在 ${D}）`, D >= 10], [`角色 15 级，开第 2 个魂龛位（现在 ${S.level}）`, S.level >= 15], ['一个魂龛里放 2 颗技能石', twoGems]] },
+    { n: '成型', goals: [[`推到第 30 层（现在 ${D}）`, D >= 30], [`天梯打到第 20 层（现在 ${Lb}）`, Lb >= 20], [`角色 35 级，开第 3 个魂龛位（现在 ${S.level}）`, S.level >= 35]] },
+    { n: '精修', goals: [[`天梯打到第 40 层（现在 ${Lb}）`, Lb >= 40], [`魂龛升到 T4（现在 T${maxTier}）`, maxTier >= 4], ['属性石合成到 3 阶', st3]] },
+    { n: '毕业', goals: [['戴上独特魂龛', uTrig], ['开第 4 个魂龛位（稀有主手或法阵的“魂龛位 +1”）', slot4], [`冲天梯新纪录（现在 ${Lb}）`, false]] },
+  ];
+  const i = D < 10 ? 0 : D < 30 || Lb < 20 ? 1 : Lb < 40 ? 2 : 3, cur = S4[i], next = cur.goals.find(g => !g[1]) || cur.goals[cur.goals.length - 1];
+  const need = typeof elemNeed === 'function' && typeof STATS !== 'undefined' && STATS.dps ? elemNeed(STATS) : '';
+  return { stage: cur.n, line: `${cur.n} · ${next[0]}`, goals: cur.goals, need };
+}
