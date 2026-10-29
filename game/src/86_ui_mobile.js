@@ -491,7 +491,7 @@ class MobileUI extends UI {
     y += 30; const busy = ladderBusy(), queued = LAD.pending;
     mkBtn(this, c, 12, y, w - 24, 28, busy ? '进行中' : queued ? '已排队（这局打完后开始）' : RUN ? '挑战（这局打完后开始）' : '挑战', () => { ladderChallenge(ladPick); this.refresh(); }, { style: 'w', disabled: !!(busy || queued) });
     y += 36; const R = LD.run, J = LD.jumps.list;
-    const d = TW(this, 12, y, `怪物等级 = 层数。攒满 ${ladderNeed(ladPick)} 点出守关 Boss，限时 ${mmss(R.timeLimit)}；剩 ${J[0][0]} 秒以上跳 ${J[0][1]} 层，${J[1][0]} 秒以上跳 ${J[1][1]} 层。墓图和命盘不生效。`, w - 24, { size: 8, color: COL.dim, parent: c });
+    const d = TW(this, 12, y, `怪物等级 = 层数。攒满 ${ladderNeed(ladPick)} 点出守关 Boss。不限时，灯灭就结束（每 30 秒燃烧加快，只有击杀能稳定回灯）；用时 ${R.timeLimit - J[0][0]} 秒内跳 ${J[0][1]} 层，${R.timeLimit - J[1][0]} 秒内跳 ${J[1][1]} 层。`, w - 24, { size: 8, color: COL.dim, parent: c });
     y += d.h + 8; rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 6;
     T(this, 12, y, '各元素最好', { size: 8, color: COL.emberHi, parent: c }); y += 12;
     const be = ladderBestByElem(), cw = Math.floor((w - 24) / 2);

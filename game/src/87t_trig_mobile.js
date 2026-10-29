@@ -91,7 +91,7 @@ Object.assign(MobileUI.prototype, {
       zoneOn(this, c, x, y, s, s, () => { if (trigSel === i && (!T0 || S.trigBag.length)) { tbagSel = null; this.openWin('tbag'); return; } trigSel = i; gemPick = null; this.refresh(); });
     }
     let y = 88; const T0 = S.trigs[trigSel], t = STATS.trigs && STATS.trigs[trigSel];
-    bub(this, c, 6, y, w - 12, 108, 0x4f5d9a, { r: 10 });
+    bub(this, c, 6, y, w - 12, 120, 0x4f5d9a, { r: 10 });
     if (!T0) { T_(this, c, w / 2, y + 30, '这一位还没有魂龛', { size: 12 }); mkBtn(this, c, w / 2 - 50, y + 56, 100, 28, `换魂龛 (${S.trigBag.length})`, () => { tbagSel = null; this.openWin('tbag'); }, { style: 'w', size: 8 }); }
     else {
       T(this, 14, y + 6, trigName(T0), { parent: c, color: '#ffffff', shadowColor: '#1a1426' }); T(this, 14 + textW(trigName(T0)) + 6, y + 8, TRIG_RAR_N[T0.rar] + ' · ' + T0.sock + ' 孔', { size: 8, parent: c, color: '#' + (RAR_C[T0.rar] || 0).toString(16).padStart(6, '0') });
@@ -121,13 +121,15 @@ Object.assign(MobileUI.prototype, {
         });
       }
       T_(this, c, w / 2, y + 74, t && !t.on ? '魂龛位暂停' : skills.length ? '⚔ ' + fmt(t ? t.dps : 0) + ' 秒伤' : '空 · 放一颗技能石', { size: 12, color: t && !t.on ? '#b9bfd6' : '#ffd23a' });
-      if (t && t.on && skills.length) T_(this, c, w / 2, y + 88, `每秒 ${(t.per || 0).toFixed(2)} 次${t.cast && STATS.weapons[0] ? ' · 占出手 ' + Math.round(Math.min(1, t.per / (STATS.weapons[0].aps || 1)) * 100) + '%' : ''} · 耗灯 ${t.cost.toFixed(1)}${t.mode === 'always' ? '/秒' : '/次'}`, { size: 8, color: '#e0e4f0' });
-      const af = trigU(T0) ? '独特：' + trigU(T0).d : trigAffList(T0).join('  '); if (af) T_(this, c, w / 2, y + 99, wrapText(af, w - 24, 8).slice(0, 1).join(''), { size: 8, color: '#9fe08a' });
+      if (t && t.on && skills.length) { const aps = STATS.weapons[0] ? STATS.weapons[0].aps || 1 : 1, over = t.cast && t.mode === 'charge' && t.per >= aps * 0.999, share = STATS.dps > 0 ? t.dps / STATS.dps : 0; // system-v2 §4.2：占出手、占总输出、充能速度；出手型满得比出手还快 = 充能溢出
+        T_(this, c, w / 2, y + 88, `每秒 ${(t.per || 0).toFixed(2)} 次${t.cast ? ' · 占出手 ' + Math.round(Math.min(1, t.per / aps) * 100) + '%' : ''} · 占输出 ${Math.round(share * 100)}%`, { size: 8, color: '#e0e4f0' });
+        T_(this, c, w / 2, y + 99, over ? `充能溢出：每次出手都满了，别再堆充能 · 耗灯 ${t.cost.toFixed(1)}/次` : `${t.mode === 'charge' ? `充能 ${Math.round(t.per * t.cap)}/秒（满 ${Math.round(t.cap)}） · ` : ''}耗灯 ${t.cost.toFixed(1)}${t.mode === 'always' ? '/秒' : '/次'}`, { size: 8, color: over ? '#b9bfd6' : '#e0e4f0' }); }
+      const af = trigU(T0) ? '独特：' + trigU(T0).d : trigAffList(T0).join('  '); if (af) T_(this, c, w / 2, y + 110, wrapText(af, w - 24, 8).slice(0, 1).join(''), { size: 8, color: '#9fe08a' });
       if (trigSel > 0 && trigSel < n) mkBtn(this, c, 14, y + 22, 22, 14, '◀', () => { swapTrigs(trigSel, trigSel - 1); trigSel--; this.refresh(); }, { size: 8 });
       if (trigSel < n - 1) mkBtn(this, c, w - 36, y + 22, 22, 14, '▶', () => { swapTrigs(trigSel, trigSel + 1); trigSel++; this.refresh(); }, { size: 8 });
     }
     // 宝石背包
-    y = 206; const tabs = [['all', '全部'], ['skill', '技能'], ['sup', '辅助']];
+    y = 218; const tabs = [['all', '全部'], ['skill', '技能'], ['sup', '辅助']];
     tabs.forEach(([v, nm], i) => mkBtn(this, c, 8 + i * 46, y, 44, 22, nm, () => { gemTab = v; gemPage = 0; gemPick = null; this.refresh(); }, { size: 8, style: gemTab === v ? 'w' : 'n' }));
     T(this, w - 10, y + 6, gemPick ? '点亮起的孔放入·再点宝石取消' : '点宝石看详情', { size: 8, align: 'right', parent: c, color: gemPick ? '#7cf05a' : '#b9c2ea' });
     const gems = S.stash.filter(x => x.kind === 'gem').sort((a, b) => b.lvl - a.lvl), sups = S.mods.filter(m => !MOD_BY[m.mid].field).sort((a, b) => b.lvl - a.lvl);

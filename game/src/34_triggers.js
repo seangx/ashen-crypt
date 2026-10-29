@@ -220,6 +220,7 @@ function trigFire(i, o = {}) {
   let any = false;
   for (const W0 of list) {
     const W = mulSt !== 1 ? { ...W0, min: scaleDmg(W0.min, mulSt), max: scaleDmg(W0.max, mulSt) } : W0;
+    if (W0.whirl && t.T.c !== 'always' && player.spin[W0.wi]) { const st = player.spin[W0.wi]; st.n = Math.max(st.n, Math.min(W0.stackMax, trigTier(t.T.ilvl) * 2)); st.idle = 0; } // system-v2 §5：被触发的旋风斩直接带“阶 × 2”层旋势
     TRIGS_RT.castSlot = i; const ok = fire(W, W0.wi); any = ok || any; if (ok) LT[W0.wi] = now;
     if (ok && (W0.cont || W0.form === 'orbit') && t.T.c !== 'always' && !o.sus) { const SU = TRIGS_RT.sus || (TRIGS_RT.sus = []), d = t.cast ? 0.4 : (TRG.sustain || 2); const ex = SU.find(x => x.wi === W0.wi); if (ex) ex.t = d; else SU.push({ i, W, wi: W0.wi, t: d, cd: 1 / (W0.aps || 1) }); } // 持续型：响应放一次持续 2 秒（出手 0.4 秒）
     if (ok && A.extra && rnd() * 100 < Math.min(TRG.affCap.extra, A.extra)) fire(W, W0.wi);
