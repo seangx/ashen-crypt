@@ -69,3 +69,15 @@ const QUAL_TINT = ['#8a8f9e', '#9aa0ae', '#c9cfdc', '#7cd06a', '#5ee05a', '#4fb8
     g.fillStyle(0x0d0912, 1).fillRect(cx - 1, cy - r + 1, 2, r * 2 - 2); g.fillStyle(0xc9893a, 1).fillRect(cx - 1, cy - r - 2, 2, 4).fillRect(cx - 1, cy + r - 2, 2, 4); // 铜隔条
   };
 }
+// 灯火分项（lamp-v2 §5.0）：下行中点灯火那半个球，看每秒燃烧、技能消耗、回灯各多少，和照现在的速度还能走多久
+{
+  const _bh = MobileUI.prototype.buildHud;
+  MobileUI.prototype.buildHud = function () {
+    _bh.call(this);
+    zoneOn(this, this.hpOrb, ORB.cx, ORB.cy - ORB.r, ORB.r, ORB.r * 2, () => {
+      if (!RUN) return; const P = STATS, lad = RUN.mode === 'ladder', burn = lad ? 0 : (SOUL.burn + lampBurnL(RUN.base)) * P.burnMul, skill = P.trigCost || 0;
+      const hit = P.lampHit ? P.lampHit / Math.max(0.1, P.lampGap || 1) : 0, kill = (SOUL.onKill.normal || 0) * 1.2 * (P.soulGainMul || 1), net = this.lampS && this.lampS.net, left = net != null && net < -0.05 ? player.soul / -net : null;
+      this.ask('灯火', () => {}, '知道了', `燃烧 −${r1(burn)}/秒${lad ? '（天梯按层数另算，越烧越快）' : `（第 ${RUN.base} 层）`}\n技能消耗约 −${r1(skill)}/秒（魂龛期望频率估算）\n回灯约 +${r1(hit + kill)}/秒（命中 ${r1(hit)}、击杀约 ${r1(kill)}）\n实际净变化 ${net == null ? '—' : (net >= 0 ? '+' : '−') + r1(Math.abs(net)) + '/秒'}${left != null ? ` · 照这个速度约 ${Math.ceil(left)} 秒灯灭` : ''}`);
+    });
+  };
+}
