@@ -147,19 +147,19 @@ function whirlFx(ground, blade, glow, x, y, R, f, t, eye, ang) { // ang：角色
   ground.lineStyle(1, 0xd06a40, 0.18 + 0.12 * f).strokeCircle(x, y, R);
   // 风暴之眼：吸扯范围外往里流的风线
   if (eye) { const PR = R * RL.areaEye.pullR; for (let k = 0; k < 14; k++) { const ph = (t * 0.9 + k * 0.37) % 1, rr = PR - (PR - R) * ph, an = k * 2.4 - t * 1.5 - ph * 1.2; for (let s = 0; s < 6; s++) { const r2 = rr + s * 1.5; ground.fillStyle(0xd08a60, 0.45 * Math.sin(ph * Math.PI) * (1 - s / 6)).fillRect(Math.round(x + Math.cos(an + s * 0.02) * r2), Math.round(y + Math.sin(an + s * 0.02) * r2), 1, 1); } } }
-  // 刀光：经典旋风斩那种粗的红橙色月牙拖影（叠加发光层，外沿 = 判定半径）。一道长的主弧 + 对面一道短的，头粗尾细
-  const g = blade, cy = y - 3, W = Math.min(R * 0.55, 12 + f * 12), S = 24;
-  const band = (r0, r1, b0, b1) => { const n = 3, pts = []; for (let j = 0; j <= n; j++) { const a = b0 + (b1 - b0) * j / n; pts.push({ x: x + Math.cos(a) * r1, y: cy + Math.sin(a) * r1 }); } for (let j = n; j >= 0; j--) { const a = b0 + (b1 - b0) * j / n; pts.push({ x: x + Math.cos(a) * r0, y: cy + Math.sin(a) * r0 }); } g.fillPoints(pts, true); }; // 一小段环形扇面，相邻段首尾相接不重叠
-  for (let i = 0; i < 2; i++) {
-    const a0 = (ang ?? -t * spd) + i * Math.PI, arc = (i ? 0.5 : 1) * (1.4 + f * 2.2), w0 = W * (i ? 0.6 : 1);
-    for (let s = 0; s < S; s++) {
-      const q = s / S, k = (1 - q) ** 0.8, w = Math.max(1, w0 * k), b0 = a0 + q * arc, b1 = b0 + arc / S;
-      g.fillStyle(0xa01208, 0.5 * k); band(R - w * 1.6, R - w, b0, b1); // 内侧暗红雾
-      g.fillStyle(0xff3c10, 0.85 * k); band(R - w, R - w * 0.3, b0, b1); // 红橙主体
-      g.fillStyle(0xffc070, k); band(R - w * 0.3, R, b0, b1); // 刃口亮边（外沿 = 判定半径）
+  // 刀光：层层套着的月牙（参考暴走巨刃的红色版）。每道月牙半径、粗细、长度、起点各不相同，起点按螺旋错开（里圈在前），一起转；
+  // 暗红主体画在怪下面，叠加层上画橙色芯和刀头的细亮边，月牙交叠处自然变亮。层数越高月牙越多（5 → 12），最外一道的外沿 = 判定半径
+  const g = blade, cy = y - 3, n = 5 + Math.round(f * 7), S = 12, rot = -t * spd;
+  const band = (r0, r1, b0, b1, G) => { const m = 2, pts = []; for (let j = 0; j <= m; j++) { const a = b0 + (b1 - b0) * j / m; pts.push({ x: x + Math.cos(a) * r1, y: cy + Math.sin(a) * r1 }); } for (let j = m; j >= 0; j--) { const a = b0 + (b1 - b0) * j / m; pts.push({ x: x + Math.cos(a) * Math.max(0, r0), y: cy + Math.sin(a) * Math.max(0, r0) }); } G.fillPoints(pts, true); };
+  const hr = k => { const v = Math.sin(k * 12.9898) * 43758.5453; return v - Math.floor(v); };
+  for (let j = 0; j < n; j++) {
+    const u = n === 1 ? 1 : j / (n - 1), w = R * (0.09 + 0.06 * hr(j + 1) + 0.04 * u), r = R * (0.3 + 0.7 * u) - w, len = 2.3 + 0.7 * hr(j + 7), head = rot - u * 4.2 + (j % 2) * Math.PI + (hr(j + 13) - 0.5) * 1.2;
+    for (let s2 = 0; s2 < S; s2++) {
+      const q = s2 / S, tail = (1 - q) ** 1.1, wq = w * Math.min(1, (q + 0.5 / S) / 0.1) ** 0.5 * (1 - q) ** 0.6, b0 = head + q * len, b1 = b0 + len / S + 0.01;
+      g.fillStyle(0x8a1408, 0.6 * tail); band(r - wq, r + wq, b0, b1, g); // 暗红主体（怪下面）
+      const G2 = glow || g; G2.fillStyle(0xd83a14, (glow ? 0.4 : 0.6) * tail * (0.7 + 0.3 * f)); band(r - wq * 0.55, r + wq * 0.55, b0, b1, G2); // 橙红芯（叠加：交叠处变亮）
+      if (q < 0.45) { G2.fillStyle(0xffe0a8, 0.75 * (1 - q / 0.45)); band(r + wq * 0.55, r + wq, b0, b1, G2); } // 刀头外沿一条细亮弧
     }
-    g.fillStyle(0xffe6b0, 0.9).fillCircle(x + Math.cos(a0) * (R - 2), cy + Math.sin(a0) * (R - 2), 1.5 + f); // 刀头
-    if (glow) { glow.lineStyle(3, 0xff6a30, 0.35); glow.beginPath(); glow.arc(x, cy, R - 1, a0, a0 + arc * 0.25); glow.strokePath(); } // 只有刀头一小段发光
   }
   for (let k = 0; k < 8; k++) { const an = -t * spd * 0.6 + k * 0.79, rr = R * (0.4 + ((t * 2.5 + k * 0.37) % 1) * 0.7); ground.fillStyle(0x8a6a4a, 0.5 * (1 - rr / (R * 1.15))).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr), 1, 1); } // 往外甩的尘土
 }
