@@ -406,7 +406,7 @@ class MobileUI extends UI {
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
     let y = 20;
     if (note) { const t = TW(this, 12, y, note[0], w - 24, { size: 8, color: note[1], parent: c }); y += t.h + 8; }
-    { const ht = hurtTop(r); if (ht) { const t = TW(this, 12, y, '受伤：' + ht, w - 24, { size: 8, color: '#ffb0a0', parent: c }); y += t.h + 6; } } // defense-v3 §8.4
+    { const ht = hurtTop(r); if (ht) { const t = TW(this, 12, y, '受伤：' + ht + '（点开看全部）', w - 24, { size: 8, color: '#ffb0a0', parent: c }); zoneOn(this, c, 8, y - 2, w - 16, t.h + 4, () => this.ask('这趟是怎么受伤的', () => {}, '知道了', hurtList(r).slice(0, 10).join('\n') + '\n\n' + ht)); y += t.h + 6; } } // defense-v3 §8.4
     const cw = Math.floor((w - 24) / 3);
     cols.forEach(([ic, v, l], i) => { const cx = 12 + (i % 3) * cw + cw / 2, yy = y + (i / 3 | 0) * 50, s2 = this.textures.get(ic).getSourceImage();
       c.add(nine(this, 12 + (i % 3) * cw + 2, yy, cw - 4, 46, 'f_slot', 3));

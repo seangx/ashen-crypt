@@ -58,6 +58,7 @@ const healBlocked = () => RUN && player.blightT > RUN.t; // 枯血
 /* 受伤来源统计（defense-v3 §8.4）：每次受伤按 来源 × 元素 记下护盾前的伤害，结算时给占比最大的一项和一句建议 */
 const HURT_CAT = src => !src ? '地面效果' : src.mirror ? '镜反' : src.slam ? '重击红圈' : src.boss ? 'Boss 招式' : src.aff ? '精英招式' : src.ranged ? '远程' : '近战';
 function hurtLog(d, el, src) { if (!RUN || d <= 0) return; const H = RUN.hurt || (RUN.hurt = {}), k = HURT_CAT(src) + '|' + (el || 'kin'); H[k] = (H[k] || 0) + d; }
+function hurtList(r) { const H = (r && r.hurt) || {}, tot = Object.values(H).reduce((s, v) => s + v, 0); return tot > 0 ? Object.entries(H).sort((a, b) => b[1] - a[1]).map(([k, v]) => { const [c, e] = k.split('|'); return `${ELEM_N[e] || e}·${c}  ${Math.round(v / tot * 100)}%`; }) : []; }
 function hurtTop(r) {
   const H = r && r.hurt; if (!H) return null; const tot = Object.values(H).reduce((s, v) => s + v, 0); if (tot <= 0) return null;
   const [k, v] = Object.entries(H).sort((a, b) => b[1] - a[1])[0], [cat, el] = k.split('|'), L = r.L || monLv(), P = STATS;
