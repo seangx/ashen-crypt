@@ -39,8 +39,8 @@ MobileUI.prototype.updateCamp = function () {
   bub(this, c, 8, 4, pw, 132, 0x46538a, { r: 10 });
   T(this, W / 2, 10, S.auto.lock ? '锁层' : '推层 · 打赢就往下', { size: 8, color: '#b9c2ea', align: 'center', parent: c });
   T(this, W / 2, 24, `第 ${descentStart()} 层`, { size: 12, scale: 2, color: '#ffe08a', align: 'center', parent: c });
-  mkBtn(this, c, 20, 26, 30, 26, '<', () => { if (S.depth > 1) { S.depth--; S.auto.lock = true; save(); } this.campKey = ''; }, { disabled: S.depth <= 1 });
-  mkBtn(this, c, W - 50, 26, 30, 26, '>', () => { if (S.depth < S.maxDepth) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.campKey = ''; }, { disabled: S.depth >= S.maxDepth });
+  mkBtn(this, c, 20, 25, 30, 28, '<', () => { if (S.depth > 1) { S.depth--; S.auto.lock = true; save(); } this.campKey = ''; }, { disabled: S.depth <= 1 });
+  mkBtn(this, c, W - 50, 25, 30, 28, '>', () => { if (S.depth < S.maxDepth) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.campKey = ''; }, { disabled: S.depth >= S.maxDepth });
   T(this, W / 2, 56, `最深 ${S.maxDepth - 1} 层 · 战力 ${fmt(Math.round(STATS.dps || 0))}`, { size: 8, color: '#ffffff', align: 'center', parent: c });
   mkBtn(this, c, 16, 70, pw - 16, 32, '开 战 !', () => startRun(), { style: 'w' });
   const rp = (S.reelsPending || []).length; if (rp) mkBtn(this, c, W - 74, 8, 60, 18, `轮盘 ×${rp}`, () => this.openWin('reels'), { size: 8, style: 'w' }); // 未开的骸骨轮盘

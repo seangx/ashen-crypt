@@ -72,7 +72,7 @@ Object.assign(MobileUI.prototype, {
     T(this, 10, y + 8, `辅助宝石库存 ${S.mods.length}${over ? ` · 超过 ${RUNE_SOFT}，建议拆一些` : ''}`, { size: 8, color: over ? COL.bad : COL.dim, parent: c });
     const fw = 52, fok = unlocked('feed');
     mkBtn(this, c, w - 10 - 56 - fw, y, fw, 26, feedOn ? '喂养开' : '喂养', () => { feedOn = !feedOn; feedSrc = null; this.refresh(); }, { size: 8, style: feedOn ? 's' : 'n', disabled: !fok, locked: !fok, whyDisabled: `喂养：${unlockText('feed')}` });
-    mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk('r'), { size: 8, style: over ? 'w' : 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' }); y += 30;
+    mkBtn(this, c, w - 64, y - 1, 54, 28, '批量拆', () => this.openRBulk('r'), { size: 8, style: over ? 'w' : 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' }); y += 30;
     this.chipRow(c, 10, y, w - 20, [['all', '全部'], ['fit', '适用'], ['new', '新'], ['field', '力场'], ['sort', runeSort === 'lvl' ? '等级↓' : '名称']], runeF, v => { if (v === 'sort') runeSort = runeSort === 'lvl' ? 'name' : 'lvl'; else runeF = v; runePage = 0; this.refresh(); }); y += 30;
     const F = { all: () => true, fit: m => host && modActive(m, host), new: m => m.isNew, field: m => MOD_BY[m.mid].field }[runeF] || (() => true);
     const stacks = stackBy(S.mods.filter(F), runeKey).sort(runeSort === 'lvl' ? (a, b) => b[0].lvl - a[0].lvl || MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) : (a, b) => MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) || b[0].lvl - a[0].lvl);
@@ -91,7 +91,7 @@ Object.assign(MobileUI.prototype, {
       this.badge(c, x, yy, st, sk.length, sk.some(m => m.isNew));
     });
     const by = y + rows * st + 2;
-    if (pages > 1) { mkBtn(this, c, 10, by, 40, 26, '<', () => { runePage--; this.refresh(); }, { disabled: runePage <= 0 }); T(this, w / 2, by + 13, `${runePage + 1} / ${pages}`, { size: 8, color: COL.dim, align: 'center', valign: 'middle', parent: c }); mkBtn(this, c, w - 50, by, 40, 26, '>', () => { runePage++; this.refresh(); }, { disabled: runePage >= pages - 1 }); }
+    if (pages > 1) { mkBtn(this, c, 10, by - 1, 40, 28, '<', () => { runePage--; this.refresh(); }, { disabled: runePage <= 0 }); T(this, w / 2, by + 13, `${runePage + 1} / ${pages}`, { size: 8, color: COL.dim, align: 'center', valign: 'middle', parent: c }); mkBtn(this, c, w - 50, by - 1, 40, 28, '>', () => { runePage++; this.refresh(); }, { disabled: runePage >= pages - 1 }); }
     else TW(this, 10, by + 4, feedOn ? (feedSrc ? `已选 ${MOD_BY[feedSrc.mid].n} 当饲料，再点要喂的符文。` : '先点一个符文当饲料。') : '同名同级的符文叠在一起。点空槽挑符文，点库存看详情和秒伤变化。', w - 20, { size: 8, color: feedOn ? COL.emberHi : COL.faint, parent: c });
   },
   runeDetail(sk, host) {
@@ -163,7 +163,7 @@ Object.assign(MobileUI.prototype, {
     } else T(this, 46, y + 8, '没有装备技能宝石：点下面的宝石装上。', { size: 8, color: COL.dim, parent: c });
     y += 38;
     T(this, 10, y + 8, `背包里的技能宝石 ${nG}`, { size: 8, color: COL.dim, parent: c });
-    mkBtn(this, c, w - 64, y, 54, 26, '批量拆', () => this.openRBulk('g'), { size: 8, disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
+    mkBtn(this, c, w - 64, y - 1, 54, 28, '批量拆', () => this.openRBulk('g'), { size: 8, disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     this.gemPane(c, w, h, y + 30);
   },
   /* 批量拆解：一次只拆一类（辅助宝石 'r' / 技能宝石 'g'），只动库存 / 背包里的 */

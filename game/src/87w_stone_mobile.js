@@ -49,7 +49,7 @@ Object.assign(MobileUI.prototype, {
       T(this, x + 36, yy + 18, fitW(`武 ${wf}`, cw - 40 - (fz ? 42 : 4)), { size: 8, color: COL.dim, parent: c });
       T(this, x + 36, yy + 30, fitW(`甲 ${af}`, cw - 40 - (fz ? 42 : 4)), { size: 8, color: COL.dim, parent: c });
       zoneOn(this, c, x, yy, cw - (L.length >= 3 && s.t < 5 ? 40 : 0), ch, () => { stonePick = stonePick === s.id ? null : s.id; R(); });
-      if (L.length >= 3 && s.t < 5) mkBtn(this, c, x + cw - 40, yy + 14, 36, 24, '合成', () => { if (stoneFuse(s.sid, s.t)) toast(`合成 ${S0.n} ${s.t + 1} 阶`, '#ffe066'); stonePick = null; R(); }, { size: 8, style: 'w' });
+      if (L.length >= 3 && s.t < 5) mkBtn(this, c, x + cw - 40, yy + 12, 36, 28, '合成', () => { if (stoneFuse(s.sid, s.t)) toast(`合成 ${S0.n} ${s.t + 1} 阶`, '#ffe066'); stonePick = null; R(); }, { size: 8, style: 'w' });
     });
     y += Math.ceil(keys.length / 2) * (ch + 6);
     if (stonePick) { const p = bag.find(x => x.id === stonePick); if (p) T(this, 12, y + 4, '已选中：点上面的空孔放入', { size: 8, color: '#ffe066', parent: c }); }

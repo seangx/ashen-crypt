@@ -205,8 +205,8 @@ class MobileUI extends UI {
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: '#2a1306', shadow: false, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });
-      mkBtn(this, c, this.pan, hy, 26, 16, '<', () => { this.pan = Math.max(0, this.pan - 120); this.refresh(); }, { size: 8, disabled: this.pan <= 0 });
-      mkBtn(this, c, this.pan + W - 8 - 26, hy, 26, 16, '>', () => { this.pan = Math.min(this.panMax, this.pan + 120); this.refresh(); }, { size: 8, disabled: this.pan >= this.panMax });
+      mkBtn(this, c, this.pan, hy - 6, 26, 28, '<', () => { this.pan = Math.max(0, this.pan - 120); this.refresh(); }, { size: 8, disabled: this.pan <= 0 });
+      mkBtn(this, c, this.pan + W - 8 - 26, hy - 6, 26, 28, '>', () => { this.pan = Math.min(this.panMax, this.pan + 120); this.refresh(); }, { size: 8, disabled: this.pan >= this.panMax });
     }
     if (!this.panHook) { // 在窗口上横向拖动 = 平移
       this.panHook = true;
@@ -230,7 +230,7 @@ class MobileUI extends UI {
     mkBtn(this, c, w - 42, y + 4, 30, 28, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { disabled: RUN || S.depth >= S.maxDepth }); y += 50;
     TW(this, 12, y, '只有一个操作：移动。武器自动攻击最近的敌人，没有冲刺和主动技能。', w - 24, { size: 8, color: COL.faint, parent: c }); y += 30;
     c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, '清除存档', { parent: c, color: '#ff6b5a' }); T(this, 16, y + 21, '删除全部进度，从第 1 层重新开始', { size: 8, color: COL.dim, parent: c });
-    mkBtn(this, c, w - 94, y + 7, 78, 22, '清除存档', () => this.ask('确定清除全部存档？', () => this.ask('最后确认：真的要清除吗？', () => wipeSave(), '确认清除', '进度、装备、宝石、设置全部删除，无法找回'), '确认清除', '此操作不可撤销'), { size: 8, style: 'r' });
+    mkBtn(this, c, w - 94, y + 4, 78, 28, '清除存档', () => this.ask('确定清除全部存档？', () => this.ask('最后确认：真的要清除吗？', () => wipeSave(), '确认清除', '进度、装备、宝石、设置全部删除，无法找回'), '确认清除', '此操作不可撤销'), { size: 8, style: 'r' });
   }
   equipSlots(c, ox, oy, onClick, selFn) {
     const pos = { gem: [0, 0], core: [32, 0], wl: [0, 32], wr: [64, 32], hub: [0, 64], engine: [32, 64], shield: [64, 64] };
@@ -250,8 +250,8 @@ class MobileUI extends UI {
     T(this, 112, 78, '抗性', { size: 8, color: COL.dim, parent: c });
     ELEM.forEach((e, i) => T(this, 134 + i * 20, 78, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
     T(this, 12, 100, `背包 ${S.stash.length}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
-    mkBtn(this, c, w - 90, 92, 38, 26, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
-    mkBtn(this, c, w - 50, 92, 40, 26, '批量', () => this.openBulk(), { size: 8, style: 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
+    mkBtn(this, c, w - 90, 91, 38, 28, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
+    mkBtn(this, c, w - 50, 91, 40, 28, '批量', () => this.openBulk(), { size: 8, style: 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
     stashTab = 0; { const gok = unlocked('gems') || nGem; mkBtn(this, c, 40, 92, 84, 26, `技能宝石 ${nGem} ›`, () => { trigSel = 0; this.openWin('trig'); }, { size: 8, icon: 'i_sg_GemNova', disabled: !gok, locked: !gok, whyDisabled: `技能宝石：${unlockText('gems')}` }); } // 技能宝石移到「宝石」页
     if (stashTab === 1) return this.gemPane(c, w, h, 122); // 技能石页：堆叠 + 筛选（87_gemrune_mobile.js）
@@ -452,7 +452,7 @@ class MobileUI extends UI {
     const n = S.stash.filter(salvWhy).length;
     mkBtn(this, c, 12, y, w - 24, 30, `现在分解背包（${n} 件）`, () => this.ask(`分解背包里 ${n} 件？`, '分解', '会变成词条碎片，不能撤销。', () => { const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个`, '#d9cfb8'); save(); this.refresh(); }), { size: 8, style: 'w', disabled: !n }); y += 38;
     T(this, 12, y, `收藏词条 ${fav.length} 个${R.fav ? '' : '（默认）'}`, { size: 8, color: COL.emberHi, parent: c });
-    if (R.fav) mkBtn(this, c, w - 84, y - 8, 72, 26, '恢复默认', () => { R.fav = null; save(); this.refresh(); }, { size: 8 });
+    if (R.fav) mkBtn(this, c, w - 84, y - 9, 72, 28, '恢复默认', () => { R.fav = null; save(); this.refresh(); }, { size: 8 });
     y += 18;
     const list = AFF.filter(a => !a.tk).sort((a, b) => (fav.includes(b.k) - fav.includes(a.k)) || (affName(a) < affName(b) ? -1 : 1));
     const rows = Math.max(1, Math.floor((h - y - 40) / 24)), per = rows * 2, pages = Math.ceil(list.length / per); this.salvPage = Math.min(this.salvPage || 0, pages - 1);

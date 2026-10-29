@@ -1,6 +1,6 @@
 # 手机端 UI 审查：按 Open Design 准则（2026-10-26）
 
-状态：**#1、#3、#4、#5、#6 已实现**（2026-10-29 核对）。#2 正文字号只做到 8.5 逻辑像素；点击区都已 ≥ 30（mkBtn 自动补齐，#3 达标），但按钮画出来的高度还有 16–26 几种（#6）；#7–#10 按原计划暂缓。
+状态：**#1、#3、#4、#5、#6 已实现**（2026-10-29 核对）。#2 正文字号只做到 8.5 逻辑像素；点击区都已 ≥ 30（mkBtn 自动补齐），页内按钮画出来的高度统一成 28（#3、#6）；#7–#10 按原计划暂缓。
 
 准则来源：本机 `/workspace/open-design/craft/`（accessibility-baseline、color、typography、state-coverage、laws-of-ux、anti-ai-slop、animation-discipline）。参照设计系统：`design/mobile/*.html`（Open Design 原型，令牌：--bg #2a2433、--gold #c8913a、--ember #ff9a3c、--muted #d2c3b0；正文最小 13px，可点区域至少 44px）。
 范围：只看手机版（86/87/88_*_mobile.js），桌面版不动。严重度：P0 必须修，P1 应该修，P2 可以晚点修。

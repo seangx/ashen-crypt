@@ -97,9 +97,9 @@ Object.assign(MobileUI.prototype, {
       T(this, 14, y + 6, trigName(T0), { parent: c, color: '#ffffff', shadowColor: '#1a1426' }); T(this, 14 + textW(trigName(T0)) + 6, y + 8, TRIG_RAR_N[T0.rar] + ' · ' + T0.sock + ' 孔', { size: 8, parent: c, color: '#' + (RAR_C[T0.rar] || 0).toString(16).padStart(6, '0') });
       const ib = this.add.container(w - 30, y + 4); c.add(ib); bub(this, ib, 0, 0, 16, 16, 0x6fc8ff, { r: 8 }); T_(this, ib, 8, 3, 'i', { size: 8 });
       zoneOn(this, c, w - 36, y, 28, 26, () => this.ask('魂龛规则', () => {}, '知道了', `【${trigKindN(T0.c)}】${TCOND[T0.c].n}：${TCOND[T0.c].d}。\n【出手】魂龛轮到时替换这一次出手（左边优先）；【响应】魂龛满了立刻额外放。\n技能石每次施放耗灯火，辅助石加倍率；灯火低于 10% 只放底技能。\n最多 ${trigMaxSkills(T0)} 颗技能石，两颗时各 −30%。技能石推荐底子一致时 +20%。\n常驻只能插瘟疫光环、游雷、旋风斩。`));
-      mkBtn(this, c, w - 74, y + 4, 40, 18, '换', () => { tbagSel = null; this.openWin('tbag'); }, { size: 8 });
-      if (unlocked('craftAdv')) mkBtn(this, c, w - 74, y + 40, 40, 18, '打造', () => { tcraftAff = null; this.openWin('tcraft'); }, { size: 8 });
-      if (trigCanAddSock(T0)) mkBtn(this, c, w - 124, y + 4, 46, 18, `开孔${S.glyphs && S.glyphs.socket || 0}`, () => { const r = trigAddSock(T0); toast(r); this.refresh(); }, { size: 8, disabled: !(S.glyphs && S.glyphs.socket > 0) });
+      mkBtn(this, c, w - 76, y + 2, 38, 28, '换', () => { tbagSel = null; this.openWin('tbag'); }, { size: 8 });
+      if (unlocked('craftAdv')) mkBtn(this, c, w - 76, y + 38, 38, 28, '打造', () => { tcraftAff = null; this.openWin('tcraft'); }, { size: 8 });
+      if (trigCanAddSock(T0)) mkBtn(this, c, w - 124, y + 2, 46, 28, `开孔${S.glyphs && S.glyphs.socket || 0}`, () => { const r = trigAddSock(T0); toast(r); this.refresh(); }, { size: 8, disabled: !(S.glyphs && S.glyphs.socket > 0) });
       const ss = 30, lk = 6, k0 = T0.sock, rw = k0 * ss + (k0 - 1) * lk, sx = Math.round((w - rw) / 2), sy = y + 34, skills = T0.socks.filter(isSkill);
       const lg = this.add.graphics(); c.add(lg);
       for (let k = 0; k < k0; k++) {
@@ -125,8 +125,8 @@ Object.assign(MobileUI.prototype, {
         T_(this, c, w / 2, y + 88, `每秒 ${(t.per || 0).toFixed(2)} 次${t.cast ? ' · 占出手 ' + Math.round(Math.min(1, t.per / aps) * 100) + '%' : ''} · 占输出 ${Math.round(share * 100)}%`, { size: 8, color: '#e0e4f0' });
         T_(this, c, w / 2, y + 99, over ? `充能溢出：每次出手都满了，别再堆充能 · 耗灯 ${t.cost.toFixed(1)}/次` : `${t.mode === 'charge' ? `充能 ${Math.round(t.per * t.cap)}/秒（满 ${Math.round(t.cap)}） · ` : ''}耗灯 ${t.cost.toFixed(1)}${t.mode === 'always' ? '/秒' : '/次'}`, { size: 8, color: over ? '#b9bfd6' : '#e0e4f0' }); }
       const af = trigU(T0) ? '独特：' + trigU(T0).d : trigAffList(T0).join('  '); if (af) T_(this, c, w / 2, y + 110, wrapText(af, w - 24, 8).slice(0, 1).join(''), { size: 8, color: '#9fe08a' });
-      if (trigSel > 0 && trigSel < n) mkBtn(this, c, 14, y + 22, 22, 14, '◀', () => { swapTrigs(trigSel, trigSel - 1); trigSel--; this.refresh(); }, { size: 8 });
-      if (trigSel < n - 1) mkBtn(this, c, w - 36, y + 22, 22, 14, '▶', () => { swapTrigs(trigSel, trigSel + 1); trigSel++; this.refresh(); }, { size: 8 });
+      if (trigSel > 0 && trigSel < n) mkBtn(this, c, 10, y + 36, 26, 28, '◀', () => { swapTrigs(trigSel, trigSel - 1); trigSel--; this.refresh(); }, { size: 8 });
+      if (trigSel < n - 1) mkBtn(this, c, w - 36, y + 38, 26, 28, '▶', () => { swapTrigs(trigSel, trigSel + 1); trigSel++; this.refresh(); }, { size: 8 });
     }
     // 宝石背包
     y = 218; const tabs = [['all', '全部'], ['skill', '技能'], ['sup', '辅助']];
@@ -145,7 +145,7 @@ Object.assign(MobileUI.prototype, {
       if (it.isNew) rect(this, x + 2, yy + 2, 4, 4, '#ff3b3b', 1, c);
     });
     if (!list.length) T_(this, c, w / 2, y + 44, gemTab === 'sup' ? '还没有辅助石' : '还没有宝石', { size: 8, color: '#b9c2ea' });
-    if (pg > 1) { mkBtn(this, c, 8, h - 28, 30, 22, '<', () => { gemPage--; this.refresh(); }, { disabled: gemPage <= 0 }); T_(this, c, w / 2, h - 24, `${gemPage + 1}/${pg}`, { size: 8 }); mkBtn(this, c, w - 38, h - 28, 30, 22, '>', () => { gemPage++; this.refresh(); }, { disabled: gemPage >= pg - 1 }); }
+    if (pg > 1) { mkBtn(this, c, 8, h - 32, 30, 28, '<', () => { gemPage--; this.refresh(); }, { disabled: gemPage <= 0 }); T_(this, c, w / 2, h - 24, `${gemPage + 1}/${pg}`, { size: 8 }); mkBtn(this, c, w - 38, h - 32, 30, 28, '>', () => { gemPage++; this.refresh(); }, { disabled: gemPage >= pg - 1 }); }
   },
   /* 触发器背包 / 掉落对比：点一个 → 当前 vs 新（孔数、秒伤变化），只有 分解 / 替换 */
   win_tbag(c, w, h) {
@@ -171,8 +171,8 @@ Object.assign(MobileUI.prototype, {
     y += 160;
     mkBtn(this, c, 10, y, 70, 30, '分解', () => { const n = salvageTrig(N); toast(`分解：碎片 +${n}`); tbagSel = null; this.refresh(); }, { style: 'r' });
     mkBtn(this, c, 88, y, w - 98, 30, '替换', () => { equipTrig(trigSel, N); tbagSel = null; this.openWin('trig'); }, { style: 'w' });
-    mkBtn(this, c, w / 2 - 40, h - 36, 80, 26, '返回', () => this.openWin('trig'), { size: 8 });
-    if (cur) mkBtn(this, c, 8, h - 36, 60, 26, '卸下', () => { unequipTrig(trigSel); this.openWin('trig'); }, { size: 8 });
+    mkBtn(this, c, w / 2 - 40, h - 36, 80, 28, '返回', () => this.openWin('trig'), { size: 8 });
+    if (cur) mkBtn(this, c, 8, h - 36, 60, 28, '卸下', () => { unequipTrig(trigSel); this.openWin('trig'); }, { size: 8 });
   },
   /* 魂龛打造（spec-trigger-slots §10，高级铁砧）：重铸、改一条（先点词条）、升阶、打磨、重随孔数 */
   win_tcraft(c, w, h) {
@@ -215,7 +215,7 @@ Object.assign(MobileUI.prototype, {
     p.shown = 1; const hope = (S.glyphs && S.glyphs.hope) || 0, y = y0 + ch + 12;
     mkBtn(this, c, 8, y, (w - 20) / 2, 26, `重转（希望符 ${hope}）`, () => { if (reelReroll()) { p.shown = 0; this.refresh(); } else toast('没有希望符'); }, { size: 8, disabled: !hope });
     mkBtn(this, c, 12 + (w - 20) / 2, y, (w - 20) / 2, 26, `放弃（+${REEL.skipShards} 碎片）`, () => { reelSkip(); toast(`碎片 +${REEL.skipShards}`); if (S.reelsPending.length) this.refresh(); else this.closeWin(); }, { size: 8, style: 'r' });
-    mkBtn(this, c, w / 2 - 40, h - 36, 80, 26, '稍后再开', () => this.closeWin(), { size: 8 });
+    mkBtn(this, c, w / 2 - 40, h - 36, 80, 28, '稍后再开', () => this.closeWin(), { size: 8 });
   },
 });
 // 刷新钩子：导航和战斗触发器小条每帧更新
