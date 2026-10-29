@@ -14,7 +14,7 @@ const TREE_TEXT = {
   armor: v => `护甲 +${v}`, armorInc: v => `护甲提高 ${v}%`, deflect: v => `护盾 +${v}`, deflectInc: v => `护盾提高 ${v}%`, dodge: v => `闪避 +${v}`,
   mass: v => `${ATTR_N.mass} +${v}`, energy: v => `${ATTR_N.energy} +${v}`, time: v => `${ATTR_N.time} +${v}`,
   massInc: v => `${ATTR_N.mass}提高 ${v}%`, energyInc: v => `${ATTR_N.energy}提高 ${v}%`, timeInc: v => `${ATTR_N.time}提高 ${v}%`,
-  aspd: v => `攻击速度提高 ${v}%`, aoeInc: v => `范围提高 ${v}%`, areaInc: v => `范围武器伤害提高 ${v}%`, dotInc: v => `持续伤害提高 ${v}%`, dashRegen: v => `冲刺回复${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`, velocity: v => `移动速度提高 ${v}%`,
+  aspd: v => `攻击速度提高 ${v}%`, chargeInc: v => `魂龛充能获取提高 ${v}%`, aoeInc: v => `范围提高 ${v}%`, areaInc: v => `范围武器伤害提高 ${v}%`, dotInc: v => `持续伤害提高 ${v}%`, dashRegen: v => `冲刺回复${v >= 0 ? '提高' : '降低'} ${Math.abs(v)}%`, velocity: v => `移动速度提高 ${v}%`,
   dashMax: v => `冲刺槽 +${v}`, critInc: v => `暴击率提高 ${v}%`, critDmg: v => `暴击伤害 ${v >= 0 ? '+' : ''}${v}%`, 'res:all': v => `全抗 ${v >= 0 ? '+' : ''}${v}`, 'inc:all': v => `全部伤害提高 ${v}%`,
   projSpd: v => `投射物速度提高 ${v}%`, projDur: v => `投射物持续时间提高 ${v}%`, bossInc: v => `对 Boss 伤害总增 ${v}%`, chain: v => `弹射 +${v}（投射物碰到屏幕边反弹的次数，用完就飞出屏幕；闪电链类的瞬发电弧则是在敌人之间连锁）`, projAdd: v => `投射物 +${v}`, durInc: v => `持续时间提高 ${v}%`, pierce: () => '投射物无限穿透', double: v => `${v}% 几率造成双倍伤害`,
   /* 通用防御（spec-tree-defense §1）和新标签属性：和装备上同名词条相加 */

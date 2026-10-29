@@ -347,12 +347,12 @@
    },
    {
     "small": {
-     "aspd": 4
+     "chargeInc": 5
     },
     "nn": "急速",
     "nadd": {
      "aspd": 10,
-     "critInc": 10
+     "chargeInc": 5
     },
     "key": {
      "n": "连环",
@@ -384,11 +384,11 @@
    },
    {
     "small": {
-     "aoeInc": 6
+     "chargeInc": 5
     },
     "nn": "积蓄",
     "nadd": {
-     "aoeInc": 10,
+     "chargeInc": 10,
      "inc:all": 10
     },
     "key": {

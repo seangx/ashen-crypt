@@ -160,7 +160,7 @@ function trigStats(P, eq) {
     });
     const tier = trigTier(T.ilvl), cap = Math.max(C.cap * (1 - (TRG.affCap.cap ? Math.min(100 - TRG.affCap.cap, A.cap || 0) : 0) / 100), (C.cap || 100) * TRG.affCap.cap / 100) * (fx.capMul || 1) * (P.flag && P.flag.overflow ? 1.25 : 1); // tree-v3 蓄满：容量 +25%
     const N = C.mode === 'timer' ? Math.max(TRG.affCap.timerMin, (fx.N || C.N[tier - 1]) - (A.gap || 0)) : 0;
-    const cm = Math.max(0, ...ws.map(W => W.chargeMore || 0)), per = trigRate(T, C, P, cap, N, fx, cm ? { ...A, gain: ((1 + (A.gain || 0) / 100) * (1 + cm / 100) - 1) * 100 } : A); // 急蓄算进期望频率
+    const cm = (1 + Math.max(0, ...ws.map(W => W.chargeMore || 0)) / 100) * (1 + ((P.tree && P.tree.add.chargeInc) || 0) / 100) * 100 - 100, per = trigRate(T, C, P, cap, N, fx, cm ? { ...A, gain: ((1 + (A.gain || 0) / 100) * (1 + cm / 100) - 1) * 100 } : A); // 急蓄算进期望频率
     const dps = ws.reduce((s, W) => s + (C.mode === 'always' ? W.dps : W.cont || W.form === 'orbit' ? W.dps * (cast ? 0.4 : TRG.sustain || 2) * per : W.dps / Math.max(0.2, W.aps || 1) * per * (1 + (W.extraCast || 0))), 0) * (1 + Math.min(TRG.affCap.extra, A.extra || 0) / 100);
     P.trigs[i] = { T, ws, on, cast, mode: C.mode, cap: cap || 100, N, gain: (1 + (A.gain || 0) / 100) * (1 + cm / 100), /* 急蓄 */ per, dps, cost: ws.reduce((s, W) => s + W.cost, 0), thr: (fx.thr || C.thr || 0) + (A.lowThr || 0) / 100 };
     if (on) { if (cast) castDps += dps; else respDps += dps; }
