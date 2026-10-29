@@ -128,7 +128,7 @@ function rollCrit(W) {
 function hitMob(m, W, o = {}) {
   if (m.dead) return 0;
   const cm = W.cont ? 1 : rollCrit(W); const crit = cm > 1; m.lastSlot = W.trigSlot || 0;
-  trigHit(W, crit);
+  trigHit(W, crit, o.procK);
   if (W.atk && STATS.lampHit && RUN) { const t = RUN.t || 0; if (t >= (player.lampHitT || 0) || t < (player.lampHitT || 0) - 5) { player.lampHitT = t + STATS.lampGap; const g = STATS.lampHit * (STATS.soulGainMul || 1) * lampGainMul(RUN.base); player.soul = Math.min(STATS.soulMax, player.soul + g); RUN.lampHit = (RUN.lampHit || 0) + g; } } // 武器出手命中回灯：普攻和出手时技能（替这一下普攻放出的）都算，每次出手只算一次；其他触发的技能不回；残灯也回
   let mul = (o.mul || 1) * cm * lampMore() * (TRIGS_RT.lampState === 'ember' ? W.emberMore || 1 : TRIGS_RT.lampState === 'bright' ? W.brightLess || 1 : 1); // 残焰符文
   if (m.boss) mul *= W.bossMore;
@@ -575,11 +575,11 @@ function projHit(p, m) {
     return true;
   }
   const bn = p.bn || 0; // 已经弹射了几次
-  hitMob(m, p.W, { mul: mul * (1 + p.W.chainStep * bn) }); if (bn && STATS.flag.chainCrown) shockOn(m);
+  hitMob(m, p.W, { mul: mul * (1 + p.W.chainStep * bn), procK: p.kid ? 0.5 : 1 }); if (bn && STATS.flag.chainCrown) shockOn(m); // 分裂出来的每发触发系数 ×0.5
   fx({ t: 'hit', x: m.x, y: m.y - 5, el: p.el });
   if (p.first && p.split > 0) { // 分裂：向前方散开
     const s = p.split;
-    for (let i = 0; i < s; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (s - 1) / 2) * 0.5, { pierce: p.pierce, chain: p.chain, split: 0, ret: 0, hit: new Set([m]), mul: p.mul, life: 0.6 });
+    for (let i = 0; i < s; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (s - 1) / 2) * 0.5, { pierce: p.pierce, chain: p.chain, split: 0, ret: 0, hit: new Set([m]), mul: p.mul, life: 0.6, kid: 1 });
     return true;
   }
   p.first = false;

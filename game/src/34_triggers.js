@@ -260,13 +260,13 @@ function castAttack(W, wi) {
   return done;
 }
 // 出手技能命中：给命中时 / 残灯时 / 暴击时充能（每次施放每个魂龛最多 40 分）；响应技能不给
-function trigHit(W, crit) {
+function trigHit(W, crit, procK = 1) {
   const cc = !W.atk && W.trigSlot && STATS.flag && STATS.flag.chainCharge; // tree-v3 连环：响应技能也给【命中时】充能 ×0.5
   if (!RUN || !STATS.trigs || (!W.atk && !cc) || W.cont) return;
   const own = W.trigSlot ? W.trigSlot - 1 : -1, R = TRIGS_RT, cap = TRG.perCastCap;
   liveTrigs((t, i) => {
     if (i === own || !t.cast || t.mode !== 'charge' || trigFx(t.T).fixed) return; const c = t.T.c;
-    if (cc && c !== 'hit') return; let v = c === 'hit' ? W.proc * (cc ? 0.5 : 1) : c === 'ember' ? (R.lampState === 'ember' ? W.proc * 2 : 0) : c === 'crit' && crit ? TCOND.crit.per : 0;
+    if (cc && c !== 'hit') return; let v = c === 'hit' ? W.proc * procK * (cc ? 0.5 : 1) : c === 'ember' ? (R.lampState === 'ember' ? W.proc * 2 * procK : 0) : c === 'crit' && crit ? TCOND.crit.per : 0;
     v = Math.min(v, cap - R.cg[i]); if (v <= 0) return; R.cg[i] += v; trigCharge(i, v);
   });
 }
