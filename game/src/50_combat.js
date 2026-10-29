@@ -99,12 +99,13 @@ function ruleMul(m) {
   if (FL.afterDash && player.adT > 0) k *= 1 + RL.afterDash.more / 100;
   return k;
 }
+const hasAil = m => m.rad.length > 0 || m.burn > 0.5 || m.shock > 0 || m.chill > 0 || m.blindT > 0 || m.frzT > 0; // 带任何异常（蚀骨）
 function deathRules(m) {
   const FL = STATS.flag; const near = (r, n) => mobs.filter(x => x !== m && !x.dead && dist2(x, m) < r * r).sort((a, b) => dist2(a, m) - dist2(b, m)).slice(0, n);
   if (FL.shockSpread && m.shock > 0) for (const x of near(RL.shockSpread.r, RL.shockSpread.n)) { x.shock = Math.max(x.shock, m.shock); x.shockT = MECH.shockDur; fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: x.x, y2: x.y - 5, el: 'ele' }); }
-  if (FL.contagion && m.rad.length) for (const x of near(RL.contagion.r, RL.contagion.n)) x.rad.push(...m.rad.map(r => ({ ...r })));
+  if (FL.contagion && (m.rad.length || m.burn > 0.5)) for (const x of near(RL.contagion.r, RL.contagion.n)) { x.rad.push(...m.rad.map(r => ({ ...r }))); if (m.burn > 0.5) x.burn = Math.max(x.burn, m.burn * RL.contagion.burnPct / 100); } // tree-v3 §3.4 传染：任何持续伤害（疫病、灼烧）
   elemDeath(m, near);
-  if (FL.deathBoom && !m.boss) { const R = RL.deathBoom; fx({ t: 'boom', x: m.x, y: m.y - 4, r: R.r, el: 'exp' }); for (const x of near(R.r, 99)) damage(x, mitigate(x, 'exp', m.max * R.pct / 100), 'exp', false, true); }
+  if (FL.deathBoom && !m.boss) { const R = RL.deathBoom, el = STATS.addEl || 'exp'; fx({ t: 'boom', x: m.x, y: m.y - 4, r: R.r, el }); for (const x of near(R.r, 99)) damage(x, mitigate(x, el, m.max * R.pct / 100), el, false, true); } // tree-v3 §3.2 殉爆：元素 = 主附加元素
 }
 
 /* ---------- 命中与伤害 ---------- */
@@ -114,7 +115,7 @@ const shockRes = (m, e) => m.shock * (MECH.shockAll + (e === 'ele' ? MECH.shockE
 const ailEffG = e => (1 + ((STATS.raw && STATS.raw['ailEff:' + e]) || 0) / 100) * (e === 'cold' && STATS.flag && STATS.flag.chillMul || 1); // 誓约：冰缓效果 −30%
 // Boss 疲惫：开打 5 秒后每秒一层，每层承受伤害 ×1.04，最多 60 层
 const fatigue = m => m.boss ? Math.pow(MECH.fatigueStep, m.fat) : 1;
-function mitigate(m, e, d) { return d * (1 - ((m.res[e] || 0) - shockRes(m, e) - (m.shredT > 0 ? m.shred[e] || 0 : 0) - (STATS.flag.corrode && m.rad.length ? RL.corrode.res : 0) - ((STATS.raw && STATS.raw['pen:' + e]) || 0)) / 100) * fatigue(m); }
+function mitigate(m, e, d) { return d * (1 - ((m.res[e] || 0) - shockRes(m, e) - (m.shredT > 0 ? m.shred[e] || 0 : 0) - (STATS.flag.corrode && hasAil(m) ? RL.corrode.res : 0) - ((STATS.raw && STATS.raw['pen:' + e]) || 0)) / 100) * fatigue(m); }
 // 暴击率超过 100% 时可以多重暴击，每多一重几率 ×0.8
 function rollCrit(W) {
   let c = W.crit + lampCritAdd(), mult = 1;
