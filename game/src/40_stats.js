@@ -197,6 +197,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.knock) W.knock = 1;
     for (const k of ['pierceMore', 'debrisMore', 'blindMore', 'radMore', 'procMul', 'burnMore', 'emberMore', 'brightLess']) if (fx[k]) W[k] *= fx[k]; // 多重投射、灼烧、残焰
     if (fx.freezeInc) W.freezeInc += fx.freezeInc; // 霜咬
+    if (fx.chargeMore) W.chargeMore = (W.chargeMore || 0) + fx.chargeMore; if (fx.extraCast) W.extraCast = (W.extraCast || 0) + fx.extraCast; // 急蓄、连发（魂龛里生效）
     if (fx.knockMore) W.more *= fx.knockMore;
     if (fx.meleeMore) W.more *= fx.meleeMore;
     if (fx.engineMore && isEngine) W.more *= 1 + fx.engineMore / 100;

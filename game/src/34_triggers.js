@@ -160,9 +160,9 @@ function trigStats(P, eq) {
     });
     const tier = trigTier(T.ilvl), cap = Math.max(C.cap * (1 - (TRG.affCap.cap ? Math.min(100 - TRG.affCap.cap, A.cap || 0) : 0) / 100), (C.cap || 100) * TRG.affCap.cap / 100) * (fx.capMul || 1) * (P.flag && P.flag.overflow ? 1.25 : 1); // tree-v3 蓄满：容量 +25%
     const N = C.mode === 'timer' ? Math.max(TRG.affCap.timerMin, (fx.N || C.N[tier - 1]) - (A.gap || 0)) : 0;
-    const per = trigRate(T, C, P, cap, N, fx, A);
-    const dps = ws.reduce((s, W) => s + (C.mode === 'always' ? W.dps : W.cont || W.form === 'orbit' ? W.dps * (cast ? 0.4 : TRG.sustain || 2) * per : W.dps / Math.max(0.2, W.aps || 1) * per), 0) * (1 + Math.min(TRG.affCap.extra, A.extra || 0) / 100);
-    P.trigs[i] = { T, ws, on, cast, mode: C.mode, cap: cap || 100, N, gain: 1 + (A.gain || 0) / 100, per, dps, cost: ws.reduce((s, W) => s + W.cost, 0), thr: (fx.thr || C.thr || 0) + (A.lowThr || 0) / 100 };
+    const cm = Math.max(0, ...ws.map(W => W.chargeMore || 0)), per = trigRate(T, C, P, cap, N, fx, cm ? { ...A, gain: ((1 + (A.gain || 0) / 100) * (1 + cm / 100) - 1) * 100 } : A); // 急蓄算进期望频率
+    const dps = ws.reduce((s, W) => s + (C.mode === 'always' ? W.dps : W.cont || W.form === 'orbit' ? W.dps * (cast ? 0.4 : TRG.sustain || 2) * per : W.dps / Math.max(0.2, W.aps || 1) * per * (1 + (W.extraCast || 0))), 0) * (1 + Math.min(TRG.affCap.extra, A.extra || 0) / 100);
+    P.trigs[i] = { T, ws, on, cast, mode: C.mode, cap: cap || 100, N, gain: (1 + (A.gain || 0) / 100) * (1 + cm / 100), /* 急蓄 */ per, dps, cost: ws.reduce((s, W) => s + W.cost, 0), thr: (fx.thr || C.thr || 0) + (A.lowThr || 0) / 100 };
     if (on) { if (cast) castDps += dps; else respDps += dps; }
   });
   // 【出手】魂龛占掉的出手不放底技能：按占比扣掉底技能
@@ -224,6 +224,7 @@ function trigFire(i, o = {}) {
     TRIGS_RT.castSlot = i; const ok = fire(W, W0.wi); any = ok || any; if (ok) LT[W0.wi] = now;
     if (ok && (W0.cont || W0.form === 'orbit') && t.T.c !== 'always' && !o.sus) { const SU = TRIGS_RT.sus || (TRIGS_RT.sus = []), d = t.cast ? 0.4 : (TRG.sustain || 2); const ex = SU.find(x => x.wi === W0.wi); if (ex) ex.t = d; else SU.push({ i, W, wi: W0.wi, t: d, cd: 1 / (W0.aps || 1) }); } // 持续型：响应放一次持续 2 秒（出手 0.4 秒）
     if (ok && A.extra && rnd() * 100 < Math.min(TRG.affCap.extra, A.extra)) fire(W, W0.wi);
+    if (ok && W0.extraCast) for (let k = 0; k < W0.extraCast; k++) fire(W, W0.wi); // 连发：额外施放
     if (ok && RUN) { if (fx.lifeCost) player.life = Math.max(1, player.life - player.life * fx.lifeCost); else player.soul = Math.max(0, player.soul - W0.cost * (RUN.mode === 'ladder' ? 1 : (SOUL.pushCostMul ?? 1))); }
   }
   TRIGS_RT.castSlot = -1;
