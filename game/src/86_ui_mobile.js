@@ -225,9 +225,9 @@ class MobileUI extends UI {
     row(y, '音效', '攻击、拾取、界面音效', S.settings.sound ? '开' : '关', () => { S.settings.sound = !S.settings.sound; ac(); }); y += 42;
     row(y, '特效', '飘字、拾取记录、横幅和震屏', G.fx ? '开' : '关', () => { G.fx = !G.fx; }); y += 42;
     row(y, '推层', S.auto.lock ? `锁定在难度 ${S.depth}` : '打赢就去最深层，连输退一层', S.auto.lock ? '锁层' : '推层', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; }); y += 42;
-    c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, `难度 ${S.depth}`, { parent: c }); T(this, 16, y + 21, `最深纪录：第 ${S.maxDepth - 1} 层通关`, { size: 8, color: COL.dim, parent: c });
-    mkBtn(this, c, w - 74, y + 4, 30, 28, '<', () => { if (S.depth > 1 && !RUN) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { disabled: RUN || S.depth <= 1 });
-    mkBtn(this, c, w - 42, y + 4, 30, 28, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { disabled: RUN || S.depth >= S.maxDepth }); y += 50;
+    c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, `出发层 ${descentStart()}`, { parent: c }); T(this, 16, y + 21, `最深纪录：第 ${S.maxDepth - 1} 层通关`, { size: 8, color: COL.dim, parent: c });
+    mkBtn(this, c, w - 74, y + 4, 30, 28, '<', () => { if (!RUN && canPick(-1)) pickFloor(-1); this.refresh(); }, { disabled: RUN || !canPick(-1) });
+    mkBtn(this, c, w - 42, y + 4, 30, 28, '>', () => { if (!RUN && canPick(1)) pickFloor(1); this.refresh(); }, { disabled: RUN || !canPick(1) }); y += 50;
     TW(this, 12, y, '只有一个操作：移动。武器自动攻击最近的敌人，没有冲刺和主动技能。', w - 24, { size: 8, color: COL.faint, parent: c }); y += 30;
     c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, '清除存档', { parent: c, color: '#ff6b5a' }); T(this, 16, y + 21, '删除全部进度，从第 1 层重新开始', { size: 8, color: COL.dim, parent: c });
     mkBtn(this, c, w - 94, y + 4, 78, 28, '清除存档', () => this.ask('确定清除全部存档？', () => this.ask('最后确认：真的要清除吗？', () => wipeSave(), '确认清除', '进度、装备、宝石、设置全部删除，无法找回'), '确认清除', '此操作不可撤销'), { size: 8, style: 'r' });
@@ -388,9 +388,9 @@ class MobileUI extends UI {
   /* 结算：竖屏原生 */
   win_summary(c, w, h) {
     const r = this.winArg; if (!r) return;
-    const lad = r.mode === 'ladder', lamp = r.result === 'lampout', back = r.result === 'retreat', emg = r.result === 'emergency', abd = r.result === 'abandon';
-    const win = r.result === 'win' || (!lad && (lamp || back || emg || abd)); // 推关：灯火燃尽、撤回、紧急撤回都是平安返回
-    const title = abd ? '提前返回' : lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '灯灭' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
+    const lad = r.mode === 'ladder', lamp = r.result === 'lampout', back = r.result === 'retreat', emg = r.result === 'emergency', abd = r.result === 'abandon', home = r.result === 'home';
+    const win = r.result === 'win' || (!lad && (lamp || back || emg || abd || home)); // 推关：灯火燃尽、撤回、紧急撤回都是平安返回
+    const title = home ? '通关 · 返回营地' : abd ? '提前返回' : lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '灯灭' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
     const g = r.gain;
     const note = lad && win && r.lad.tierUp.length ? [`晋升${LADDER_TIERS[r.lad.tierUp[r.lad.tierUp.length - 1]].n}：送每种铸符各 ${LD.tiers.firstGlyphs} 张`, COL.emberHi]
       : abd ? [lad ? '提前离开天梯：这一层不算通过，没有损失' : '提前返回：东西全部带走，没打完的这一层不算通过', COL.emberHi]
@@ -432,9 +432,9 @@ class MobileUI extends UI {
     let y = 18;
     T(this, w / 2, y, `下一趟从第 ${descentStart()} 层出发`, { align: 'center', color: COL.emberHi, parent: c }); y += 18;
     TW(this, 12, y, `最深纪录：第 ${S.maxDepth - 1} 层通关 · ${S.auto.lock ? '锁层：从选定的层出发' : `从最深层往回退 ${SOUL.startBack} 层热身`}`, w - 24, { size: 8, color: COL.dim, parent: c }); y += 28;
-    mkBtn(this, c, 12, y, 40, 30, '<', () => { if (S.depth > 1) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { disabled: S.depth <= 1 });
-    T(this, w / 2, y + 15, `难度 ${S.depth}`, { align: 'center', valign: 'middle', parent: c });
-    mkBtn(this, c, w - 52, y, 40, 30, '>', () => { if (S.depth < S.maxDepth) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { disabled: S.depth >= S.maxDepth }); y += 38;
+    mkBtn(this, c, 12, y, 40, 30, '<', () => { if (canPick(-1)) pickFloor(-1); this.refresh(); }, { disabled: !canPick(-1) });
+    T(this, w / 2, y + 15, `出发层 ${descentStart()}`, { align: 'center', valign: 'middle', parent: c });
+    mkBtn(this, c, w - 52, y, 40, 30, '>', () => { if (canPick(1)) pickFloor(1); this.refresh(); }, { disabled: !canPick(1) }); y += 38;
     mkBtn(this, c, 12, y, w - 24, 30, S.auto.lock ? '锁层：开（点击改为推层）' : '推层：开（点击改为锁层）', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; save(); this.refresh(); }, { size: 8 }); y += 40;
     if (unlocked('ladder')) T(this, 12, y, '天梯从天梯石碑出发（营地面板或导航「天梯」）', { size: 8, color: COL.faint, parent: c });
     mkBtn(this, c, 12, h - 76, w - 24, 30, '出发', () => { this.closeWin(); startRun(); }, { style: 'w', disabled: !!RUN });

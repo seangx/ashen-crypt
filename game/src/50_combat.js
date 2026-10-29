@@ -29,6 +29,8 @@ function resetPlayer() {
   player.life = STATS.life; player.shield = STATS.shield; player.dash = STATS.dashMax; player.hurtT = 0; player.dashT = 0;
 }
 // 灯火下行的出发层：没锁层时从最深层往回退 startBack 层出发，最深层是一趟的高潮
+function pickFloor(d) { const n = clamp(descentStart() + d, 1, S.maxDepth); S.depth = n; S.auto.lock = true; save(); }
+const canPick = d => d < 0 ? descentStart() > 1 : descentStart() < S.maxDepth;
 const descentStart = () => S.auto.lock ? S.depth : Math.max(1, Math.min(S.depth, S.maxDepth) - SOUL.startBack);
 function startRun(L) {
   if (LAD.pending) { const N = LAD.pending; LAD.pending = 0; return startLadder(N); }
@@ -659,7 +661,7 @@ function logic(dt) {
   }
   if (RUN.ending) {
     RUN.ending -= dt;
-    const keepAll = ['win', 'lampout', 'retreat', 'emergency', 'abandon'].includes(RUN.result);
+    const keepAll = ['win', 'lampout', 'retreat', 'emergency', 'abandon', 'home'].includes(RUN.result);
     for (const dp of drops) if (keepAll) collect(dp);
     if (keepAll) drops = [];
     if (RUN.ending <= 0) finishRun();
@@ -979,8 +981,9 @@ function prepReturn() { if (!RUN || !RUN.prep) return; RUN.prep = null; if (G.ui
 function abandonRun(cleared) {
   if (!RUN || RUN.ending) return false;
   if (RUN.prep) { RUN.prep = null; if (G.ui && G.ui.closePrep) G.ui.closePrep(); }
-  RUN.result = 'abandon'; RUN.ending = 0.8; RUN.next = 0; S.auto.loop = false; sfx('out');
-  if (G.ui) G.ui.banner('提前返回', COL.emberHi); return true;
+  const home = cleared && RUN.mode !== 'ladder' && RUN.descent && RUN.descent.floors > 0; // 整备时返回：这一层已经打过，是通关后回营地
+  RUN.result = home ? 'home' : 'abandon'; RUN.ending = 0.8; RUN.next = 0; S.auto.loop = false; sfx('out');
+  if (G.ui) G.ui.banner(home ? '返回营地' : '提前返回', COL.emberHi); return true;
 }
 function finishRun() {
   const r = RUN; RUN = null; mobs = []; projs = []; drops = []; zones = []; checkUnlocks();

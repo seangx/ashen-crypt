@@ -200,8 +200,8 @@ class UI extends Phaser.Scene {
     const top = this.add.container(0, 0).setDepth(10); this.topC = top;
     this.ribbon = this.add.nineslice(0, 2, 'ribbon', null, 120, 22, 14, 14, 0, 0).setOrigin(0); top.add(this.ribbon);
     this.depthT = T(this, W / 2, 7, '', { align: 'center', color: COL.emberHi, parent: top });
-    this.dPrev = mkBtn(this, top, 0, 6, 14, 14, '<', () => { if (S.depth > 1 && !RUN) { S.depth--; S.auto.lock = true; } }, { size: 8, tip: [{ t: '降低难度（会锁定层数）', s: 8 }] });
-    this.dNext = mkBtn(this, top, 0, 6, 14, 14, '>', () => { if (S.depth < S.maxDepth && !RUN) { S.depth++; S.auto.lock = S.depth < S.maxDepth; } }, { size: 8, tip: () => [{ t: S.maxDepth >= PROG.run.maxDepth ? `已到最深层（第 ${PROG.run.maxDepth} 层），之后自动推层就一直刷这层` : '提高难度（通关后解锁下一层；不是最深层时会锁定层数）', s: 8 }] });
+    this.dPrev = mkBtn(this, top, 0, 6, 14, 14, '<', () => { if (!RUN && canPick(-1)) pickFloor(-1); }, { size: 8, tip: [{ t: '降低难度（会锁定层数）', s: 8 }] });
+    this.dNext = mkBtn(this, top, 0, 6, 14, 14, '>', () => { if (!RUN && canPick(1)) pickFloor(1); }, { size: 8, tip: () => [{ t: S.maxDepth >= PROG.run.maxDepth ? `已到最深层（第 ${PROG.run.maxDepth} 层），之后自动推层就一直刷这层` : '提高难度（通关后解锁下一层；不是最深层时会锁定层数）', s: 8 }] });
     const bc = this.add.container(W / 2 - 100, 26); top.add(bc); this.bossC = bc;
     this.bossT = T(this, 100, 0, '', { size: 8, align: 'center', parent: bc });
     bc.add(img(this, 0, 10, 'bonebar')); this.bossG = this.add.graphics(); bc.add(this.bossG);
@@ -294,7 +294,7 @@ class UI extends Phaser.Scene {
     const L = RUN ? RUN.L : S.depth;
     const dl = ladderBusy() ? `天梯 ${L} 层${(RUN.mods || []).length ? ' · ' + RUN.mods.map(x => LAD_AFF_BY[x.k].s).join(' ') : ''} · ${mmss(Math.max(0, RUN.limit - RUN.t))}` : RUN ? `第 ${L} 层 · ${themeFor(L).n}` : `营地 · 下一趟从第 ${descentStart()} 层出发`;
     if (this.depthT.text !== dl) { this.depthT.setText(dl); const tw = textW(dl), rw = tw + 44; this.ribbon.setSize(rw, 22); this.ribbon.x = Math.round(W / 2 - rw / 2); this.dPrev.x = this.ribbon.x - 16; this.dNext.x = this.ribbon.x + rw + 2; }
-    this.dPrev.setVisible(!RUN).setDisabled(S.depth <= 1); this.dNext.setVisible(!RUN).setDisabled(S.depth >= S.maxDepth);
+    this.dPrev.setVisible(!RUN).setDisabled(!canPick(-1)); this.dNext.setVisible(!RUN).setDisabled(!canPick(1));
     this.bossC.setVisible(!!RUN); this.topC.setVisible(!this.winId);
     const b = this.bossG; b.clear();
     if (RUN && RUN.boss && !RUN.boss.dead) {
@@ -394,7 +394,7 @@ class UI extends Phaser.Scene {
     if (!show) return;
     const win = r.result === 'win', g = r.gain, A = S.auto;
     const lad = r.mode === 'ladder';
-    const RN = { win: '抵达最深处', lampout: '灯火燃尽 · 平安返回', retreat: '险胜 · 撤回', emergency: '紧急撤回', abandon: '提前返回', dead: '阵亡', timeout: '灯灭' };
+    const RN = { win: '抵达最深处', lampout: '灯火燃尽 · 平安返回', retreat: '险胜 · 撤回', emergency: '紧急撤回', abandon: '提前返回', home: '通关 · 返回营地', dead: '阵亡', timeout: '灯灭' };
     const l1 = lad ? `天梯 ${r.L} 层${win ? `通过 · 用时 ${mmss(r.t)} · 跳 ${r.lad.jump} 层` : r.result === 'timeout' ? ' · 灯灭' : ' · 阵亡'}` : `${RN[r.result] || r.result} · 第 ${r.descent.from === r.base ? r.base : r.descent.from + '–' + r.base} 层`;
     const l2 = `击杀 ${r.kills} · 装备 ${g.items.length} 件${r.salv && r.salv.n ? `，分解 ${r.salv.n} 件得碎片 ${r.salv.shards}` : ''} · 经验 +${fmt(g.xp)}${g.lv ? ` · 升 ${g.lv} 级` : ''}`;
     const why = A.lock ? '（锁定层数）' : A.back ? `（退一层练级，再赢 ${AU.push.winsToRetry - A.backWins} 次回去冲）` : !win && A.fails ? `（再输 ${AU.push.lossesToRetreat - A.fails} 次退一层）` : '';
@@ -919,9 +919,9 @@ class UI extends Phaser.Scene {
   // 一趟结算：绶带标题，一排带图标的数，凹槽里的装备，拿到的符文和铸符只放图标
   win_summary(c, w, h) {
     const r = this.winArg; if (!r) return;
-    const lad = r.mode === 'ladder', lamp = r.result === 'lampout', back = r.result === 'retreat', emg = r.result === 'emergency', abd = r.result === 'abandon';
-    const win = r.result === 'win' || (!lad && (lamp || back || emg || abd)); // 推关：灯火燃尽、撤回、紧急撤回都是平安返回
-    const title = abd ? '提前返回' : lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '灯灭' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
+    const lad = r.mode === 'ladder', lamp = r.result === 'lampout', back = r.result === 'retreat', emg = r.result === 'emergency', abd = r.result === 'abandon', home = r.result === 'home';
+    const win = r.result === 'win' || (!lad && (lamp || back || emg || abd || home)); // 推关：灯火燃尽、撤回、紧急撤回都是平安返回
+    const title = home ? '通关 · 返回营地' : abd ? '提前返回' : lad ? (win ? `天梯 ${r.L} 层通过` : r.result === 'timeout' ? '灯灭' : '阵亡') : lamp ? '灯火燃尽 · 平安返回' : back ? '险胜 · 撤回' : emg ? '紧急撤回' : win ? '抵达最深处' : '阵亡';
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
     const g = r.gain;
     const note = lad && win && r.lad.tierUp.length ? [`晋升${LADDER_TIERS[r.lad.tierUp[r.lad.tierUp.length - 1]].n}：送每种铸符各 ${LD.tiers.firstGlyphs} 张`, COL.emberHi]
@@ -999,9 +999,9 @@ class UI extends Phaser.Scene {
   win_depart(c, w, h) {
     T(this, w / 2, 14, `下一趟从第 ${descentStart()} 层出发`, { align: 'center', color: COL.emberHi, parent: c });
     T(this, w / 2, 30, `最深纪录：第 ${S.maxDepth - 1} 层通关 · ${S.auto.lock ? '锁层：从选定的层出发' : `从最深层往回退 ${SOUL.startBack} 层热身`}`, { size: 8, color: COL.dim, align: 'center', parent: c });
-    mkBtn(this, c, w / 2 - 62, 46, 18, 16, '<', () => { if (S.depth > 1) { S.depth--; S.auto.lock = true; save(); } this.refresh(); }, { size: 8, disabled: S.depth <= 1 });
+    mkBtn(this, c, w / 2 - 62, 46, 18, 16, '<', () => { if (canPick(-1)) pickFloor(-1); this.refresh(); }, { size: 8, disabled: !canPick(-1) });
     T(this, w / 2, 50, `难度 ${S.depth}`, { align: 'center', parent: c });
-    mkBtn(this, c, w / 2 + 44, 46, 18, 16, '>', () => { if (S.depth < S.maxDepth) { S.depth++; S.auto.lock = S.depth < S.maxDepth; save(); } this.refresh(); }, { size: 8, disabled: S.depth >= S.maxDepth });
+    mkBtn(this, c, w / 2 + 44, 46, 18, 16, '>', () => { if (canPick(1)) pickFloor(1); this.refresh(); }, { size: 8, disabled: !canPick(1) });
     mkBtn(this, c, w / 2 - 62, 68, 124, 16, S.auto.lock ? '锁层：开（点击改为推层）' : '推层：开（点击改为锁层）', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; save(); this.refresh(); }, { size: 8 });
     if (unlocked('ladder')) T(this, w / 2, 90, '天梯从右边的天梯石碑出发', { size: 8, color: COL.faint, align: 'center', parent: c });
     mkBtn(this, c, w / 2 - 110, h - 28, 104, 20, '出发', () => { this.closeWin(); startRun(); }, { size: 8, style: 'w' });
