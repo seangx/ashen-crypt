@@ -245,6 +245,8 @@ class MobileUI extends UI {
     const P = STATS;
     [['出手秒伤', fmt(P.castDps || P.dps), COL.emberHi], ['响应秒伤', fmt(P.respDps || 0), '#ffb36a'], ['坚韧 / 恢复', `${fmt(toughness(P))} / ${fmt(recovery(P))}每秒`, '#ffd0a0'], ['最缺', elemNeed(P), COL.cyan], ['生命 / 护盾', `${fmt(P.life)} / ${fmt(P.shield)}`, '#ff8a7a'], ['护甲', `${fmt(P.armor)} 减伤${Math.round(armorDrL(P.armor, monLv()) * 100)}%`], ['附加特效', elemFxName(P), P.addEl ? ELEM_C[P.addEl] : COL.faint]]
       .forEach(([a, b, col], i) => { T(this, 112, 13 + i * 9, a, { size: 8, color: COL.dim, parent: c }); T(this, w - 10, 13 + i * 9, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); }); // 双行面板（system-v2 §5）
+    zoneOn(this, c, 108, 13 + 2 * 9 - 2, w - 116, 10, () => { const D = toughParts(P), pc = v => Math.round(v * 100) + '%', top = Object.entries(D.X.el).sort((a, b) => b[1] - a[1]).map(([e, v]) => `${ELEM_N[e]} ${pc(v)}`).join('、'); // defense-v3 §4：点开看每一层减伤
+      this.ask('坚韧怎么算', () => {}, '知道了', `按第 ${D.L} 级怪算\n生命 ${fmt(P.life)} + 护盾 ${fmt(P.shield)}\n护甲减伤 ${pc(D.armor)}\n平均抗性减伤 ${pc(D.res)}（这层的怪：${top}）\n条件减伤 ${pc(D.cond)}（远程怪占 ${pc(D.X.ranged)}）\n恢复：每秒回复 ${r1(P.lifeRegen || 0)}、护盾 ${r1(P.shieldRegen || 0)}、击杀回复 ${r1(P.lifeOnKill || 0)}`); });
     T(this, 112, 78, '抗性', { size: 8, color: COL.dim, parent: c });
     ELEM.forEach((e, i) => T(this, 134 + i * 20, 78, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
     T(this, 12, 100, `背包 ${S.stash.length}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
