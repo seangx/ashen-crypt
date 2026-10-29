@@ -378,6 +378,8 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
 
 /* ---------- 冲刺（遁靴：冲刺即技能） ---------- */
 // to：冲向哪里（默认鼠标）；byAuto：自动战斗发起的，打开窗口时也能冲
+// 前方 blockR 像素内怪够多 = 路被堵住
+const dashBlocked = (ux, uy) => { const K = PROG.slam.stack; if (!K) return false; let n = 0; for (const m of mobs) { if (m.dead) continue; const ax = m.x - player.x, ay = m.y - player.y; if (ax * ux + ay * uy > 0 && ax * ax + ay * ay < K.blockR * K.blockR && ++n >= K.blockN) return true; } return false; };
 function tryDash(to = mouse, byAuto = false) {
   if (player.dash < 1 || player.dashT > 0 || (!byAuto && G.ui && G.ui.winId)) return;
   if (!byAuto && RUN) autoTouch(-1);
@@ -394,7 +396,7 @@ function tryDash(to = mouse, byAuto = false) {
     if (RUN) engineBlast(E, player.x, player.y, Math.min(E.aoeR || 48, 70));
     return;
   }
-  trigEach('dash'); const T = PLAYER.dashTime; player.dashT = T; const DD = PLAYER.dashDist * (STATS.flag.whirlHeart ? WH.dashMul : 1); player.dvx = dx / dl * DD / T; player.dvy = dy / dl * DD / T; // 旋风之心：短距离突进
+  trigEach('dash'); const T = PLAYER.dashTime; player.dashT = T; const DD = PLAYER.dashDist * (STATS.flag.whirlHeart ? WH.dashMul : 1) * (byAuto && RUN && dashBlocked(dx / dl, dy / dl) ? PROG.slam.stack.blockMul : 1); // §8.2 被堵住：AI 冲刺距离减半 player.dvx = dx / dl * DD / T; player.dvy = dy / dl * DD / T; // 旋风之心：短距离突进
   if (!RUN || !E) return;
   if (kind === 'trail') player.trail = 1;
   if (kind === 'nova') engineBlast(E, player.x, player.y, E.aoeR || 80);
@@ -756,7 +758,7 @@ function logic(dt) {
     const MA = PROG.monsterAttack;
     if (d < m.size + MA.touch && m.atkCd <= 0) { hurtPlayer(m.dmg * bl, m.el, ctrlK(m), { melee: 1, elite: m.elite || m.boss, ax: m.ax }); m.atkCd = MA.meleeCd; }
     slamStep(m, dt * ck, bl); if (m.ax) eliteStep(m, dt * ck, d, dx, dy, bl);
-    if (m.boss && m.cd <= 0) bossAct(m, Math.atan2(dy, dx), bl);
+    if (m.boss && m.cd <= 0) { bossAct(m, Math.atan2(dy, dx), bl); const K = PROG.slam.stack; if (K && eliteFloor() >= K.from && !m.slam) m.slamCd = 0; } // §8.2：30 层起 Boss 每个招式后接一次范围预警
     else if (m.d.ai === 'ranged' && m.cd <= 0) {
       m.cd = m.d.cd; const lt = m.d.lead ? d / MA.shotSpd * m.d.lead : 0, a = Math.atan2(player.y + player.vy * lt - m.y, player.x + player.vx * lt - m.x); // lead：按角色速度预判落点
       projs.push({ enemy: true, x: m.x, y: m.y - 6, vx: Math.cos(a) * MA.shotSpd, vy: Math.sin(a) * MA.shotSpd, life: m.d.pool ? Math.min(MA.shotLife, d / MA.shotSpd) : MA.shotLife, dmg: m.dmg * bl, ck: ctrlK(m), elite: m.elite || m.boss, ax: m.ax, el: m.el, chill: m.d.chill, pool: m.d.pool ? { ...m.d.pool, dmg: m.dmg * m.d.pool.dmg * bl } : null }); // 骨法师：弹飞到角色当时的位置落地留火圈
@@ -788,11 +790,12 @@ function slamStep(m, dt, bl) {
     m.slam.t -= dt; if (m.slam.t > 0) return;
     const s = m.slam; m.slam = null;
     fx({ t: 'slam', x: s.x, y: s.y, r: s.r });
+    const K = PROG.slam.stack; if (K && m.elite && !s.dbl && eliteFloor() >= K.from && rnd() < K.dblCh) m.slam = { x: player.x, y: player.y, r: s.r, t: K.dblGap, T: K.dblGap, dbl: 1 }; // §8.2 预警会叠：精英重击连放两次
     if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m), { melee: 1, slam: 1, elite: m.elite || m.boss, ax: m.ax }); }
     return;
   }
   m.slamCd = (m.slamCd ?? C.every * rf(0.5, 1)) - dt;
-  if (m.slamCd <= 0 && m.rise <= 0) { m.slamCd = C.every; m.slam = { x: player.x, y: player.y, r: C.r, t: C.windup, T: C.windup }; }
+  if (m.slamCd <= 0 && m.rise <= 0) { m.slamCd = C.every; const K = PROG.slam.stack, wu = C.windup * (K && RUN && dist2(m, player) > lampLightR() ** 2 ? K.darkWindup : 1); m.slam = { x: player.x, y: player.y, r: C.r, t: wu, T: wu }; } // §8.2 光圈外砸下来的重击读条减半
 }
 // Boss 招式：每个 Boss 一套
 function bossAct(m, aim, bl) {

@@ -197,7 +197,8 @@
    "windup": 1.0,
    "r": 36,
    "mul": 5
-  }
+  },
+  "stack": {"_说明": "defense-v3 §8.2：from 层起精英重击 dblCh 几率连放两次（间隔 dblGap 秒），Boss 每个招式后接一次范围预警；砸重击的怪在光圈外时读条 ×darkWindup；AI 冲刺时前方 blockR 像素内 ≥ blockN 只怪，冲刺距离 ×blockMul", "from": 30, "dblCh": 0.3, "dblGap": 0.6, "darkWindup": 0.5, "blockR": 30, "blockN": 6, "blockMul": 0.5}
  },
  "bosses": {
   "_说明": "按层数轮换：第 1 层用第一个，第 2 层第二个……（顺序就是轮换顺序）。数值是 1 级的，按 monsterScaling 成长。pat 招式见 bossPatterns",
