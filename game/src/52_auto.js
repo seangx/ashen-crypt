@@ -99,7 +99,7 @@ function autoStep(dt) {
   if (!autoDriving() || RUN.ending) return null;
   const MW = meleeW();
   if (AU.slamDodge) { // 红圈：在圈里就冲刺出去，没冲刺槽就走出去（近战、远程都躲）
-    let s = null; for (const m of mobs) if (m.slam && dist2(player, m.slam) < (m.slam.r + 2) ** 2 && (!s || m.slam.t < s.t)) s = m.slam;
+    let s = null; const LR2 = lampLightR() ** 2; for (const m of mobs) if (m.slam && dist2(player, m) <= LR2 && dist2(player, m.slam) < (m.slam.r + 2) ** 2 && (!s || m.slam.t < s.t)) s = m.slam; // §8.2：AI 只看得见光圈里的怪砸下来的预警
     if (s) { const dx = player.x - s.x, dy = player.y - s.y, dl = Math.hypot(dx, dy) || 1, ux = dl > 0.5 ? dx / dl : 1, uy = dl > 0.5 ? dy / dl : 0, out = { x: s.x + ux * (s.r + 14), y: s.y + uy * (s.r + 14), near: 0 };
       if (player.dash >= 1 && player.dashT <= 0) { tryDash(out, true); if (player.dashT > 0) RUN.slamDash = (RUN.slamDash || 0) + 1; }
       return out; }

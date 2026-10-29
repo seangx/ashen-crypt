@@ -20,8 +20,9 @@ function startLadder(N) {
   const mods = ladderMods(N); LX = lootFx(mods); const mob = { ...(LD.run.mob || {}) }; for (const k in LX.mob) mob[k] = (mob[k] || 0) + LX.mob[k];
   RUN = { dmg: { whirl: 0, devil: 0, spark: 0, fork: 0 }, mode: 'ladder', L: N, base: N, map: null, mods, mob, bossD: bossFor(N), kills: 0, prog: 0, need: Math.round(ladderNeed(N) * (1 + (mob.need || 0) / 100)), limit: 0, dens: LD.run.density, eliteMul: LD.run.eliteMul,
     boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, result: null, gain: { items: [], shards: 0, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
+  RUN.eliteAx = ladderEliteAx(N); // defense-v3 §8.3：天梯层词缀从精英词缀表抽，整层所有精英都带
   arenaReset();
-  if (G.ui) G.ui.banner(`天梯第 ${N} 层`, COL.emberHi);
+  if (G.ui) G.ui.banner(`天梯第 ${N} 层${RUN.eliteAx.length ? ' · 精英：' + RUN.eliteAx.map(id => EAF_BY[id].n).join('·') : ''}`, COL.emberHi);
 }
 // 天梯按钮：现在没在打就马上开始，否则排在这局后面
 function ladderChallenge(N) {

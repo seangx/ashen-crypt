@@ -7,9 +7,12 @@ const ARENA = F; // 场地边界（下面的 F 是词条参数）
 const EAF = ELITE.affixes || [], EAF_BY = Object.fromEntries(EAF.map(a => [a.id, a]));
 const ELEM_AF = new Set(['exp', 'cold', 'ele', 'pla', 'nuc', 'kin']);
 const eliteFloor = () => RUN ? (RUN.mode === 'ladder' ? RUN.L : RUN.base || RUN.L) : 1;
+// 天梯：每层固定抽 count 个（同一层每次一样），整层精英都带
+function ladderEliteAx(N) { let h = (N * 2654435761) >>> 0; const r = () => ((h = (h * 1103515245 + 12345) >>> 0) / 4294967296), n = (ELITE.count || [[1, 1]]).reduce((k, [f, c]) => N >= f ? c : k, 1), out = [];
+  for (let i = 0; i < n; i++) { const pool = EAF.filter(a => N >= a.from && !out.includes(a.id) && !(ELEM_AF.has(a.id) && out.some(x => ELEM_AF.has(x)))); if (!pool.length) break; let t = r() * pool.reduce((s, a) => s + a.w, 0); out.push((pool.find(a => (t -= a.w) < 0) || pool[0]).id); } return out; }
 function rollEliteAffixes(m) {
-  const F = eliteFloor(), n = (ELITE.count || [[1, 1]]).reduce((k, [f, c]) => F >= f ? c : k, 1), out = [];
-  for (let i = 0; i < n; i++) {
+  const F = eliteFloor(), n = (ELITE.count || [[1, 1]]).reduce((k, [f, c]) => F >= f ? c : k, 1), out = RUN && RUN.eliteAx ? [...RUN.eliteAx] : [];
+  for (let i = out.length; i < n; i++) {
     const pool = EAF.filter(a => F >= a.from && !out.includes(a.id) && !(ELEM_AF.has(a.id) && out.some(x => ELEM_AF.has(x)))); if (!pool.length) break;
     out.push(wpick(pool, a => a.w).id);
   }
