@@ -143,7 +143,7 @@ function trigStats(P, eq) {
   let castDps = W0 ? W0.dps : 0, respDps = 0;
   (S.trigs || []).forEach((T, i) => {
     if (!T) return; const C = TCOND[T.c], fx = trigFx(T), A = T.affs || {}, on = i < n, cast = C.kind === 'cast';
-    const skills = T.socks.filter(isSkill), sups = T.socks.filter(isSupport), FT = P.flag || {}, costMul = (FT.rapid ? 1.25 : 1) * (FT.chainCharge && !cast ? 1.3 : 1) * (FT.auraPower && T.c === 'always' ? 1.5 : 1) * sups.reduce((m, s) => m * (TRG.supCost[s.mid] || TRG.defCost), 1) * (1 - ((A.costLess || 0) + (P.raw.costLess || 0) + ((IMPL[eq.wl && eq.wl.b] && implFx(eq.wl).costLess) || 0)) / 100);
+    const skills = T.socks.filter(isSkill), sups = T.socks.filter(isSupport), FT = P.flag || {}, costMul = (FT.rapid ? 1.25 : 1) * (FT.chainCharge && !cast ? 1.3 : 1) * (FT.auraPower && T.c === 'always' ? 1.5 : 1) * sups.reduce((m, s) => { const c = TRG.supCost[s.mid] || TRG.defCost; return m * (eq.wl && eq.wl.u === 'Slotfather' && c > 1 ? 1 + (c - 1) / 2 : c); }, 1) /* 符文教父：辅助石消耗倍率超过 1 的部分减半 */ * (1 - ((A.costLess || 0) + (P.raw.costLess || 0) + ((IMPL[eq.wl && eq.wl.b] && implFx(eq.wl).costLess) || 0)) / 100);
     const ws = []; if (on) skills.forEach((g, j) => {
       const sl = A.supLv ? sups.map(m => ({ ...m, lvl: Math.min(MOD_MAX, (m.lvl || 1) + 1) })) : sups;
       const g2 = { ...g, mods: sl.filter(m => supportFits(m, g)), sock: sups.length }, sh = GEM_BY[g.b].form === 'shieldThrow'; // 圣盾掷：盾变成虚拟武器，没拿盾就不放
@@ -152,10 +152,10 @@ function trigStats(P, eq) {
       const mul = (1 + ((A.dmg || 0) + (fx.dmg || 0) + bl + (P.trigDmg || 0)) / 100) * (1 + (T.q || 0) / 100) * (skills.length > 1 && !fx.rotate ? trigSplit(T) : 1) * (TRG.fitCond[g.b] === T.c ? TRG.fit : 1) * (FT.heavyHit && cast ? 1.4 : 1) * (FT.focus ? (cast ? 1.5 : 0.7) : 1) * (FT.auraPower && T.c === 'always' ? 1.4 : 1); // tree-v3：重击、专精、常驻之力
       for (const o of [W.min, W.max]) if (o) for (const e in o) o[e] *= mul;
       if (W.auraDps) W.auraDps *= mul; W.dps *= mul;
-      const aoe = (A.aoe || 0) + (fx.aoe || 0); if (aoe) { W.aoeInc = (W.aoeInc || 0) + aoe; if (W.aoeR) W.aoeR *= 1 + aoe / 100; if (T.c === 'always' && W.rng) W.rng *= 1 + aoe / 100; }
+      const aoe = (A.aoe || 0) + (fx.aoe || 0) + (fx.emberAoe && TRIGS_RT.lampState === 'ember' ? fx.emberAoe : 0); // 永夜灯：残灯时范围再 +40% if (aoe) { W.aoeInc = (W.aoeInc || 0) + aoe; if (W.aoeR) W.aoeR *= 1 + aoe / 100; if (T.c === 'always' && W.rng) W.rng *= 1 + aoe / 100; }
       if (A.crit) W.crit += A.crit / 100; if (fx.alwaysCrit) W.crit = Math.max(W.crit, 1);
       const Sk = TSK[g.b] || {}; W.proc = (Sk.proc ?? 5) * (W.procMul || 1); // 多重投射：每发触发系数 ×0.6 W.atk = cast ? 1 : 0;
-      W.cost = (T.c === 'always' ? gemCost(g) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul * (TRG.skillCostMul || 1) * ((cast || T.c === 'hit' || T.c === 'crit') ? TRG.castCostMul || 1 : 1) + blT;
+      W.cost = (T.c === 'always' ? gemCost(g) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul * (TRG.skillCostMul || 1) * ((cast || T.c === 'hit' || T.c === 'crit') ? TRG.castCostMul || 1 : 1) * (W.orbCost || 1) + blT; // 冬之心：寒魄球消耗 +50%
       W.trigSlot = i + 1; W.trigMul = mul; W.ailEffT = A.ailEff || 0; W.wi = TRIG_BASE + i * TRIG_PER + j; ws.push(W);
     });
     const tier = trigTier(T.ilvl), cap = Math.max(C.cap * (1 - (TRG.affCap.cap ? Math.min(100 - TRG.affCap.cap, A.cap || 0) : 0) / 100), (C.cap || 100) * TRG.affCap.cap / 100) * (fx.capMul || 1) * (P.flag && P.flag.overflow ? 1.25 : 1); // tree-v3 蓄满：容量 +25%
@@ -163,7 +163,7 @@ function trigStats(P, eq) {
     const cm = (1 + Math.max(0, ...ws.map(W => W.chargeMore || 0)) / 100) * (1 + ((P.tree && P.tree.add.chargeInc) || 0) / 100) * 100 - 100, per = trigRate(T, C, P, cap, N, fx, cm ? { ...A, gain: ((1 + (A.gain || 0) / 100) * (1 + cm / 100) - 1) * 100 } : A); // 急蓄算进期望频率
     const dps = ws.reduce((s, W) => s + (C.mode === 'always' ? W.dps : W.cont || W.form === 'orbit' ? W.dps * (cast ? 0.4 : TRG.sustain || 2) * per : W.dps / Math.max(0.2, W.aps || 1) * per * (1 + (W.extraCast || 0))), 0) * (1 + Math.min(TRG.affCap.extra, A.extra || 0) / 100);
     P.trigs[i] = { T, ws, on, cast, mode: C.mode, cap: cap || 100, N, gain: (1 + (A.gain || 0) / 100) * (1 + cm / 100), /* 急蓄 */ per, dps, cost: ws.reduce((s, W) => s + W.cost, 0), thr: (fx.thr || C.thr || 0) + (A.lowThr || 0) / 100 };
-    if (on) { if (cast) castDps += dps; else respDps += dps; }
+    if (on) { if (cast) castDps += dps; else respDps += dps; if (fx.burn) P.burnMul *= 1 + fx.burn / 100; } // 永夜灯：灯火燃烧 +10%
   });
   // 【出手】魂龛占掉的出手不放底技能：按占比扣掉底技能
   const aps = W0 ? W0.aps || 1 : 1, castShare = Math.min(1, P.trigs.reduce((s, t) => s + (t && t.on && t.cast && t.ws.length ? t.per / aps : 0), 0));
@@ -285,7 +285,7 @@ function trigEach(c) { // 每次型：格挡、冲刺
 const trigEvent = (ev, x) => ev === 'kill' ? trigKill(x || {}) : ev === 'dash' || ev === 'block' ? trigEach(ev) : null; // 旧接口
 function trigStep(dt) {
   if (!RUN || !STATS.trigs) return; const R = TRIGS_RT;
-  const ls = lampState(); if (ls !== R.lampState) { if (R.lampState && ls !== 'dim' && G.ui) fx({ t: 'text', x: player.x, y: player.y - 22, s: LST[ls].n, c: ls === 'ember' ? COL.emberHi : '#ffe9a0' }); R.lampState = ls; }
+  const ls = lampState(); if (ls !== R.lampState) { const reAoe = (STATS.trigs || []).some(t => t && t.on && trigFx(t.T).emberAoe) && (ls === 'ember' || R.lampState === 'ember'); if (R.lampState && ls !== 'dim' && G.ui) fx({ t: 'text', x: player.x, y: player.y - 22, s: LST[ls].n, c: ls === 'ember' ? COL.emberHi : '#ffe9a0' }); R.lampState = ls; if (reAoe) refreshStats(); }
   R.stillT = isStill() ? R.stillT + dt : 0;
   R.later = R.later.filter(x => { x.t -= dt; if (x.t <= 0) { trigFire(x.i, { again: 1 }); return false; } return true; });
   if (R.sus && R.sus.length) R.sus = R.sus.filter(x => { x.t -= dt; x.cd -= dt; if (x.cd <= 0 && x.t > 0) { R.castSlot = x.i; fire(x.W, x.wi); R.castSlot = -1; x.cd = 1 / (x.W.aps || 1); } return x.t > 0; });

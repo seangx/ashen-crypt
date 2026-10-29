@@ -305,10 +305,12 @@ function modXp(x) {
 }
 
 /* ---------- 玩家受伤：闪避 → 抗性 → 护甲减伤 → 流派减伤 → 护盾 → 生命 ---------- */
-// 旋涡之履：1 = 叠满（或永冬自动脉冲中），0 = 没有层数，0.5 = 中间，-1 = 没穿
+// 旋风斩常驻：插在【常驻】魂龛里（uniques-audit：旋涡之履、风暴之眼只认这种）
+const alwaysWhirl = W => !!(W && W.trigSlot && STATS.trigs && STATS.trigs[W.trigSlot - 1] && STATS.trigs[W.trigSlot - 1].mode === 'always');
+// 旋涡之履：1 = 常驻旋风斩叠满，0 = 没有层数，0.5 = 中间，-1 = 没穿
 function vortexState() {
-  if (!STATS.flag.vortexTreads) return -1; if (combatWs().some(([W]) => W.autoNova)) return 1;
-  let full = false, any = false; whirlWs().forEach(([W, i]) => { { const n = player.spin[i].n; if (n >= W.stackMax) full = true; if (n > 0) any = true; } });
+  if (!STATS.flag.vortexTreads) return -1;
+  let full = false, any = false; whirlWs().forEach(([W, i]) => { if (!alwaysWhirl(W)) return; const n = player.spin[i].n; if (n >= W.stackMax) full = true; if (n > 0) any = true; });
   return full ? 1 : any ? 0.5 : 0;
 }
 const vortexMove = () => { const v = vortexState(); return v === 1 ? 1 + UQX.vortex.moveFull / 100 : v === 0 ? 1 - UQX.vortex.moveNone / 100 : 1; };
@@ -666,7 +668,7 @@ function logic(dt) {
   // 转旋风的时候：风暴之眼把身边的怪卷过来；旋风之心不断甩出小旋风
   if (spinning()) {
     const [OW, wi] = whirlWs().find(([W, i]) => player.spin[i].n > 0), n = player.spin[wi].n;
-    if (P.flag.areaEye) { const pr = whirlR(OW, n) * RL.areaEye.pullR; for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy); if (d > 6 && d < pr) { m.x += dx / d * RL.areaEye.pull * dt; m.y += dy / d * RL.areaEye.pull * dt; } } }
+    if (P.flag.areaEye && alwaysWhirl(OW)) { const pr = whirlR(OW, n) * RL.areaEye.pullR; for (const m of mobs) if (!m.dead && !m.boss && m.rise <= 0.2) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy); if (d > 6 && d < pr) { m.x += dx / d * RL.areaEye.pull * dt; m.y += dy / d * RL.areaEye.pull * dt; } } }
     if (P.flag.whirlHeart && (player.devilT -= dt) <= 0) {
       player.devilT = WH.devilEvery * (n >= OW.stackMax ? WH.devilFullMul : 1);
       // 小旋风算投射物：每次甩出 1 + 投射物 个，上限同比放大；速度吃投射物速度，存在时间吃持续时间；伤害不吃投射物伤害总增/总降（那是给射击流派的）

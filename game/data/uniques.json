@@ -245,9 +245,9 @@
      100
     ],
     [
-     "pierce",
-     2,
-     4
+     "pierceInf",
+     1,
+     1
     ]
    ]
   },
@@ -256,7 +256,6 @@
    "n": "疫爆陷阱",
    "kind": "weapon",
    "b": "PlasmaNova",
-   "when": "Mine",
    "req": 6,
    "w": 100,
    "fixed": [
@@ -288,7 +287,6 @@
    "n": "末日瘴云",
    "kind": "weapon",
    "b": "Laser",
-   "when": "Mine",
    "req": 6,
    "w": 100,
    "fixed": [
@@ -673,10 +671,6 @@
     ],
     [
      "FlatDeflectorShield",
-     1
-    ],
-    [
-     "FlatEnergy",
      1
     ]
    ],

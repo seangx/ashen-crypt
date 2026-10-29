@@ -145,7 +145,7 @@ function weaponStats(it, P, isEngine) {
   // 独特装备的局部规则
   if (U('knock')) W.knock = 1;
   W.more *= 1 + U('knockMore') / 100; W.dotMore *= 1 + U('dotMore') / 100;
-  W.pierce += U('pierce'); W.chain += U('chain'); W.cull += U('cull'); W.doubleChance += U('double') / 100 + (TA.double || 0) / 100;
+  W.pierce += U('pierce') + (U('pierceInf') ? 99 : 0); W.chain += U('chain'); W.cull += U('cull'); W.doubleChance += U('double') / 100 + (TA.double || 0) / 100;
   W.afterPct = U('afterPct') ? U('afterPct') / 100 : MECH.afterPct;
   W.bossMore *= 1 + (TA.bossInc || 0) / 100;
   if (has('Projectile') && !P.flag.snipe) W.extra += P.projAdd; // 投射物 +N（狙杀：无效）
@@ -243,7 +243,7 @@ function weaponStats(it, P, isEngine) {
   if (P.flag.shardChain) { if (has('Spawn')) W.more *= OB.heartMore; } // 碎冰连锁：【派生】
   if (P.flag.starfall) { if (has('Delayed')) W.more *= MT.heartMore; } // 星坠雨：【延迟】
   if (P.flag.shatter) { if (has('Nova') || W.frostNova) W.more *= NV.heartMore; } // 碎冰：【新星】
-  conv('kin', THERMAL_E, U('convKinThermal') / 100); conv('exp', ['nuc'], U('convExpNuc') / 100); conv('pla', ['nuc'], U('convPlaNuc') / 100);
+  conv('kin', [...THERMAL_E, 'nuc'], U('convKinThermal') / 100); /* 三棱穿心弩：另外 5 种元素 */ conv('exp', ['nuc'], U('convExpNuc') / 100); conv('pla', ['nuc'], U('convPlaNuc') / 100);
   // 额外获得：按加成前总伤害的比例
   const tmin = ELEM.reduce((s, e) => s + W.min[e], 0), tmax = ELEM.reduce((s, e) => s + W.max[e], 0);
   for (const e in gain) if (ok(e)) { W.min[e] += tmin * gain[e]; W.max[e] += tmax * gain[e]; }
