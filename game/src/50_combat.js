@@ -227,7 +227,7 @@ function shatter(m) {
 function kill(m) {
   if (m.dead) return;
   m.dead = true; S.stats.kills++; trigKill(m); if (m.ax && RUN) eliteDie(m);
-  fx({ t: 'die', x: m.x, y: m.y, boss: m.boss, elite: m.elite, type: m.type });
+  fx({ t: 'die', x: m.x, y: m.y, boss: m.boss, elite: m.elite, type: m.type, flip: m.face < 0 });
   sfx(m.boss ? 'bossdie' : 'kill');
   if (!RUN) return;
   RUN.kills++;

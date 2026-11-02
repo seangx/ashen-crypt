@@ -42,7 +42,7 @@ class World extends Phaser.Scene {
     this.hero = this.add.image(0, 0, 'hero_0').setOrigin(0.5, 1);
     this.heroSh = this.add.image(0, 0, 'shadow').setDepth(9);
     this.hubG = this.add.graphics().setDepth(9.2);
-    this.spr = new Map(); this.frame = 0; this.lines = []; this.rings = []; this.dmgCount = 0; this.trail = [];
+    this.spr = new Map(); this.frame = 0; this.lines = []; this.rings = []; this.stars = []; this.dmgCount = 0; this.trail = [];
     const P = (cfg, depth = 30) => this.add.particles(0, 0, 'px', { emitting: false, ...cfg }).setDepth(depth);
     this.scorch = [];
     this.em = {
@@ -50,7 +50,7 @@ class World extends Phaser.Scene {
       bossdie: P({ lifespan: { min: 500, max: 1200 }, speed: { min: 40, max: 140 }, angle: { min: 190, max: 350 }, gravityY: 200, tint: [0xece3cb, 0x7a55a0, 0xffd75e] }),
       spark: P({ lifespan: 220, speed: { min: 15, max: 45 } }, 60),
       // 打击火花（2 像素、叠加发光）和骨屑
-      spark2: this.add.particles(0, 0, 'px2', { emitting: false, lifespan: { min: 90, max: 230 }, speed: { min: 30, max: 110 }, scale: { start: 1, end: 0.3 }, alpha: { start: 1, end: 0 }, gravityY: 140, blendMode: 'ADD' }).setDepth(60),
+      spark2: this.add.particles(0, 0, 'px2', { emitting: false, lifespan: { min: 90, max: 230 }, speed: { min: 30, max: 110 }, scale: { start: 1, end: 0.5 }, alpha: { start: 1, end: 0 }, gravityY: 140, blendMode: 'ADD' }).setDepth(60),
       chip: this.add.particles(0, 0, 'px2', { emitting: false, lifespan: { min: 400, max: 800 }, speed: { min: 40, max: 110 }, angle: { min: 200, max: 340 }, gravityY: 320, scale: { start: 1, end: 0.5 }, tint: [0xece3cb, 0xb9ad94, 0xfff6dc] }).setDepth(30),
       fire: P({ lifespan: { min: 250, max: 450 }, speed: { min: 10, max: 40 }, gravityY: -30, tint: [0xff9a3d, 0xffd36a, 0xe8533a] }, 60),
       loot: P({ lifespan: 500, speedY: -14, speedX: 0, alpha: { start: 1, end: 0 } }, 56),
@@ -75,6 +75,12 @@ class World extends Phaser.Scene {
     this.tweens.add({ targets: t, y: y - 10, duration: big ? 700 : 500, ease: 'Quad.easeOut' });
     this.tweens.add({ targets: t, alpha: 0, delay: big ? 400 : 280, duration: 260, onComplete: () => { t.setVisible(false); pool.push(t); this.dmgCount--; } });
   }
+  // 命中星芒：头两帧白色十字，之后按元素色缩回去；lv 0 普通命中（3 像素）、1 精英 / Boss、2 暴击（带斜角）
+  star(x, y, c, lv) { if (!G.fx || this.stars.length > 40) return; this.stars.push({ x: Math.round(x), y: Math.round(y), c, lv, life: lv ? 0.12 : 0.07, max: lv ? 0.12 : 0.07 }); }
+  // 小怪死亡：原地一张白色剪影，顿两帧后往地上压扁、淡掉（以前直接消失）
+  corpse(e) { const key = `m_${e.type}_0_fl`; if (!G.fx || !this.textures.exists(key) || (this.corpseN || 0) > 16) return; this.corpseN = (this.corpseN || 0) + 1;
+    const im = this.add.image(Math.round(e.x), Math.round(e.y) + 1, key).setOrigin(0.5, 1).setDepth(ySort(e.y)).setFlipX(!!e.flip).setTint(0x9d93b5); // 压成灰紫，过了泛光阈值会糊成一团白
+    this.tweens.add({ targets: im, scaleY: 0.15, scaleX: 1.3, alpha: 0, delay: 33, duration: 140, ease: 'Quad.in', onComplete: () => { im.destroy(); this.corpseN--; } }); }
   label(x, y, s, c) {
     const t = T(this, x, y, s, { size: 8, color: c, align: 'center' }).setDepth(72);
     this.tweens.add({ targets: t, y: y - 10, alpha: 0, duration: 800, onComplete: () => t.destroy() });
@@ -124,10 +130,11 @@ class World extends Phaser.Scene {
         case 'bounce': // 弹射：投射物在场边反弹时的小火花
           if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 6, life: 0.1, max: 0.1, el: 'flash' });
           this.em.spark2.particleTint = 0xd8f4ff; this.em.spark2.explode(4, e.x, e.y); break;
-        case 'hit': this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(2, e.x, e.y); break;
-        case 'impact': this.em.spark2.particleTint = hex(e.crit ? '#ffe6a0' : ELEM_C[e.el]); this.em.spark2.explode(e.big ? (e.crit ? 10 : 4) : 4, e.x, e.y); if (e.crit) this.em.chip.explode(e.big ? 4 : 1, e.x, e.y); if (e.big && e.crit) this.hitStop(0.05, 1.2); break;
+        case 'hit': this.star(e.x, e.y, hex(ELEM_C[e.el]), 0); this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(2, e.x, e.y); break;
+        case 'impact': this.star(e.x, e.y, hex(e.crit ? '#ffe6a0' : ELEM_C[e.el]), e.crit ? 2 : 1); this.em.spark2.particleTint = hex(e.crit ? '#ffe6a0' : ELEM_C[e.el]); this.em.spark2.explode(e.big ? (e.crit ? 10 : 4) : 4, e.x, e.y); if (e.crit) this.em.chip.explode(e.big ? 4 : 1, e.x, e.y); if (e.big && e.crit) this.hitStop(0.05, 1.2); break;
         case 'burn': this.em.fire.explode(2, e.x, e.y - 6); break;
-        case 'die': if (e.boss) { this.em.bossdie.explode(60, e.x, e.y - 12); this.shake(300, 0.01); this.hitStop(0.09); } else { this.em.bone.explode(e.elite ? 6 : 2, e.x, e.y - 6); this.em.chip.explode(e.elite ? 12 : 2, e.x, e.y - 6); if (e.elite) { this.hitStop(0.06); this.shake(90, 0.002); } } break;
+        case 'die': if (e.boss) { this.rings.push({ x: e.x, y: e.y - 10, r: 34, life: 0.4, max: 0.4, el: 'exp', fill: true }, { x: e.x, y: e.y - 6, r: 64, life: 0.6, max: 0.6, el: 'flash' }); this.time.delayedCall(140, () => this.rings.push({ x: e.x, y: e.y - 6, r: 44, life: 0.45, max: 0.45, el: 'exp' })); this.em.bossdie.explode(36, e.x, e.y - 12); this.shake(300, 0.01); this.hitStop(0.09); } /* Boss：先一个大爆心、两道冲击波，再撒碎片（以前 60 颗粒子满屏没有焦点） */
+          else { this.corpse(e); this.em.bone.explode(e.elite ? 6 : 3, e.x, e.y - 6); this.em.chip.explode(e.elite ? 12 : 2, e.x, e.y - 6); if (e.elite) { this.rings.push({ x: e.x, y: e.y - 2, r: 18, life: 0.3, max: 0.3, el: 'kin' }); this.hitStop(0.06); this.shake(90, 0.002); } } break;
         case 'pick': this.em.spark.particleTint = 0xfff2c8; this.em.spark.explode(4, e.x, e.y - 4); break;
         case 'orbitHit': break;
         case 'meteorHit': { this.scorch.push({ x: e.x, y: e.y, r: e.r, life: 6, max: 6, sd: Math.random() * 100 | 0 }); if (this.scorch.length > 40) this.scorch.shift(); // 陨石落地：白闪 + 火球爆开 + 碎石、火星飞溅 + 一道冲击波；星坠雨多颗时震屏限频
@@ -224,12 +231,16 @@ class World extends Phaser.Scene {
     const fg = this.fxG; fg.clear();
     for (const l of this.lines) { l.life -= dt; if (l.arc) { arcFx(fg, this.glowG, l); continue; } const c = hex(ELEM_C[l.el] || '#ffffff'); fg.fillStyle(c, 1); if (l.jag) jag(fg, l.x1, l.y1, l.x2, l.y2); else { pline(fg, l.x1, l.y1, l.x2, l.y2); fg.fillStyle(0xffffff, 0.8); pline(fg, l.x1, l.y1 - 1, l.x2, l.y2 - 1); } }
     this.lines = this.lines.filter(l => l.life > 0);
-    for (const r of this.rings) {
-      r.life -= dt; const k = 1 - r.life / r.max; const rr = r.r * (0.4 + 0.6 * k); const c = r.el === 'cyan' ? 0x57e0d0 : r.el === 'flash' ? 0xe8fbff : hex(ELEM_C[r.el]);
-      if (r.fill) { fg.fillStyle(c, 0.25 * (1 - k)); fg.fillCircle(r.x, r.y, rr); }
-      fg.fillStyle(c, 1 - k); const n = Math.max(12, rr * 2 | 0); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; fg.fillRect(r.x + Math.cos(a) * rr - .5, r.y + Math.sin(a) * rr * 0.75 - .5, 1, 1); }
+    for (const r of this.rings) { // 环：快出慢收（outQuart）、头两帧白色亮帧、实线内亮外暗两级、后 40% 按格子抖散消失（不再是均匀虚点 + 线性淡出）
+      r.life -= dt; const k = clamp(1 - r.life / r.max, 0, 1), rr = r.r * (0.3 + 0.7 * (1 - (1 - k) ** 4)), c = r.el === 'cyan' ? 0x57e0d0 : r.el === 'flash' ? 0xe8fbff : hex(ELEM_C[r.el]), hero = r.max - r.life < 0.034;
+      if (r.fill) { const cr = Math.round(rr * 0.6 * (1 - k) ** 1.5); if (cr >= 1) { fg.fillStyle(hero ? 0xffffff : c, 1).fillCircle(Math.round(r.x), Math.round(r.y), cr); if (cr >= 3) fg.fillStyle(hero ? 0xffffff : tintMix(c, 0xffffff, 0.6), 1).fillCircle(Math.round(r.x), Math.round(r.y), cr >> 1); } } // 爆心：硬边实心，从大缩到无
+      ringPx(fg, r.x, r.y, rr, hero ? 0xffffff : c, k); if (rr >= 6) ringPx(fg, r.x, r.y, rr + 1, tintMix(c, 0x120c18, 0.5), k);
     }
     this.rings = this.rings.filter(r => r.life > 0);
+    for (const st of this.stars) { st.life -= dt; const hero = st.max - st.life < 0.034, L = Math.max(1, Math.round((st.lv === 2 ? 4 : st.lv ? 3 : 1) * (hero ? 1 : 0.4 + 0.6 * st.life / st.max)));
+      fg.fillStyle(hero ? 0xffffff : st.c, 1).fillRect(st.x - L, st.y, L * 2 + 1, 1).fillRect(st.x, st.y - L, 1, L * 2 + 1);
+      if (st.lv === 2 && hero) for (const [dx, dy] of [[-2, -2], [2, -2], [-2, 2], [2, 2]]) fg.fillRect(st.x + dx, st.y + dy, 1, 1); }
+    this.stars = this.stars.filter(st => st.life > 0);
     if (RUN) { // 屏幕外的 Boss、稀有掉落：屏幕边上画个小箭头指过去
       const tg = mobs.filter(m => m.boss && !m.dead).map(m => [m, 0xff5a4a]).concat(drops.filter(d => (d.kind === 'item' && d.item.rar >= 2) || d.kind === 'map' || d.kind === 'glyph').map(d => [d, hex(d.item ? icol(d.item) : '#ffd36a')]));
       for (const [o, c] of tg) { if (!offView(o, -4) || (MOBILE && this.vk !== 1)) continue; this.edgeArrow(fg, o.x, o.y - 6, c, t); }
@@ -408,6 +419,17 @@ function flame(g, x, y, t) {
   g.fillStyle(0xffe7a0, 1).fillRect(x, y - h + 3, 1, Math.max(1, h - 3));
   if (Math.sin(tt * 2.3) > .6) g.fillStyle(0xffd36a, 1).fillRect(x + (Math.sin(tt) > 0 ? 1 : -1), y - h - 1, 1, 1);
 }
+// 两个颜色按 k 混合（0 = a，1 = b）
+function tintMix(a, b, k) { const ch = s => [(a >> s) & 255, (b >> s) & 255]; let o = 0; for (const s of [16, 8, 0]) { const [x, y] = ch(s); o |= Math.round(x + (y - x) * k) << s; } return o; }
+// 像素实线环（俯视压扁 0.75）：按周长取点、整像素去重，连成一圈；k > 0.6 以后按固定图案逐格去掉 = 抖散消失
+function ringPx(g, x, y, r, c, k) { if (r < 1) return; if (k <= 0.6) { g.lineStyle(1, c, 1).strokeEllipse(Math.round(x) + 0.5, Math.round(y) + 0.5, Math.round(r) * 2, Math.round(r * 0.75) * 2); return; } // 实线阶段直接描边（一条路径，比逐格画省得多）；抖散阶段才逐格
+  const n = Math.max(12, Math.ceil(Math.PI * 2 * r)), cut = k > 0.6 ? (k - 0.6) / 0.4 * 4 : 0; let lx = 1e9, ly = 1e9, rx = 0, rw = 0; g.fillStyle(c, 1);
+  const flush = () => { if (rw) g.fillRect(rx, ly, rw, 1); rw = 0; }; // 同一行相邻的格子并成一段，少画几百个 1×1
+  for (let i = 0; i <= n; i++) { const a = i / n * Math.PI * 2, px_ = Math.round(x + Math.cos(a) * r), py = Math.round(y + Math.sin(a) * r * 0.75); if (px_ === lx && py === ly) continue;
+    const keep = !(cut && ((px_ * 3 + py * 5) & 3) < cut);
+    if (keep && rw && py === ly && (px_ === rx - 1 || px_ === rx + rw)) { if (px_ < rx) rx = px_; rw++; } else { flush(); if (keep) { rx = px_; rw = 1; } }
+    lx = px_; ly = py; }
+  flush(); }
 function pline(g, x0, y0, x1, y1) {
   x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
   const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let err = dx + dy, n = 0;
