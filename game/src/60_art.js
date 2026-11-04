@@ -260,14 +260,44 @@ Object.assign(ART, {
 });
 // 副手在纸娃娃手上（小图，[行, 握点 x, 握点 y]）
 Object.assign(HELD, { BoneQuiver: [['.ww', 'nNw', 'nN.', 'N..'], 1, 1], SoulSource: [['.p.', 'plp', '.p.'], 1, 2], AshCenser: [['.o.', 'NnN', '.N.'], 1, 1], BoneTotem: [['www', 'wkw', '.n.', '.n.'], 1, 2], GraveLantern: [['.k.', 'kck', 'klk', '.k.'], 1, 0] });
-// 头冠在纸娃娃上：换兜帽颜色，或者叠一层头饰
+// 头冠在纸娃娃上：整颗头换掉（低像素下只叠一层看不出来）。f 正面 / s 侧面（朝右）/ b 背面，宽度取偶数，底边对齐脖子
+// pal 压暗大面积主色：泛光从亮度 0.55 开始，成片的浅色会糊成白球，只留眼睛这类小点发亮
 const HEAD_DOLL = {
-  TitaniumCore: { over: ['..ssss..', '.sSvvSs.', 'sSSSSSSs'], ox: 2, oy: -1 },
-  PhantomCore: { hood: { P: 'V', p: 'v' } },
-  NebulaCore: { over: ['c..cc..c', '.cCCCCc.'], ox: 2, oy: -2 },
-  CrystalCore: { over: ['l..l..l.', 'lB.lB.lB', 'BBBBBBBB'], ox: 2, oy: -2 },
-  EtherealCore: { hood: { P: 'k', p: 'P' } },
-  PolymerCore: { over: ['wwwwww', 'wkqqkw', 'wwqqww'], ox: 3, oy: 2 },
+  TitaniumCore: { // 铁骨盔：银色圆盔，中脊，T 形面罩里两点红光
+    pal: { v: '#98a2b4', s: '#7f8999' },
+    f: ['....vv....', '..ssvvss..', '.sssvvssS.', '.svssssSS.', 'ssssssssSS', '.skrkkrkS.', '.sSkkkkSS.', '..SSkkSS..'],
+    s: ['...vv...', '.ssvvss.', 'sssvvsss', 'ssssssss', 'ssssssss', 'sssskrkk', 'SSSSSkkk', '.SSSSSk.'],
+    b: ['....vv....', '..ssvvss..', '.sssvvssS.', '.sssvvsSS.', 'ssssvvssSS', '.sssvvsSS.', '.ssSvvSSS.', '..SSSSSS..'],
+  },
+  PhantomCore: { // 幻影兜帽：灰白尖帽，帽尖歪向一边，黑脸青眼
+    pal: { v: '#9d9ab8', V: '#5f5c80' },
+    f: ['.......vv.', '.....vvv..', '...vvvvv..', '..vvvvvvv.', '.vvVVVVVvv', '.vVkkkkkVv', '.vVkckkcVv', '.vvkkkkVvV', '.vVVkkVVvV'],
+    s: ['.vv.....', '..vvv...', '..vvvvv.', '.vvvvvvv', 'vvvvvVVV', 'vvvvVkkk', 'vvvvVkck', 'vvvvVkkk', '.VvvVVVV'],
+    b: ['.......vv.', '.....vvv..', '...vvvvv..', '..vvvvvvv.', '.vvvvvvvvv', '.vvvvvvvVv', '.vvvvvvVVv', '.vvvvvVVvV', '.vVVvvVVvV'],
+  },
+  NebulaCore: { // 灵纱冠：青色王冠，下面一整片深青面纱垂到肩，只透出两只眼
+    pal: { c: '#3bb5a8' },
+    f: ['c..c.cc.c..c', 'cc.cccccc.cc', 'ccccyccycccc', '.CCCCCCCCCC.', '.CCkkCCkkCC.', '.CClkCCklCC.', '.CCCCCCCCCC.', '.cCCCCCCCCc.', '..c.Cc.C.c..'],
+    s: ['c.c.cc.c', 'cccccccc', 'ccycccyc', 'CCCCCCCC', 'CCCCCCkk', 'CCCCCClk', 'CCCCCCCC', 'cCCCCCCc', '.c.Cc.C.'],
+    b: ['c..c.cc.c..c', 'cc.cccccc.cc', 'cccccccccccc', '.CCCCCCCCCC.', '.CCCcCCCCCC.', '.CCCCCCcCCC.', '.CcCCCCCCCC.', '.cCCCCCcCCc.', '..c.Cc.C.c..'],
+  },
+  CrystalCore: { // 晶冠：头就是一块蓝水晶，顶上乱戳几根晶刺
+    pal: { l: '#6fa0e6', B: '#3f68b8', w: '#bfe0ff' },
+    f: ['..w.....l...', '.ll..w.ll.l.', '.lB.lwlBl.lB', '.lBlwwlBllB.', '.lBBlllBBBB.', '.BlkkBBkkBB.', '.BBBBBBBBBB.', '..BBlBBlBB..', '...BBBBBB...'],
+    s: ['.w....l.', 'll..w.ll', 'lB.lwlBl', 'lBlwwlBl', 'lBBlllBB', 'BlBBBBkk', 'BBBBBBBB', '.BBlBBB.', '..BBBB..'],
+    b: ['..w.....l...', '.ll..w.ll.l.', '.lB.lwlBl.lB', '.lBlwwlBllB.', '.lBBlllBBBB.', '.BlBBlBBBlB.', '.BBBBBBBBBB.', '..BBlBBlBB..', '...BBBBBB...'],
+  },
+  EtherealCore: { // 幽影兜帽：暗紫罩袍，亮紫边，黑脸里两点红眼，下摆破碎
+    f: ['....pp....', '...pPPp...', '..pPPPPp..', '.pPPkkPPp.', 'pPPkkkkPPp', 'pPkrkkrkPp', 'pPkkkkkkPp', '.pPPkkPPp.', 'p.pP.Pp.p.'],
+    s: ['...pp...', '..pPPp..', '.pPPPPp.', 'pPPPPkkp', 'pPPPkkkk', 'pPPPkkrk', 'pPPPkkkk', '.pPPPkkp', 'p.pP.Pp.'],
+    b: ['....pp....', '...pPPp...', '..pPPPPp..', '.pPPPPPPp.', 'pPPPpPPPPp', 'pPPPPPpPPp', 'pPpPPPPPPp', '.pPPPPpPp.', 'p.pP.Pp.p.'],
+  },
+  PolymerCore: { // 缝合面具：骨白大脸，黑眼洞，红线缝着；背面是皮绳绑带
+    pal: { w: '#9a8f7a', b: '#6f6555' },
+    f: ['..wwwwww..', '.wwwwwwbb.', 'wwkkwwkkwb', 'wwkkwwkkwb', 'wqwwqqwwqb', 'wwqwwwwqbb', '.wwqqqqwb.', '..wbwwbb..'],
+    s: ['..wwwww.', '.nnwwwww', 'nnnwwwkk', 'nnnwwwkk', 'Nnnwwqwb', 'nnnwwwqb', '.nnnwqqb', '..NNwbb.'],
+    b: ['..NNNNNN..', '.NnnnnnnN.', 'NnnnnnnnnN', 'NnqqqqqqnN', 'NnnnnnnnnN', 'NnqqqqqqnN', '.NnnnnnnN.', '..NNNNNN..'],
+  },
 };
 const DOLL_W = 26, DOLL_H = 18, DOLL_OX = 7, DOLL_OY = 4;
 const dollSig = eq => ['wl', 'wr', 'shield', 'core', 'engine'].map(k => eq[k] ? eq[k].b : '-').join('|');
@@ -287,10 +317,11 @@ function dollCanvas(eq, fr, view = 0) {
   let rows = DOLL_BODY[fr];
   if (view === 2) rows = rows.map((r, j) => j >= 2 && j <= 4 ? r.replace(/[kf]/g, 'p') : r);
   if (view === 1) rows = rows.map((r, j) => { let q = DOLL_SIDE(r); if (j >= 2 && j <= 4) q = q.replace(/[kf]/g, 'p').slice(0, 5) + (j === 3 ? 'kf' : 'kk') + q[7]; return q; });
-  const body = rows.map((r, j) => j <= 5 && hd.hood ? recolor([r], hd.hood)[0] : r), bx = view === 1 ? DOLL_OX + 1 : DOLL_OX - 1;
+  const hr = hd[['f', 's', 'b'][view]]; // 戴了头冠：身子不画头，整颗换掉
+  const body = hr ? rows.map((r, j) => j <= 5 ? '.'.repeat(r.length) : r) : rows, bx = view === 1 ? DOLL_OX + 1 : DOLL_OX - 1;
   put(sprite(recolor(body, { F: boots, G: 'p', b: 'w' })), bx, DOLL_OY - 1);
-  if (hd.over && view !== 1) put(sprite(hd.over), DOLL_OX + hd.ox - 1, DOLL_OY + hd.oy - 1);
   if (view === 0) held(eq.wl, 'front', 1); else if (view === 2) held(eq.wr, 'front', 1);
-  else if (eq.wl) { const h = HELD[eq.wl.b]; if (h) { const [hr, ax, ay] = h; put(sprite(hr), DOLL_OX + 9 - ax, DOLL_OY + 7 - ay - 1); } } // 侧面：武器伸在身前
+  else if (eq.wl) { const h = HELD[eq.wl.b]; if (h) { const [wr, ax, ay] = h; put(sprite(wr), DOLL_OX + 9 - ax, DOLL_OY + 7 - ay - 1); } } // 侧面：武器伸在身前
+  if (hr) put(sprite(hr, undefined, null, hd.pal), DOLL_W / 2 - hr[0].length / 2 - 1, DOLL_OY + 5 - hr.length); // 头最后画，武器不挡脸
   return c;
 }
