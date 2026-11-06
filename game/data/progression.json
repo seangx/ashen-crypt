@@ -24,13 +24,16 @@
   "growth": 1.25
  },
  "monsterScaling": {
-  "_说明": "怪物等级 L 的倍率 = growth^(L-1)；怪物等级 = 任务层数 + 墓图阶数 + 命盘加的等级。分段成长（可选）：knee 填数字后，L 超过 knee 的部分改用 hpGrowth2 / dmgGrowth2（没填就沿用第一段）；knee 为 null 时不分段",
+  "_说明": "怪物等级 L 的倍率 = growth^(L-1)；怪物等级 = 任务层数 + 墓图阶数 + 命盘加的等级。分段成长（可选）：knee 填数字后，L 超过 knee 的部分改用 hpGrowth2 / dmgGrowth2（没填就沿用第一段）；knee 为 null 时不分段。第三段：knee2 填数字后，L 超过 knee2 的部分改用 hpGrowth3 / dmgGrowth3（没填就沿用第二段）",
   "hpGrowth": 1.15,
   "dmgGrowth": 1.08,
   "xpGrowth": 1.1,
   "knee": 20,
   "hpGrowth2": 1.07,
-  "dmgGrowth2": 1.02
+  "dmgGrowth2": 1.02,
+  "knee2": 40,
+  "hpGrowth3": 1.02,
+  "dmgGrowth3": 1.005
  },
  "run": {
   "maxDepth": 100,
