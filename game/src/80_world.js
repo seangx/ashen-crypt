@@ -183,8 +183,9 @@ class World extends Phaser.Scene {
     const sig = dollSig(S.equip);
     if (sig !== this.dollSig) { // 装备变了：重画纸娃娃
       this.dollSig = sig; this.dollN = (this.dollN || 0) + 1;
-      for (const f of [0, 1]) { const cv = dollCanvas(S.equip, f); for (const [k, c] of [['doll_', cv], ['doll_fl_', silhouette(cv, '#ffffff')]]) { const key = k + f; if (this.textures.exists(key)) this.textures.remove(key); this.textures.addCanvas(key, c); } }
-      for (const v of [1, 2]) { const key = 'doll_v' + v; if (this.textures.exists(key)) this.textures.remove(key); this.textures.addCanvas(key, dollCanvas(S.equip, 0, v)); } // 转身用的侧面、背面
+      const putTex = (key, cv) => { const t = this.textures.exists(key) && this.textures.get(key); if (t && t.context && t.width === cv.width && t.height === cv.height) { t.context.clearRect(0, 0, t.width, t.height); t.context.drawImage(cv, 0, 0); t.refresh(); return; } if (t) this.textures.remove(key); this.textures.addCanvas(key, cv); }; // 原地重画：残影、转身残像还拿着这些贴图，删掉重建会让它们读到空纹理崩溃
+      for (const f of [0, 1]) { const cv = dollCanvas(S.equip, f); for (const [k, c] of [['doll_', cv], ['doll_fl_', silhouette(cv, '#ffffff')]]) { const key = k + f; putTex(key, c); } }
+      for (const v of [1, 2]) putTex('doll_v' + v, dollCanvas(S.equip, 0, v)); // 转身用的侧面、背面
       this.hero.setTexture('doll_0'); if (this.heroCS && this.heroCS.cs) this.heroCS.cs.setTexture('doll_0'); G.ui && G.ui.dollChanged && G.ui.dollChanged(); // 影子也要换到新纹理，旧的已经删掉
     }
     // 旋风斩转身：正 → 侧 → 背 → 另一侧，一圈 4 帧；身后拖两个旧帧的淡残影

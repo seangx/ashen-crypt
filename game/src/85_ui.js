@@ -27,6 +27,12 @@ const FAC_TIP = {
 /* 物品卡：返回 {c,h} */
 function mkCard(sc, parent, x, y, it, w, o = {}) {
   const c = sc.add.container(x, y); if (parent) parent.add(c);
+  if (it.kind === 'stone') { // 属性石没有底材，单独画一张小卡（原来走 baseOf 会崩）
+    const S0 = stoneOf(it.sid) || { n: '属性石' }, nm = r => r ? STAT_N2[r[0]] || r[0] : '无效';
+    T(sc, 0, 0, `${S0.n} · ${it.t} 阶`, { color: COL.emberHi, parent: c });
+    T(sc, 0, 14, `武器 / 副手：${nm(S0.w)}`, { size: 8, color: COL.dim, parent: c }); T(sc, 0, 26, `护甲部位：${nm(S0.a)}`, { size: 8, color: COL.dim, parent: c });
+    T(sc, 0, 38, '去“属性石”页镶到装备的孔里', { size: 8, color: COL.faint, parent: c }); return { c, h: 50 };
+  }
   const b = baseOf(it); let cy = 0;
   img(sc, 0, 0, 'i_' + iconOf(it), c);
   T(sc, 17, 1, itemName(it), { color: icol(it), parent: c });

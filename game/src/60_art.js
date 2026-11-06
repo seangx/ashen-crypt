@@ -264,25 +264,25 @@ Object.assign(HELD, { BoneQuiver: [['.ww', 'nNw', 'nN.', 'N..'], 1, 1], SoulSour
 // pal 压暗大面积主色：泛光从亮度 0.55 开始，成片的浅色会糊成白球，只留眼睛这类小点发亮
 const HEAD_DOLL = {
   TitaniumCore: { // 铁骨盔：银色圆盔，中脊，T 形面罩里两点红光
-    pal: { v: '#98a2b4', s: '#7f8999' },
+    pal: { v: '#7d8699', s: '#666f82' },
     f: ['....vv....', '..ssvvss..', '.sssvvssS.', '.svssssSS.', 'ssssssssSS', '.skrkkrkS.', '.sSkkkkSS.', '..SSkkSS..'],
     s: ['...vv...', '.ssvvss.', 'sssvvsss', 'ssssssss', 'ssssssss', 'sssskrkk', 'SSSSSkkk', '.SSSSSk.'],
     b: ['....vv....', '..ssvvss..', '.sssvvssS.', '.sssvvsSS.', 'ssssvvssSS', '.sssvvsSS.', '.ssSvvSSS.', '..SSSSSS..'],
   },
   PhantomCore: { // 幻影兜帽：灰白尖帽，帽尖歪向一边，黑脸青眼
-    pal: { v: '#9d9ab8', V: '#5f5c80' },
+    pal: { v: '#7f7b9a', V: '#524f6e' },
     f: ['.......vv.', '.....vvv..', '...vvvvv..', '..vvvvvvv.', '.vvVVVVVvv', '.vVkkkkkVv', '.vVkckkcVv', '.vvkkkkVvV', '.vVVkkVVvV'],
     s: ['.vv.....', '..vvv...', '..vvvvv.', '.vvvvvvv', 'vvvvvVVV', 'vvvvVkkk', 'vvvvVkck', 'vvvvVkkk', '.VvvVVVV'],
     b: ['.......vv.', '.....vvv..', '...vvvvv..', '..vvvvvvv.', '.vvvvvvvvv', '.vvvvvvvVv', '.vvvvvvVVv', '.vvvvvVVvV', '.vVVvvVVvV'],
   },
   NebulaCore: { // 灵纱冠：青色王冠，下面一整片深青面纱垂到肩，只透出两只眼
-    pal: { c: '#3bb5a8' },
+    pal: { c: '#33a094' },
     f: ['c..c.cc.c..c', 'cc.cccccc.cc', 'ccccyccycccc', '.CCCCCCCCCC.', '.CCkkCCkkCC.', '.CClkCCklCC.', '.CCCCCCCCCC.', '.cCCCCCCCCc.', '..c.Cc.C.c..'],
     s: ['c.c.cc.c', 'cccccccc', 'ccycccyc', 'CCCCCCCC', 'CCCCCCkk', 'CCCCCClk', 'CCCCCCCC', 'cCCCCCCc', '.c.Cc.C.'],
     b: ['c..c.cc.c..c', 'cc.cccccc.cc', 'cccccccccccc', '.CCCCCCCCCC.', '.CCCcCCCCCC.', '.CCCCCCcCCC.', '.CcCCCCCCCC.', '.cCCCCCcCCc.', '..c.Cc.C.c..'],
   },
   CrystalCore: { // 晶冠：头就是一块蓝水晶，顶上乱戳几根晶刺
-    pal: { l: '#6fa0e6', B: '#3f68b8', w: '#bfe0ff' },
+    pal: { l: '#5f8fd6', B: '#3a5fa8', w: '#bfe0ff' },
     f: ['..w.....l...', '.ll..w.ll.l.', '.lB.lwlBl.lB', '.lBlwwlBllB.', '.lBBlllBBBB.', '.BlkkBBkkBB.', '.BBBBBBBBBB.', '..BBlBBlBB..', '...BBBBBB...'],
     s: ['.w....l.', 'll..w.ll', 'lB.lwlBl', 'lBlwwlBl', 'lBBlllBB', 'BlBBBBkk', 'BBBBBBBB', '.BBlBBB.', '..BBBB..'],
     b: ['..w.....l...', '.ll..w.ll.l.', '.lB.lwlBl.lB', '.lBlwwlBllB.', '.lBBlllBBBB.', '.BlBBlBBBlB.', '.BBBBBBBBBB.', '..BBlBBlBB..', '...BBBBBB...'],
@@ -293,7 +293,7 @@ const HEAD_DOLL = {
     b: ['....pp....', '...pPPp...', '..pPPPPp..', '.pPPPPPPp.', 'pPPPpPPPPp', 'pPPPPPpPPp', 'pPpPPPPPPp', '.pPPPPpPp.', 'p.pP.Pp.p.'],
   },
   PolymerCore: { // 缝合面具：骨白大脸，黑眼洞，红线缝着；背面是皮绳绑带
-    pal: { w: '#9a8f7a', b: '#6f6555' },
+    pal: { w: '#7a705e', b: '#5c5447' },
     f: ['..wwwwww..', '.wwwwwwbb.', 'wwkkwwkkwb', 'wwkkwwkkwb', 'wqwwqqwwqb', 'wwqwwwwqbb', '.wwqqqqwb.', '..wbwwbb..'],
     s: ['..wwwww.', '.nnwwwww', 'nnnwwwkk', 'nnnwwwkk', 'Nnnwwqwb', 'nnnwwwqb', '.nnnwqqb', '..NNwbb.'],
     b: ['..NNNNNN..', '.NnnnnnnN.', 'NnnnnnnnnN', 'NnqqqqqqnN', 'NnnnnnnnnN', 'NnqqqqqqnN', '.NnnnnnnN.', '..NNNNNN..'],
