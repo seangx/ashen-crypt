@@ -4,7 +4,7 @@
   "_说明": "armor 基础护甲（只负责减伤，见 mechanics.defense.armorK）; life 基础生命（归零阵亡，只靠吸血和打掉 Boss 回复）; lifePerLevel 每级生命上限 +; shield 基础护盾上限（第一道血条）; shieldRegenPct 护盾每秒回复上限的百分之几（挨打也照常回）; res 基础抗性 %; maxRes 抗性上限 %; critMult 暴击倍率; dashDist 冲刺距离（像素）; dashTime 冲刺时长（秒）; dashMax 基础冲刺槽; pickup 拾取半径; baseSpeed 基础移速; thrustToSpeed 遁靴推力换算移速; accelMul 加速度 = 移速 × 它。shield：自带护盾，0 = 没有；护盾是堆生存的一个方向，只从词条（护盾、护盾提高、护盾每秒回复、命中回护盾）和法阵力场符文来",
   "armor": 0,
   "life": 100,
-  "lifePerLevel": 3,
+  "lifePerLevel": 6,
   "shield": 0,
   "shieldRegenPct": 8,
   "res": 0,
@@ -25,12 +25,12 @@
  },
  "monsterScaling": {
   "_说明": "怪物等级 L 的倍率 = growth^(L-1)；怪物等级 = 任务层数 + 墓图阶数 + 命盘加的等级。分段成长（可选）：knee 填数字后，L 超过 knee 的部分改用 hpGrowth2 / dmgGrowth2（没填就沿用第一段）；knee 为 null 时不分段",
-  "hpGrowth": 1.18,
-  "dmgGrowth": 1.12,
+  "hpGrowth": 1.15,
+  "dmgGrowth": 1.08,
   "xpGrowth": 1.1,
   "knee": 20,
-  "hpGrowth2": null,
-  "dmgGrowth2": 1.03
+  "hpGrowth2": 1.07,
+  "dmgGrowth2": 1.02
  },
  "run": {
   "maxDepth": 100,
@@ -185,18 +185,20 @@
   "shotLife": 4
  },
  "slam": {
-  "_说明": "红圈重击：精英 / Boss 每 every 秒在角色当时的位置亮一个半径 r 的红圈，windup 秒后砸下，圈内受 怪伤害 × mul（一次结算，可闪避，冲刺无敌可躲）",
+  "_说明": "红圈重击：精英 / Boss 每 every 秒在角色当时的位置亮一个半径 r 的红圈，windup 秒后砸下，圈内受 怪伤害 × mul（一次结算，可闪避，冲刺无敌可躲）；capLife：一次最多打掉生命上限的百分之几（减伤之后算，null 不封顶）",
   "elite": {
    "every": 5,
    "windup": 0.8,
    "r": 28,
-   "mul": 4
+   "mul": 4,
+   "capLife": 25
   },
   "boss": {
    "every": 7,
    "windup": 1.0,
    "r": 36,
-   "mul": 5
+   "mul": 5,
+   "capLife": 40
   },
   "stack": {"_说明": "defense-v3 §8.2：from 层起精英重击 dblCh 几率连放两次（间隔 dblGap 秒），Boss 每个招式后接一次范围预警；砸重击的怪在光圈外时读条 ×darkWindup；AI 冲刺时前方 blockR 像素内 ≥ blockN 只怪，冲刺距离 ×blockMul", "from": 30, "dblCh": 0.3, "dblGap": 0.6, "darkWindup": 0.5, "blockR": 30, "blockN": 6, "blockMul": 0.5}
  },

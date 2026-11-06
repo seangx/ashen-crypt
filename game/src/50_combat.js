@@ -367,6 +367,7 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
   if (STATS.flag.vortexTreads && vortexState() === 1) d *= 1 - UQX.vortex.takenFull / 100; // 旋涡之履
   if (player.guardT > 0) d *= 1 - MECH.meleeGuardLess;
   d *= 1 - Math.max(0, ...whirlWs().map(([W, i]) => Math.min(WH.drCap, WH.drPerStack * player.spin[i].n))) / 100; // 旋身：每层当前旋转减伤，有上限
+  if (src && src.cap) d = Math.min(d, STATS.life * src.cap / 100); // 红圈重击单次最多打掉生命上限的 cap%：威胁是“这趟走不深”，不是一下秒掉
   hurtLog(d, el, src); // defense-v3 §8.4 受伤来源
   if (RUN.gd) RUN.gd[player.closeN > 0 ? 'hitC' : 'hitF'] += d / STATS.life; /* 模拟统计：贴身 / 不贴身时的承伤（按生命上限的比例） */
   if (STATS.flag.lampBlood && d > 0 && player.soul > 0) { const pay = Math.min(d * 0.3, player.soul * 4); player.soul -= pay / 4; d -= pay; } // tree-v3 以灯代血
@@ -651,8 +652,8 @@ function logic(dt) {
   }
   RUN.t += dt;
   if (!RUN.ending && !RUN.next && RUN.descent) RUN.descent.minHp = Math.min(RUN.descent.minHp, player.life / P.life);
-  // 紧急撤回：最深层附近护甲一旦低于 returnHpNow%，立刻平安返回，不等打完 Boss
-  if (!lad && !RUN.ending && !RUN.next && RUN.base >= RUN.descent.prevMax - 1 && player.life > 0 && player.life / P.life * 100 < SOUL.returnHpNow) { RUN.result = 'emergency'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('紧急撤回', COL.emberHi); }
+  // 紧急撤回：最深层附近（returnNowAll 时任何层）护甲一旦低于 returnHpNow%，立刻平安返回，不等打完 Boss
+  if (!lad && !RUN.ending && !RUN.next && (SOUL.returnNowAll || RUN.base >= RUN.descent.prevMax - 1) && player.life > 0 && player.life / P.life * 100 < SOUL.returnHpNow) { RUN.result = 'emergency'; RUN.ending = 1.6; sfx('out'); if (G.ui) G.ui.banner('紧急撤回', COL.emberHi); }
   // 光环类独特规则：每秒一次
   if ((P.flag.blindAura || P.flag.shockAura) && (RUN.auraT = (RUN.auraT || 0) - dt) <= 0) {
     RUN.auraT = RL.aura.every;
@@ -796,7 +797,7 @@ function slamStep(m, dt, bl) {
     const s = m.slam; m.slam = null;
     fx({ t: 'slam', x: s.x, y: s.y, r: s.r });
     const K = PROG.slam.stack; if (K && m.elite && !s.dbl && eliteFloor() >= K.from && rnd() < K.dblCh) m.slam = { x: player.x, y: player.y, r: s.r, t: K.dblGap, T: K.dblGap, dbl: 1 }; // §8.2 预警会叠：精英重击连放两次
-    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m), { melee: 1, slam: 1, elite: m.elite || m.boss, ax: m.ax }); }
+    if (dist2(player, s) < s.r * s.r && RUN && !RUN.ending) { if (player.dashT <= 0) RUN.slamHits = (RUN.slamHits || 0) + 1; hurtPlayer(m.dmg * C.mul * bl, m.el, ctrlK(m), { melee: 1, slam: 1, elite: m.elite || m.boss, ax: m.ax, cap: C.capLife }); }
     return;
   }
   m.slamCd = (m.slamCd ?? C.every * rf(0.5, 1)) - dt;
