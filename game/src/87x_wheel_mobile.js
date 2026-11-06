@@ -114,12 +114,13 @@ Object.assign(MobileUI.prototype, {
       const k = wheelIconC(this, it, 38); c.add(k); k.setScale(2.5);
       halo.setPosition(cx, A.hy); k.setPosition(cx, A.hy); const jx = Wh.extra || [], side = jx.map((i, s) => { const q = wheelIconC(this, Wh.opts[i], 38); c.add(q); q.setScale(1.6).setPosition(cx + (s ? 1 : -1) * 92, A.hy + 10); return q; });
       this.tweens.add({ targets: [k, halo, ...side], y: '-=6', yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut' });
-      const cw = w - 28, x = 14, y = cy + R * 0.42, chh = by - y - 4;
+      const cw = w - 28, x = 14;
+      const lines = (tw ? [`【${trigKindN(it.c)}】${TCOND[it.c].n}`, trigU(it).d] : ruleLines(it)).flatMap(l => wrapText(l, cw - 24, 8));
+      const y = Math.min(cy + R * 0.42, by - 4 - (50 + lines.length * 13)), chh = by - y - 4; // 说明多就把卡片往上长，别截断独特的规则
       bub(this, c, x, y, cw, chh, 0x4f5d9a, { r: 12, ring: 0xffa31a });
       const nmAll = jx.length ? '三连！' + [nm, ...jx.map(i => wheelName(Wh.opts[i]))].join(' · ') : nm;
       T_(this, c, w / 2, y + 8, nmAll, { size: textW(nmAll, 12) <= cw - 16 ? 12 : 8, color: '#ffd23a' });
       T_(this, c, w / 2, y + 28, `${tw ? '魂龛' : KIND_N[it.kind] || it.kind} · ${it.ilvl} 级 · 独特${Wh.tag[Wh.win] ? '   ★ 同标签' : ''}`, { size: 8, color: '#e0e4f0' });
-      const lines = (tw ? [`【${trigKindN(it.c)}】${TCOND[it.c].n}`, trigU(it).d] : ruleLines(it)).flatMap(l => wrapText(l, cw - 24, 8));
       const mx = Math.max(1, Math.floor((chh - 50) / 13)), L = lines.length > mx ? [...lines.slice(0, mx - 1), lines[mx - 1].slice(0, -1) + '…'] : lines;
       T(this, x + 12, y + 44, L.join('\n'), { size: 8, color: '#b6f09a', parent: c });
       mkBtn(this, c, 14, by + 6, w - 28, 44, jx.length ? '全拿（3 件）' : '收下', () => { wheelTake(); this.wh = null; toast(jx.length ? '三件都进背包了' : `${nm} 进背包了`, '#ffd23a'); if (S.reelsPending.length) this.refresh(); else this.closeWin(); }, { style: 'w', size: 12 });
