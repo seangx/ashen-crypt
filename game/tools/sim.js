@@ -1,6 +1,6 @@
 /* 推层模拟：无头浏览器里跑真实的游戏逻辑。走位、冲刺、自动循环和自动推层都用游戏自己的自动战斗（src/52_auto.js，参数在 data/auto.json），
    这个脚本只负责在两局之间换装、插符文、点天赋。
-   用法：node tools/sim.js [--runs 30 | --minutes 60] [--seed 1] [--gear auto|none] [--tree auto|none] [--lock] [--html ashen-crypt.html] [--json out.json] [--build whirl|spark|random] [--ladder every:5|every:10m] [--ladderCap 3] [--override 路径=值 ...] [--seeds 1,2,3] [--par 3 | --serial]
+   用法：node tools/sim.js [--runs 30 | --minutes 60] [--seed 1] [--gear auto|none] [--tree auto|none] [--lock] [--html ashen-crypt.html] [--json out.json] [--build whirl|spark|random] [--ladder every:5|every:10m] [--ladderCap 3] [--override 路径=值 ...] [--seeds 1,2,3] [--par 3 | --serial] [--mem]
      --minutes     按游戏内时间跑（包括每局之间的结算时间），代替 --runs
      --lock        锁定层数（不自动推层）
      --gear none   从不换装（检查“不换装备能不能一直推”）
@@ -16,7 +16,7 @@ const path = require('path'), fs = require('fs');
 let pw; try { pw = require('playwright'); } catch (e) { pw = require('/opt/node22/lib/node_modules/playwright'); }
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const ROOT = path.resolve(__dirname, '..');
-const opt = { unlocks: arg('unlocks', 'off'), runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', 'auto'), tree: arg('tree', 'none'), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), json: arg('json', null), maxT: +arg('maxT', 3600), minutes: +arg('minutes', 0), ladderArg: arg('ladder', ''), craft: arg('craft', 'none'), build: arg('build', 'none'), lock: process.argv.includes('--lock') };
+const opt = { unlocks: arg('unlocks', 'off'), runs: +arg('runs', 30), seed: +arg('seed', 1), gear: arg('gear', 'auto'), tree: arg('tree', 'none'), html: path.resolve(ROOT, arg('html', 'ashen-crypt.html')), json: arg('json', null), maxT: +arg('maxT', 3600), minutes: +arg('minutes', 0), ladderArg: arg('ladder', ''), craft: arg('craft', 'none'), build: arg('build', 'none'), lock: process.argv.includes('--lock'), mem: process.argv.includes('--mem') };
 // 天梯：every:K = 每 K 趟推关排一次；every:10m = 每 10 分钟游戏时间排一次（每次最多连打 ladderCap 局）。--build whirl/random 默认 every:10m
 { const la = opt.ladderArg || (['whirl', 'random', 'spark', 'nova', 'meteor', 'orb', 'shield'].includes(opt.build) ? 'every:10m' : ''), v = (la.split(':')[1] || '');
   opt.ladder = /m$/.test(v) ? 0 : +v || 0; opt.ladderMin = /m$/.test(v) ? parseFloat(v) : 0; opt.ladderCap = +arg('ladderCap', 3); }
@@ -43,10 +43,11 @@ if (seedsArg) {
     });
 } else
 (async () => {
-  const b = await pw.chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
+  const b = await pw.chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--enable-precise-memory-info'] });
   const p = await b.newPage({ viewport: { width: 960, height: 540 } });
   const errs = [];
   p.on('pageerror', e => errs.push('PAGEERR ' + e.message));
+  p.on('console', m => { const t = m.text(); if (/^(MEM|BIG|STUCK)/.test(t)) console.log(t); }); // --mem：页面里的诊断行实时转出来（模拟跑在一次 evaluate 里，崩了 rows 就没了）
   // 可重置的随机数：同一个种子，模拟结果完全一样
   await p.addInitScript(seed => {
     let s = seed >>> 0;
@@ -69,8 +70,9 @@ if (seedsArg) {
     const WH = A.DATA.mechanics.whirl, SPK = A.DATA.mechanics.spark, B = opt.build;
     // 成型流派（whirl / spark）共用一套“锁左手底材、按优先级插符文和做装、先走到大型天赋”的逻辑，BP 是它们各自的配置段
     const MB = A.DATA.mechanics, ARCH = !!(MB[B] && MB[B].treeKey), BP = ARCH ? MB[B] : WH, BASE = BP.base || 'TurbineBlades', BS = 'gem', BGEM = BP.gem || 'GemWhirl', BCAT = BP.cat || null; // 技能石（spec-skill-gems）：流派 = 技能石 + runeOrder；主手按类别对口挑 // BS：流派底子放在哪个部位（圣盾掷是盾） // 成型流派：mechanics.json 里有 treeKey 的段（whirl / spark / nova …）
-    const spinDps = n => n.weapons.reduce((s, w) => s + (w ? w.dps * (w.spinMax || 1) : 0), 0) + (n.shieldW ? n.shieldW.dps * (n.shieldW.spinMax || 1) : 0); // 旋转满层的秒伤
-    const ehpOf = n => { const w = n.weapons.find(x => x && x.whirl); const dr = 1 - (1 - (w ? Math.min(WH.drCap, WH.drPerStack * w.stackMax) / 100 : 0)) * (1 - (n.weapons.some(x => x && x.meleeGuard) ? A.DATA.mechanics.defense.meleeGuardLess : 0)); return A.defEhp(n, A.S.depth, Math.min(0.6, dr)); } // 有效生命：(生命 + 护盾 + 护盾回复×5) ÷ (1 − 护甲减伤 − 流派减伤) // 减伤合计在分数里最多算 60%; // 旋转满层减伤算进有效生命
+    const allWs = n => [...n.weapons, ...(n.trigs || []).flatMap(t => (t && t.ws) || [])].filter(Boolean); // 普攻 + 魂龛里的技能（触发器改版后流派技能都在魂龛里）
+    const spinDps = n => allWs(n).reduce((s, w) => s + w.dps * (w.spinMax || 1), 0) + (n.shieldW ? n.shieldW.dps * (n.shieldW.spinMax || 1) : 0); // 旋转满层的秒伤
+    const ehpOf = n => { const w = allWs(n).find(x => x.whirl); const dr = 1 - (1 - (w ? Math.min(WH.drCap, WH.drPerStack * w.stackMax) / 100 : 0)) * (1 - (n.weapons.some(x => x && x.meleeGuard) ? A.DATA.mechanics.defense.meleeGuardLess : 0)); return A.defEhp(n, A.S.depth, Math.min(0.6, dr)); } // 有效生命：(生命 + 护盾 + 护盾回复×5) ÷ (1 − 护甲减伤 − 流派减伤) // 减伤合计在分数里最多算 60%; // 旋转满层减伤算进有效生命
     const score = () => spinDps(A.STATS) + ehpOf(A.STATS);
     const evS = eq => { const n = A.computeStats(eq); return spinDps(n) + ehpOf(n); };
     // 比较武器时把身上那把的符文挪过去再算；换上以后旧武器的符文退回符文袋，后面重新插
@@ -89,6 +91,48 @@ if (seedsArg) {
         for (const s of ['gem', 'core', 'engine', 'hub']) { const w = S.equip[s]; if (!w || !w.sock) continue; const k = w.mods.indexOf(null); if (k < 0) continue; if (s === 'hub' || A.modActive(m, w)) { w.mods[k] = m; placed = true; break; } }
         if (placed) S.mods = S.mods.filter(x => x !== m);
       }
+    };
+    // 魂龛（触发器改版）：流派技能石放进对口底子的魂龛（旋风斩 / 游雷 → 常驻，陨火 → 命中时），其余技能石按对口底子填满栏位；辅助石按流派 runeOrder 插
+    const FIT = A.DATA.triggers.fitCond, gemKey = g => g.lvl * 10 + (g.q || 0) / 10 + (g.sock || 0);
+    const tScore = T => (T.u ? 25 : T.rar * 8) + trigTier(T.ilvl) * 4 + T.sock * 3 + (T.q || 0) / 10;
+    const manageTrigs = () => {
+      if (!ARCH) return;
+      S.trigAuto = false; // 游戏自带的整理会分解普通魂龛（常驻底子很少掉），这里自己整理
+      for (let i = 0; i < S.trigs.length; i++) { const T = S.trigs[i]; if (!T) continue; for (let k = 0; k < T.sock; k++) unsocketAt(T, k, true); S.trigs[i] = null; S.trigBag.unshift(T); }
+      if (S.equip.gem) { S.stash.unshift(S.equip.gem); S.equip.gem = null; } // 旧技能格不再生效
+      const best = {}; for (const g of S.stash.filter(isSkill)) if (!best[g.b] || gemKey(g) > gemKey(best[g.b])) best[g.b] = g;
+      S.stash = S.stash.filter(x => !isSkill(x) || best[x.b] === x); // 同名技能石只留最好的
+      const byC = {}; for (const T of S.trigBag) (byC[T.c] = byC[T.c] || []).push(T); // 每种底子留最好的 3 个，其余分解
+      for (const c in byC) byC[c].sort((a, b) => tScore(b) - tScore(a)).slice(3).forEach(T => { if (!T.u) salvageTrig(T, true); });
+      const order = [best[BGEM], ...Object.values(best).filter(g => g.b !== BGEM).sort((a, b) => gemKey(b) - gemKey(a))].filter(Boolean);
+      const rank = m => { const i = BP.runeOrder.indexOf(m.mid); return (i < 0 ? 99 : i) * 100 - m.lvl; };
+      let slot = 0; const n = trigSlots();
+      for (const g of order) {
+        if (slot >= n) break;
+        const cands = S.trigBag.filter(T => T.c !== 'always' || alwaysOk(g.b)); if (!cands.length) continue;
+        const fitC = cands.filter(T => T.c === FIT[g.b]), T = (fitC.length ? fitC : cands).sort((a, b) => tScore(b) - tScore(a))[0];
+        S.trigBag = S.trigBag.filter(x => x !== T); S.trigs[slot++] = T; socketInto(T, 0, g);
+        for (const m of [...S.mods].sort((a, b) => rank(a) - rank(b))) { if (!T.socks.includes(null)) break; if (MOD_BY[m.mid].field || !supportFits(m, g) || T.socks.some(x => x && x.mid === m.mid)) continue; autoInsert(T, m); }
+      }
+      A.refreshStats();
+    };
+    // 背包整理（真实玩家会做的）：属性石 3 合 1、按分数镶进装备孔；符文每种只留等级最高的 3 个。不整理的话几十小时后存档上 MB、页面会崩
+    const tidyBags = () => {
+      S.stones = S.stones || []; for (let t = 1; t < 5; t++) for (const sid of [...new Set(S.stones.map(x => x.sid))]) while (stoneFuse(sid, t));
+      if (opt.gear === 'auto') for (const slot of ['wl', 'wr', 'shield', 'core', 'engine', 'hub']) {
+        const it = S.equip[slot]; if (!it) continue; const n = stoneSockN(it);
+        for (let k = 0; k < n; k++) {
+          const cur = (it.stones || [])[k], on = (it.stones || []).filter((x, i) => x && i !== k).map(x => x.sid), tops = {};
+          for (const x of S.stones) if (!on.includes(x.sid) && (!tops[x.sid] || x.t > tops[x.sid].t)) tops[x.sid] = x;
+          const evK = x => { const st = [...(it.stones || [])]; st[k] = x || null; return evS({ ...S.equip, [slot]: { ...it, stones: st } }); }; // 复制一份算分，不真的镶（真镶每次都会刷新属性 + 存档）
+          let best = cur, bv = evK(cur);
+          for (const x of Object.values(tops)) { const v = evK(x); if (v > bv * 1.0005) { bv = v; best = x; } }
+          if (best !== cur) stoneSocket(it, k, best);
+        }
+      }
+      const by = {}; for (const m of S.mods) (by[m.mid] = by[m.mid] || []).push(m);
+      const drop = new Set(); for (const k in by) by[k].sort((a, b) => b.lvl - a.lvl).slice(3).forEach(m => drop.add(m));
+      S.mods = S.mods.filter(m => !drop.has(m)); A.refreshStats();
     };
     const fits = (it, s) => !ARCH || it.kind !== 'weapon' || !BCAT || A.WEAPONS[it.b].cat === BCAT;
     // 选做装动作：默认按“秒伤 × 有效生命”贪心；whirl 按词条族优先级；random 随机
@@ -111,9 +155,9 @@ if (seedsArg) {
     S.salvage = { rar: [...A.DATA.camp.salvage.rar], old: A.DATA.camp.salvage.old, fav: null, on: opt.craft === 'auto' }; // 分解祭坛：--craft auto 时用默认规则
     A.startRun();
     for (let r = 0; opt.minutes ? simT < opt.minutes * 60 : r < opt.runs; r++) {
-      while (!A.RUN) { A.logic(dt); simT += dt; } // 结算倒计时
+      let wk = 0; while (!A.RUN) { A.logic(dt); simT += dt; if (++wk === 20000) { console.log('STUCK', r, JSON.stringify({ auto: S.auto, depth: S.depth, maxDepth: S.maxDepth, lad: S.ladder && { u: S.ladder.unlocked, chain: S.ladder.chain }, pend: A.LAD && A.LAD.pending, last: A.AUTO && A.AUTO.last && A.AUTO.last.result, reels: (S.reelsPending || []).length, win: A.G.ui && A.G.ui.win && A.G.ui.win.key })); break; } } if (!A.RUN) break; // 结算倒计时（卡住就停，别空转到崩）
       const L = A.RUN.L, depth = S.depth, mode = A.RUN.mode; let t = 0, minArmor = 1;
-      while (A.RUN && t < opt.maxT) { A.logic(dt); t += dt; simT += dt; if (A.RUN && !A.RUN.ending) minArmor = Math.min(minArmor, A.player.life / A.STATS.life); }
+      let tk = 0; while (A.RUN && t < opt.maxT) { A.logic(dt); t += dt; simT += dt; if (opt.mem && ++tk % 300 === 0) { const c = { projs: projs.length, mobs: mobs.length, zones: zones.length, drops: drops.length, meteors: meteors.length, fxq: fxq.length }; if (Object.values(c).some(v => v > 400)) console.log('BIG', r, Math.round(simT / 60), A.RUN && A.RUN.L, JSON.stringify(c), Math.round(performance.memory.usedJSHeapSize / 1e6)); } if (A.RUN && !A.RUN.ending) minArmor = Math.min(minArmor, A.player.life / A.STATS.life); }
       if (A.RUN) { A.RUN.result = 'timeout'; A.RUN.ending = 0.01; A.logic(dt); }
       const res = A.AUTO.last ? A.AUTO.last.result : '?';
       const soulE = t > 0 ? A.player.soulEmpty : 0; // 这局魂火见底的秒数
@@ -124,7 +168,7 @@ if (seedsArg) {
         if (it.kind === 'chip') continue;
         let slot = it.kind === 'weapon' ? 'wl' : it.kind === 'off' ? 'wr' : it.kind; // 只有主手武器；副手另算
         if (it.kind === 'gem') { const cur = S.equip.gem, gs = g => g ? g.lvl + g.sock * 4 + g.q / 5 : -1; // 技能石：流派只换同一颗（等级 + 槽数更好）；random 按分数
-          if (ARCH) { if (it.b === BGEM && (!cur || cur.b !== BGEM || gs(it) > gs(cur))) swapIn(it, 'gem'); }
+          if (ARCH) { /* 技能石由 manageTrigs 放进魂龛 */ }
           else if (!cur || evS({ ...S.equip, gem: withMods(it, cur) }) > evS(S.equip)) swapIn(it, 'gem');
           continue; }
         if (ARCH && it.kind === 'weapon' && !fits(it, 'wl')) continue;
@@ -133,7 +177,7 @@ if (seedsArg) {
         if (it.kind === 'weapon') { if (evS({ ...S.equip, [slot]: it }) > evS(S.equip)) swapIn(it, slot); continue; }
         const before = score(); A.equipItem(it, slot); if (score() < before) A.equipItem(cur, slot);
       }
-      placeRunes();
+      manageTrigs(); placeRunes();
       const canAlloc = A.treeCanAlloc || window.treeCanAlloc;
       if (opt.tree === 'auto' && canAlloc) {
         const ids = Object.keys(A.TREE.nodes).sort((a, b) => { const na = A.TREE.nodes[a], nb = A.TREE.nodes[b]; return (na.x * na.x + na.y * na.y) - (nb.x * nb.x + nb.y * nb.y) || (a < b ? -1 : 1); });
@@ -148,7 +192,7 @@ if (seedsArg) {
       // 铁砧（贪心）
       if (opt.craft === 'auto') {
         // 灯火秒数（粗算，不算击杀回复）：上限 ÷ (这层的燃烧 + 满层旋转的消耗)，推关做装按 秒伤 × 有效生命 × 灯火秒数
-        const lightOf = n => { const w = n.weapons.find(x => x && x.whirl), SO = A.DATA.mechanics.soul; return n.soulMax / ((SO.burn + S.maxDepth * SO.burnPerFloor) * (n.burnMul ?? 1) + (w ? WH.soulPerSec * (1 - n.soulLess) : 0) + n.weapons.reduce((x, v) => x + (v && v.spark ? SPK.soulPerCast * v.aps * (1 - n.soulLess) : 0), 0)); };
+        const lightOf = n => { const w = allWs(n).find(x => x.whirl), SO = A.DATA.mechanics.soul; return n.soulMax / ((SO.burn + S.maxDepth * SO.burnPerFloor) * (n.burnMul ?? 1) + (w ? WH.soulPerSec * (1 - n.soulLess) : 0) + n.weapons.reduce((x, v) => x + (v && v.spark ? SPK.soulPerCast * v.aps * (1 - n.soulLess) : 0), 0)); };
         const ev = eq => { const n = A.computeStats(eq); return spinDps(n) * ehpOf(n) * lightOf(n); };
         const mid = (a, t) => { const v = a.tiers[t][0]; return a.pair ? [Math.round((v[0] + v[1]) / 2), Math.round((v[2] + v[3]) / 2)] : v.length === 1 ? v[0] : Math.round((v[0] + v[1]) / 2); };
         const slots = ['wl', 'wr', 'shield', 'core', 'engine', 'hub'];
@@ -182,7 +226,7 @@ if (seedsArg) {
           }
         }
       }
-      placeRunes(); A.refreshStats();
+      placeRunes(); tidyBags(); A.refreshStats();
       if (S.stash.length > 60) S.stash.splice(0, S.stash.length - 60);
       // 天梯：每 K 局推层排一次最高层（连打）
       if (mode !== 'ladder') pushes++;
@@ -190,7 +234,8 @@ if (seedsArg) {
       const ladDue = opt.ladderMin ? simT >= ladNextT : opt.ladder && mode !== 'ladder' && pushes % opt.ladder === 0;
       if (ladDue && mode !== 'ladder' && A.unlocked('ladder') && !A.LAD.pending) { S.ladder.chain = true; A.LAD.pending = S.ladder.unlocked; ladLeft = opt.ladderMin ? opt.ladderCap : 1e9; ladNextT = simT + opt.ladderMin * 60; }
       const lr = A.AUTO.last;
-      rows.push({ hurt: { ...(lr.hurt || {}) }, gd: lr.gd || null, soulE, mode, dmg: lr.dmg || { whirl: 0, devil: 0 }, slamHits: lr.slamHits || 0, slamDash: lr.slamDash || 0, mins: lr.descent && lr.descent.mins || [], fl: lr.descent ? lr.descent.floors : 0, got: { items: lr.gain.items.length, shards: lr.gain.shards }, salv: lr.salv || { n: 0, shards: 0 }, lost: lr.lost || { items: 0, mods: 0, shards: 0 }, lad: mode === 'ladder' ? { t: Math.round(lr.t), jump: lr.lad ? lr.lad.jump : 0, unlocked: S.ladder.unlocked, best: S.ladder.best } : null, run: r + 1, L, depth, next: S.depth, back: S.auto.back, res, t: Math.round(t), min: Math.round(simT / 60), kills: S.stats.kills, lv: S.level, maxDepth: S.maxDepth, dps: Math.round(spinDps(A.STATS)), tdps: Math.round((A.STATS.trigs || []).reduce((s, t) => s + (t ? t.dps : 0), 0)), wf: B === 'nova' ? (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'FrostNova') ? '霜' : '') + (S.tree.includes(BP.treeKey) ? '碎' : '') + ' sh' + ((lr.dmg && lr.dmg.shards) || 0) + ' fz' + ((lr.dmg && lr.dmg.fz) || 0) : B === 'spark' ? (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Spark') ? '雷' : '') + (S.tree.includes(SPK.treeKey) ? '织' : '') + (Object.values(S.equip).some(it => it && it.u === SPK.uniqueId) ? '冠' : '') : (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Whirl') ? '旋' : '') + (S.tree.includes(WH.treeKey) ? '心' : '') + (Object.values(S.equip).some(it => it && it.u === 'StormEye') ? '眼' : ''), armor: A.STATS.armor, deflect: A.STATS.deflect, minHp: Math.round(minArmor * 100),
+      if (opt.mem) console.log('MEM', r, Math.round(simT / 60), 'heap', Math.round(performance.memory.usedJSHeapSize / 1e6), 'stash', S.stash.length, 'mods', S.mods.length, 'bag', S.trigBag.length, 'stones', (S.stones || []).length, 'save', JSON.stringify(S).length);
+      rows.push({ trg: S.trigs.map(T => T ? T.c + ':' + T.socks.filter(Boolean).map(x => x.b || x.mid).join('+') : '-').join(' '), hurt: { ...(lr.hurt || {}) }, gd: lr.gd || null, soulE, mode, dmg: lr.dmg || { whirl: 0, devil: 0 }, slamHits: lr.slamHits || 0, slamDash: lr.slamDash || 0, mins: lr.descent && lr.descent.mins || [], fl: lr.descent ? lr.descent.floors : 0, got: { items: lr.gain.items.length, shards: lr.gain.shards }, salv: lr.salv || { n: 0, shards: 0 }, lost: lr.lost || { items: 0, mods: 0, shards: 0 }, lad: mode === 'ladder' ? { t: Math.round(lr.t), jump: lr.lad ? lr.lad.jump : 0, unlocked: S.ladder.unlocked, best: S.ladder.best } : null, run: r + 1, L, depth, next: S.depth, back: S.auto.back, res, t: Math.round(t), min: Math.round(simT / 60), kills: S.stats.kills, lv: S.level, maxDepth: S.maxDepth, dps: Math.round(spinDps(A.STATS)), tdps: Math.round((A.STATS.trigs || []).reduce((s, t) => s + (t ? t.dps : 0), 0)), wf: B === 'nova' ? (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'FrostNova') ? '霜' : '') + (S.tree.includes(BP.treeKey) ? '碎' : '') + ' sh' + ((lr.dmg && lr.dmg.shards) || 0) + ' fz' + ((lr.dmg && lr.dmg.fz) || 0) : B === 'spark' ? (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Spark') ? '雷' : '') + (S.tree.includes(SPK.treeKey) ? '织' : '') + (Object.values(S.equip).some(it => it && it.u === SPK.uniqueId) ? '冠' : '') : (S.equip.wl && S.equip.wl.mods.some(m => m && m.mid === 'Whirl') ? '旋' : '') + (S.tree.includes(WH.treeKey) ? '心' : '') + (Object.values(S.equip).some(it => it && it.u === 'StormEye') ? '眼' : ''), armor: A.STATS.armor, deflect: A.STATS.deflect, minHp: Math.round(minArmor * 100),
         eq: ['gem', 'wl', 'wr', 'shield', 'core', 'engine', 'hub'].map(k => S.equip[k] ? `${S.equip[k].b}/q${S.equip[k].q}/r${S.equip[k].rar}${k === 'gem' ? '/L' + S.equip[k].lvl + '/s' + S.equip[k].sock : ''}` : '-').join(' '),
         shards: Object.values(S.shards).reduce((a, b) => a + b, 0), glyphs: Object.values(S.glyphs).reduce((a, b) => a + b, 0), crafts: { ...crafts }, mods: S.mods.length + Object.values(S.equip).reduce((n, it) => n + (it && it.mods ? it.mods.filter(Boolean).length : 0), 0) });
     }

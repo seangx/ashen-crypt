@@ -268,14 +268,12 @@ const MECH = { ...DATA.mechanics.attributes, ...DATA.mechanics.defense, ...DATA.
 const MOBS = PROG.monsters;
 const BOSS = PROG.bosses.list[0];
 const MS = PROG.monsterScaling;
-// 分段成长：L 超过 knee 后改用第二段倍率（knee 为 null 时不分段）
-// 第三段：L 超过 knee2 后改用 hpGrowth3 / dmgGrowth3（深层装备只按品质线性涨，怪物再按指数涨就成了墙）
-const msPow = (g1, g2, g3, L) => { const k = MS.knee || 1e9, k2 = Math.max(MS.knee2 || 1e9, k); g2 = g2 ?? g1; g3 = g3 ?? g2;
-  if (L <= k) return Math.pow(g1, L - 1);
-  if (L <= k2) return Math.pow(g1, k - 1) * Math.pow(g2, L - k);
-  return Math.pow(g1, k - 1) * Math.pow(g2, k2 - k) * Math.pow(g3, L - k2); };
-const monHp = L => msPow(MS.hpGrowth, MS.hpGrowth2, MS.hpGrowth3, L);
-const monDmg = L => msPow(MS.dmgGrowth, MS.dmgGrowth2, MS.dmgGrowth3, L);
+// 分段成长：bands 按 from 从小到大，L 超过某段的 from 后每层改用这段的 hp / dmg 倍率（第一段用 hpGrowth / dmgGrowth）
+const msPow = (g1, key, L) => { let v = 1, at = 1, g = g1;
+  for (const b of MS.bands || []) { if (L <= b.from) break; v *= Math.pow(g, b.from - at); at = b.from; g = b[key] ?? g; }
+  return v * Math.pow(g, L - at); };
+const monHp = L => msPow(MS.hpGrowth, 'hp', L);
+const monDmg = L => msPow(MS.dmgGrowth, 'dmg', L);
 const monXp = L => Math.pow(MS.xpGrowth, L - 1);
 // 灯火燃烧 / 回灯随层数：燃烧过了拐点变缓，回灯过了拐点变多（灯火是计时器，不是深层硬墙）
 const lampBurnL = (L, per = SOUL.burnPerFloor) => { const k = SOUL.burnKnee ?? 1e9; return L <= k ? L * per : k * per + (L - k) * per * (SOUL.burnAfterKnee ?? 1); };

@@ -24,19 +24,18 @@
   "growth": 1.25
  },
  "monsterScaling": {
-  "_说明": "怪物等级 L 的倍率 = growth^(L-1)；怪物等级 = 任务层数 + 墓图阶数 + 命盘加的等级。分段成长（可选）：knee 填数字后，L 超过 knee 的部分改用 hpGrowth2 / dmgGrowth2（没填就沿用第一段）；knee 为 null 时不分段。第三段：knee2 填数字后，L 超过 knee2 的部分改用 hpGrowth3 / dmgGrowth3（没填就沿用第二段）",
+  "_说明": "怪物等级 L 的倍率 = growth^(L-1)；怪物等级 = 任务层数 + 墓图阶数 + 命盘加的等级。分段成长：bands 里每段 from 层之后每层改用这段的 hp / dmg 倍率（没填就沿用上一段）",
   "hpGrowth": 1.15,
   "dmgGrowth": 1.08,
   "xpGrowth": 1.1,
-  "knee": 20,
-  "hpGrowth2": 1.07,
-  "dmgGrowth2": 1.02,
-  "knee2": 40,
-  "hpGrowth3": 1.02,
-  "dmgGrowth3": 1.005
+  "bands": [
+   { "from": 20, "hp": 1.07, "dmg": 1.02, "_说明": "装备品质还在涨，怪物放缓" },
+   { "from": 40, "hp": 1.02, "dmg": 1.005, "_说明": "深层装备只按品质线性涨，怪物再按指数涨就成了墙" },
+   { "from": 100, "hp": 1.06, "dmg": 1.02, "_说明": "100 层后（小毕业之后）靠神装往上推" }
+  ]
  },
  "run": {
-  "maxDepth": 100,
+  "maxDepth": 150,
   "_说明": "maxDepth 推层的最深层（打到这层以后自动推层就一直刷这层；天梯不受限）。每局：杀够 killsBase + killsPerLevel×层数 只怪后 Boss 出现。同屏上限 = spawnCapBase + min(spawnCapMaxExtra, 层数)；刷怪间隔 = max(spawnIntervalMin, spawnInterval - spawnIntervalPerLevel×层数)",
   "killsBase": 30,
   "killsPerLevel": 2,
