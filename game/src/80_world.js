@@ -183,8 +183,9 @@ class World extends Phaser.Scene {
     const sig = dollSig(S.equip);
     if (sig !== this.dollSig) { // 装备变了：重画纸娃娃
       this.dollSig = sig; this.dollN = (this.dollN || 0) + 1;
-      for (const f of [0, 1]) { const cv = dollCanvas(S.equip, f); for (const [k, c] of [['doll_', cv], ['doll_fl_', silhouette(cv, '#ffffff')]]) { const key = k + f; if (this.textures.exists(key)) this.textures.remove(key); this.textures.addCanvas(key, c); } }
-      for (const v of [1, 2]) { const key = 'doll_v' + v; if (this.textures.exists(key)) this.textures.remove(key); this.textures.addCanvas(key, dollCanvas(S.equip, 0, v)); } // 转身用的侧面、背面
+      const putTex = (key, cv) => { const t = this.textures.exists(key) && this.textures.get(key); if (t && t.context && t.width === cv.width && t.height === cv.height) { t.context.clearRect(0, 0, t.width, t.height); t.context.drawImage(cv, 0, 0); t.refresh(); return; } if (t) this.textures.remove(key); this.textures.addCanvas(key, cv); }; // 原地重画：残影、转身残像还拿着这些贴图，删掉重建会让它们读到空纹理崩溃
+      for (const f of [0, 1]) { const cv = dollCanvas(S.equip, f); for (const [k, c] of [['doll_', cv], ['doll_fl_', silhouette(cv, '#ffffff')]]) { const key = k + f; putTex(key, c); } }
+      for (const v of [1, 2]) putTex('doll_v' + v, dollCanvas(S.equip, 0, v)); // 转身用的侧面、背面
       this.hero.setTexture('doll_0'); if (this.heroCS && this.heroCS.cs) this.heroCS.cs.setTexture('doll_0'); G.ui && G.ui.dollChanged && G.ui.dollChanged(); // 影子也要换到新纹理，旧的已经删掉
     }
     // 旋风斩转身：正 → 侧 → 背 → 另一侧，一圈 4 帧；身后拖两个旧帧的淡残影
@@ -382,7 +383,7 @@ class World extends Phaser.Scene {
     else o.img.clearTint();
     o.sh.setPosition(sx, sy + 1).setScale(m.boss ? 2 : 1, 1);
     if (frz) { const hw = (w >> 1) + 1; bar.fillStyle(0xe8fbff, 0.9); for (let i = -hw; i <= hw; i += 2) bar.fillRect(Math.round(sx + i), Math.round(sy - ((i * 7 + 13) % 3)), 1, 2); bar.fillStyle(0x9fe3ff, 0.7).fillRect(Math.round(sx - hw), Math.round(sy), hw * 2 + 1, 1); } // 冻结：脚下一圈冰凌
-    if (m.ax && m.ax.length && !m.dead) { if (!o.lab) o.lab = T(this, 0, 0, `${eliteName(m)} ${m.d.n || ''}`, { size: 8, color: EAF_BY[m.ax[0]].c, align: 'center' }).setDepth(71); o.lab.setPosition(Math.round(sx - o.lab.width / 2), Math.round(sy - h - 18)).setVisible(!dark); } // 精英名字前面显示词缀（defense-v3 §8.3）
+    if (m.ax && m.ax.length && !m.dead) { if (!o.lab) o.lab = T(this, 0, 0, `${eliteName(m)} ${m.d.n || ''}`, { size: 8, color: EAF_BY[m.ax[0]].c, align: 'center' }).setDepth(71); const wv = this.cameras.main.worldView; o.lab.setPosition(Math.round(clamp(sx - o.lab.width / 2, wv.x + 2, wv.right - o.lab.width - 2)), Math.round(Math.max(wv.y + 2, sy - h - 18))).setVisible(!dark); } // 精英名字前面显示词缀（defense-v3 §8.3）；贴着画面边缘时名字收回到画面里
     if (m.ax && m.ax.length) { const n = m.ax.length, bx = Math.round(sx - n * 2), by = Math.round(sy - h - 8); for (let k = 0; k < n; k++) { bar.fillStyle(0x120c18, 1).fillRect(bx + k * 4 - 1, by - 1, 4, 4); bar.fillStyle(parseInt(EAF_BY[m.ax[k]].c.slice(1), 16), 1).fillRect(bx + k * 4, by, 2, 2); } } // 精英词缀：头顶一排彩点
     if (m.hp < m.max && !m.boss) {
       const bw = m.elite ? 14 : 10; const bx = Math.round(sx - (bw >> 1)), by = Math.round(sy - h - 3);

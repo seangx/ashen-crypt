@@ -1,5 +1,5 @@
 /* --override 路径=值（可写多次）：不改 data 文件，直接改打进 html 的 DATA，方便试曲线。
-   例：--override progression.monsterScaling.knee=20 --override progression.monsterScaling.dmgGrowth2=1.03
+   例：--override progression.monsterScaling.bands.2.hp=1.05 --override progression.run.maxDepth=150
    值按 JSON 解析（数字、true、null、[1,2]），解析不了就当字符串。 */
 function overridesFrom(argv) {
   const out = [];

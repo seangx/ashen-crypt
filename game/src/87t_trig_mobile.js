@@ -22,7 +22,8 @@ const RAR_C = [0xb9bfd6, 0x4fa8f0, 0xc070f0, 0xffa31a];
 const trigTile = (sc, c, x, y, s, T, o = {}) => { // 触发器图块：条件色 + 条件短名，稀有度描边
   const C = TCOND[T.c]; bub(sc, c, x, y, s, s, hx(C.c), { ring: o.sel ? 0xffffff : null });
   const g = sc.add.graphics(); c.add(g); g.lineStyle(2, RAR_C[T.rar] || RAR_C[0], 1).strokeRoundedRect(x + 2, y + 2, s - 4, s - 4, 5);
-  T_(sc, c, x + s / 2, y + s / 2 - (s > 30 ? 9 : 6), C.s, { size: 12, scale: s > 30 ? 1.4 : 1, color: '#ffffff' });
+  const nm = o.name && s >= 40; T_(sc, c, x + s / 2, y + s / 2 - (s > 30 ? 9 : 6) - (nm ? 4 : 0), C.s, { size: 12, scale: s > 30 ? 1.4 : 1, color: '#ffffff' });
+  if (nm) T_(sc, c, x + s / 2, y + s - 13, C.n, { size: 8, color: '#ffffff' }); // 背包格子里写全名，不用点开才知道“驻 / 命 / 杀”是什么
   if (T.legacy) T_(sc, c, x + s - 4, y + 1, '旧', { size: 8, color: '#ffe066', align: 'right' });
 };
 const T_ = (sc, c, x, y, s, o = {}) => T(sc, x, y, s, { align: 'center', parent: c, shadowColor: '#1a1426', ...o });
@@ -154,7 +155,7 @@ Object.assign(MobileUI.prototype, {
     if (unlocked('salvage')) mkBtn(this, c, w - 104, y - 8, 96, 20, `自动分解：${S.trigAuto === false ? '关' : '开'}`, () => { S.trigAuto = S.trigAuto === false; if (trigAutoOn()) { const r = trigBagTidy(S.maxDepth || 1); if (r.k) toast(`自动分解 ${r.k} 个，碎片 +${r.n}`); } save(); this.refresh(); }, { size: 8, style: S.trigAuto === false ? 'n' : 'w' });
     y += 18;
     const s = 40, cols = Math.floor((w - 12) / (s + 6)), gx = Math.round((w - cols * (s + 6)) / 2);
-    const ents = trigBagStacks(bag); ents.slice(0, cols * 3).forEach(({ T: T0, n: cnt }, i) => { const x = gx + (i % cols) * (s + 6), yy = y + Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (cnt > 1) T(this, x + s - 2, yy + s - 10, '×' + cnt, { size: 8, align: 'right', parent: c, color: '#ffe066' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
+    const ents = trigBagStacks(bag); ents.slice(0, cols * 3).forEach(({ T: T0, n: cnt }, i) => { const x = gx + (i % cols) * (s + 6), yy = y + Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0, name: 1 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (cnt > 1) T(this, x + s - 3, yy + 3, '×' + cnt, { size: 8, align: 'right', parent: c, color: '#ffe066' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
     if (!bag.length) T_(this, c, w / 2, y + 20, '还没有别的魂龛 · 打怪会掉', { size: 8, color: '#b9c2ea' });
     y += Math.max(1, Math.ceil(Math.min(ents.length, cols * 3) / cols)) * (s + 14) + 10;
     const N = tbagSel && bag.includes(tbagSel) ? tbagSel : null; if (!N) { mkBtn(this, c, w / 2 - 40, h - 40, 80, 28, '返回', () => this.openWin('trig'), {}); if (cur) mkBtn(this, c, 8, h - 40, 70, 28, '卸下', () => { unequipTrig(trigSel); this.openWin('trig'); }, { size: 8 }); return; }

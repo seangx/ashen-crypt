@@ -4,7 +4,7 @@
   "_说明": "armor 基础护甲（只负责减伤，见 mechanics.defense.armorK）; life 基础生命（归零阵亡，只靠吸血和打掉 Boss 回复）; lifePerLevel 每级生命上限 +; shield 基础护盾上限（第一道血条）; shieldRegenPct 护盾每秒回复上限的百分之几（挨打也照常回）; res 基础抗性 %; maxRes 抗性上限 %; critMult 暴击倍率; dashDist 冲刺距离（像素）; dashTime 冲刺时长（秒）; dashMax 基础冲刺槽; pickup 拾取半径; baseSpeed 基础移速; thrustToSpeed 遁靴推力换算移速; accelMul 加速度 = 移速 × 它。shield：自带护盾，0 = 没有；护盾是堆生存的一个方向，只从词条（护盾、护盾提高、护盾每秒回复、命中回护盾）和法阵力场符文来",
   "armor": 0,
   "life": 100,
-  "lifePerLevel": 3,
+  "lifePerLevel": 6,
   "shield": 0,
   "shieldRegenPct": 8,
   "res": 0,
@@ -24,16 +24,18 @@
   "growth": 1.25
  },
  "monsterScaling": {
-  "_说明": "怪物等级 L 的倍率 = growth^(L-1)；怪物等级 = 任务层数 + 墓图阶数 + 命盘加的等级。分段成长（可选）：knee 填数字后，L 超过 knee 的部分改用 hpGrowth2 / dmgGrowth2（没填就沿用第一段）；knee 为 null 时不分段",
-  "hpGrowth": 1.18,
-  "dmgGrowth": 1.12,
+  "_说明": "怪物等级 L 的倍率 = growth^(L-1)；怪物等级 = 任务层数 + 墓图阶数 + 命盘加的等级。分段成长：bands 里每段 from 层之后每层改用这段的 hp / dmg 倍率（没填就沿用上一段）",
+  "hpGrowth": 1.15,
+  "dmgGrowth": 1.08,
   "xpGrowth": 1.1,
-  "knee": 20,
-  "hpGrowth2": null,
-  "dmgGrowth2": 1.03
+  "bands": [
+   { "from": 20, "hp": 1.07, "dmg": 1.02, "_说明": "装备品质还在涨，怪物放缓" },
+   { "from": 40, "hp": 1.02, "dmg": 1.005, "_说明": "深层装备只按品质线性涨，怪物再按指数涨就成了墙" },
+   { "from": 100, "hp": 1.06, "dmg": 1.02, "_说明": "100 层后（小毕业之后）靠神装往上推" }
+  ]
  },
  "run": {
-  "maxDepth": 100,
+  "maxDepth": 150,
   "_说明": "maxDepth 推层的最深层（打到这层以后自动推层就一直刷这层；天梯不受限）。每局：杀够 killsBase + killsPerLevel×层数 只怪后 Boss 出现。同屏上限 = spawnCapBase + min(spawnCapMaxExtra, 层数)；刷怪间隔 = max(spawnIntervalMin, spawnInterval - spawnIntervalPerLevel×层数)",
   "killsBase": 30,
   "killsPerLevel": 2,
@@ -71,7 +73,7 @@
   "xp": 4,
   "_affixes说明": "defense-v3 §8.3 精英词缀：生成精英时按权重抽 count 个（层数 ≥ from 的才进池，元素魂最多一个）；n 显示名，c 头顶小点的颜色。层数：推层按 base，天梯按层数",
   "count": [[1, 1], [30, 2], [60, 3]],
-  "affixes": [{"id": "exp", "n": "炎魂", "w": 3, "from": 1, "c": "#ff8a3d", "fx": {"el": "exp", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "cold", "n": "霜魂", "w": 3, "from": 1, "c": "#9fe3ff", "fx": {"el": "cold", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "ele", "n": "雷魂", "w": 3, "from": 1, "c": "#7fc8ff", "fx": {"el": "ele", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "pla", "n": "圣魂", "w": 3, "from": 1, "c": "#ffe27a", "fx": {"el": "pla", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "nuc", "n": "疫魂", "w": 3, "from": 1, "c": "#8fe05a", "fx": {"el": "nuc", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "kin", "n": "骨魂", "w": 3, "from": 1, "c": "#e9e0c9", "fx": {"el": "kin", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "drain", "n": "噬光", "w": 8, "from": 3, "c": "#ffb84a", "fx": {"lamp": 3}}, {"id": "breaker", "n": "破盾", "w": 7, "from": 6, "c": "#c0c8ff", "fx": {"shieldMul": 2}}, {"id": "blight", "n": "枯血", "w": 6, "from": 8, "c": "#b04a5a", "fx": {"r": 120}}, {"id": "charge", "n": "冲锋", "w": 8, "from": 10, "c": "#ff5a4a", "fx": {"every": 5, "windup": 0.5, "dur": 0.45, "spd": 4, "mul": 1.5, "knock": 40, "range": 160}}, {"id": "barrage", "n": "弹幕", "w": 8, "from": 12, "c": "#e07aff", "fx": {"every": 4, "n": 5, "fan": 70, "dmg": 0.35}}, {"id": "wall", "n": "坚壁", "w": 6, "from": 15, "c": "#a0a0a0", "fx": {"less": 50, "r": 80}}, {"id": "summon", "n": "召魂", "w": 6, "from": 18, "c": "#7f8ac0", "fx": {"every": 6, "n": 4, "max": 12}}, {"id": "mirror", "n": "镜反", "w": 5, "from": 25, "c": "#ffffff", "fx": {"pct": 10, "cap": 4}}]
+  "affixes": [{"id": "exp", "n": "炎魂", "w": 3, "from": 1, "c": "#ff8a3d", "fx": {"el": "exp", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "cold", "n": "霜魂", "w": 3, "from": 1, "c": "#9fe3ff", "fx": {"el": "cold", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "ele", "n": "雷魂", "w": 3, "from": 1, "c": "#7fc8ff", "fx": {"el": "ele", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "pla", "n": "圣魂", "w": 3, "from": 1, "c": "#ffe27a", "fx": {"el": "pla", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "nuc", "n": "疫魂", "w": 3, "from": 1, "c": "#8fe05a", "fx": {"el": "nuc", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "kin", "n": "骨魂", "w": 3, "from": 1, "c": "#e9e0c9", "fx": {"el": "kin", "dmg": 30, "ground": {"r": 22, "dur": 3, "tick": 0.5, "pct": 0.25}}}, {"id": "drain", "n": "噬光", "w": 8, "from": 3, "c": "#ffb84a", "fx": {"lamp": 3}}, {"id": "breaker", "n": "破盾", "w": 7, "from": 6, "c": "#c0c8ff", "fx": {"shieldMul": 2}}, {"id": "blight", "n": "枯血", "w": 6, "from": 8, "c": "#b04a5a", "fx": {"r": 120}}, {"id": "charge", "n": "冲锋", "w": 8, "from": 10, "c": "#ff5a4a", "fx": {"every": 5, "windup": 0.5, "dur": 0.45, "spd": 4, "mul": 1.5, "knock": 40, "range": 160}}, {"id": "barrage", "n": "弹幕", "w": 8, "from": 12, "c": "#e07aff", "fx": {"every": 4, "n": 5, "fan": 70, "dmg": 0.35}}, {"id": "wall", "n": "坚壁", "w": 6, "from": 15, "c": "#a0a0a0", "fx": {"less": 50, "r": 80}}, {"id": "summon", "n": "召魂", "w": 6, "from": 18, "c": "#7f8ac0", "fx": {"every": 6, "n": 4, "max": 12}}, {"id": "mirror", "n": "镜反", "w": 5, "from": 25, "c": "#ffffff", "fx": {"pct": 10, "cap": 4, "gap": 1, "_说明": "每次挨打反弹这次伤害的 pct%，最多 cap% 生命；所有镜反精英合计每 gap 秒最多反一次"}}]
  },
  "monsters": {
   "_说明": "1 级数值，按 monsterScaling 成长。w 刷出权重; minL 从第几层开始出现; ai chase 近身 / ranged 远程（rng 射程, cd 射击间隔）; res 抗性 %; el 伤害元素 kin 物理 exp 火焰 pla 圣光 ele 闪电 nuc 瘟疫 cold 寒霜; chill 弹打中角色时叠几层冰缓; lead 远程瞄准时按角色当前速度预判落点（预判 = 弹飞到的时间 × 角色速度 × lead）; pool 弹落地或打中时留下的火圈 {r 半径, dur 持续秒, tick 结算间隔, dmg 每次伤害占怪伤害的比例}",
@@ -185,18 +187,20 @@
   "shotLife": 4
  },
  "slam": {
-  "_说明": "红圈重击：精英 / Boss 每 every 秒在角色当时的位置亮一个半径 r 的红圈，windup 秒后砸下，圈内受 怪伤害 × mul（一次结算，可闪避，冲刺无敌可躲）",
+  "_说明": "红圈重击：精英 / Boss 每 every 秒在角色当时的位置亮一个半径 r 的红圈，windup 秒后砸下，圈内受 怪伤害 × mul（一次结算，可闪避，冲刺无敌可躲）；capLife：一次最多打掉生命上限的百分之几（减伤之后算，null 不封顶）",
   "elite": {
    "every": 5,
    "windup": 0.8,
    "r": 28,
-   "mul": 4
+   "mul": 4,
+   "capLife": 25
   },
   "boss": {
    "every": 7,
    "windup": 1.0,
    "r": 36,
-   "mul": 5
+   "mul": 5,
+   "capLife": 40
   },
   "stack": {"_说明": "defense-v3 §8.2：from 层起精英重击 dblCh 几率连放两次（间隔 dblGap 秒），Boss 每个招式后接一次范围预警；砸重击的怪在光圈外时读条 ×darkWindup；AI 冲刺时前方 blockR 像素内 ≥ blockN 只怪，冲刺距离 ×blockMul", "from": 30, "dblCh": 0.3, "dblGap": 0.6, "darkWindup": 0.5, "blockR": 30, "blockN": 6, "blockMul": 0.5}
  },

@@ -72,8 +72,8 @@ const ICON_SVG = (() => {
   I.a_tombward = shield('clay', ln('M20 24H44M20 36H44M26 18V30M38 30V42M32 42V50', 2.2) + ln('M23 22L25 26M29 22L31 26M35 34L37 38M41 34L43 38', 1.4));
   /* ---- 头冠 ---- */
   I.a_helm = f('iron', 'M10 38C10 18 20 8 32 8S54 18 54 38V50H42V40H22V50H10Z') + f('steel', 'M28 8H36V40H28Z') + ln('M16 30H26M38 30H48', 3) + hl('M16 20C18 15 22 12 26 11');
-  I.a_phantomhood = hood('purp', '#ffe680');
-  I.a_veilcrown = crown('iron', 'cold') + ln('M10 50C18 56 46 56 54 50', 2, '#ffffffaa');
+  I.a_phantomhood = hood('steel', '#7ff0e8'); // 和身上的灰紫尖帽、青眼一致
+  I.a_veilcrown = crown('cyan', 'cold') + ln('M10 50C18 56 46 56 54 50', 2, '#ffffffaa');
   I.a_crystalcrown = crown('cold', 'cyan');
   I.a_shadehood = hood('dark', '#ff5a7a');
   I.a_mask = f('bone', 'M12 14C12 8 52 8 52 14V34C52 48 42 58 32 58S12 48 12 34Z') + `<path d="M18 28L28 30L26 36L18 34Z M46 28L36 30L38 36L46 34Z" fill="#1a1426"/>` + ln('M22 46C28 50 36 50 42 46M26 44V49M32 45V50M38 44V49', 1.8) + ln('M32 10V22', 1.6) + ln('M29 13L35 15M29 18L35 20', 1.4) + hl('M17 18V32');

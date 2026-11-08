@@ -324,7 +324,10 @@ function affDetail(x, acts) {
 }
 function isUpgrade(it) {
   const slot = slotsFor(it)[0]; if (!slot) return false; const eq = S.equip[slot]; if (eq === it || Object.values(S.equip).includes(it)) return false;
-  return !eq || itemValue(it) > itemValue(eq) * 1.02;
+  if (!eq) return true;
+  const n = computeStats({ ...S.equip, [slot]: it }); // 和详情卡的对比同一口径：秒伤或坚韧明显变差就不标绿箭头
+  if (n.dps < STATS.dps * 0.95 || toughness(n) < toughness(STATS) * 0.95) return false;
+  return itemValue(it) > itemValue(eq) * 1.02;
 }
 const modActiveHere = (m, host) => !host || modActive(m, host);
 

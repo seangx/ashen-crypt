@@ -37,22 +37,26 @@ Object.assign(MobileUI.prototype, {
     const keys = Object.keys(G).sort((a, b) => { const [sa, ta] = a.split('|'), [sb, tb] = b.split('|'); return sa === sb ? tb - ta : sa < sb ? -1 : 1; });
     T(this, 12, y, `背包 · ${bag.length} 颗`, { size: 12, color: COL.emberHi, parent: c }); y += 20;
     if (!keys.length) { T_(this, c, w / 2, y + 6, '打怪有几率掉属性石（直接进背包）', { size: 8, color: COL.dim }); return; }
-    const cw = Math.floor((w - 24) / 2), ch = 44, fit = Math.max(2, Math.floor((h - y - 50) / (ch + 6)) * 2), more = keys.length - fit;
-    if (more > 0) { keys.length = fit - 1; T_(this, c, 8 + 1.5 * cw + 8, y + ((fit - 1) / 2 | 0) * (ch + 6) + 16, `还有 ${more + 1} 种…`, { size: 8, color: COL.dim }); }
-    keys.forEach((k, i) => bub(this, c, 8 + (i % 2) * (cw + 8), y + (i / 2 | 0) * (ch + 6), cw, ch, 0x2a2236, { flat: 1, ring: G[k].some(s => s.id === stonePick) ? CY : null }));
+    // 背包：小方块网格（颜色 = 种类，数字 = 阶，右下角 = 数量），点一下选中，选中的那种在下面显示效果和合成
+    const SZ2 = 30, per = Math.max(1, Math.floor((w - 16) / (SZ2 + 6)));
     keys.forEach((k, i) => {
-      const L = G[k], s = L[0], fz = L.length >= 3 && s.t < 5, S0 = stoneOf(s.sid), x = 8 + (i % 2) * (cw + 8), yy = y + (i / 2 | 0) * (ch + 6);
-      bub(this, c, x + 4, yy + 7, 26, 26, hx(S0.c));
-      T_(this, c, x + 17, yy + 12, String(s.t), { size: 12, color: '#1a1426', shadowColor: null });
-      T(this, x + 36, yy + 5, `${S0.n} ×${L.length}`, { size: 8, color: COL.text, parent: c });
-      const wf = S0.w ? `${STAT_N2[S0.w[0]] || S0.w[0]}` : '武器无效', af = S0.a ? `${STAT_N2[S0.a[0]] || S0.a[0]}` : '护甲无效';
-      T(this, x + 36, yy + 18, fitW(`武 ${wf}`, cw - 40 - (fz ? 42 : 4)), { size: 8, color: COL.dim, parent: c });
-      T(this, x + 36, yy + 30, fitW(`甲 ${af}`, cw - 40 - (fz ? 42 : 4)), { size: 8, color: COL.dim, parent: c });
-      zoneOn(this, c, x, yy, cw - (L.length >= 3 && s.t < 5 ? 40 : 0), ch, () => { stonePick = stonePick === s.id ? null : s.id; R(); });
-      if (L.length >= 3 && s.t < 5) mkBtn(this, c, x + cw - 40, yy + 12, 36, 28, '合成', () => { if (stoneFuse(s.sid, s.t)) toast(`合成 ${S0.n} ${s.t + 1} 阶`, '#ffe066'); stonePick = null; R(); }, { size: 8, style: 'w' });
+      const L = G[k], s = L[0], S0 = stoneOf(s.sid), x = 8 + (i % per) * (SZ2 + 6), yy = y + (i / per | 0) * (SZ2 + 6);
+      bub(this, c, x, yy, SZ2, SZ2, hx(S0.c), { ring: L.some(t => t.id === stonePick) ? CY : null });
+      T_(this, c, x + SZ2 / 2, yy + 7, String(s.t), { size: 12, color: '#1a1426', shadowColor: null });
+      if (L.length > 1) T(this, x + SZ2 - 1, yy + SZ2 - 9, '×' + L.length, { size: 8, color: COL.text, align: 'right', parent: c });
+      zoneOn(this, c, x, yy, SZ2, SZ2, () => { stonePick = L.some(t => t.id === stonePick) ? null : s.id; R(); });
     });
-    y += Math.ceil(keys.length / 2) * (ch + 6);
-    if (stonePick) { const p = bag.find(x => x.id === stonePick); if (p) T(this, 12, y + 4, '已选中：点上面的空孔放入', { size: 8, color: '#ffe066', parent: c }); }
+    y += Math.ceil(keys.length / per) * (SZ2 + 6) + 4;
+    const pk = stonePick && bag.find(x => x.id === stonePick);
+    if (pk) {
+      const S0 = stoneOf(pk.sid), L = G[pk.sid + '|' + pk.t] || [], fz = L.length >= 3 && pk.t < 5;
+      const wf = S0.w ? `${STAT_N2[S0.w[0]] || S0.w[0]}` : '武器无效', af = S0.a ? `${STAT_N2[S0.a[0]] || S0.a[0]}` : '护甲无效';
+      T(this, 12, y, `${S0.n} ${pk.t} 阶 ×${L.length}`, { size: 8, color: COL.text, parent: c });
+      T(this, 12, y + 12, fitW(`武 ${wf} · 甲 ${af}`, w - 24 - (fz ? 48 : 0)), { size: 8, color: COL.dim, parent: c });
+      T(this, 12, y + 24, '已选中：点上面的空孔放入', { size: 8, color: '#ffe066', parent: c });
+      if (fz) mkBtn(this, c, w - 56, y, 44, 28, '合成', () => { if (stoneFuse(pk.sid, pk.t)) toast(`合成 ${S0.n} ${pk.t + 1} 阶`, '#ffe066'); stonePick = null; R(); }, { size: 8, style: 'w' });
+      y += 36;
+    } else { T(this, 12, y, '点一颗选中，看效果；3 颗同种同阶可以合成', { size: 8, color: COL.faint, parent: c }); y += 14; }
     this.paneH = y + 30;
   },
 });
