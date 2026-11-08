@@ -48,7 +48,8 @@ const eliteShieldMul = src => src && src.ax && src.ax.includes('breaker') ? EAF_
 function eliteTaken(m, amt, small) {
   if (!m.ax) return amt; let f;
   if (m.wallOn && (f = eaf(m, 'wall'))) amt *= 1 - f.less / 100;
-  if (!small && (f = eaf(m, 'mirror')) && STATS.life) hurtPlayer(Math.min(amt * f.pct / 100, STATS.life * f.cap / 100), 'kin', 1, { elite: 1, mirror: 1 });
+  if (!small && (f = eaf(m, 'mirror')) && STATS.life && RUN && !(RUN.mirT > RUN.t)) { RUN.mirT = RUN.t + (f.gap || 0); } else f = null; // 镜反有全局冷却：出手越快、一次砸中的镜反精英越多，都不该反得越多（原来连射 / 范围流派被反死）
+  if (f) hurtPlayer(Math.min(amt * f.pct / 100, STATS.life * f.cap / 100), 'kin', 1, { elite: 1, mirror: 1 });
   return amt;
 }
 // 精英死了：元素魂留地面

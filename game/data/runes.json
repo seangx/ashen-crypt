@@ -46,7 +46,7 @@
     { "id": "ArmorOnHit", "n": "吸髓符文", "fit": ["weapon", "tag:Hit"], "req": 6, "fx": { "armorOnHit": ["lp", 0.1, 10, 2] } },
     { "id": "Melee", "n": "蛮力符文", "fit": ["weapon", "tag:Melee"], "req": 6, "fx": { "meleeInc": ["lp", 40, 120, 0], "meleeGuard": 1 } },
     { "id": "Thorns", "n": "荆棘符文", "fit": ["weapon", "tag:Melee"], "req": 12, "fx": { "thorns": ["lp", 35, 70, 0] } },
-    { "id": "Whirl", "n": "旋身符文", "fit": ["weapon", "tag:Melee", "tag:AoE"], "req": 6, "w": 0, "fx": { "whirl": 1, "spinMore": ["lp", 1.06, 1.12, 3], "meleeGuard": 1, "armorOnHit": ["lp", 1, 6, 2] } },
+    { "id": "Whirl", "n": "旋身符文", "fit": ["weapon", "tag:Melee", "tag:AoE"], "req": 6, "w": 0, "fx": { "whirl": 1, "spinMore": ["lp", 1.06, 1.08, 3], "meleeGuard": 1, "armorOnHit": ["lp", 1, 6, 2] } },
     { "id": "ShieldThrow", "n": "圣盾掷符文", "fit": ["tag:Shield"], "req": 12, "w": 0, "fx": {"shieldThrow": 1, "throwK": ["lp", 0.55, 0.95, 2], "chain": ["step", 3, 6], "chainStepInc": 10, "ail": {"pla": 0.2}}, "_说明": "插在圣徽盾上（只有圣徽盾有符文槽）：盾每 1/aps 秒自动扔一次，单次伤害 = 盾的护甲 × throwK，圣光。见 mechanics.json 的 shield"},
     { "id": "FrostOrbRune", "n": "寒魄符文", "fit": ["weapon", "tag:Spawn"], "req": 6, "w": 0, "fx": {"frostOrb": 1, "shardMul": ["lp", 0.2, 0.32, 2]}, "_说明": "寒魄宝珠（form orb）：冰球飞行中每 emit 秒向四周放冰片，每片 ×shardMul。见 mechanics.json 的 orb"},
     { "id": "Meteor", "n": "陨火符文", "fit": ["weapon", "tag:Delayed"], "req": 6, "w": 0, "fx": {"meteor": 1, "meteorMul": ["lp", 1.4, 2.0, 2], "delay": 1.0, "ground": {"dur": 3, "tick": 0.5, "pct": 0.12}}, "_说明": "坠星杖（form meteor）：陨石伤害 ×meteorMul，落地留火地（每 tick 造成这次命中的 pct，吃持续时间）。见 mechanics.json 的 meteor"},
