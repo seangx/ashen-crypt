@@ -324,7 +324,7 @@ function trigProgress(i) {
   return 1;
 }
 function trigGemXp(x) {
-  let up = false;
+  let up = false; x *= TRG.gemXpMul ?? 1; // 技能石 / 辅助石吃击杀经验的倍率（数据开关，控制构筑成型的快慢）
   for (const T of S.trigs || []) if (T) for (const g of T.socks) if ((isSkill(g) || isSupport(g)) && g.lvl < MOD_MAX) { g.xp = (g.xp || 0) + x; const L = modLevelOf(g.xp); if (L > g.lvl) { g.lvl = L; up = true; if (G.ui) G.ui.feed(`${isSkill(g) ? GEM_BY[g.b].n : MOD_BY[g.mid].n} ${g.lvl} 级`, COL.cyan, isSkill(g) ? 'i_' + iconOf(g) : 'mod_' + g.mid); } }
   return up;
 }
