@@ -45,15 +45,13 @@ Object.assign(MobileUI.prototype, {
     const keys = Object.keys(G).sort((a, b) => { const [sa, ta] = a.split('|'), [sb, tb] = b.split('|'); return sa === sb ? tb - ta : sa < sb ? -1 : 1; });
     T(this, 12, y + 2, `背包 · ${bag.length} 颗`, { size: 12, color: COL.emberHi, parent: c }); T(this, w - 12, y + 6, '点石头看效果、镶嵌、合成', { size: 8, color: COL.faint, align: 'right', parent: c }); y += 22;
     if (!keys.length) { T_(this, c, w / 2, y + 6, '打怪有几率掉属性石（直接进背包）', { size: 8, color: COL.dim }); this.paneH = y + 40; return; }
-    const TW2 = 44, TH = 38, per = Math.max(1, Math.floor((w - 16 + 4) / (TW2 + 4))), rows = Math.max(1, Math.floor((h - y - 38) / (TH + 4))), pageN = rows * per, pages = Math.max(1, Math.ceil(keys.length / pageN)); // 放不下就分页（不滚动：滚出去的格子会挡住底部导航的点击）
-    this.stonePage = clamp(this.stonePage || 0, 0, pages - 1);
-    if (pages > 1) { mkBtn(this, c, 8, h - 34, 36, 28, '<', () => { this.stonePage--; this.refresh(); }, { disabled: this.stonePage <= 0 }); T_(this, c, w / 2, h - 26, `${this.stonePage + 1} / ${pages} 页`, { size: 8, color: COL.dim }); mkBtn(this, c, w - 44, h - 34, 36, 28, '>', () => { this.stonePage++; this.refresh(); }, { disabled: this.stonePage >= pages - 1 }); }
-    keys.slice(this.stonePage * pageN, this.stonePage * pageN + pageN).forEach((k, i) => { const L = G[k], st = L[0], S0 = stoneOf(st.sid), x = 8 + (i % per) * (TW2 + 4), yy = y + (i / per | 0) * (TH + 4);
+    const TW2 = 44, TH = 38, per = Math.max(1, Math.floor((w - 16 + 4) / (TW2 + 4))), SA = this.scrollArea(c, 0, y, w, Math.max(TH + 8, h - y - 8), 'stones'), c0 = c; c = SA.lc; // 背包上下滑动
+    keys.forEach((k, i) => { const L = G[k], st = L[0], S0 = stoneOf(st.sid), x = 8 + (i % per) * (TW2 + 4), yy = 4 + (i / per | 0) * (TH + 4);
       bub(this, c, x, yy, TW2, TH, hx(S0.c));
       T_(this, c, x + TW2 / 2, yy + 5, stoneShort(S0), { size: 8, color: '#1a1426', shadowColor: null }); T_(this, c, x + TW2 / 2, yy + 19, `${st.t}阶`, { size: 8, color: '#1a1426', shadowColor: null });
       if (L.length > 1) { rect(this, x + TW2 - 15, yy - 3, 17, 11, '#1a1426', 1, c); T(this, x + TW2 + 1, yy - 2, '×' + L.length, { size: 8, color: L.length >= 3 && st.t < 5 ? '#ffe066' : COL.text, align: 'right', parent: c }); }
       zoneOn(this, c, x, yy, TW2, TH, () => this.stoneSheet({ s: st })); });
-    y += rows * (TH + 4) + 8;
+    c = c0; SA.done(4 + Math.ceil(keys.length / per) * (TH + 4));
   },
   // 底部抽屉：背包石头（效果 / 下一阶 / 能镶的孔 / 合成）或孔里的石头（效果 / 取下）
   stoneSheet(o) {

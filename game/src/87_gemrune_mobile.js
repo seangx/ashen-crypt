@@ -76,22 +76,23 @@ Object.assign(MobileUI.prototype, {
     this.chipRow(c, 10, y, w - 20, [['all', '全部'], ['fit', '适用'], ['new', '新'], ['field', '力场'], ['sort', runeSort === 'lvl' ? '等级↓' : '名称']], runeF, v => { if (v === 'sort') runeSort = runeSort === 'lvl' ? 'name' : 'lvl'; else runeF = v; runePage = 0; this.refresh(); }); y += 30;
     const F = { all: () => true, fit: m => host && modActive(m, host), new: m => m.isNew, field: m => MOD_BY[m.mid].field }[runeF] || (() => true);
     const stacks = stackBy(S.mods.filter(F), runeKey).sort(runeSort === 'lvl' ? (a, b) => b[0].lvl - a[0].lvl || MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) : (a, b) => MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) || b[0].lvl - a[0].lvl);
-    const cols = MCOLS, st = TOUCH, x0 = Math.round((w - cols * st) / 2), rows = Math.max(1, Math.floor((h - y - 52) / st)), per = cols * rows, pages = Math.max(1, Math.ceil(stacks.length / per));
-    runePage = clamp(runePage, 0, pages - 1);
+    const cols = MCOLS, st = TOUCH, x0 = Math.round((w - cols * st) / 2), rows = Math.max(1, Math.floor((h - y - 52) / st)), SA = this.scrollArea(c, 0, y, w, rows * st, 'rune:' + modWeapon); // 上下滑动（原来分页）
     if (!stacks.length) TW(this, 12, y + 6, S.mods.length ? { fit: host ? `没有能在${SLOTS.find(s => s.id === modWeapon).n}上生效的符文。` : '先选一个有装备的部位。', new: '没有新符文。', field: '没有力场符文（力场符文只在法阵里生效）。' }[runeF] || '没有符合的符文。' : '还没有符文。打怪会掉落，Boss 宝箱里也有。', w - 24, { size: 8, color: COL.dim, parent: c });
     if (!stacks.length && runeF !== 'all' && S.mods.length) mkBtn(this, c, 12, y + 34, 96, 28, '显示全部', () => { runeF = 'all'; this.refresh(); }, { size: 8 });
-    stacks.slice(runePage * per, runePage * per + per).forEach((sk, i) => {
-      const x = x0 + (i % cols) * st, yy = y + (i / cols | 0) * st, rep = sk[0];
-      if (feedOn && sk.includes(feedSrc)) rect(this, x - 1, yy - 1, st, st, COL.ember, 1, c);
-      mkCell(this, c, x, yy, { ...rep, isNew: false }, { size: st, host, direct: true, onHover: v => showTip(modTip(v, host)), onOut: hideTip, onDown: (v, p) => { if (!feedOn) this.drag = { m: rep, x: p.worldX, y: p.worldY, moved: false }; }, onClick: () => {
+    const cy = y, lc = SA.lc;
+    stacks.forEach((sk, i) => {
+      const x = x0 + (i % cols) * st, yy = (i / cols | 0) * st, rep = sk[0];
+      if (feedOn && sk.includes(feedSrc)) rect(this, x - 1, yy - 1, st, st, COL.ember, 1, lc);
+      mkCell(this, lc, x, yy, { ...rep, isNew: false }, { size: st, host, direct: true, onHover: v => showTip(modTip(v, host)), onOut: hideTip, onDown: (v, p) => { if (!feedOn) this.drag = { m: rep, x: p.worldX, y: p.worldY, moved: false }; }, onClick: () => {
         if (this.drag && this.drag.moved) return;
         if (feedOn) { const v = sk.find(x => x !== feedSrc) || rep; if (!feedSrc) { feedSrc = v; return this.refresh(); } if (sk.includes(feedSrc) && sk.length === 1) { feedSrc = null; return this.refresh(); } return this.doFeed(v); }
         this.runeDetail(sk, host);
       } });
-      this.badge(c, x, yy, st, sk.length, sk.some(m => m.isNew));
+      this.badge(lc, x, yy, st, sk.length, sk.some(m => m.isNew));
     });
-    const by = y + rows * st + 2;
-    if (pages > 1) { mkBtn(this, c, 10, by - 1, 40, 28, '<', () => { runePage--; this.refresh(); }, { disabled: runePage <= 0 }); T(this, w / 2, by + 13, `${runePage + 1} / ${pages}`, { size: 8, color: COL.dim, align: 'center', valign: 'middle', parent: c }); mkBtn(this, c, w - 50, by - 1, 40, 28, '>', () => { runePage++; this.refresh(); }, { disabled: runePage >= pages - 1 }); }
+    SA.done(Math.ceil(stacks.length / cols) * st);
+    const by = cy + rows * st + 2;
+    if (false) { mkBtn(this, c, 10, by - 1, 40, 28, '<', () => { runePage--; this.refresh(); }, { disabled: runePage <= 0 }); T(this, w / 2, by + 13, `${runePage + 1} / ${pages}`, { size: 8, color: COL.dim, align: 'center', valign: 'middle', parent: c }); mkBtn(this, c, w - 50, by - 1, 40, 28, '>', () => { runePage++; this.refresh(); }, { disabled: runePage >= pages - 1 }); }
     else TW(this, 10, by + 4, feedOn ? (feedSrc ? `已选 ${MOD_BY[feedSrc.mid].n} 当饲料，再点要喂的符文。` : '先点一个符文当饲料。') : '同名同级的符文叠在一起。点空槽挑符文，点库存看详情和秒伤变化。', w - 20, { size: 8, color: feedOn ? COL.emberHi : COL.faint, parent: c });
   },
   runeDetail(sk, host) {
