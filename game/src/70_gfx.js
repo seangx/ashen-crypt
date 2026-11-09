@@ -324,6 +324,7 @@ function affDetail(x, acts) {
     ...(v.length ? [{ t: `本档数值范围：${rg}`, s: 8 }] : []), { t: `碎片 ${shardN(x.k)} 个`, s: 8, c: COL.faint }], acts);
 }
 function isUpgrade(it) {
+  if (it.kind === 'gem') { if (gemInTrig(it)) return false; const b = bestGemSpot(it); return !!b && b.st.dps > STATS.dps * 1.02 && toughness(b.st) >= toughness(STATS) * 0.95; } // 技能石：插进魂龛最好的孔，秒伤明显变高才标
   const slot = slotsFor(it)[0]; if (!slot) return false; const eq = S.equip[slot]; if (eq === it || Object.values(S.equip).includes(it)) return false;
   if (!eq) return true;
   const n = computeStats({ ...S.equip, [slot]: it }); // 和详情卡的对比同一口径：秒伤或坚韧明显变差就不标绿箭头

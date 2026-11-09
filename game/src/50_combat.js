@@ -1003,6 +1003,7 @@ function finishRun() {
     for (let i = 0; i < n; i++) { const it = rollItem(r.L, LX.iir); addItem(it); r.gain.items.push(it); r.ember.items.push(it); }
     if (!r.descent.floors) S.lampPity = Math.min(SOUL.lampPityMax ?? 3, (S.lampPity || 0) + 1); r.ember.pity = S.lampPity || 0; }
   if (salvRules().on && unlocked('salvage')) r.salv = autoSalvage(r.gain.items); // 分解祭坛：带回的装备按规则拆成碎片
+  if (r.psalv) { const s = r.salv || (r.salv = { n: 0, shards: 0, coins: 0 }); s.n += r.psalv.n; s.shards += r.psalv.shards; s.coins = (s.coins || 0) + r.psalv.coins; } // 拾取时已经分解的
   LX = lootFx(null);
   autoAfterRun(r);
   refreshStats(); resetPlayer(); save();

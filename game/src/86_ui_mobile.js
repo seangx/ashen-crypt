@@ -249,7 +249,7 @@ class MobileUI extends UI {
       this.ask('坚韧怎么算', () => {}, '知道了', `按第 ${D.L} 级怪算\n生命 ${fmt(P.life)} + 护盾 ${fmt(P.shield)}\n护甲减伤 ${pc(D.armor)}\n平均抗性减伤 ${pc(D.res)}（这层的怪：${top}）\n条件减伤 ${pc(D.cond)}（远程怪占 ${pc(D.X.ranged)}）\n恢复：每秒回复 ${r1(P.lifeRegen || 0)}、护盾 ${r1(P.shieldRegen || 0)}、击杀回复 ${r1(P.lifeOnKill || 0)}`); });
     T(this, 112, 78, '抗性', { size: 8, color: COL.dim, parent: c });
     ELEM.forEach((e, i) => T(this, 134 + i * 20, 78, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
-    T(this, 12, 100, `背包 ${S.stash.length}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
+    T(this, 12, 100, `背包 ${gearCount()}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
     mkBtn(this, c, w - 90, 91, 38, 28, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
     mkBtn(this, c, w - 50, 91, 40, 28, '批量', () => this.openBulk(), { size: 8, style: 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
@@ -513,7 +513,7 @@ class MobileUI extends UI {
   win_shop(c, w, h) {
     let y = 14; const price = shopPrice(), why = shopWhy();
     img(this, 12, y - 1, 'coin', c).setScale(2); T(this, 30, y, `骨币 ${fmt(S.coins || 0)}`, { color: COL.emberHi, parent: c });
-    T(this, w - 12, y + 2, `储物箱 ${S.stash.length}/${STASH_CAP}`, { size: 8, color: COL.dim, align: 'right', parent: c }); y += 20;
+    T(this, w - 12, y + 2, `储物箱 ${gearCount()}/${STASH_CAP}`, { size: 8, color: COL.dim, align: 'right', parent: c }); y += 20;
     const t = TW(this, 12, y, `选一个部位，花 ${price} 骨币买一件未鉴定装备，买下才揭晓。物品等级 = 已到的最深层（${shopIlvl()}），只出罕见和稀有，${Math.round(ECO.shop.unique * 100)}% 是这个部位的独特装备。骨币来自分解装备和宝石。`, w - 24, { size: 8, color: COL.dim, parent: c }); y += t.h + 8;
     const hw = Math.floor((w - 28) / 2);
     SHOP_SLOTS.forEach((s, i) => mkBtn(this, c, 12 + (i % 2) * (hw + 4), y + (i / 2 | 0) * 34, hw, 30, `${SLOTS.find(x => x.id === s).n} · ${price}`, () => {
