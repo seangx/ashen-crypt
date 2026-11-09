@@ -6,7 +6,7 @@ function freshState() {
     v: 4, level: 1, xp: 0, depth: 1, maxDepth: 1, nextId: 1,
     equip: { gem: null, wl: null, wr: null, shield: null, core: null, engine: null, hub: null },
     stash: [], mods: [], tree: [], bossKills: {},
-    shards: {}, coins: 0, glyphs: Object.fromEntries(GLYPHS.map(g => [g.id, 0])),
+    shards: {}, coins: 0, mst: { picks: [], bar: {}, pas: {}, key: {} }, glyphs: Object.fromEntries(GLYPHS.map(g => [g.id, 0])),
     stats: { kills: 0, missions: 0, deaths: 0, bosses: 0 },
     settings: { sound: true },
     auto: { ai: true, loop: false, lock: false, fails: 0, back: false, backWins: 0 },
@@ -37,6 +37,7 @@ function load(data) {
   S.auto = { ...freshState().auto, ...(S.auto || {}) };
   S.ladder = { ...freshState().ladder, ...(S.ladder || {}) };
   S.tree ??= []; S.chips ??= {}; S.bossKills ??= {};
+  S.mst ??= mstFresh(); if (S.tree.length) { const n = S.tree.length; S.tree = []; const tell = () => G.ui ? toast(`天赋改版：星盘换成专精，${n} 点已退回`, COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1500); } // 专精改版（mastery-v1 §6）：星盘点数全退
   // 天赋树改版后旧存档的节点对不上：全部退回，印记回到背包
   // 通用防御整理（spec-tree-defense §3）：节点 id 不变，但换掉大天赋的 5 个小团整团退掉（点数自动返还），别的节点直接变成新效果
   if ((S.treeV || 0) < 7) { const gone = ['meleec0_', 'projc1_', 'guardc2_', 'guardc3_', 'lampc0_']; S.treeGone = gone; } S.treeV = 7;

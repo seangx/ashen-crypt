@@ -381,13 +381,62 @@ class MobileUI extends UI {
     mkCard(this, c, 10, y, u, w - 20);
   }
   /* 天赋：复用星图，窄屏默认收起两侧栏 */
+  /* 天赋：专精（mastery-v1）。顶栏点数 / 洗点 / 汇总 → 专精页签 → 专精条 → 被动 / 大天赋列表，每行 [−][+] */
   win_tree(c, w, h) {
-    if (!this._treeInit) { this._treeInit = 1; treeUI.left = false; treeUI.right = false; }
-    super.win_tree(c, w, h);
-    // 顶上一条：剩余点数 + 洗点（左栏收起时也看得到；桌面版的“全部重置”在左栏底部）
-    const n = S.tree.length, pts = treePoints(), bx = treeUI.left ? null : 18;
-    if (bx != null) { rect(this, bx - 2, 17, 104, 15, '#0d0a12', 0.75, c); T(this, bx, 20, `天赋点 ${pts} · 已点 ${n}`, { size: 8, color: pts ? COL.good : COL.emberHi, parent: c }); }
-    if (!treeUI.right) mkBtn(this, c, w - 66, 15, 48, 20, '洗点', () => this.ask('洗点：退回全部天赋点？', () => { treeKeep([]); refreshStats(); save(); sfx('craft'); toast(`退回 ${n} 点天赋，可以重新分配`, COL.emberHi); this.refresh(); }, '洗点', `退回已点的 ${n} 点，重新分配。目前免费。`), { size: 8, disabled: !n, whyDisabled: '还没有点天赋' });
+    const m = mstS(), pts = treePoints(), R = () => { refreshStats(); save(); this.refresh(); }, slots = MST.picks[MST.picks.length - 1][1];
+    T(this, 12, 12, `天赋点 ${pts} · 已点 ${mstSpent()}`, { size: 8, color: pts ? COL.good : COL.emberHi, parent: c });
+    mkBtn(this, c, w - 120, 6, 52, 22, '洗点', () => this.ask('洗点：退回全部天赋点？', () => { const n = mstSpent(); mstReset(); sfx('craft'); toast(`退回 ${n} 点，可以重新分配`, COL.emberHi); R(); }, '洗点', '专精保留，点数全部退回。免费。'), { size: 8, disabled: !mstSpent(), whyDisabled: '还没有点天赋' });
+    mkBtn(this, c, w - 64, 6, 52, 22, '汇总', () => this.showLines(this.mstSummary(), m.picks.map(mid => ({ l: `换掉${MST_BY[mid].n}`, fn: () => this.ask(`换掉专精：${MST_BY[mid].n}？`, () => { mstUnpick(mid); this.mstTab = null; R(); }, '换掉', '它上面的点数全部退回，之后可以选别的专精。') }))), { size: 8 });
+    let y = 34; const tw = Math.floor((w - 24 - (slots - 1) * 4) / slots);
+    if (!m.picks.includes(this.mstTab)) this.mstTab = m.picks[0] || null;
+    for (let i = 0; i < slots; i++) { const mid = m.picks[i], M = MST_BY[mid], x = 12 + i * (tw + 4);
+      if (M) mkBtn(this, c, x, y, tw, 26, M.n, () => { this.mstTab = mid; this.refresh(); }, { size: 8, style: this.mstTab === mid ? 's' : 'n', color: M.c });
+      else if (i >= mstPickMax()) { const lv = (MST.picks.find(([, k]) => k > i) || [99])[0]; mkBtn(this, c, x, y, tw, 26, `Lv${lv} 开放`, () => {}, { size: 8, disabled: true, whyDisabled: `第 ${i + 1} 个专精 Lv${lv} 开放` }); }
+      else { const why = mstWhy('pick', '__', 1); mkBtn(this, c, x, y, tw, 26, why && why !== '先选这个专精' ? why.replace(/^第 \d 个专精 /, '') : '＋ 选专精', () => { this.mstTab = null; this.refresh(); }, { size: 8, style: !this.mstTab ? 'w' : 'n', disabled: !!why && why !== '先选这个专精', whyDisabled: why || '' }); } }
+    y += 32; const M = MST_BY[this.mstTab];
+    if (!M) { // 选专精：6 张卡片
+      T(this, 12, y, m.picks.length ? '选第 2 个专精（换专精要先退掉现在的）' : '选你的第 1 个专精（Lv10 再选第 2 个）', { size: 8, color: COL.dim, parent: c }); y += 14;
+      const ch = Math.floor((h - y - 8) / 6);
+      MASTERY.forEach((X, i) => { const yy = y + i * ch, taken = m.picks.includes(X.id), b = mkBtn(this, c, 12, yy, w - 24, ch - 4, '', () => this.ask(`选择专精：${X.n}？`, () => { mstDo('pick', X.id, 1); this.mstTab = X.id; sfx('craft'); R(); }, '选择', `大天赋：${X.keys.map(k => k.n).join('、')}`), { size: 8, disabled: taken, whyDisabled: '已选' });
+        T(this, 10, 5, X.n, { color: X.c, parent: b }); T(this, 10, 20, wrapText('大天赋：' + X.keys.map(k => k.n).join('、'), w - 48, 8)[0], { size: 8, color: COL.dim, parent: b }); });
+      return;
+    }
+    // 专精条
+    const b = mstBar(M.id), bw = w - 24 - 76;
+    T(this, 12, y + 2, `${M.n} · 专精条 ${b}/${MST.barMax}`, { size: 8, color: M.c, parent: c });
+    rect(this, 12, y + 15, bw, 6, '#1a1426', 1, c); if (b) rect(this, 12, y + 15, Math.round(bw * b / MST.barMax), 6, M.c, 1, c);
+    for (const t of [...new Set([...MST.tiers.pass, ...MST.tiers.key, MST.tiers.elemBar])]) rect(this, 12 + Math.round(bw * t / MST.barMax) - 1, y + 13, 1, 10, b >= t ? '#ffffff' : '#5a5070', 1, c); // 档位刻度
+    const pm = (kind, id, x, yy) => { const wm = mstWhy(kind, id, -1), wp = mstWhy(kind, id, 1);
+      mkBtn(this, c, x, yy, 30, 28, '−', () => { if (mstDo(kind, id, -1)) R(); }, { disabled: !!wm, whyDisabled: wm || '' });
+      mkBtn(this, c, x + 34, yy, 30, 28, '+', () => { if (mstDo(kind, id, 1)) { sfx('click'); R(); } }, { style: wp ? 'n' : 'w', disabled: !!wp, whyDisabled: wp || '' }); };
+    pm('bar', M.id, w - 76, y);
+    const bl = mstLines(M.bar, Math.max(1, b)).slice(0, 3).join('，');
+    T(this, 12, y + 26, wrapText((b ? '' : '每点：') + bl, w - 24, 8)[0], { size: 8, color: COL.faint, parent: c });
+    y += 40;
+    // 被动 / 大天赋 分页
+    const sub = this.mstSub || 'pass', hw = Math.floor((w - 28) / 2);
+    [['pass', `被动 ${M.pass.length}`], ['key', `大天赋 ${M.keys.length}`]].forEach(([k, n], i) => mkBtn(this, c, 12 + i * (hw + 4), y, hw, 24, n, () => { this.mstSub = k; this.refresh(); }, { size: 8, style: sub === k ? 's' : 'n' }));
+    y += 30; const rh = Math.min(36, Math.floor((h - y - 4) / Math.max(M.pass.length, M.keys.length)));
+    if (sub === 'pass') M.pass.forEach((p, i) => { const yy = y + i * rh, r = mstRank(p.id), lock = mstBar(M.id) < p.tier;
+      const zr = rect(this, 12, yy, w - 92, rh - 3, '#000000', 0.001, c).setInteractive(); zr.on('pointerup', () => this.showLines([{ t: `${p.n}  ${r}/${MST.passMax} 级`, c: M.c }, { t: '1 级：' + (mstLines(p.add, 1 / MST.passRef).join('，') || '—') + '\n' + MST.passRef + ' 级：' + mstLines(p.add, 1).join('，') + '\n' + MST.passMax + ' 级：' + mstLines(p.add, MST.passMax / MST.passRef).join('，'), s: 8 }, r ? { t: '现在：' + mstLines(p.add, r / MST.passRef).join('，'), s: 8, c: COL.good } : null, { t: `专精条 ${p.tier} 点解锁`, s: 8, c: COL.dim }].filter(Boolean)));
+      T(this, 12, yy + 2, `${p.n}  ${r}/${MST.passMax}`, { size: 8, color: lock ? COL.faint : r ? COL.emberHi : COL.text, parent: c });
+      T(this, 12, yy + 15, wrapText(lock ? `专精条 ${p.tier} 点解锁` : mstLines(p.add, Math.max(1, r) / MST.passRef).join('，'), w - 96, 8)[0], { size: 8, color: lock ? COL.faint : COL.dim, parent: c });
+      pm('pass', p.id, w - 76, yy); });
+    else M.keys.forEach((k, i) => { const yy = y + i * rh, on = mstHas(k.id), wp = mstWhy('key', k.id, 1), wm = mstWhy('key', k.id, -1);
+      const zr = rect(this, 12, yy, w - 76, rh - 3, '#000000', 0.001, c).setInteractive(); zr.on('pointerup', () => this.showLines([{ t: k.n + (on ? '（已点）' : ''), c: M.c }, { t: k.d, s: 8 }, { t: `专精条 ${k.tier} 点${k.need ? `，${MPASS[k.need].n} ${MST.keyNeed} 级` : ''}`, s: 8, c: COL.dim }]));
+      T(this, 12, yy + 2, k.n + (k.elem ? ' · 元素' : ''), { size: 8, color: on ? COL.emberHi : wp && !on ? COL.faint : COL.text, parent: c });
+      T(this, 12, yy + 15, wrapText(!on && wp ? wp : k.d, w - 92, 8)[0], { size: 8, color: !on && wp ? COL.faint : COL.dim, parent: c });
+      mkBtn(this, c, w - 64, yy, 52, 28, on ? '退回' : '点亮', () => { if (mstDo('key', k.id, on ? -1 : 1)) { sfx('craft'); R(); } }, { size: 8, style: on ? 'n' : 'w', disabled: on ? !!wm : !!wp, whyDisabled: (on ? wm : wp) || '' }); });
+  }
+  mstSummary() {
+    const m = mstS(), L = [{ t: `天赋汇总 · 已点 ${mstSpent()} / ${Math.max(0, S.level - 1)}`, c: COL.emberHi }];
+    if (!m.picks.length) return [...L, { t: '还没有选专精', s: 8, c: COL.dim }];
+    const add = {}; for (const part of masteryParts()) for (const k in part.add || {}) add[k] = (add[k] || 0) + part.add[k];
+    L.push({ t: mstLines(add).join('，') || '（还没有加成）', s: 8 });
+    const keys = Object.keys(m.key).map(id => MKEY[id]).filter(Boolean);
+    if (keys.length) keys.forEach(k => L.push({ t: `【${k.n}】${k.d}`, s: 8, c: COL.good }));
+    L.push({ t: '换专精：点下面的“换掉”，那个专精上的点数全部退回。', s: 8, c: COL.dim });
+    return L;
   }
   /* 结算：竖屏原生 */
   win_summary(c, w, h) {
