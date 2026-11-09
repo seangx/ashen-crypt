@@ -138,16 +138,18 @@ Object.assign(MobileUI.prototype, {
     T(this, w - 8, y + 6, gemPick ? '点亮孔放入' : '点宝石看详情', { size: 8, align: 'right', parent: c, color: gemPick ? '#7cf05a' : '#b9c2ea' });
     const gems = S.stash.filter(x => x.kind === 'gem').sort((a, b) => b.lvl - a.lvl), sups = S.mods.filter(m => !MOD_BY[m.mid].field && !(supFit && fsk.length && !fitsAny(m))).sort((a, b) => b.lvl - a.lvl);
     const list = gemTab === 'skill' ? gems : gemTab === 'sup' ? sups : [...gems, ...sups];
-    const cs = TOUCH, cols = Math.floor((w - 12) / (cs + 2)), rows = Math.max(1, Math.floor((h - (y + 30) - 30) / (cs + 2))), per = cols * rows, pg = Math.max(1, Math.ceil(list.length / per)); gemPage = clamp(gemPage, 0, pg - 1);
+    const cs = TOUCH, cols = Math.floor((w - 12) / (cs + 2)), vh = Math.max(cs + 2, h - (y + 30) - 38), SA = this.scrollArea(c, 0, y + 30, w, vh, 'gembag:' + gemTab), pg = 1; // 上下滑动（原来分页）
     const gx = Math.round((w - cols * (cs + 2)) / 2);
-    list.slice(gemPage * per, gemPage * per + per).forEach((it, i) => {
-      const x = gx + (i % cols) * (cs + 2), yy = y + 30 + Math.floor(i / cols) * (cs + 2), bad = gemPick && T0 && !T0.socks.some((_, k) => !T0.socks[k] && trigCanSock(T0, k, it));
+    const lc0 = c; c = SA.lc; // 背包格子画进滑动区
+    list.forEach((it, i) => {
+      const x = gx + (i % cols) * (cs + 2), yy = Math.floor(i / cols) * (cs + 2), bad = gemPick && T0 && !T0.socks.some((_, k) => !T0.socks[k] && trigCanSock(T0, k, it));
       if (gemPick === it) { const g = this.add.graphics(); c.add(g); g.fillStyle(0xffffff, 1).fillRoundedRect(x - 3, yy - 3, cs + 6, cs + 6, 6); }
       const cell = mkCell(this, c, x, yy, it, { size: cs, direct: true, onClick: () => {
         if (gemPick === it) { gemPick = null; this.refresh(); return; } this.gemDetail(it, { T0 }); } });
       if (gemPick && gemPick !== it) cell.setAlpha(0.6); else if (fsk.length && isSupport(it) && !fitsAny(it)) cell.setAlpha(0.35);
       if (it.isNew) rect(this, x + 2, yy + 2, 4, 4, '#ff3b3b', 1, c);
     });
+    c = lc0; SA.done(Math.ceil(list.length / cols) * (cs + 2));
     if (!list.length) T_(this, c, w / 2, y + 44, gemTab === 'sup' ? (supFit && fsk.length && S.mods.some(m => !MOD_BY[m.mid].field) ? '没有适配' + itemName(fsk[0]) + '的辅助石' : '还没有辅助石') : '还没有宝石', { size: 8, color: '#b9c2ea' });
     { const mc = mergeCount(); mkBtn(this, c, 8, h - 32, 100, 28, mc ? `一键合成 · ${mc}` : '一键合成', () => { const r = mergeAll(); sfx('craft'); toast(`合成 ${r.n} 次` + (r.ups.length ? '：' + r.ups.slice(0, 3).map(x => `${x.kind === 'mod' ? MOD_BY[x.mid].n : itemName(x)} ${x.lvl}级`).join('、') + (r.ups.length > 3 ? ' 等' : '') : ''), '#ffe066'); this.refresh(); }, { size: 8, style: mc ? 'w' : 'n', disabled: !mc, whyDisabled: `同名、同等级的宝石凑够 ${ECO.merge.n} 颗才能合成（插在魂龛里的不算）` }); } // 同名同级 → 高一级
     if (pg > 1) { mkBtn(this, c, w - 112, h - 32, 30, 28, '<', () => { gemPage--; this.refresh(); }, { disabled: gemPage <= 0 }); T_(this, c, w - 66, h - 24, `${gemPage + 1}/${pg}`, { size: 8 }); mkBtn(this, c, w - 38, h - 32, 30, 28, '>', () => { gemPage++; this.refresh(); }, { disabled: gemPage >= pg - 1 }); }
@@ -159,9 +161,10 @@ Object.assign(MobileUI.prototype, {
     if (unlocked('salvage')) mkBtn(this, c, w - 104, y - 8, 96, 20, `自动分解：${S.trigAuto === false ? '关' : '开'}`, () => { S.trigAuto = S.trigAuto === false; if (trigAutoOn()) { const r = trigBagTidy(S.maxDepth || 1); if (r.k) toast(`自动分解 ${r.k} 个，碎片 +${r.n}`); } save(); this.refresh(); }, { size: 8, style: S.trigAuto === false ? 'n' : 'w' });
     y += 18;
     const s = 40, cols = Math.floor((w - 12) / (s + 6)), gx = Math.round((w - cols * (s + 6)) / 2);
-    const ents = trigBagStacks(bag); ents.slice(0, cols * 3).forEach(({ T: T0, n: cnt }, i) => { const x = gx + (i % cols) * (s + 6), yy = y + Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0, name: 1 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (cnt > 1) T(this, x + s - 3, yy + 3, '×' + cnt, { size: 8, align: 'right', parent: c, color: '#ffe066' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
+    const ents = trigBagStacks(bag), SA = this.scrollArea(c, 0, y, w, 3 * (s + 14), 'tbag'), lc0 = c; c = SA.lc; ents.forEach(({ T: T0, n: cnt }, i) => { const x = gx + (i % cols) * (s + 6), yy = Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0, name: 1 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (cnt > 1) T(this, x + s - 3, yy + 3, '×' + cnt, { size: 8, align: 'right', parent: c, color: '#ffe066' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
+    c = lc0; SA.done(Math.ceil(ents.length / cols) * (s + 14));
     if (!bag.length) T_(this, c, w / 2, y + 20, '还没有别的魂龛 · 打怪会掉', { size: 8, color: '#b9c2ea' });
-    y += Math.max(1, Math.ceil(Math.min(ents.length, cols * 3) / cols)) * (s + 14) + 10;
+    y += Math.max(1, Math.min(3, Math.ceil(ents.length / cols))) * (s + 14) + 10;
     const N = tbagSel && bag.includes(tbagSel) ? tbagSel : null; if (!N) { mkBtn(this, c, w / 2 - 40, h - 40, 80, 28, '返回', () => this.openWin('trig'), {}); if (cur) mkBtn(this, c, 8, h - 40, 70, 28, '卸下', () => { unequipTrig(trigSel); this.openWin('trig'); }, { size: 8 }); return; }
     // 对比：临时把当前的宝石按顺序搬进新触发器算秒伤
     const before = STATS.dps, keep = S.trigs[trigSel]; const tmp = { ...N, socks: Array(N.sock).fill(null) };

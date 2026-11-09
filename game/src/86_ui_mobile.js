@@ -200,7 +200,7 @@ class MobileUI extends UI {
     const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[id] || 'f_win';
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
-    this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
+    this.scrollVPs = []; this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
     const title = { stones: '属性石', trig: '魂龛', tbag: '换魂龛', tcraft: '魂龛打造', reels: '骸骨轮盘', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '段位', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', shop: '骨坊', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: '#2a1306', shadow: false, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
@@ -255,12 +255,13 @@ class MobileUI extends UI {
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
     stashTab = 0; // 技能石都在魂龛页管理，装备页不再放入口（用户 10-29）
     if (stashTab === 1) return this.gemPane(c, w, h, 122); // 技能石页：堆叠 + 筛选（87_gemrune_mobile.js）
-    const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2);
+    const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2), SA = this.scrollArea(c, 0, 122, w, h - 122 - 18, 'gear');
     for (let i = 0; i < STASH_CAP; i++) {
-      const it = (stashTab === 1 || unlocked('gems') || S.stash.some(x => x.kind === 'gem') ? view : S.stash)[i]; const x = x0 + (i % cols) * st, y = 122 + (i / cols | 0) * st;
-      mkCell(this, c, x, y, it, { size: cs, sel: it && it.id === selId, upg: true, acts: v => this.itemActs(v) });
+      const it = (stashTab === 1 || unlocked('gems') || S.stash.some(x => x.kind === 'gem') ? view : S.stash)[i]; const x = x0 + (i % cols) * st, y = (i / cols | 0) * st;
+      mkCell(this, SA.lc, x, y, it, { size: cs, sel: it && it.id === selId, upg: true, acts: v => this.itemActs(v) });
     }
-    this.gearY = 122 + Math.ceil(STASH_CAP / cols) * st + 4;
+    SA.done(Math.ceil(STASH_CAP / cols) * st + 4);
+    this.gearY = h - 16;
     T(this, 12, this.gearY, '点物品看详情，在弹窗里装备 / 拆解 / 进铁砧。绿箭头 = 更好。', { size: 8, color: COL.faint, parent: c });
     this.paneC = this.add.container(0, this.gearY + 14); c.add(this.paneC); this.paneW = w; this.paneH = h - this.gearY - 14;
     this.renderPane();
@@ -330,13 +331,13 @@ class MobileUI extends UI {
   win_craft(c, w, h) {
     [['铁砧', true], ['熔铸', unlocked('fuse')]].forEach(([n, ok], i) => mkBtn(this, c, 10 + i * 52, 4, 48, 28, n, () => { craftTab = i; this.refresh(); }, { size: 8, style: craftTab === i ? 's' : 'n', disabled: !ok, locked: !ok, whyDisabled: `${n}：${unlockText('fuse')}` }));
     if (craftTab === 1 && unlocked('fuse')) return this.fusePaneM(c, w, h);
-    const all = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash];
+    const all = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash].filter(x => x.kind !== 'gem'); // 技能石不能上铁砧（原来混进来，点到会报错）
     let it = all.find(x => x.id === craftId); if (!it) { it = all.find(craftable) || all[0]; craftId = it && it.id; craftAff = -1; }
     GLYPHS.forEach((g, i) => T(this, 118 + i * 23, 14, `${g.n.slice(0, 1)}${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: c }));
-    const cols = MCOLS - 1, st = TOUCH, per0 = cols * 2, pg = Math.max(1, Math.ceil(all.length / per0)); this.cPage = clamp(this.cPage || 0, 0, pg - 1);
-    if (this.cPage * per0 > all.indexOf(it) || all.indexOf(it) >= (this.cPage + 1) * per0) { if (this.cPageFor !== it) this.cPage = Math.max(0, Math.floor(all.indexOf(it) / per0)); } this.cPageFor = it;
-    all.slice(this.cPage * per0, this.cPage * per0 + per0).forEach((x, i) => mkCell(this, c, 9 + (i % cols) * st, 36 + (i / cols | 0) * st, x, { size: st, sel: x === it, direct: true, onClick: v => { craftId = v.id; craftAff = -1; craftLog = []; addPage = 0; this.refresh(); } }));
-    mkBtn(this, c, w - 31, 36, 22, 28, '<', () => { this.cPage = (this.cPage + pg - 1) % pg; this.cPageFor = null; this.refresh(); }, { size: 8, disabled: pg < 2 }); mkBtn(this, c, w - 31, 66, 22, 28, '>', () => { this.cPage = (this.cPage + 1) % pg; this.cPageFor = null; this.refresh(); }, { size: 8, disabled: pg < 2 });
+    const cols = MCOLS, st = TOUCH, SA = this.scrollArea(c, 0, 36, w, 2 * st, 'craft'); // 选装备：两行高，上下滑动
+    if (this.cPageFor !== it && it) { this.scrollPos = this.scrollPos || {}; this.scrollPos.craft = Math.max(0, (Math.floor(all.indexOf(it) / cols) - 1) * st); } this.cPageFor = it; // 换了要锻的装备：滚到它那一行
+    all.forEach((x, i) => mkCell(this, SA.lc, 9 + (i % cols) * st, (i / cols | 0) * st, x, { size: st, sel: x === it, direct: true, onClick: v => { craftId = v.id; craftAff = -1; craftLog = []; addPage = 0; this.cPageFor = v; this.refresh(); } }));
+    SA.done(Math.ceil(all.length / cols) * st);
     let y = 36 + 2 * st + 6;
     if (craftLog[0]) { const r = TW(this, 10, y, craftLog[0], w - 20, { size: 8, color: COL.good, parent: c }); y += r.h + 4; }
     if (!it) return T(this, 10, y, '没有可锻造的装备。', { size: 8, color: COL.faint, parent: c });
@@ -381,6 +382,28 @@ class MobileUI extends UI {
     mkCard(this, c, 10, y, u, w - 20);
   }
   /* 天赋：复用星图，窄屏默认收起两侧栏 */
+  /* 通用上下滑动区域（所有背包，11-09）：内容画进返回的 lc，最后 done(内容高度)。可视区外的格子关掉点击（不然会挡住下面的按钮）；拖动超过 6 像素算滑动，这一下不触发点击；右边一条滚动条 */
+  scrollArea(c, x, top, w, vh, key) {
+    const lc = this.add.container(0, top), ui = this; c.add(lc);
+    const mg = this.make.graphics({ add: false }); mg.fillStyle(0xffffff).fillRect(c.x + x, c.y + top, w, vh); lc.setMask(mg.createGeometryMask()); c.once('destroy', () => mg.destroy());
+    return { lc, done(contentH) {
+      ui.scrollPos = ui.scrollPos || {}; const max = Math.max(0, Math.ceil(contentH - vh)), s = ui.scrollPos[key] = clamp(ui.scrollPos[key] || 0, 0, max); lc.y = top - s;
+      const hits = [], walk = (o, oy) => { for (const q of o.list || []) { const yy = oy + (q.y || 0); if (q.input) hits.push({ o: q, y0: yy - (q.displayOriginY || 0), h: q.displayHeight || q.height || 0 }); if (q.list) walk(q, yy); } }; walk(lc, 0);
+      const bar = max > 0 ? ui.add.graphics() : null; if (bar) c.add(bar);
+      const V = { key, x0: c.x + x, x1: c.x + x + w, y0: c.y + top, y1: c.y + top + vh, max, lc, base: top,
+        sync(off) { for (const H of hits) if (H.o.input) { const a = lc.y + H.y0, b = a + H.h; H.o.input.enabled = !off && a >= top - 2 && b <= top + vh + 2; } },
+        drawBar() { if (!bar) return; const th = Math.max(16, vh * vh / (vh + max)), ty = top + (vh - th) * (ui.scrollPos[key] || 0) / max; bar.clear(); bar.fillStyle(0x000000, 0.35).fillRect(x + w - 3, top, 3, vh); bar.fillStyle(0xb9c2ea, 0.7).fillRect(x + w - 3, Math.round(ty), 3, Math.round(th)); } };
+      V.sync(); V.drawBar(); ui.scrollVPs.push(V); ui.initScroll();
+    } };
+  }
+  initScroll() {
+    if (this._scrollInit) return; this._scrollInit = 1;
+    this.input.on('pointerdown', p => { const V = !this.popC && (this.scrollVPs || []).find(v => v.lc.scene && v.max > 0 && p.worldX >= v.x0 && p.worldX <= v.x1 && p.worldY >= v.y0 && p.worldY <= v.y1); this.scrollDrag = V ? { V, x: p.worldX, y: p.worldY, s: (this.scrollPos || {})[V.key] || 0, moved: false } : null; });
+    this.input.on('pointermove', p => { const D = this.scrollDrag; if (!D || !p.isDown || !D.V.lc.scene) return; const dy = p.worldY - D.y;
+      if (!D.moved) { if (Math.abs(dy) <= 6 || Math.abs(dy) < Math.abs(p.worldX - D.x)) return; D.moved = true; D.V.sync(true); hideTip(); if (this.drag) { if (this.drag.img) this.drag.img.destroy(); this.drag = null; } } // 竖着拖 = 滑动（取消拖符文）
+      this.scrollPos[D.V.key] = clamp(D.s - dy, 0, D.V.max); D.V.lc.y = D.V.base - this.scrollPos[D.V.key]; D.V.drawBar(); });
+    this.input.on('pointerup', () => { const D = this.scrollDrag; this.scrollDrag = null; if (D && D.moved) setTimeout(() => { if (D.V.lc.scene) D.V.sync(); }, 0); });
+  }
   /* 天赋：专精（mastery-v1；交互按 11-09 设计稿）。顶栏 洗点 / 汇总 → 可用点数 → 两个专精切换 → 可滚动的档位阶梯（专精条卡 + 1/5/10/15/20 档的被动、大天赋卡）→ 底部汇总条；点卡片出底部抽屉（现在 / 下一级 / −1 加满 +1） */
   win_tree(c, w, h) {
     const m = mstS(), pts = treePoints(), slots = MST.picks[MST.picks.length - 1][1], R = () => { refreshStats(); save(); this.refresh(); };

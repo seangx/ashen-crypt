@@ -33,6 +33,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
     T(sc, 0, 14, `武器 / 副手：${nm(S0.w)}`, { size: 8, color: COL.dim, parent: c }); T(sc, 0, 26, `护甲部位：${nm(S0.a)}`, { size: 8, color: COL.dim, parent: c });
     T(sc, 0, 38, '去“属性石”页镶到装备的孔里', { size: 8, color: COL.faint, parent: c }); return { c, h: 50 };
   }
+  if (it.kind === 'mod') { let cy = 0; for (const l of modTip(it)) { const t = TW(sc, 0, cy, l.t, w, { size: l.s || 12, color: l.c || COL.text, parent: c }); cy += t.h + 2; } return { c, h: cy }; } // 辅助石：没有底材，用符文说明（原来走 baseOf 会崩，滑动背包时手指划过就报错）
   const b = baseOf(it); let cy = 0;
   img(sc, 0, 0, 'i_' + iconOf(it), c);
   T(sc, 17, 1, itemName(it), { color: icol(it), parent: c });

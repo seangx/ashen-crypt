@@ -334,7 +334,7 @@ function isUpgrade(it) {
 const modActiveHere = (m, host) => !host || modActive(m, host);
 
 /* ---------- 悬浮提示 ---------- */
-function showTip(content) { G.ui && G.ui.setTip(content); }
+function showTip(content) { if (G.ui && G.ui.scrollDrag && G.ui.scrollDrag.moved) return; G.ui && G.ui.setTip(content); } // 滑动背包时手指划过格子不弹提示
 function hideTip() { G.ui && G.ui.setTip(null); }
 function toast(msg, color) { G.ui && G.ui.toast(msg, color); }
 function feed(msg, color) { G.ui && G.ui.feed(msg, color); }
