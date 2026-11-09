@@ -1,0 +1,115 @@
+{
+ "_说明": "专精（design/mastery-v1.md，替换星盘天赋）。内容从 tree.json 搬：每个区 = 一个专精。barMax 专精条上限；bar 每点给的加成（= 这个区原来所有小节点之和 × 0.6 ÷ barMax，外环 / 内环两侧小节点各分一半给相邻两区）；被动 = 原来的中节点，每级 = 原效果 ÷ passRef，最多 passMax 级；大天赋 = 原来的大天赋，要挂靠的被动 ≥ keyNeed 级；tiers 专精条到多少点解锁哪一档（被动 / 大天赋按序号）；picks [角色等级, 可选专精数]；elem 内环的元素大天赋放进哪个专精（Lv 专精条要求 elemBar），elemPass 共鸣 / 导引放进哪个专精当被动",
+ "barMax": 20,
+ "passMax": 5,
+ "passRef": 3,
+ "keyNeed": 3,
+ "tiers": {
+  "pass": [
+   1,
+   1,
+   5,
+   5,
+   10,
+   10
+  ],
+  "key": [
+   10,
+   15,
+   15,
+   20,
+   20
+  ],
+  "elemBar": 15
+ },
+ "picks": [
+  [
+   1,
+   1
+  ],
+  [
+   10,
+   2
+  ]
+ ],
+ "bar": {
+  "melee": {
+   "inc:melee": 2.88,
+   "aspd": 0.84,
+   "closeCap": 0.63,
+   "aoeInc": 0.825,
+   "flatInc": 0.3,
+   "addFx": 0.24,
+   "ailNative": 0.001,
+   "moveInc": 0.06
+  },
+  "area": {
+   "aoeInc": 1.335,
+   "areaInc": 0.78,
+   "delayInc": 2.28,
+   "chargeInc": 1.5,
+   "inc:melee": 0.12,
+   "flatInc": 0.3,
+   "addFx": 0.24,
+   "ailNative": 0.001,
+   "inc:proj": 0.12
+  },
+  "proj": {
+   "inc:proj": 4.68,
+   "projSpd": 1.26,
+   "critInc": 0.48,
+   "projDur": 0.9,
+   "areaInc": 0.12,
+   "flatInc": 0.3,
+   "addFx": 0.24,
+   "ailNative": 0.001,
+   "dotInc": 0.12
+  },
+  "dot": {
+   "dotInc": 4.53,
+   "durInc": 1.26,
+   "ailNative": 0.007,
+   "inc:proj": 0.12,
+   "flatInc": 0.3,
+   "addFx": 0.24,
+   "res:all": 0.06
+  },
+  "guard": {
+   "armorInc": 0.66,
+   "deflectInc": 0.96,
+   "res:all": 0.54,
+   "meleeDR": 0.3,
+   "eliteDR": 0.3,
+   "rangedDR": 0.33,
+   "lifeRegen": 0.45,
+   "dotInc": 0.12,
+   "flatInc": 0.3,
+   "addFx": 0.24,
+   "ailNative": 0.001
+  },
+  "lamp": {
+   "burnLess": 0.24,
+   "soulKillInc": 1.68,
+   "energy": 0.06,
+   "moveInc": 0.6,
+   "farDR": 0.6,
+   "lampMax": 0.6,
+   "deflectInc": 0.12,
+   "rangedDR": 0.03,
+   "flatInc": 0.3,
+   "addFx": 0.24,
+   "ailNative": 0.001,
+   "inc:melee": 0.12
+  }
+ },
+ "elem": {
+  "pureColor": "melee",
+  "mixed": "proj",
+  "mutate": "dot",
+  "echoFx": "area"
+ },
+ "elemPass": {
+  "共鸣": "melee",
+  "导引": "area"
+ }
+}

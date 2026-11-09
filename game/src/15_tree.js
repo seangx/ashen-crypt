@@ -90,7 +90,7 @@ const SOCK_ADD = { melee: { 'inc:melee': 8 }, area: { areaInc: 8 }, proj: { 'inc
     mk('ring', `${B.id}c3_3`, `${N.id}c2_3`, 150, 0.12, TREE_RING[i], i + 6);
   });
 })();
-const treePoints = () => Math.max(0, S.level - 1) - S.tree.length;
+const treePoints = () => Math.max(0, S.level - 1) - mstSpent(); // 专精改版：点数花在专精上（15m_mastery.js），星盘 S.tree 不再计入
 function treeCanAlloc(id) {
   const nd = TREE.nodes[id]; if (!nd || nd.kind === 'start' || S.tree.includes(id)) return false;
   return treePoints() > 0 && nd.nb.some(x => x === 'start' || S.tree.includes(x));
@@ -147,8 +147,7 @@ function treeStats(ids = S.tree, eq = S.equip) {
     else flag[k] = (1 + (flag[k] || 0) / 100) * (1 + v / 100) * 100 - 100; } }; // fullShieldMore / frozenMore / delayMore / dmgMore / burnMore：按 % 存，叠加时相乘
   for (const k in eq) if (eq[k] && eq[k].u) uniqueRules(eq[k]);
   for (const k in eq) if (eq[k] && eq[k].oath) oathRules(eq[k]);
-  for (const id of ids) {
-    const nd = TREE.nodes[id]; if (!nd) continue;
+  for (const nd of masteryParts()) { // 专精改版：加成来自专精条、被动、大天赋（星盘 ids 不再生效）
     for (const k in nd.add || {}) add[k] = (add[k] || 0) + nd.add[k];
     for (const k in nd.more || {}) more[k] = k === 'dashMax' ? (more[k] || 0) + nd.more[k] : (more[k] ?? 1) * nd.more[k];
     for (const k in nd.flag || {}) flag[k] = k === 'shockMul' ? (flag[k] || 1) * nd.flag[k] : (flag[k] || 0) + nd.flag[k];
