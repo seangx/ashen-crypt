@@ -92,15 +92,16 @@ Object.assign(MobileUI.prototype, {
       zoneOn(this, c, x, y, s, s, () => { if (trigSel === i && (!T0 || S.trigBag.length)) { tbagSel = null; this.openWin('tbag'); return; } trigSel = i; gemPick = null; this.refresh(); });
     }
     let y = 88; const T0 = S.trigs[trigSel], t = STATS.trigs && STATS.trigs[trigSel];
-    bub(this, c, 6, y, w - 12, 120, 0x4f5d9a, { r: 10 });
+    bub(this, c, 6, y, w - 12, 128, 0x4f5d9a, { r: 10 });
     if (!T0) { T_(this, c, w / 2, y + 30, '这一位还没有魂龛', { size: 12 }); mkBtn(this, c, w / 2 - 50, y + 56, 100, 28, `换魂龛 (${S.trigBag.length})`, () => { tbagSel = null; this.openWin('tbag'); }, { style: 'w', size: 8 }); }
     else {
       T(this, 14, y + 6, trigName(T0), { parent: c, color: '#ffffff', shadowColor: '#1a1426' }); T(this, 14 + textW(trigName(T0)) + 6, y + 8, TRIG_RAR_N[T0.rar] + ' · ' + T0.sock + ' 孔', { size: 8, parent: c, color: '#' + (RAR_C[T0.rar] || 0).toString(16).padStart(6, '0') });
-      const ib = this.add.container(w - 30, y + 4); c.add(ib); bub(this, ib, 0, 0, 16, 16, 0x6fc8ff, { r: 8 }); T_(this, ib, 8, 3, 'i', { size: 8 });
-      zoneOn(this, c, w - 36, y, 28, 26, () => this.ask('魂龛规则', () => {}, '知道了', `【${trigKindN(T0.c)}】${TCOND[T0.c].n}：${TCOND[T0.c].d}。\n【出手】魂龛轮到时替换这一次出手（左边优先）；【响应】魂龛满了立刻额外放。\n技能石每次施放耗灯火，辅助石加倍率；灯火低于 10% 只放底技能。\n最多 ${trigMaxSkills(T0)} 颗技能石，两颗时各 −30%。技能石推荐底子一致时 +20%。\n常驻只能插瘟疫光环、游雷、旋风斩。`));
-      mkBtn(this, c, w - 76, y + 2, 38, 28, '换', () => { tbagSel = null; this.openWin('tbag'); }, { size: 8 });
-      if (unlocked('craftAdv')) mkBtn(this, c, w - 76, y + 38, 38, 28, '打造', () => { tcraftAff = null; this.openWin('tcraft'); }, { size: 8 });
-      if (trigCanAddSock(T0)) mkBtn(this, c, w - 124, y + 2, 46, 28, `开孔${S.glyphs && S.glyphs.socket || 0}`, () => { const r = trigAddSock(T0); toast(r); this.refresh(); }, { size: 8, disabled: !(S.glyphs && S.glyphs.socket > 0) });
+      const hdrW = textW(trigName(T0)) + 6 + textW(TRIG_RAR_N[T0.rar] + ' · ' + T0.sock + ' 孔', 8), ib = this.add.container(14 + hdrW + 4, y + 5); c.add(ib); bub(this, ib, 0, 0, 14, 14, 0x6fc8ff, { r: 7 }); T_(this, ib, 7, 2, 'i', { size: 8 }); // 规则说明：点名字或 i
+      zoneOn(this, c, 10, y, hdrW + 24, 26, () => this.ask('魂龛规则', () => {}, '知道了', `【${trigKindN(T0.c)}】${TCOND[T0.c].n}：${TCOND[T0.c].d}。\n【出手】魂龛轮到时替换这一次出手（左边优先）；【响应】魂龛满了立刻额外放。\n技能石每次施放耗灯火，辅助石加倍率；灯火低于 10% 只放底技能。\n最多 ${trigMaxSkills(T0)} 颗技能石，两颗时各 −30%。技能石推荐底子一致时 +20%。\n常驻只能插瘟疫光环、游雷、旋风斩。`));
+      { let bx = w - 12; const hb = (bw, l, fn, o) => { bx -= bw; mkBtn(this, c, bx, y + 2, bw, 26, l, fn, { size: 8, ...o }); bx -= 3; }; // 顶行右侧：打造 / 换 / 开孔（原来打造在孔那一行，4–5 孔时被孔压住）
+        if (unlocked('craftAdv')) hb(36, '打造', () => { tcraftAff = null; this.openWin('tcraft'); });
+        hb(30, '换', () => { tbagSel = null; this.openWin('tbag'); });
+        if (trigCanAddSock(T0) && bx - 44 > 14 + hdrW + 22) hb(44, `开孔${S.glyphs && S.glyphs.socket || 0}`, () => { const r = trigAddSock(T0); toast(r); this.refresh(); }, { disabled: !(S.glyphs && S.glyphs.socket > 0) }); }
       const ss = 30, lk = 6, k0 = T0.sock, rw = k0 * ss + (k0 - 1) * lk, sx = Math.round((w - rw) / 2), sy = y + 34, skills = T0.socks.filter(isSkill);
       const lg = this.add.graphics(); c.add(lg);
       for (let k = 0; k < k0; k++) {
@@ -125,12 +126,12 @@ Object.assign(MobileUI.prototype, {
       if (t && t.on && skills.length) { const aps = STATS.weapons[0] ? STATS.weapons[0].aps || 1 : 1, over = t.cast && t.mode === 'charge' && t.per >= aps * 0.999, share = STATS.dps > 0 ? t.dps / STATS.dps : 0; // system-v2 §4.2：占出手、占总输出、充能速度；出手型满得比出手还快 = 充能溢出
         T_(this, c, w / 2, y + 88, `每秒 ${(t.per || 0).toFixed(2)} 次${t.cast ? ' · 占出手 ' + Math.round(Math.min(1, t.per / aps) * 100) + '%' : ''} · 占输出 ${Math.round(share * 100)}%`, { size: 8, color: '#e0e4f0' });
         T_(this, c, w / 2, y + 99, over ? `充能溢出：每次出手都满了，别再堆充能 · 耗灯 ${t.cost.toFixed(1)}/次` : `${t.mode === 'charge' ? `充能 ${Math.round(t.per * t.cap)}/秒（满 ${Math.round(t.cap)}） · ` : ''}耗灯 ${t.cost.toFixed(1)}${t.mode === 'always' ? '/秒' : '/次'}`, { size: 8, color: over ? '#b9bfd6' : '#e0e4f0' }); }
-      const af = trigU(T0) ? '独特：' + trigU(T0).d : trigAffList(T0).join('  '); if (af) T_(this, c, w / 2, y + 110, wrapText(af, w - 24, 8).slice(0, 1).join(''), { size: 8, color: '#9fe08a' });
+      const af = trigU(T0) ? '独特：' + trigU(T0).d : trigAffList(T0).join('  '); if (af) { const ls = wrapText(af, w - 28, 8), more = ls.length > 2; T_(this, c, w / 2, y + 108, ls.slice(0, 2).join('\n') + (more ? '…' : ''), { size: 8, color: '#9fe08a' }); zoneOn(this, c, 10, y + 106, w - 20, 22, () => this.showLines([{ t: trigName(T0) + ' · 词条', c: COL.emberHi }, ...(trigU(T0) ? [{ t: '独特：' + trigU(T0).d, s: 8, c: '#9fe08a' }] : []), ...trigAffList(T0).map(t => ({ t, s: 8, c: '#9fe08a' }))])); } // 原来只显示一行，后面的被截掉；现在两行，点开看全部
       if (trigSel > 0 && trigSel < n) mkBtn(this, c, 10, y + 36, 26, 28, '◀', () => { swapTrigs(trigSel, trigSel - 1); trigSel--; this.refresh(); }, { size: 8 });
       if (trigSel < n - 1) mkBtn(this, c, w - 36, y + 38, 26, 28, '▶', () => { swapTrigs(trigSel, trigSel + 1); trigSel++; this.refresh(); }, { size: 8 });
     }
     // 宝石背包
-    y = 218; const tabs = [['all', '全部'], ['skill', '技能'], ['sup', '辅助']];
+    y = 226; const tabs = [['all', '全部'], ['skill', '技能'], ['sup', '辅助']];
     tabs.forEach(([v, nm], i) => mkBtn(this, c, 8 + i * 46, y, 44, 22, nm, () => { gemTab = v; gemPage = 0; gemPick = null; this.refresh(); }, { size: 8, style: gemTab === v ? 'w' : 'n' }));
     // 适配：拿起的技能石优先，否则看当前魂龛里插着的技能石；开着时辅助石只列能给它们用的，关着时不适配的变暗
     const fsk = gemPick && isSkill(gemPick) ? [gemPick] : T0 ? T0.socks.filter(isSkill) : [], fitsAny = m => fsk.some(g => supportFits(m, g));
@@ -161,7 +162,7 @@ Object.assign(MobileUI.prototype, {
     if (unlocked('salvage')) mkBtn(this, c, w - 104, y - 8, 96, 20, `自动分解：${S.trigAuto === false ? '关' : '开'}`, () => { S.trigAuto = S.trigAuto === false; if (trigAutoOn()) { const r = trigBagTidy(S.maxDepth || 1); if (r.k) toast(`自动分解 ${r.k} 个，碎片 +${r.n}`); } save(); this.refresh(); }, { size: 8, style: S.trigAuto === false ? 'n' : 'w' });
     y += 18;
     const s = 40, cols = Math.floor((w - 12) / (s + 6)), gx = Math.round((w - cols * (s + 6)) / 2);
-    const ents = trigBagStacks(bag), SA = this.scrollArea(c, 0, y, w, 3 * (s + 14), 'tbag'), lc0 = c; c = SA.lc; ents.forEach(({ T: T0, n: cnt }, i) => { const x = gx + (i % cols) * (s + 6), yy = Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0, name: 1 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (cnt > 1) T(this, x + s - 3, yy + 3, '×' + cnt, { size: 8, align: 'right', parent: c, color: '#ffe066' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
+    const ents = trigBagStacks(bag), SA = this.scrollArea(c, 0, y, w, tbagSel && bag.includes(tbagSel) ? 3 * (s + 14) : Math.max(3 * (s + 14), h - y - 52), 'tbag'), lc0 = c; c = SA.lc; ents.forEach(({ T: T0, n: cnt }, i) => { const x = gx + (i % cols) * (s + 6), yy = Math.floor(i / cols) * (s + 14); trigTile(this, c, x, yy, s, T0, { sel: tbagSel === T0, name: 1 }); T_(this, c, x + s / 2, yy + s + 2, '●'.repeat(T0.sock), { size: 8, color: '#ffffff' }); if (cnt > 1) T(this, x + s - 3, yy + 3, '×' + cnt, { size: 8, align: 'right', parent: c, color: '#ffe066' }); if (T0.isNew) rect(this, x + 1, yy + 1, 5, 5, '#ff3b3b', 1, c); zoneOn(this, c, x, yy, s, s, () => { tbagSel = T0; T0.isNew = false; this.refresh(); }); });
     c = lc0; SA.done(Math.ceil(ents.length / cols) * (s + 14));
     if (!bag.length) T_(this, c, w / 2, y + 20, '还没有别的魂龛 · 打怪会掉', { size: 8, color: '#b9c2ea' });
     y += Math.max(1, Math.min(3, Math.ceil(ents.length / cols))) * (s + 14) + 10;
