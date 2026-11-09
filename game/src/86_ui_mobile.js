@@ -7,7 +7,7 @@
 const MNAV = [
   { id: 'gear', n: '装备', ic: 'i_w_crossbow' }, { id: 'tree', n: '天赋', ic: 'i_star' }, { id: 'craft', n: '铁砧', ic: 'i_anvil' },
   { id: 'battle', n: '战斗', ic: 'torch' },
-  { id: 'mods', n: '宝石', ic: 'i_sg_GemFrostOrb' }, { id: 'ladder', n: '天梯', ic: 'i_ladder' }, { id: 'settings', n: '设置', ic: null },
+  { id: 'mods', n: '宝石', ic: 'i_sg_GemFrostOrb' }, { id: 'ladder', n: '段位', ic: 'i_ladder' }, { id: 'settings', n: '设置', ic: null },
 ];
 const STICK_R = 26;
 const MCOLS = 8; // 竖屏格子每行 8 个，每格 TOUCH 见方 // 摇杆半径（逻辑像素）
@@ -201,7 +201,7 @@ class MobileUI extends UI {
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
-    const title = { stones: '属性石', trig: '魂龛', tbag: '换魂龛', tcraft: '魂龛打造', reels: '骸骨轮盘', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', shop: '骨坊', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
+    const title = { stones: '属性石', trig: '魂龛', tbag: '换魂龛', tcraft: '魂龛打造', reels: '骸骨轮盘', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '段位', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', shop: '骨坊', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: '#2a1306', shadow: false, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });
@@ -558,7 +558,6 @@ class MobileUI extends UI {
     T(this, w / 2, y + 15, `出发层 ${descentStart()}`, { align: 'center', valign: 'middle', parent: c });
     mkBtn(this, c, w - 52, y, 40, 30, '>', () => { if (canPick(1)) pickFloor(1); this.refresh(); }, { disabled: !canPick(1) }); y += 38;
     mkBtn(this, c, 12, y, w - 24, 30, S.auto.lock ? '锁层：开（点击改为推层）' : '推层：开（点击改为锁层）', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; save(); this.refresh(); }, { size: 8 }); y += 40;
-    if (unlocked('ladder')) T(this, 12, y, '天梯从天梯石碑出发（营地面板或导航「天梯」）', { size: 8, color: COL.faint, parent: c });
     mkBtn(this, c, 12, h - 76, w - 24, 30, '出发', () => { this.closeWin(); startRun(); }, { style: 'w', disabled: !!RUN });
     mkBtn(this, c, 12, h - 42, w - 24, 30, S.auto.loop ? '停止自动刷' : '自动刷（一趟接一趟）', () => { this.closeWin(); this.toggleLoop(); }, { size: 8 });
   }
@@ -586,7 +585,7 @@ class MobileUI extends UI {
   }
   /* 手册：竖屏原生 */
   win_help(c, w, h) {
-    const pages = helpPages(); pages[0] = ['操作', '手机上只有一个操作：移动。在屏幕左下按住拖动出现浮动摇杆，松手几秒后交还自动。两只手上的武器会自动攻击射程内最近的敌人；没有冲刺按钮和主动技能。底部导航打开装备、天赋、铁砧、符文、天梯、设置；中间「战斗」回到战场。长按物品或词条看详情。每升一级得 1 个天赋点。'];
+    const pages = helpPages(); pages[0] = ['操作', '手机上只有一个操作：移动。在屏幕左下按住拖动出现浮动摇杆，松手几秒后交还自动。两只手上的武器会自动攻击射程内最近的敌人；没有冲刺按钮和主动技能。底部导航打开装备、天赋、铁砧、符文、段位、设置；中间「战斗」回到战场。长按物品或词条看详情。每升一级得 1 个天赋点。'];
     const bw = Math.floor((w - 24) / 4);
     pages.forEach(([n], i) => mkBtn(this, c, 12 + (i % 4) * bw, 8 + (i / 4 | 0) * 30, bw - 2, 28, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
     let y = 8 + Math.ceil(pages.length / 4) * 30 + 6; const [n, txt] = pages[helpTopic];
@@ -599,35 +598,27 @@ class MobileUI extends UI {
     }
     T(this, w / 2, h - 14, '系统与数值参考 Astroloot 复刻；画面、名字和文字为原创。', { size: 8, color: COL.faint, align: 'center', parent: c });
   }
-  /* 天梯：竖屏原生（段位 → 选层和挑战 → 各元素最好 → 最近记录） */
+  /* 段位（天梯并进推层，11-09）：段位按推层最深层；Boss 宝箱的额外奖励；跳层规则；最近记录 */
   win_ladder(c, w, h) {
-    const L = S.ladder, ti = ladderTier(L.best), tier = LADDER_TIERS[ti], nx = LADDER_TIERS[ti + 1];
-    ladPick = clamp(ladPick, 1, L.unlocked);
+    const L = S.ladder, D = deepest(), ti = ladderTier(D), tier = LADDER_TIERS[ti], nx = LADDER_TIERS[ti + 1], R = LD.reward;
     T(this, 12, 16, tier ? tier.n : '未定段位', { color: tier ? tier.c : COL.dim, scale: 2, parent: c });
-    T(this, w - 12, 18, nx ? `下一段位 ${nx.n}：${nx.at} 层` : '已是最高段位', { size: 8, color: COL.dim, align: 'right', parent: c });
-    T(this, w - 12, 30, L.best ? `最高 ${L.best} 层 · ${mmss(L.bestTime)}` : '还没有通过任何一层', { size: 8, align: 'right', parent: c });
-    T(this, 12, 46, `已解锁到第 ${L.unlocked} 层`, { size: 8, color: COL.good, parent: c });
-    let y = 60;
-    mkBtn(this, c, 12, y, 30, 28, '<', () => { ladPick = Math.max(1, ladPick - 1); this.refresh(); }, { disabled: ladPick <= 1 });
-    T(this, 82, y + 12, `第 ${ladPick} 层`, { align: 'center', valign: 'middle', color: COL.emberHi, parent: c });
-    mkBtn(this, c, 122, y, 30, 28, '>', () => { ladPick = Math.min(L.unlocked, ladPick + 1); this.refresh(); }, { disabled: ladPick >= L.unlocked });
-    mkBtn(this, c, 158, y, 50, 28, '最高', () => { ladPick = L.unlocked; this.refresh(); }, { size: 8, disabled: ladPick >= L.unlocked });
-    mkBtn(this, c, 212, y, w - 224, 28, L.chain ? '连打开' : '连打关', () => { L.chain = !L.chain; save(); this.refresh(); }, { size: 8, style: L.chain ? 's' : 'n' });
-    y += 30; const busy = ladderBusy(), queued = LAD.pending;
-    mkBtn(this, c, 12, y, w - 24, 28, busy ? '进行中' : queued ? '已排队（这局打完后开始）' : RUN ? '挑战（这局打完后开始）' : '挑战', () => { ladderChallenge(ladPick); this.refresh(); }, { style: 'w', disabled: !!(busy || queued) });
-    y += 36; const R = LD.run, J = LD.jumps.list;
-    const d = TW(this, 12, y, `怪物等级 = 层数。攒满 ${ladderNeed(ladPick)} 点出守关 Boss。不限时，灯灭就结束（每 30 秒燃烧加快，只有击杀能稳定回灯）；用时 ${R.timeLimit - J[0][0]} 秒内跳 ${J[0][1]} 层，${R.timeLimit - J[1][0]} 秒内跳 ${J[1][1]} 层。`, w - 24, { size: 8, color: COL.dim, parent: c });
-    y += d.h + 8; rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 6;
-    T(this, 12, y, '各元素最好', { size: 8, color: COL.emberHi, parent: c }); y += 12;
-    const be = ladderBestByElem(), cw = Math.floor((w - 24) / 2);
-    ELEM.forEach((e, i) => { const r = be[e], x = 12 + (i % 2) * cw, yy = y + (i / 2 | 0) * 12; T(this, x, yy, ELEM_N[e], { size: 8, color: ELEM_C[e], parent: c }); T(this, x + 30, yy, r ? `${r.lvl} 层 ${mmss(r.time)}` : '—', { size: 8, color: r ? COL.text : COL.faint, parent: c }); });
-    y += Math.ceil(ELEM.length / 2) * 12 + 6; rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 6;
-    T(this, 12, y, `最近记录（共 ${L.records.length} 条）`, { size: 8, color: COL.emberHi, parent: c }); y += 12;
-    if (!L.records.length) T(this, 12, y, '通过一层后会记下用时和当时的配装', { size: 8, color: COL.faint, parent: c });
+    T(this, w - 12, 18, nx ? `下一段位 ${nx.n}：第 ${nx.at} 层` : '已是最高段位', { size: 8, color: COL.dim, align: 'right', parent: c });
+    T(this, w - 12, 30, `推层最深 ${D} 层`, { size: 8, align: 'right', parent: c });
+    let y = 52; const ln = (t, col) => { const x = TW(this, 12, y, t, w - 24, { size: 8, color: col || COL.text, parent: c }); y += x.h + 6; };
+    rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 8;
+    T(this, 12, y, '推层规则', { size: 8, color: COL.emberHi, parent: c }); y += 14;
+    ln(`段位按推层最深层晋升，第一次到达送每种铸符 ${LD.tiers.firstGlyphs} 张。`);
+    ln(`Boss 层打得快会往下跳：回到纪录的路上 ${(LD.push.jumps || []).map(([s, j]) => `${s} 秒内跳 ${j} 层`).join('、')}（最多跳到纪录下一层）；超过纪录后 ${(LD.push.frontierJumps || []).map(([s, j]) => `${s} 秒内跳 ${j} 层`).join('、')}。`);
+    ln(`第 ${LD.mods.every} 层起每 ${LD.mods.every} 层多一条坏词缀（最多 ${LD.mods.max} 条），每条宝箱 +${LD.mods.items} 件、碎片 +${Math.round(LD.mods.shards * 100)}%。`);
+    ln(`Boss 宝箱：每种铸符 ${R.glyphBase}% + 层数 × ${R.glyphPerN}% 的几率；第 ${R.exaltedFrom} 层起出溢彩装备；${unlocked('oath') ? '装备 ' + OATH.chestChance + '% 带誓约。' : '誓约 30 层开放。'}`, COL.dim);
+    const mods = pushMods(D + 1); if (mods.length) ln(`下一层（第 ${D + 1} 层）的词缀：${mods.map(ladModText).join('，')}`, COL.bad);
+    rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 8;
+    T(this, 12, y, `新纪录（共 ${L.records.length} 条）`, { size: 8, color: COL.emberHi, parent: c }); y += 14;
+    if (!L.records.length) T(this, 12, y, '推到新的最深层时记下用时和当时的配装', { size: 8, color: COL.faint, parent: c });
     const nm = q => q.u ? UNIQUE_BY[q.u].n : baseOf({ kind: q.slot === 'wl' || (q.slot === 'wr' && WEAPONS[q.b]) ? 'weapon' : q.slot === 'wr' ? 'off' : q.slot, b: q.b }).n;
     L.records.slice(0, Math.max(0, Math.floor((h - y - 6) / 11))).forEach((r, i) => {
       const wp = r.build.equip.find(q => q.slot === 'wl') || r.build.equip[0], tc = LADDER_TIERS[ladderTier(r.lvl)];
-      T(this, 12, y + i * 11, `${r.lvl} 层 · ${mmss(r.time)} · +${r.jump}`, { size: 8, color: tc ? tc.c : COL.text, parent: c });
+      T(this, 12, y + i * 11, `${r.lvl} 层${r.jump > 1 ? ` · 跳 ${r.jump}` : ''}`, { size: 8, color: tc ? tc.c : COL.text, parent: c });
       T(this, w - 12, y + i * 11, `${r.date.slice(5, 10)} ${ELEM_N[r.build.elem]} ${wp ? nm(wp) : ''}`, { size: 8, color: COL.faint, align: 'right', parent: c });
     });
   }
@@ -653,7 +644,7 @@ class MobileUI extends UI {
   }
   /* 菜单：底部导航放不下的页面 */
   win_more(c, w, h) {
-    const items = [['ladder', '天梯', 'i_ladder'], ['settings', '设置', null], ['mods', '辅助宝石', 'mod_Chain'], ['stones', '属性石 · 镶嵌与合成', 'shard'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['shop', '骨坊 · 赌部件', 'coin'], ['depart', '地窖入口 · 选层', 'torch']];
+    const items = [['ladder', '段位 · 记录', 'i_ladder'], ['settings', '设置', null], ['mods', '辅助宝石', 'mod_Chain'], ['stones', '属性石 · 镶嵌与合成', 'shard'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['shop', '骨坊 · 赌部件', 'coin'], ['depart', '地窖入口 · 选层', 'torch']];
     items.forEach(([id, n, ic], i) => {
       const y = 20 + i * 40, open = (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'shop' || unlocked('shop'));
       mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, iconX: 10, labelX: 34, disabled: !open || (RUN && id === 'depart'), locked: !open, whyDisabled: open ? '任务进行中' : `${n}：${unlockText(id)}` });
@@ -665,7 +656,7 @@ class MobileUI extends UI {
   updateCamp() {
     if (!this.campC) this.buildCamp();
     const show = !RUN && !this.winId; this.campC.setVisible(show); if (!show) return;
-    const F = [['depart', '地窖入口', 'torch'], ['ladder', '天梯石碑', 'i_ladder'], ['salvage', '分解祭坛', 'shard'], ['gear', '储物箱', 'i_w_crossbow'], ['help', '手册', 'i_book'], ['shop', '骨坊', 'coin']];
+    const F = [['depart', '地窖入口', 'torch'], ['ladder', '段位', 'i_ladder'], ['salvage', '分解祭坛', 'shard'], ['gear', '储物箱', 'i_w_crossbow'], ['help', '手册', 'i_book'], ['shop', '骨坊', 'coin']];
     const ok = id => (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'salvage' || unlocked('salvage')) && (id !== 'shop' || unlocked('shop')); const key = F.map(f => +ok(f[0])).join('') + descentStart();
     if (key === this.campKey) return; this.campKey = key;
     const c = this.campC; c.removeAll(true); const bw = Math.floor((W - 16) / 3);

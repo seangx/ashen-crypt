@@ -36,13 +36,15 @@ function startRun(L) {
   if (LAD.pending) { const N = LAD.pending; LAD.pending = 0; return startLadder(N); }
   if (L == null) L = descentStart();
   refreshStats();
-  LX = lootFx(null); const mob = LX.mob, map = null; // 推层不再有词缀（墓图已下线）
-  RUN = { dmg: { whirl: 0, devil: 0, spark: 0, fork: 0 }, mode: 'push', L: L + LX.lvl, base: L, map, mob, bossD: bossFor(L + LX.lvl), kills: 0, prog: 0, dens: 1, eliteMul: 1, need: Math.round(killNeed(L) * (1 + (mob.need || 0) / 100)), boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, next: 0, result: null, descent: { from: L, floors: 0, prevMax: S.maxDepth, minHp: 1 }, gain: { items: [], shards: 0, shardK: {}, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
+  const pm = pushMods(L); LX = lootFx(pm); const mob = LX.mob, map = null; // 天梯并进推层：深层带天梯坏词缀（ladder.json push.mods）
+  RUN = { dmg: { whirl: 0, devil: 0, spark: 0, fork: 0 }, mode: 'push', L: L + LX.lvl, base: L, map, mods: pm, floorT0: 0, mob, bossD: bossFor(L + LX.lvl), kills: 0, prog: 0, dens: 1, eliteMul: 1, need: Math.round(killNeed(L) * (1 + (mob.need || 0) / 100)), boss: null, t: 0, spawnT: PROG.run.spawnFirst, ending: 0, next: 0, result: null, descent: { from: L, floors: 0, prevMax: S.maxDepth, minHp: 1 }, gain: { items: [], shards: 0, shardK: {}, glyphs: {}, mods: [], maps: [], xp: 0, lv: 0, boon: null } };
   arenaReset();
 }
 /* 灯火下行：守关 Boss 倒下后直接进入下一层（护甲、灯火、旋转层数都带着走） */
 function nextFloor() {
-  RUN.base++; RUN.L++; RUN.bossD = bossFor(RUN.L); RUN.descent.minHp = 1; RUN.prog = 0; RUN.boss = null; RUN.next = 0;
+  const j = Math.max(1, RUN.jumpN || 1); RUN.jumpN = 0; RUN.base += j; RUN.L += j; RUN.floorT0 = RUN.t; // 跳层：上一层 Boss 打得快一次走好几层
+  if (RUN.mode === 'push') { RUN.mods = pushMods(RUN.base); const lv = LX.lvl; LX = lootFx(RUN.mods); LX.lvl = lv; RUN.mob = LX.mob; }
+  RUN.bossD = bossFor(RUN.L); RUN.descent.minHp = 1; RUN.prog = 0; RUN.boss = null; RUN.next = 0;
   RUN.need = Math.round(killNeed(RUN.base) * (1 + (RUN.mob.need || 0) / 100)); RUN.spawnT = PROG.run.spawnFirst;
   mobs = []; projs = []; zones = []; drops = []; meteors = []; spawnOil();
   if (G.ui) G.ui.banner(`第 ${RUN.base} 层`, COL.emberHi);
@@ -256,23 +258,29 @@ function kill(m) {
     const BL = PROG.bossLoot; RUN.prepFrom = RUN.gain ? RUN.gain.items.length : 0; // 整备面板列出的宝箱装备从这里开始
     const n = Math.round(BL.items * (1 + LX.iiq / 100));
     const emR = TRIGS_RT.lampState === 'ember' ? LST.ember.rarity || 0 : 0; // lamp-v2 §4：残灯时掉落稀有度 +25%
-    for (let i = 0; i < n; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir + emR, true) }, 1);
+    const R = LD.reward, N = RUN.base, exP = N >= R.exaltedFrom ? Math.min(R.exaltedMax, (N - R.exaltedFrom) * R.exaltedPerN) : 0, nm = (RUN.mods || []).length; // 天梯并进推层：宝箱按天梯规则出溢彩、誓约，每条坏词缀多 1 件
+    for (let i = 0; i < n + nm * LD.mods.items; i++) { let it = rnd() * 100 < exP ? makeExalted(rollItem(L + BL.ilvlBonus, 0, false, 2)) : rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir + emR, true); if (!it.u && unlocked('oath') && rnd() * 100 < OATH.chestChance) addOath(it); dropThing(m, { kind: 'item', item: it }, 1); }
+    for (const g of GLYPHS_DROP) if (rnd() * 100 < R.glyphBase + N * R.glyphPerN) dropThing(m, { kind: 'glyph', id: g.id }, 1);
+    if (N >= OATH.glyphLadder && rnd() * 100 < OATH.glyphDrop) dropThing(m, { kind: 'glyph', id: 'oath' }, 1);
+    if (rnd() * 100 < GEMC.socketDrop) dropThing(m, { kind: 'glyph', id: 'socket' }, 1);
     const pity = S.lampPity || 0; if (pity) { S.lampPity = 0; for (let i = 0; i < pity; i++) dropThing(m, { kind: 'item', item: rollItem(L + BL.ilvlBonus, BL.rarityBonus + LX.iir, true) }, 1); } /* 余烬：灯火燃尽攒下的补偿 */
     const c = Math.round((RUN.cache || 0) * BL.cacheMul); RUN.cache = 0; // 这一层攒下的装备（倍数补偿撤回 / 灯灭时没打到 Boss 的那部分）
     for (let i = 0; i < c; i++) dropThing(m, { kind: 'item', item: rollItem(L, LX.iir + emR) }, 1);
     fx({ t: 'chest', x: m.x, y: m.y, n: n + c });
-    for (let i = 0; i < BL.shards; i++) shardDrop();
+    for (let i = 0; i < Math.round(BL.shards * (1 + nm * LD.mods.shards)); i++) shardDrop();
     for (let i = 0; i < BL.runes; i++) dropRune(m, L + BL.runeIlvlBonus);
     for (const T of bossTrigs(RUN.bossD && RUN.bossD.id, L + BL.ilvlBonus)) dropThing(m, { kind: 'trig', trig: T }, 1); // 首领必掉魂龛，偏好 2 种底子
     S.stats.bosses++; RUN.descent.floors++; (RUN.descent.mins = RUN.descent.mins || []).push([RUN.base, Math.round(RUN.descent.minHp * 100), RUN.base >= RUN.descent.prevMax - 1]); // 每层最低血量（模拟用）
     if (RUN.base >= S.maxDepth && RUN.base < PROG.run.maxDepth) S.maxDepth = RUN.base + 1;
+    const ft = RUN.t - (RUN.floorT0 || 0); RUN.jumpN = Math.min(pushJump(ft, RUN.base), PROG.run.maxDepth - RUN.base); RUN.lastFloorT = ft; // 跳层（天梯并进推层）
+    const tierUp = pushMilestone(m, RUN.base, RUN.jumpN); // 段位、记录
     if (RUN.mode !== 'ladder' && RUN.base >= (S.maxDepth || 1) - 1) reelMilestone(RUN.base); // 骸骨轮盘：新纪录的 5 的倍数层
     if (RUN.base >= PROG.run.maxDepth) { RUN.result = 'win'; RUN.ending = 1.6; }
     else if (RUN.base >= RUN.descent.prevMax - 1 && RUN.descent.minHp * 100 < (meleeW() && SOUL.returnHpMelee != null ? SOUL.returnHpMelee : SOUL.returnHp)) { RUN.result = 'retreat'; RUN.ending = 1.6; } // 最深层附近打得太险：见好就收
     else RUN.next = SOUL.nextFloorDelay; // 没到底就接着往下走
     unlockEvent('bossChest'); checkUnlocks(); for (const it of takeGuarantees(L)) dropThing(m, { kind: 'item', item: it }, 1); // 渐进式披露：第一只宝箱保底副手，第 3 层保底新技能石
     const bid = RUN.bossD.id; S.bossKills[bid] = (S.bossKills[bid] || 0) + 1; // 只记次数（祝福已下线）
-    if (G.ui) G.ui.banner(RUN.result === 'retreat' ? `险胜 · 撤回 · 宝箱 ${n + c} 件` : `第 ${RUN.base} 层通过 · 宝箱 ${n + c} 件`);
+    if (G.ui) G.ui.banner(RUN.result === 'retreat' ? `险胜 · 撤回 · 宝箱 ${n + c} 件` : tierUp != null ? `晋升${LADDER_TIERS[tierUp].n} · 第 ${RUN.base} 层通过` : `第 ${RUN.base} 层通过${RUN.jumpN > 1 && RUN.next ? ` · 快！往下跳 ${RUN.jumpN} 层` : ''} · 宝箱 ${n + c} 件`);
   }
 }
 // 符文掉落判定：gems.dropShare 的几率换成技能石（spec-skill-gems §3.4）
