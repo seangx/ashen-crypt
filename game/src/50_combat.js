@@ -445,7 +445,7 @@ const combatWs = () => { const a = []; (STATS.weapons || []).forEach((W, i) => {
 const whirlWs = () => combatWs().filter(([W]) => W.whirl);
 function auraHit(W, mul = 1) { const AT = MECH.auraTick;
   if (!W.tick) { W.tick = { ...W, cont: true, aps: 1 / AT, min: { ...W.min }, max: { ...W.max } }; W.tick.min[W.el] = W.tick.max[W.el] = W.auraDps * AT; }
-  for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2) hitMob(m, W.tick, mul !== 1 ? { mul } : undefined); }
+  for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2) { hitMob(m, W.tick, mul !== 1 ? { mul } : undefined); if ((m._afx = (m._afx || 0) + 1) % 3 === 0 || mul !== 1) fx({ t: 'aura', x: m.x, y: m.y - m.size }); } } // 每 3 次结算冒一次孢子，不刷屏
 const spinning = () => whirlWs().some(([W, i]) => player.spin[i].n > 0);
 const inRange = (W, r) => mobs.some(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2);
 // 手里的武器朝最近一次出手的方向（AIM_HOLD 秒内）；这段时间身子也跟着朝那边，不被走位翻过去
@@ -457,7 +457,7 @@ function fire(W, i) {
   switch (W.form) {
     case 'aura': { // 瘟疫光环插在魂龛：常驻的由下面的光环循环每 auraTick 结算，这里不出手；其他魂龛触发一次 = 结算 1 秒的量
       const t = W.trigSlot && STATS.trigs && STATS.trigs[W.trigSlot - 1]; if (t && t.mode === 'always') return true;
-      auraHit(W, 1 / MECH.auraTick); return true;
+      fx({ t: 'auraburst', x: player.x, y: player.y, r: W.rng, el: W.el || 'nuc' }); auraHit(W, 1 / MECH.auraTick); return true;
     }
     case 'shieldThrow': { // 圣盾掷插在魂龛：朝最近的敌人扔盾，盾飞回来之前不能再扔
       if (projs.some(p => p.sthrow && !p.dead)) return false; const t = nearest(px, py + 1, W.rng); if (!t) return false;
