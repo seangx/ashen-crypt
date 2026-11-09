@@ -6,7 +6,7 @@ MNAV.splice(0, MNAV.length,
   { id: 'gear', n: '装备', ic: 'i_w_crossbow' }, { id: 'trig', n: '魂龛', ic: null }, { id: 'battle', n: '战斗', ic: 'torch' },
   { id: 'tree', n: '天赋', ic: 'i_star' }, { id: 'craft', n: '铁砧', ic: 'i_anvil' });
 const DK = 0x1a1426, CY = 0xffc83a; // 弹壳风：粗深色描边、亮黄选中
-let trigSel = 0, gemPick = null, gemTab = 'all', gemPage = 0, tbagSel = null, tcraftAff = null;
+let trigSel = 0, gemPick = null, gemTab = 'all', supFit = true, gemPage = 0, tbagSel = null, tcraftAff = null;
 const hx = s => typeof s === 'number' ? s : parseInt(String(s).slice(1), 16);
 function bub(sc, c, x, y, w, h, fill, o = {}) { // 圆角粗描边 3D 块
   const g = sc.add.graphics(); c.add(g); const r = o.r ?? 7;
@@ -132,8 +132,11 @@ Object.assign(MobileUI.prototype, {
     // 宝石背包
     y = 218; const tabs = [['all', '全部'], ['skill', '技能'], ['sup', '辅助']];
     tabs.forEach(([v, nm], i) => mkBtn(this, c, 8 + i * 46, y, 44, 22, nm, () => { gemTab = v; gemPage = 0; gemPick = null; this.refresh(); }, { size: 8, style: gemTab === v ? 'w' : 'n' }));
-    T(this, w - 10, y + 6, gemPick ? '点亮起的孔放入·再点宝石取消' : '点宝石看详情', { size: 8, align: 'right', parent: c, color: gemPick ? '#7cf05a' : '#b9c2ea' });
-    const gems = S.stash.filter(x => x.kind === 'gem').sort((a, b) => b.lvl - a.lvl), sups = S.mods.filter(m => !MOD_BY[m.mid].field).sort((a, b) => b.lvl - a.lvl);
+    // 适配：拿起的技能石优先，否则看当前魂龛里插着的技能石；开着时辅助石只列能给它们用的，关着时不适配的变暗
+    const fsk = gemPick && isSkill(gemPick) ? [gemPick] : T0 ? T0.socks.filter(isSkill) : [], fitsAny = m => fsk.some(g => supportFits(m, g));
+    mkBtn(this, c, 8 + 3 * 46, y, 44, 22, '适配', () => { supFit = !supFit; gemPage = 0; this.refresh(); }, { size: 8, style: supFit && fsk.length ? 'w' : 'n', disabled: !fsk.length, whyDisabled: '先在魂龛里放一颗技能石' });
+    T(this, w - 8, y + 6, gemPick ? '点亮孔放入' : '点宝石看详情', { size: 8, align: 'right', parent: c, color: gemPick ? '#7cf05a' : '#b9c2ea' });
+    const gems = S.stash.filter(x => x.kind === 'gem').sort((a, b) => b.lvl - a.lvl), sups = S.mods.filter(m => !MOD_BY[m.mid].field && !(supFit && fsk.length && !fitsAny(m))).sort((a, b) => b.lvl - a.lvl);
     const list = gemTab === 'skill' ? gems : gemTab === 'sup' ? sups : [...gems, ...sups];
     const cs = TOUCH, cols = Math.floor((w - 12) / (cs + 2)), rows = Math.max(1, Math.floor((h - (y + 30) - 30) / (cs + 2))), per = cols * rows, pg = Math.max(1, Math.ceil(list.length / per)); gemPage = clamp(gemPage, 0, pg - 1);
     const gx = Math.round((w - cols * (cs + 2)) / 2);
@@ -142,10 +145,10 @@ Object.assign(MobileUI.prototype, {
       if (gemPick === it) { const g = this.add.graphics(); c.add(g); g.fillStyle(0xffffff, 1).fillRoundedRect(x - 3, yy - 3, cs + 6, cs + 6, 6); }
       const cell = mkCell(this, c, x, yy, it, { size: cs, direct: true, onClick: () => {
         if (gemPick === it) { gemPick = null; this.refresh(); return; } this.gemDetail(it, { T0 }); } });
-      if (gemPick && gemPick !== it) cell.setAlpha(0.6);
+      if (gemPick && gemPick !== it) cell.setAlpha(0.6); else if (fsk.length && isSupport(it) && !fitsAny(it)) cell.setAlpha(0.35);
       if (it.isNew) rect(this, x + 2, yy + 2, 4, 4, '#ff3b3b', 1, c);
     });
-    if (!list.length) T_(this, c, w / 2, y + 44, gemTab === 'sup' ? '还没有辅助石' : '还没有宝石', { size: 8, color: '#b9c2ea' });
+    if (!list.length) T_(this, c, w / 2, y + 44, gemTab === 'sup' ? (supFit && fsk.length && S.mods.some(m => !MOD_BY[m.mid].field) ? '没有适配' + itemName(fsk[0]) + '的辅助石' : '还没有辅助石') : '还没有宝石', { size: 8, color: '#b9c2ea' });
     if (pg > 1) { mkBtn(this, c, 8, h - 32, 30, 28, '<', () => { gemPage--; this.refresh(); }, { disabled: gemPage <= 0 }); T_(this, c, w / 2, h - 24, `${gemPage + 1}/${pg}`, { size: 8 }); mkBtn(this, c, w - 38, h - 32, 30, 28, '>', () => { gemPage++; this.refresh(); }, { disabled: gemPage >= pg - 1 }); }
   },
   /* 触发器背包 / 掉落对比：点一个 → 当前 vs 新（孔数、秒伤变化），只有 分解 / 替换 */
