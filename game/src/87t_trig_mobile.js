@@ -146,7 +146,8 @@ Object.assign(MobileUI.prototype, {
       if (it.isNew) rect(this, x + 2, yy + 2, 4, 4, '#ff3b3b', 1, c);
     });
     if (!list.length) T_(this, c, w / 2, y + 44, gemTab === 'sup' ? '还没有辅助石' : '还没有宝石', { size: 8, color: '#b9c2ea' });
-    if (pg > 1) { mkBtn(this, c, 8, h - 32, 30, 28, '<', () => { gemPage--; this.refresh(); }, { disabled: gemPage <= 0 }); T_(this, c, w / 2, h - 24, `${gemPage + 1}/${pg}`, { size: 8 }); mkBtn(this, c, w - 38, h - 32, 30, 28, '>', () => { gemPage++; this.refresh(); }, { disabled: gemPage >= pg - 1 }); }
+    { const mc = mergeCount(); mkBtn(this, c, 8, h - 32, 100, 28, mc ? `一键合成 · ${mc}` : '一键合成', () => { const r = mergeAll(); sfx('craft'); toast(`合成 ${r.n} 次` + (r.ups.length ? '：' + r.ups.slice(0, 3).map(x => `${x.kind === 'mod' ? MOD_BY[x.mid].n : itemName(x)} ${x.lvl}级`).join('、') + (r.ups.length > 3 ? ' 等' : '') : ''), '#ffe066'); this.refresh(); }, { size: 8, style: mc ? 'w' : 'n', disabled: !mc, whyDisabled: `同名、同等级的宝石凑够 ${ECO.merge.n} 颗才能合成（插在魂龛里的不算）` }); } // 同名同级 → 高一级
+    if (pg > 1) { mkBtn(this, c, w - 112, h - 32, 30, 28, '<', () => { gemPage--; this.refresh(); }, { disabled: gemPage <= 0 }); T_(this, c, w - 66, h - 24, `${gemPage + 1}/${pg}`, { size: 8 }); mkBtn(this, c, w - 38, h - 32, 30, 28, '>', () => { gemPage++; this.refresh(); }, { disabled: gemPage >= pg - 1 }); }
   },
   /* 触发器背包 / 掉落对比：点一个 → 当前 vs 新（孔数、秒伤变化），只有 分解 / 替换 */
   win_tbag(c, w, h) {

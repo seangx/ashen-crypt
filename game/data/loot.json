@@ -166,12 +166,12 @@
   ]
  },
  "runeDrop": {
-  "_说明": "掉落的符文自带经验 = rand^(expBase + expPerIlvl × 物品等级) × cap × capGrowth^物品等级。符文升级经验门槛在 astro.json 的 modXp",
+  "_说明": "掉落的辅助石、技能石按层数定等级：1 + floor(物品等级 / lvlPer) ± lvlSpread（上限 maxLevel），经验取该等级的门槛。cap / capGrowth / expBase / expPerIlvl 是旧的随机经验公式，已不用。符文升级经验门槛在 astro.json 的 modXp",
   "cap": 250,
   "capGrowth": 1.3,
   "expBase": 2,
   "expPerIlvl": 0.2,
-  "maxLevel": 20,
+  "maxLevel": 20, "lvlPer": 6, "lvlSpread": 1,
   "levelCap": 45
  },
  "uniqueBossOnlyWeight": {

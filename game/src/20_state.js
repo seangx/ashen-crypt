@@ -6,7 +6,7 @@ function freshState() {
     v: 4, level: 1, xp: 0, depth: 1, maxDepth: 1, nextId: 1,
     equip: { gem: null, wl: null, wr: null, shield: null, core: null, engine: null, hub: null },
     stash: [], mods: [], tree: [], bossKills: {},
-    shards: {}, glyphs: Object.fromEntries(GLYPHS.map(g => [g.id, 0])),
+    shards: {}, coins: 0, glyphs: Object.fromEntries(GLYPHS.map(g => [g.id, 0])),
     stats: { kills: 0, missions: 0, deaths: 0, bosses: 0 },
     settings: { sound: true },
     auto: { ai: true, loop: false, lock: false, fails: 0, back: false, backWins: 0 },

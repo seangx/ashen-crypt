@@ -329,7 +329,7 @@
   "hub": "QuartzNexus"
  },
  "unlocks": {
-  "_说明": "渐进式披露（spec-unlocks）。depth = 已通关最深层；level = 角色等级；ladder = 天梯最高层；event = 还要发生过这件事（bossChest 打开 Boss 宝箱、pickRune 捡到辅助符文、gainShard 得到碎片、gainGlyph 得到铸符）。条件都满足才开。guarantee：解锁时在 Boss 宝箱里保底一件（off 副手、gem 新技能石）。hint：解锁横幅。没写的系统一直开放",
+  "_说明": "渐进式披露（spec-unlocks）。depth = 已通关最深层；level = 角色等级；ladder = 天梯最高层；event = 还要发生过这件事（bossChest 打开 Boss 宝箱、pickRune 捡到辅助符文、gainShard 得到碎片、gainGlyph 得到铸符、gainCoin 得到骨币）。条件都满足才开。guarantee：解锁时在 Boss 宝箱里保底一件（off 副手、gem 新技能石）。hint：解锁横幅。没写的系统一直开放",
   "wr": {"event": "bossChest", "guarantee": "off", "hint": "副手：强化你的技能"},
   "gems": {"depth": 3, "guarantee": "gem", "hint": "新的技能石：插进魂龛的孔"},
   "mods": {"event": "pickRune", "hint": "辅助石：改造同一个魂龛里的技能"},
@@ -338,6 +338,7 @@
   "reels": {"depth": 5, "hint": "骸骨轮盘：每 5 层一次独特三选一"},
   "craft": {"event": "gainShard", "depth": 3, "hint": "铁砧：用碎片给装备加词条"},
   "salvage": {"depth": 10, "hint": "分解祭坛：回营地时自动拆掉不要的装备"},
+  "shop": {"event": "gainCoin", "hint": "骨坊：花骨币赌一件指定部位的未鉴定装备"},
   "trig2": {"level": 15, "hint": "第 2 个魂龛位"},
   "ladder": {"depth": 14, "hint": "天梯：灯灭就结束，越快通关跳得越多"},
   "craftAdv": {"depth": 20, "hint": "铁砧：可以洗数值、移除词条；魂龛也能重铸、升阶、打磨"},

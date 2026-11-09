@@ -1,6 +1,12 @@
 {
  "_说明": "营地（主页）。一趟推关或天梯结束后回到营地。idleStay：自动循环开着时在营地停留几秒再出发。salvageIlvlBack：分解祭坛的“旧装备”规则，物品等级低于 最深层 − salvageIlvlBack 的装备分解。salvage：新存档的默认分解规则，rar 依次是 普通 / 罕见 / 稀有 是否分解，old 是旧装备规则开关，favN 是默认收藏词条数（取主武器流派做装偏好的前 favN 个）。facilities：营地里的设施，x/y 是在 480×270 画面里的脚底位置，unlock 对应 progression.json 的 unlocks（null 表示一开始就有），win 是点它打开的窗口，r 是点击半径。",
  "idleStay": 4,
+ "economy": {
+  "_说明": "骨币（分解给货币）。coin：分解一件装备给 rar[稀有度] × (1 + 物品等级 / ilvlDiv) 骨币（普通 / 罕见 / 稀有；独特、传奇按稀有算），技能石 gem + 等级、辅助石 rune + 等级 ÷ 2（向下取整）。shop：骨坊，选部位赌一件未鉴定装备，物品等级 = 已通关最深层，价格 base + perIlvl × 物品等级；rar 是普通 / 罕见 / 稀有的权重，unique 是变成同部位独特装备的几率。merge：同名、同等级的宝石 n 颗合成一颗高一级的",
+  "coin": { "rar": [1, 2, 4], "ilvlDiv": 20, "gem": 3, "rune": 1 },
+  "shop": { "base": 30, "perIlvl": 3, "rar": [0, 60, 40], "unique": 0.03 },
+  "merge": { "n": 2 }
+ },
  "salvageIlvlBack": 10,
  "salvage": { "rar": [true, true, false], "old": true, "favN": 6 },
  "facilities": [

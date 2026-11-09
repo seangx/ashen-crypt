@@ -402,7 +402,7 @@ class UI extends Phaser.Scene {
     const lad = r.mode === 'ladder';
     const RN = { win: '抵达最深处', lampout: '灯火燃尽 · 平安返回', retreat: '险胜 · 撤回', emergency: '紧急撤回', abandon: '提前返回', home: '通关 · 返回营地', dead: '阵亡', timeout: '灯灭' };
     const l1 = lad ? `天梯 ${r.L} 层${win ? `通过 · 用时 ${mmss(r.t)} · 跳 ${r.lad.jump} 层` : r.result === 'timeout' ? ' · 灯灭' : ' · 阵亡'}` : `${RN[r.result] || r.result} · 第 ${r.descent.from === r.base ? r.base : r.descent.from + '–' + r.base} 层`;
-    const l2 = `击杀 ${r.kills} · 装备 ${g.items.length} 件${r.salv && r.salv.n ? `，分解 ${r.salv.n} 件得碎片 ${r.salv.shards}` : ''} · 经验 +${fmt(g.xp)}${g.lv ? ` · 升 ${g.lv} 级` : ''}`;
+    const l2 = `击杀 ${r.kills} · 装备 ${g.items.length} 件${r.salv && r.salv.n ? `，分解 ${r.salv.n} 件得碎片 ${r.salv.shards}${coinTxt(r.salv)}` : ''} · 经验 +${fmt(g.xp)}${g.lv ? ` · 升 ${g.lv} 级` : ''}`;
     const why = A.lock ? '（锁定层数）' : A.back ? `（退一层练级，再赢 ${AU.push.winsToRetry - A.backWins} 次回去冲）` : !win && A.fails ? `（再输 ${AU.push.lossesToRetreat - A.fails} 次退一层）` : '';
     const l3 = LAD.pending ? `${Math.ceil(AUTO.nextT)} 秒后开始天梯第 ${LAD.pending} 层` : `${Math.ceil(AUTO.nextT)} 秒后出发：从第 ${descentStart()} 层往下走${lad ? '' : why}`;
     [l1, l2, l3].forEach((s, i) => { if (this.sumT[i].text !== s) this.sumT[i].setText(s); });
@@ -426,7 +426,7 @@ class UI extends Phaser.Scene {
   closePrep() { if (this.winId === 'prep') this.closeWin(true); }
   prepCdText() { const R = RUN && RUN.prep; return !R ? '' : R.cd ? `${Math.max(1, Math.ceil(R.t))} 秒后自动继续 · 点任意处取消` : S.auto.loop ? '倒计时已取消' : ''; }
   openBulk() { this.bulkPick = new Map(); this.openWin('bulk'); }
-  doBulk() { const g = bulkSalvage(bulkList(this.bulkPick)); this.bulkPick = new Map(); if (g.n) toast(`拆解 ${g.n} 件，得到 ${g.shards} 个词条碎片`, '#d9cfb8'); this.refresh(); }
+  doBulk() { const g = bulkSalvage(bulkList(this.bulkPick)); this.bulkPick = new Map(); if (g.n) toast(`拆解 ${g.n} 件，得到 ${g.shards} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); this.refresh(); }
   /* 批量拆解：按品质多选 + 单件点选（点一下加入/移出），确认后一起拆 */
   win_bulk(c, w, h) {
     const mob = typeof MOBILE !== 'undefined' && MOBILE, sel = bulkSel(), pick = this.bulkPick || (this.bulkPick = new Map());
@@ -551,7 +551,7 @@ class UI extends Phaser.Scene {
     const by = 176;
     if (f.where === 'stash') {
       mkBtn(this, p, 0, by, 100, 16, it.kind === 'weapon' ? '装主手' : it.kind === 'off' ? '装副手' : '装备', () => { equipItem(it); save(); this.refresh(); }, { size: 8, style: 'w' });
-      mkBtn(this, p, 104, by, 48, 16, confirmKey === 'sal' + it.id ? '确认' : '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { size: 8, style: confirmKey === 'sal' + it.id ? 'r' : 'n', tip: [{ t: '拆解', c: COL.emberHi }, { t: `毁掉装备，每条词条给 ${CRAFT.shatter.perAffix} 个对应的碎片，T${CRAFT.shatter.bonusTier} 及以上多给 ${CRAFT.shatter.bonus} 个。`, s: 8 }] });
+      mkBtn(this, p, 104, by, 48, 16, confirmKey === 'sal' + it.id ? '确认' : '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n || g.coins) toast(`得到 ${n} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { size: 8, style: confirmKey === 'sal' + it.id ? 'r' : 'n', tip: [{ t: '拆解', c: COL.emberHi }, { t: `毁掉装备，每条词条给 ${CRAFT.shatter.perAffix} 个对应的碎片，T${CRAFT.shatter.bonusTier} 及以上多给 ${CRAFT.shatter.bonus} 个。`, s: 8 }] });
     } else {
       mkBtn(this, p, 0, by, 48, 16, '卸下', () => { unequip(f.slot); save(); this.refresh(); }, { size: 8 });
       if (unlocked('mods') && (it.sock || ['core', 'engine', 'hub'].includes(f.slot))) mkBtn(this, p, 52, by, 48, 16, '符文', () => { modWeapon = f.slot; this.openWin('mods'); }, { size: 8 });
@@ -644,7 +644,7 @@ class UI extends Phaser.Scene {
     const ow = oathWhy(it); if (unlocked('oath')) mkBtn(this, c, X + 76, 74, 72, 16, `立誓 ×${glyphN('oath')}`, () => done(craftOath(it)), { size: 8, disabled: !!ow, tip: [{ t: '立誓', c: GLYPH_BY.oath.c }, { t: `花 1 张立誓符，随机打一条这个部位能出的誓约（一正一负，已有就替换），潜力扣 ${OATH.fpCost}。`, s: 8 }, ...(ow ? [{ t: ow, s: 8, c: COL.bad }] : [])] });
     if (unlocked('salvage')) mkBtn(this, c, X, 74, 72, 16, confirmKey === 'shat' + it.id ? '确认拆解' : '拆解', () => {
       if (!confirm2('shat' + it.id)) return this.refresh();
-      const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片`);
+      const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片${coinTxt(g)}`);
     }, { size: 8, style: confirmKey === 'shat' + it.id ? 'r' : 'n', tip: [{ t: '拆解', c: COL.emberHi }, { t: `毁掉装备，每条词条给 ${CRAFT.shatter.perAffix} 个对应碎片，T${CRAFT.shatter.bonusTier} 及以上多给 ${CRAFT.shatter.bonus} 个。`, s: 8 }] });
     // 加词条：有碎片、能加到这件装备上的词条族
     const opts = craftable(it) ? AFF.filter(a => shardN(a.k) > 0 && canAdd(it, a)) : [];
@@ -1023,7 +1023,7 @@ class UI extends Phaser.Scene {
     tog(94, R.old, `旧装备（物品等级 < ${Math.max(1, back)}）`, () => { R.old = !R.old; }, [{ t: `物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的装备全部分解，不看稀有度和收藏词条。`, s: 8 }]);
     TW(this, 10, 114, '独特、传奇、溢彩装备和技能石、符文永远不会被自动分解；身上穿着的也不会。', 160, { size: 8, color: COL.faint, parent: c });
     const n = S.stash.filter(salvWhy).length;
-    mkBtn(this, c, 10, h - 30, 160, 20, confirmKey === 'salvNow' ? `确认分解 ${n} 件` : `现在分解背包（${n} 件）`, () => { if (!confirm2('salvNow')) return this.refresh(); const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个`, '#d9cfb8'); save(); this.refresh(); }, { size: 8, style: confirmKey === 'salvNow' ? 'r' : 'w', disabled: !n });
+    mkBtn(this, c, 10, h - 30, 160, 20, confirmKey === 'salvNow' ? `确认分解 ${n} 件` : `现在分解背包（${n} 件）`, () => { if (!confirm2('salvNow')) return this.refresh(); const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个${coinTxt(g)}`, '#d9cfb8'); save(); this.refresh(); }, { size: 8, style: confirmKey === 'salvNow' ? 'r' : 'w', disabled: !n });
     // 收藏词条：带这些词条族的装备不按稀有度分解
     rect(this, 180, 10, 1, h - 20, '#33293f', 1, c);
     const list = AFF.filter(a => !a.tk).sort((a, b) => (fav.includes(b.k) - fav.includes(a.k)) || (affName(a) < affName(b) ? -1 : 1));
