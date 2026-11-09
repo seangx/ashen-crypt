@@ -448,6 +448,10 @@ function auraHit(W, mul = 1) { const AT = MECH.auraTick;
   for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2) hitMob(m, W.tick, mul !== 1 ? { mul } : undefined); }
 const spinning = () => whirlWs().some(([W, i]) => player.spin[i].n > 0);
 const inRange = (W, r) => mobs.some(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2);
+// 手里的武器朝最近一次出手的方向（AIM_HOLD 秒内）；这段时间身子也跟着朝那边，不被走位翻过去
+const AIM_HOLD = 0.6;
+function aimAt(a) { player.aimA = a; player.aimT = AIM_HOLD; player.face = Math.cos(a) >= 0 ? 1 : -1; return a; }
+const aiming = () => player.aimT > 0; // aimT 在 playerStep 里倒数（模拟器不走 G.time）
 function fire(W, i) {
   const px = player.x, py = player.y - 6;
   switch (W.form) {
@@ -485,7 +489,7 @@ function fire(W, i) {
       const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
       const cost = W.trigSlot ? 0 : OB.soulPerCast * (W.orbCost || 1) * (1 - STATS.soulLess), rune = W.frostOrb && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost;
       const dR = AU.orb.denseR ** 2; let best = live[0], bn = -1; for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < dR) c++; if (c > bn) { bn = c; best = a; } }
-      const a0 = Math.atan2(best.y - 5 - py, best.x - px), n = attacks(W), fan = OB.fan * Math.PI / 180, cast = { ref: 0, rune };
+      const a0 = aimAt(Math.atan2(best.y - 5 - py, best.x - px)), n = attacks(W), fan = OB.fan * Math.PI / 180, cast = { ref: 0, rune };
       for (let k = 0; k < n; k++) { const a = a0 + (k - (n - 1) / 2) * fan; projs.push({ W, orb: 1, x: px, y: py, a, vx: Math.cos(a) * W.orbSpd, vy: Math.sin(a) * W.orbSpd, life: W.orbLife, age: 0, el: W.el, r: 5, sch: W.chain, rune, cast, emitT: OB.emit, rot: rf(0, Math.PI * 2), touch: new Map(), hit: new Set(), mul: 1 }); }
       sfx('shoot'); return true;
     }
@@ -495,7 +499,7 @@ function fire(W, i) {
       const delay = W.delayTot || (W.delay || MT.delay), R2 = W.aoeR * W.aoeR; let best = live[0], bn = -1;
       for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < R2) c++; if (c > bn) { bn = c; best = a; } }
       let cx = 0, cy = 0, vx = 0, vy = 0, k0 = 0; for (const b2 of live) if (dist2(best, b2) < R2) { cx += b2.x; cy += b2.y; vx += b2.vx || 0; vy += b2.vy || 0; k0++; }
-      cx = cx / k0 + vx / k0 * delay; cy = cy / k0 + vy / k0 * delay; // 预判：那群怪的平均速度 × 延迟
+      cx = cx / k0 + vx / k0 * delay; cy = cy / k0 + vy / k0 * delay; aimAt(Math.atan2(cy - py, cx - px)); // 预判：那群怪的平均速度 × 延迟
       const sf = STATS.flag.starfall, n = attacks(W) * (sf ? MT.sfN : 1);
       let off = 0; // 多颗陨石错落落下：每多一颗随机晚 0.1–0.35 秒，位置再抖几像素
       for (let k = 0; k < n; k++) {
@@ -522,7 +526,7 @@ function fire(W, i) {
   }
   const tg = nearest(px, py, W.rng || 160); if (!tg) return false;
   const a = Math.atan2(tg.y - 4 - py, tg.x - px);
-  player.face = Math.cos(a) >= 0 ? 1 : -1;
+  aimAt(a);
   if (W.form === 'cone') {
     const half = 0.5;
     for (const m of mobs) { if (m.dead || m.rise > 0.2) continue; const dx = m.x - px, dy = m.y - 4 - py; const d = Math.hypot(dx, dy); if (d > W.rng + m.size) continue; let da = Math.abs(Math.atan2(dy, dx) - a); if (da > Math.PI) da = Math.PI * 2 - da; if (da < half) hitMob(m, W); }
@@ -624,7 +628,7 @@ function logic(dt) {
     const ax = tvx - player.vx, ay = tvy - player.vy, al = Math.hypot(ax, ay), step = P.accel * dt;
     if (al <= step) { player.vx = tvx; player.vy = tvy; } else { player.vx += ax / al * step; player.vy += ay / al * step; }
     player.x += player.vx * dt; player.y += player.vy * dt;
-    if (Math.abs(player.vx) > 4) player.face = player.vx > 0 ? 1 : -1;
+    if (Math.abs(player.vx) > 4 && !aiming()) player.face = player.vx > 0 ? 1 : -1;
   }
   if (!RUN) { player.x = clamp(player.x, FIX.x0, FIX.x1); player.y = clamp(player.y, FIX.y0, FIX.y1); }
   camStep(dt);
@@ -632,6 +636,7 @@ function logic(dt) {
   if (player.adT > 0) player.adT -= dt;
   if (player.hurtT > 0) player.hurtT -= dt;
   if (player.fbT > 0) player.fbT -= dt;
+  if (player.aimT > 0) player.aimT -= dt;
   if (RUN) { closeStep(); if (RUN.gd) { RUN.gd.t += dt - 1 / 60; if (player.closeN > 0) RUN.gd.closeT += dt - 1 / 60; } }
   if (player.guardT > 0) player.guardT -= dt;
   player.shield = Math.min(P.shield, player.shield + P.shieldRegen * lampShieldRegen() * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
