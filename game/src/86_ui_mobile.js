@@ -250,6 +250,7 @@ class MobileUI extends UI {
     T(this, 112, 78, '抗性', { size: 8, color: COL.dim, parent: c });
     ELEM.forEach((e, i) => T(this, 134 + i * 20, 78, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
     T(this, 12, 100, `背包 ${gearCount()}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
+    { const nNew = S.stash.filter(x => x.isNew && x.kind !== 'gem').length; if (nNew) mkBtn(this, c, w - 134, 91, 42, 28, `已读 ${nNew}`, () => { for (const x of S.stash) if (x.kind !== 'gem') x.isNew = false; save(); this.refresh(); }, { size: 8 }); } // 一键清掉“新”
     mkBtn(this, c, w - 90, 91, 38, 28, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
     mkBtn(this, c, w - 50, 91, 40, 28, '批量', () => this.openBulk(), { size: 8, style: 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
@@ -595,7 +596,12 @@ class MobileUI extends UI {
     const tog = (x, y, bw, on, label, fn) => { const b = mkBtn(this, c, x, y, bw, 28, label, () => { fn(); save(); this.refresh(); }, { size: 8, labelX: 20 }); rect(this, 6, 10, 9, 9, '#120c18', 1, b); if (on) rect(this, 7, 11, 7, 7, COL.ember, 1, b); };
     let y = 14; T(this, 12, y, '回营地时自动分解带回的装备', { size: 8, color: COL.emberHi, parent: c }); y += 14;
     const hw = Math.floor((w - 28) / 2);
-    tog(12, y, hw, R.on, '自动分解', () => { R.on = !R.on; }); tog(16 + hw, y, hw, R.old, `旧装备 <${Math.max(1, back)}`, () => { R.old = !R.old; }); y += 32;
+    tog(12, y, hw, R.on, '自动分解', () => { R.on = !R.on; }); tog(16 + hw, y, hw, R.old, `等级 <${salvLv()} 分解`, () => { R.old = !R.old; }); y += 32;
+    // 等级阈值：−5 −1 +1 +5，跟随最深层（R.lvl = null）
+    T(this, 12, y + 4, `物品等级低于 ${salvLv()} 的装备分解${R.lvl == null ? '（跟随最深层 −' + CAMP.salvageIlvlBack + '）' : ''}`, { size: 8, color: R.old ? COL.text : COL.faint, parent: c }); y += 16;
+    { const setLv = d => { R.lvl = clamp(salvLv() + d, 1, PROG.run.maxDepth + 10); R.old = true; }, bw4 = Math.floor((w - 24 - 4 * 3 - 70) / 4);
+      [[-5, '−5'], [-1, '−1'], [1, '+1'], [5, '+5']].forEach(([d, l], i) => mkBtn(this, c, 12 + i * (bw4 + 3), y, bw4, 28, l, () => { setLv(d); save(); this.refresh(); }, { size: 8 }));
+      mkBtn(this, c, w - 82, y, 70, 28, '跟随最深层', () => { R.lvl = null; save(); this.refresh(); }, { size: 8, style: R.lvl == null ? 's' : 'n' }); } y += 34;
     const tw = Math.floor((w - 28) / 3); ['普通', '罕见', '稀有'].forEach((n, i) => tog(12 + i * (tw + 2), y, tw, R.rar[i], n, () => { R.rar[i] = !R.rar[i]; })); y += 34;
     const t = TW(this, 12, y, '独特、传奇、溢彩装备和印记、符文、墓图永远不会被自动分解；身上穿着的也不会。带收藏词条的装备不按稀有度分解。', w - 24, { size: 8, color: COL.faint, parent: c }); y += t.h + 6;
     const n = S.stash.filter(salvWhy).length;

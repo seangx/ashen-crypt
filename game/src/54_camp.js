@@ -4,6 +4,8 @@ const CAMP = DATA.camp;
 const FAC_BY = Object.fromEntries(CAMP.facilities.map(f => [f.id, f]));
 const facOpen = f => !f.unlock || unlocked(f.unlock);
 const salvRules = () => (S.salvage ??= { rar: [...CAMP.salvage.rar], old: CAMP.salvage.old, fav: null, on: true });
+// 旧装备阈值：物品等级低于这个就分解。R.lvl 玩家自己设的固定值；没设就跟着最深层 − salvageIlvlBack
+const salvLv = () => { const R = salvRules(); return Math.max(1, R.lvl ?? (S.maxDepth - CAMP.salvageIlvlBack)); };
 // 收藏词条：玩家没改过时，取主武器流派的做装偏好前 favN 个
 function salvFav() {
   const R = salvRules(); if (R.fav) return R.fav;
@@ -14,7 +16,7 @@ function salvFav() {
 function salvWhy(it) {
   if (!it || it.kind === 'chip' || it.kind === 'gem' || it.u || it.leg || it.ex) return null; // 技能石不自动分解
   const R = salvRules();
-  if (R.old && it.ilvl < S.maxDepth - CAMP.salvageIlvlBack) return 'old';
+  if (R.old && it.ilvl < salvLv()) return 'old';
   const fav = salvFav(); if (it.affs.some(x => fav.includes(x.k))) return null;
   return R.rar[it.rar] ? 'rar' : null;
 }
