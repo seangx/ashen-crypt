@@ -31,7 +31,7 @@
 MobileUI.prototype.updateCamp = function () {
   if (!this.campC) this.buildCamp();
   const show = !RUN && !this.winId; this.campC.setVisible(show); if (!show) return;
-  const F = [['ladder', '天梯', 'i_ladder'], ['salvage', '分解', 'shard'], ['shop', '骨坊', 'coin'], ['help', '手册', 'i_book']];
+  const F = [['ladder', '段位', 'i_ladder'], ['salvage', '分解', 'shard'], ['shop', '骨坊', 'coin'], ['help', '手册', 'i_book']];
   const ok = id => (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'shop' || unlocked('shop'));
   const key = [F.map(f => +ok(f[0])).join(''), S.depth, S.maxDepth, S.auto.lock, S.auto.loop, Math.round(STATS.dps || 0), (S.reelsPending || []).length].join('|');
   if (key === this.campKey) return; this.campKey = key;

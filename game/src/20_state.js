@@ -37,6 +37,7 @@ function load(data) {
   S.auto = { ...freshState().auto, ...(S.auto || {}) };
   S.ladder = { ...freshState().ladder, ...(S.ladder || {}) };
   S.tree ??= []; S.chips ??= {}; S.bossKills ??= {};
+  if (!S.ladMerged) { S.ladMerged = 1; const b = (S.ladder && S.ladder.best) || 0; if (b + 1 > (S.maxDepth || 1)) S.maxDepth = Math.min(PROG.run.maxDepth, b + 1); } // 天梯并进推层：天梯最高层算进推层最深层
   S.mst ??= mstFresh(); if (S.tree.length) { const n = S.tree.length; S.tree = []; const tell = () => G.ui ? toast(`天赋改版：星盘换成专精，${n} 点已退回`, COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1500); } // 专精改版（mastery-v1 §6）：星盘点数全退
   // 天赋树改版后旧存档的节点对不上：全部退回，印记回到背包
   // 通用防御整理（spec-tree-defense §3）：节点 id 不变，但换掉大天赋的 5 个小团整团退掉（点数自动返还），别的节点直接变成新效果

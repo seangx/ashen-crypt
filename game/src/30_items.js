@@ -110,7 +110,7 @@ function newUnique(id, ilvl, rand2) {
   return it;
 }
 function rollUnique(ilvl, boss, ladder) {
-  const pool = UNIQUES.filter(u => u.req <= ilvl && (u.w > 0 || boss) && (!u.ladderOnly || ladder || (S.ladder && S.ladder.best >= u.ladderOnly)));
+  const pool = UNIQUES.filter(u => u.req <= ilvl && (u.w > 0 || boss) && (!u.ladderOnly || ladder || deepest() >= u.ladderOnly));
   if (!pool.length) return null;
   return newUnique(wpick(pool, u => u.w || LOOT.uniqueBossOnlyWeight.w).id, ilvl, boss ? G2.uniques.randChest : 0);
 }

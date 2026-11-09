@@ -88,4 +88,13 @@ function ladderBestByElem() {
   for (const r of S.ladder.records) { const e = r.build.elem, o = out[e]; if (!o || r.lvl > o.lvl || (r.lvl === o.lvl && r.time < o.time)) out[e] = r; }
   return out;
 }
+// 天梯并进推层（11-09）：推层第 N 层的坏词缀、按用时跳层、段位和记录
+const pushMods = N => LD.push && LD.push.mods ? ladderMods(N) : [];
+const pushJump = (t, N) => { const front = N >= (S.ladder.best || 0), list = (LD.push && (front ? LD.push.frontierJumps : LD.push.jumps)) || []; for (const [s, j] of list) if (t <= s) return front ? j : Math.min(j, Math.max(1, (S.ladder.best || 0) + 1 - N)); return 1; }; // 纪录以内最多跳回纪录下一层
+function pushMilestone(m, N, jump) {
+  const L = S.ladder; let up = null;
+  if (N > L.best) { L.best = N; L.bestTime = Math.round((RUN.t - (RUN.floorT0 || 0)) * 10) / 10; ladderRecord(N, jump); }
+  for (let i = 0; i <= ladderTier(L.best); i++) if (!L.tiersHit.includes(i)) { L.tiersHit.push(i); up = i; for (const g of GLYPHS_DROP) for (let j = 0; j < LD.tiers.firstGlyphs; j++) dropThing(m, { kind: 'glyph', id: g.id }, 1); }
+  return up;
+}
 const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
