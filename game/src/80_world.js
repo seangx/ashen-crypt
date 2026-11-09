@@ -193,7 +193,7 @@ class World extends Phaser.Scene {
       this.hero.setTexture('doll_0'); if (this.heroCS && this.heroCS.cs) this.heroCS.cs.setTexture('doll_0'); G.ui && G.ui.dollChanged && G.ui.dollChanged(); // 影子也要换到新纹理，旧的已经删掉
     }
     // 旋风斩转身：正 → 侧 → 背 → 另一侧，一圈 4 帧；身后拖两个旧帧的淡残影
-    const SPIN = [['doll_0', false], ['doll_v1', false], ['doll_v2', false], ['doll_v1', true]], ph = this.spinRate ? (this.spinPh = (this.spinPh || 0) + dt * this.spinRate * 4) : 0;
+    const SPIN = [['doll_0', false], ['doll_v1', true], ['doll_v2', false], ['doll_v1', false]], ph = this.spinRate ? (this.spinPh = (this.spinPh || 0) + dt * this.spinRate * 4) : 0; // 顺时针：正面 → 朝左 → 背面 → 朝右
     const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.fbT > 0.12 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
     if (player.chill > 0) this.hero.setTint(0xb8e6ff); else if (this.hero.isTinted) this.hero.clearTint(); // 角色被冰缓
@@ -210,7 +210,7 @@ class World extends Phaser.Scene {
         if (player.fbT > 0.12) hw.setTintFill(0xffffff); else if (player.chill > 0) hw.setTint(0xb8e6ff); else if (hw.isTinted) hw.clearTint();
       } }
     if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x7a2a1a));
-    this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(-ph * Math.PI / 2 - i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
+    this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(ph * Math.PI / 2 + i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
     this.heroSh.setPosition(player.x, player.y + 1);
     { const hub = S.equip.hub, hg = this.hubG; hg.clear(); if (hub) { const b = baseOf(hub); const c = hex(b.el ? ELEM_C[b.el] : b.mass ? '#e9e0c9' : b.energy ? '#c08aff' : '#57e0d0'); const n = 22; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.7; hg.fillStyle(c, 0.35 + 0.3 * Math.sin(i * 1.3 + t * 3)); hg.fillRect(Math.round(player.x + Math.cos(a) * 9), Math.round(player.y + 1 + Math.sin(a) * 3), 1, 1); } } }
     if (player.dashT > 0 && this.frame % 2 === 0) {
@@ -232,7 +232,7 @@ class World extends Phaser.Scene {
       if (!W_ || W_.form !== 'orbit') return;
       // 回旋骨刃：有旋势时人在转（刀光圈 + 风）；没有时每次砍中画一道横扫
       const n = W_.whirl ? player.spin[wi].n : 0, R = whirlR(W_, n);
-      if (n > 0) { const f = n / W_.stackMax; whirlFx(this.groundG, this.whirlG, this.glowG, player.x, player.y, R, f, t, STATS.flag.areaEye, Math.PI / 2 - (this.spinPh || 0) * Math.PI / 2 + 0.5); if (f >= 1 && this.post && G.time - (this.wPulse || 0) > 0.55) { this.wPulse = G.time; this.post.waves.push({ x: player.x, y: player.y, r: R + 10, k: 0.45, life: 0.3, t0: G.time }); } } // 满层：每圈一道空气冲击波
+      if (n > 0) { const f = n / W_.stackMax; whirlFx(this.groundG, this.whirlG, this.glowG, player.x, player.y, R, f, t, STATS.flag.areaEye, Math.PI / 2 + (this.spinPh || 0) * Math.PI / 2 + 0.5); if (f >= 1 && this.post && G.time - (this.wPulse || 0) > 0.55) { this.wPulse = G.time; this.post.waves.push({ x: player.x, y: player.y, r: R + 10, k: 0.45, life: 0.3, t0: G.time }); } } // 满层：每圈一道空气冲击波
       else if (player.swing[wi] > 0) { const k = player.swing[wi] / 0.18, a0 = (player.face < 0 ? Math.PI : 0) - 2.4 + (1 - k) * 4.8; for (let s2 = 0; s2 < 16; s2++) { const q = s2 / 16, an = a0 - q * 2.2; pg.fillStyle(0xdfe6ee, 0.8 * k * (1 - q)); pg.fillRect(Math.round(player.x + Math.cos(an) * R), Math.round(player.y - 6 + Math.sin(an) * R * 0.4), 2, 1); } }
     });
     // 红圈重击：地上一片红，外圈实线，内圈从外往里收，收到中心就砸下
