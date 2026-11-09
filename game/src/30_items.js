@@ -86,7 +86,8 @@ function modActive(mod, it) {
   if (d.field && uval(it, 'fieldHere')) return true;
   return !d.field && d.fit(it);
 }
-const modWhere = m => MOD_BY[m.mid].field ? '法阵' : '武器、头冠或遁靴';
+const RUNE_FIT = Object.fromEntries(DATA.runes.list.map(r => [r.id, r.fit || []]));
+const modWhere = m => { if (MOD_BY[m.mid].field) return '法阵'; const t = (RUNE_FIT[m.mid] || []).filter(c => c.startsWith('tag:')).map(c => TAG_N[c.slice(4)] || c.slice(4)); return '魂龛，给同一个魂龛里的技能石' + (t.length ? `（技能要带：${t.join('、')}）` : ''); }; // 魂龛改版后辅助石只对技能石生效
 
 /* 掉落：底材按原作掉落权重在全部部位里抽（要求物品等级达到底材需求） */
 function allBases() {
@@ -177,8 +178,24 @@ function removeItem(it) {
   refreshStats();
 }
 const STASH_CAP = LOOT.stashCap;
-function addItem(it) { S.stash.push(it); it.isNew = true; }
+// 捡到装备：分解祭坛的规则在拾取时就生效（自动推层可以很久不回营地，原来背包会涨到一百多件、超出 60 格的看不到）；装备超过上限时拆掉最不值钱的
+function addItem(it) {
+  S.stash.push(it); it.isNew = true; if (it.kind === 'gem') return;
+  if (typeof salvWhy === 'function' && salvRules().on && unlocked('salvage') && salvWhy(it)) return pickSalvage(it);
+  stashTrim();
+}
+function pickSalvage(it) { const g = salvage(it), P = RUN ? (RUN.psalv ??= { n: 0, shards: 0, coins: 0 }) : null; if (P) { P.n++; P.shards += Object.values(g).reduce((a, b) => a + b, 0); P.coins += g.coins || 0; } }
+const gearCount = () => S.stash.reduce((n, x) => n + (x.kind !== 'gem'), 0);
+const VAL_CACHE = new WeakMap();
+function stashTrim() {
+  let over = gearCount() - STASH_CAP; if (over <= 0) return;
+  const fav = typeof salvFav === 'function' ? salvFav() : [], st = typeof STATS !== 'undefined' ? STATS : null;
+  const val = x => { if (!st) return (x.rar | 0) * 1000 + (x.ilvl || 0); let c = VAL_CACHE.get(x); if (!c || c.st !== st) VAL_CACHE.set(x, c = { st, v: itemValue(x) }); return c.v; }; // 换上后的估值（秒伤 + 有效生命），装备不变就用缓存（WeakMap，不进存档）
+  const cands = S.stash.filter(x => x.kind !== 'gem' && x.kind !== 'chip' && !(x.u || x.leg || x.ex) && !(x.affs || []).some(a => fav.includes(a.k))).sort((a, b) => val(a) - val(b));
+  for (const x of cands) { if (over <= 0) break; pickSalvage(x); over--; if (RUN && !RUN.trimTold) { RUN.trimTold = 1; toast(`储物箱满了（${STASH_CAP} 件）：自动拆掉最不值钱的装备`, '#d9cfb8'); } } // 独特、传奇、溢彩、带收藏词条的不拆；更好的估值高，排在最后
+}
 function equipItem(it, slot) {
+  if (it.kind === 'gem') { const b = bestGemSpot(it); if (b) socketInto(b.T, b.k, it); return; } // 技能石插进魂龛（旧技能格已经不生效）
   slot = it.kind === 'weapon' ? 'wl' : it.kind === 'off' ? 'wr' : it.kind; // 武器只进主手，副手只进副手槽
   const cur = S.equip[slot];
   S.stash = S.stash.filter(x => x !== it);
@@ -192,7 +209,7 @@ function unequip(slot) { const it = S.equip[slot]; if (!it) return; S.equip[slot
 function salvage(it) {
   const SH = CRAFT.shatter, got = {};
   for (const x of it.affs || []) { const n = SH.perAffix + (x.t + 1 >= SH.bonusTier ? SH.bonus : 0); S.shards[x.k] = (S.shards[x.k] || 0) + n; got[x.k] = (got[x.k] || 0) + n; }
-  removeItem(it); const c = gainCoins(coinOfItem(it)); Object.defineProperty(got, 'coins', { value: c }); // 骨币不算进碎片合计
+  removeItem(it); const c = gainCoins(it.kind === 'gem' ? coinOfGem(it) : coinOfItem(it)); Object.defineProperty(got, 'coins', { value: c }); // 骨币不算进碎片合计
   return got;
 }
 

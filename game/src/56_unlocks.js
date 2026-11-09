@@ -24,10 +24,10 @@ function takeGuarantees(L) {
   const out = []; for (const g of S.guarantee || []) { const it = g === 'off' ? guaranteeOff(L) : g === 'gem' ? guaranteeGem(L) : null; if (it) out.push(it); }
   S.guarantee = []; return out;
 }
-function guaranteeOff(L) { const OH = DATA.mechanics.offhand, tg = S.equip.gem ? itemTags(S.equip.gem) : [], b = (OH.starterByTag.find(([t]) => tg.includes(t)) || [0, OH.fallback])[1]; return newItem('off', b, Math.max(1, L), rollQuality(Math.max(1, L)), 1); }
+function guaranteeOff(L) { const OH = DATA.mechanics.offhand, tg = mainSkillGem() ? itemTags(mainSkillGem()) : [], b = (OH.starterByTag.find(([t]) => tg.includes(t)) || [0, OH.fallback])[1]; return newItem('off', b, Math.max(1, L), rollQuality(Math.max(1, L)), 1); }
 function guaranteeGem(L) { // 从没拥有过的技能石里抽，偏向新流派（和身上技能不同大类）
-  const own = new Set([...Object.values(S.equip), ...S.stash].filter(it => it && it.kind === 'gem').map(it => it.b));
-  const fam = g => g.tags.includes('Melee') ? 'melee' : g.tags.includes('Projectile') ? 'proj' : 'area', cur = S.equip.gem ? fam(GEM_BY[S.equip.gem.b]) : 'proj';
+  const own = new Set([...Object.values(S.equip), ...S.stash, ...(S.trigs || []).flatMap(T => T ? T.socks : [])].filter(it => it && it.kind === 'gem').map(it => it.b)); // 魂龛里插着的也算拥有
+  const fam = g => g.tags.includes('Melee') ? 'melee' : g.tags.includes('Projectile') ? 'proj' : 'area', cur = mainSkillGem() ? fam(GEM_BY[mainSkillGem().b]) : 'proj';
   let pool = GEMS.filter(g => g.w > 0 && !own.has(g.id)); const nf = pool.filter(g => fam(g) !== cur); if (nf.length) pool = nf; if (!pool.length) return null;
   return newGem(pick(pool).id, { sock: 1 });
 }

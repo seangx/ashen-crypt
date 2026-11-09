@@ -10,7 +10,7 @@ const SHOP_SLOTS = ['wl', 'wr', 'shield', 'core', 'engine', 'hub'];
 const slotKind = s => (SLOTS.find(x => x.id === s) || {}).kind || s;
 const shopIlvl = () => Math.max(1, S.maxDepth || 1);
 const shopPrice = () => Math.round(ECO.shop.base + ECO.shop.perIlvl * shopIlvl());
-const shopWhy = () => (S.coins || 0) < shopPrice() ? `骨币不够（要 ${shopPrice()}）` : S.stash.length >= STASH_CAP ? '储物箱满了' : null;
+const shopWhy = () => (S.coins || 0) < shopPrice() ? `骨币不够（要 ${shopPrice()}）` : gearCount() >= STASH_CAP ? '储物箱满了' : null;
 function gamble(slot) {
   if (shopWhy()) return null;
   const P = ECO.shop, L = shopIlvl(), kind = slotKind(slot); let it = null;

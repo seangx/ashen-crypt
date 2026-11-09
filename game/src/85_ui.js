@@ -163,6 +163,12 @@ function baseLines(it) {
   return out;
 }
 function compareLines(it) {
+  if (it.kind === 'gem') { // 技能石：和插进魂龛最好的孔比（装备时也插在那里）
+    if (gemInTrig(it)) return [{ t: '已插在魂龛里', c: COL.dim }];
+    const b = bestGemSpot(it); if (!b) return [{ t: '没有能插的魂龛孔', c: COL.dim }];
+    const a = STATS.dps, v = b.st.dps, p = a ? (v / a - 1) * 100 : 0, old = b.T.socks[b.k];
+    return [{ t: Math.abs(v - a) < 0.5 ? `插进第 ${b.i + 1} 个魂龛：秒伤不变` : `插进第 ${b.i + 1} 个魂龛${old ? '（换下 ' + itemName(old) + '）' : ''}后秒伤 ${fmt(a)} → ${fmt(v)}（${p >= 0 ? '+' : ''}${p.toFixed(0)}%）`, c: v >= a ? COL.good : COL.bad }];
+  }
   const slot = slotsFor(it)[0];
   if (!slot) return [];
   if (Object.values(S.equip).includes(it)) return [{ t: '已装备', c: COL.dim }];
@@ -501,6 +507,7 @@ class UI extends Phaser.Scene {
     const pos = { gem: [0, 0], core: [26, 0], wl: [0, 26], wr: [52, 26], hub: [0, 52], engine: [26, 52], shield: [52, 52] };
     const ghost = { gem: 'i_w_crossbow', wl: 'i_w_crossbow', wr: 'i_o_source', shield: 'i_a_boneward', core: 'i_a_helm', engine: 'i_a_shadowstep', hub: 'i_a_circle' };
     for (const s of SLOTS) {
+      if (s.id === 'gem' && !S.equip.gem) continue; // 旧技能格：魂龛改版后不生效，技能石插魂龛
       if (s.id === 'wr' && !unlocked('wr') && !S.equip.wr) continue; // 副手格：解锁前不画
       const it = S.equip[s.id]; const [x, y] = pos[s.id];
       mkCell(this, c, ox + x, oy + y, it, { size: 24, sel: selFn(it, s.id), ghost: ghost[s.id], tip: [{ t: s.id === 'wr' && !unlocked('wr') ? `${s.n}：${unlockText('wr')}` : `${s.n}（空）`, c: COL.dim }], onHover: i => { if (i) { hoverId = i.id; this.renderPane(); } }, onOut: () => { hoverId = null; this.renderPane(); }, onClick: i => onClick(i, s.id) });
@@ -525,7 +532,7 @@ class UI extends Phaser.Scene {
     const rz = rect(this, 8, 165, 124, 28, '#000', 0, c).setInteractive();
     rz.on('pointerover', () => showTip([{ t: '抗性', c: COL.emberHi }, ...ELEM.map(e => ({ t: `${ELEM_N[e]} ${P.res[e]}%`, c: ELEM_C[e], s: 8 })), { t: `按百分比减少对应元素的伤害，上限 ${P.maxRes}%。`, s: 8 }])); rz.on('pointerout', hideTip);
     // 背包
-    T(this, 140, 6, `背包 ${S.stash.length}/${STASH_CAP}`, { size: 8, color: COL.dim, parent: c });
+    T(this, 140, 6, `背包 ${gearCount()}/${STASH_CAP}`, { size: 8, color: COL.dim, parent: c });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一个分页
     if (!unlocked('gems') && !nGem) stashTab = 0; else [['装备', 0], [`技能石 ${nGem}`, 1]].forEach(([n, t], i) => mkBtn(this, c, 140 + i * 56, 138, 54, 15, n, () => { stashTab = t; this.refresh(); }, { size: 8, style: stashTab === t ? 's' : 'n' }));
     for (let i = 0; i < STASH_CAP; i++) {
@@ -548,7 +555,7 @@ class UI extends Phaser.Scene {
     if (hoverId && hoverId !== selId) return;
     const by = 176;
     if (f.where === 'stash') {
-      mkBtn(this, p, 0, by, 100, 16, it.kind === 'weapon' ? '装主手' : it.kind === 'off' ? '装副手' : '装备', () => { equipItem(it); save(); this.refresh(); }, { size: 8, style: 'w' });
+      mkBtn(this, p, 0, by, 100, 16, it.kind === 'weapon' ? '装主手' : it.kind === 'off' ? '装副手' : it.kind === 'gem' ? '插魂龛' : '装备', () => { equipItem(it); save(); this.refresh(); }, { size: 8, style: 'w' });
       mkBtn(this, p, 104, by, 48, 16, confirmKey === 'sal' + it.id ? '确认' : '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n || g.coins) toast(`得到 ${n} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { size: 8, style: confirmKey === 'sal' + it.id ? 'r' : 'n', tip: [{ t: '拆解', c: COL.emberHi }, { t: `毁掉装备，每条词条给 ${CRAFT.shatter.perAffix} 个对应的碎片，T${CRAFT.shatter.bonusTier} 及以上多给 ${CRAFT.shatter.bonus} 个。`, s: 8 }] });
     } else {
       mkBtn(this, p, 0, by, 48, 16, '卸下', () => { unequip(f.slot); save(); this.refresh(); }, { size: 8 });

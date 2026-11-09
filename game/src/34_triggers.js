@@ -76,6 +76,18 @@ function socketInto(T, k, x) {
   if (isSkill(x)) S.stash = S.stash.filter(y => y !== x); else S.mods = S.mods.filter(y => y !== x);
   x.isNew = false; T.socks[k] = x; refreshStats(); save(); return true;
 }
+// 技能石放进魂龛的最好位置：逐个已开的魂龛、逐个能插的孔试插，取秒伤最高的（试完还原，不改存档）。按 STATS 缓存（装备一变就重算）
+let GEM_SPOT = { st: null, m: new Map() };
+function bestGemSpot(g) {
+  if (GEM_SPOT.st !== STATS) GEM_SPOT = { st: STATS, m: new Map() };
+  if (GEM_SPOT.m.has(g.id)) return GEM_SPOT.m.get(g.id);
+  let best = null; const n = trigSlots();
+  (S.trigs || []).forEach((T, i) => { if (!T || i >= n) return; for (let k = 0; k < T.sock; k++) { if (!trigCanSock(T, k, g)) continue; const old = T.socks[k]; T.socks[k] = g; let st; try { st = computeStats(); } finally { T.socks[k] = old; } if (!best || st.dps > best.st.dps) best = { T, i, k, st }; } });
+  GEM_SPOT.m.set(g.id, best); return best;
+}
+const gemInTrig = g => (S.trigs || []).some(T => T && T.socks.includes(g));
+// 现在主力的技能石：魂龛里第一颗（出手时魂龛优先）；保底副手、保底新技能石按它选流派
+const mainSkillGem = () => { const ts = (S.trigs || []).filter(Boolean), T = ts.find(t => t.c === 'cast' && t.socks.some(isSkill)) || ts.find(t => t.socks.some(isSkill)); return T ? T.socks.find(isSkill) : null; };
 function unsocketAt(T, k, quiet) { const x = T.socks[k]; if (!x) return; T.socks[k] = null; if (isSkill(x)) S.stash.unshift(x); else S.mods.unshift(x); if (!quiet) { refreshStats(); save(); } }
 function autoInsert(T, x) { for (let k = 0; k < T.sock; k++) if (!T.socks[k] && trigCanSock(T, k, x)) return socketInto(T, k, x) ? k : -1; return -1; }
 function equipTrig(slot, T) {
