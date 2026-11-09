@@ -54,6 +54,7 @@ class World extends Phaser.Scene {
       chip: this.add.particles(0, 0, 'px2', { emitting: false, lifespan: { min: 400, max: 800 }, speed: { min: 40, max: 110 }, angle: { min: 200, max: 340 }, gravityY: 320, scale: { start: 1, end: 0.5 }, tint: [0xece3cb, 0xb9ad94, 0xfff6dc] }).setDepth(30),
       fire: P({ lifespan: { min: 250, max: 450 }, speed: { min: 10, max: 40 }, gravityY: -30, tint: [0xff9a3d, 0xffd36a, 0xe8533a] }, 60),
       loot: P({ lifespan: 500, speedY: -14, speedX: 0, alpha: { start: 1, end: 0 } }, 56),
+      spore: P({ lifespan: { min: 500, max: 1000 }, speedY: { min: -16, max: -5 }, speedX: { min: -6, max: 6 }, alpha: { start: 0.85, end: 0 }, tint: [0x8fe05a, 0x5fae3a, 0xc8f08a] }, 31), // 瘟疫光环的孢子
     };
     const cv = this.game.canvas;
     // 直接监听画布的原生事件：鼠标在 UI 按钮上时 Phaser 不会把移动事件传到下层场景
@@ -117,6 +118,8 @@ class World extends Phaser.Scene {
         case 'frostburst': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.3, max: 0.3, el: 'cold', fill: false }); this.em.spark2.particleTint = 0x6fb4e8; this.em.spark2.explode(6, e.x, e.y); break; /* 冰封球终爆：冷色环 + 冰屑，不放火花、不闪白 */
         case 'boom': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.25, max: 0.25, el: e.el, fill: true }); this.em.fire.explode(10, e.x, e.y); this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(8, e.x, e.y); if (this.post) this.post.waves.push({ x: e.x, y: e.y, r: e.r * 1.4 + 16, k: 1, life: 0.35, t0: G.time }); break;
         case 'ring': this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.18, max: 0.18, el: e.el }); break;
+        case 'aura': this.em.spore.explode(2, e.x + rf(-3, 3), e.y - rf(2, 8)); break; // 瘟疫光环结算：怪身上冒两颗孢子
+        case 'auraburst': if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.35, max: 0.35, el: e.el, fill: true }); for (let i = 0; i < 14; i++) { const a = rf(0, Math.PI * 2), d = Math.sqrt(rnd()) * e.r; this.em.spore.explode(1, e.x + Math.cos(a) * d, e.y + Math.sin(a) * d * 0.6); } break; // 非常驻魂龛触发：一圈绿色冲击
         case 'shield': this.rings.push({ x: e.x, y: e.y - 6, r: 11, life: 0.2, max: 0.2, el: 'cyan' }); break;
         case 'cone': { const n = 4; for (let i = 0; i < n; i++) { const a = e.a + rf(-0.5, 0.5), d = rf(8, e.r); this.em.fire.explode(1, e.x + Math.cos(a) * d, e.y + Math.sin(a) * d); } break; }
         case 'sflash': if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 5, life: 0.08, max: 0.08, el: 'flash' }); break;
@@ -239,7 +242,16 @@ class World extends Phaser.Scene {
     for (const z of zones) if (z.devil) { const a = Math.min(1, z.t * 2); if (this.glowG) devilFx(this.groundG, this.glowG, z.x, z.y + 2, z.r, t, z.seed, a); else tornado(pg, z.x, z.y + 2, z.r * 1.6, z.r * 1.2, t, z.seed, a * 0.85); } // 旋风之心甩出的小旋风
     for (const z of zones) if (z.fire) fireGroundFx(this, this.groundG, pg, this.glowG, z, t); // 火地：焦土 + 跳动的火舌
     for (const z of zones) { if (z.devil || z.fire) continue; const c = z.enemy && z.el !== 'nuc' ? 0xff3a7a : hex(ELEM_C[z.el]); if (z.enemy) { const ea = Math.min(1, z.t); pg.fillStyle(z.el === 'nuc' ? 0x2f5a22 : 0x4a0a30, (z.el === 'nuc' ? 0.35 : 0.4) * ea).fillEllipse(z.x, z.y, z.r * 2, z.r * 1.2); pg.lineStyle(1, z.el === 'nuc' ? 0x6ad040 : 0xd02060, 0.7 * ea).strokeEllipse(z.x, z.y, z.r * 2, z.r * 1.2); } /* 敌方地面区域：毒池绿、骨法师火圈按元素色 */ const n = Math.max(10, z.r * 1.5 | 0); pg.fillStyle(c, z.vortex ? 0.8 : 0.45); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (z.vortex ? t * 6 : 0), rr = z.r * (z.vortex ? 0.4 + 0.6 * ((i * 7) % 5) / 5 : (0.5 + 0.5 * Math.abs(Math.sin(i * 1.7 + t * 3)))); pg.fillRect(z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr * 0.6, 1, 1); } }
-    for (const [W_] of combatWs()) if (W_.form === 'aura') { const c = hex(ELEM_C[W_.el]); const n = 28; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.8; pg.fillStyle(c, 0.25 + 0.25 * Math.sin(i + t * 4)); pg.fillRect(player.x + Math.cos(a) * W_.rng, player.y - 2 + Math.sin(a) * W_.rng * 0.6, 1, 1); } }
+    // 瘟疫光环（常驻 / 拿在手里时）：地上一层半透明的绿盘 + 转动的虚线边，圈里飘孢子，每秒向外脉动一次；画在怪下面
+    for (const [W_, wi] of combatWs()) if (W_.form === 'aura') {
+      const tr = W_.trigSlot ? STATS.trigs[W_.trigSlot - 1] : null; if (tr && (tr.mode !== 'always' || !lampOk())) continue; // 非常驻魂龛：只在触发时放冲击环
+      const gg = this.groundG, c = hex(ELEM_C[W_.el] || '#8fe05a'), R = W_.rng, cx = player.x, cy = player.y, k = 0.6;
+      gg.fillStyle(c, 0.09 + 0.03 * Math.sin(t * 2.4)).fillEllipse(cx, cy, R * 2, R * 2 * k);
+      gg.fillStyle(c, 0.06).fillEllipse(cx, cy, R * 1.3, R * 1.3 * k);
+      const n = 24; for (let i = 0; i < n; i++) { if (i % 3 === 2) continue; const a = i / n * Math.PI * 2 + t * 0.5; gg.fillStyle(c, 0.55).fillRect(Math.round(cx + Math.cos(a) * R), Math.round(cy + Math.sin(a) * R * k), 2, 1); }
+      if (rnd() < this.dt * 10) { const a = rf(0, Math.PI * 2), d = Math.sqrt(rnd()) * R; this.em.spore.explode(1, cx + Math.cos(a) * d, cy + Math.sin(a) * d * k - 1); }
+      const ph = (this.auraPh = ((this.auraPh || 0) + this.dt) % 1.2) / 1.2, pr = R * (0.35 + 0.65 * (1 - (1 - ph) ** 2)); gg.lineStyle(1, c, 0.45 * (1 - ph)).strokeEllipse(cx, cy, pr * 2, pr * 2 * k); // 每 1.2 秒从里往外扩一圈，和地上的椭圆同形
+    }
     // 特效线与环
     const fg = this.fxG; fg.clear();
     for (const l of this.lines) { l.life -= dt; if (l.arc) { arcFx(fg, this.glowG, l); continue; } const c = hex(ELEM_C[l.el] || '#ffffff'); fg.fillStyle(c, 1); if (l.jag) jag(fg, l.x1, l.y1, l.x2, l.y2); else { pline(fg, l.x1, l.y1, l.x2, l.y2); fg.fillStyle(0xffffff, 0.8); pline(fg, l.x1, l.y1 - 1, l.x2, l.y2 - 1); } }
