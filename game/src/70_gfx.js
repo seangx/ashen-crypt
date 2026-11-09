@@ -297,7 +297,7 @@ function mkCell(sc, parent, x, y, it, o = {}) {
     else if (it.kind === 'map') T(sc, 1, s - 8, String(it.tier), { size: 'num', color: COL.text, parent: c });
     else if (it.q) T(sc, 1, s - 8, String(it.q), { size: 'num', color: COL.dim, parent: c });
     if (!isMod && o.upg && isUpgrade(it)) img(sc, s - 7, 1, 'up', c);
-    if (it.isNew) rect(sc, 2, 2, 2, 2, COL.ember, 1, c);
+    if (it.isNew) { rect(sc, 0, 0, 13, 10, '#e2553a', 1, c); T(sc, 6.5, 5, '新', { size: 8, color: '#ffffff', align: 'center', valign: 'middle', shadow: false, parent: c }); } // 没看过的：左上角“新”（原来是 2×2 的小点，看不出来）
   } else if (o.ghost) { const g = img(sc, Math.round((s - 14) / 2), Math.round((s - 14) / 2), o.ghost, c); g.setTintFill(hex('#3a3049')); }
   if (o.sel) c.add(nine(sc, -1, -1, s + 2, s + 2, 'f_rar', 2).setTint(hex(COL.emberHi)));
   const hl = rect(sc, 1, 1, s - 2, s - 2, '#ffffff', 0, c);
