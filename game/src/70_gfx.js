@@ -157,7 +157,7 @@ function whirlFx(ground, blade, glow, x, y, R, f, t, eye, ang) { // ang：角色
   for (let j = 0; j < n; j++) {
     const u = n === 1 ? 1 : j / (n - 1), w = R * (0.09 + 0.06 * hr(j + 1) + 0.04 * u), r = R * (0.3 + 0.7 * u) - w, len = 2.3 + 0.7 * hr(j + 7), head = rot - u * 4.2 + (j % 2) * Math.PI + (hr(j + 13) - 0.5) * 1.2;
     for (let s2 = 0; s2 < S; s2++) {
-      const q = s2 / S, tail = (1 - q) ** 1.1, wq = w * Math.min(1, (q + 0.5 / S) / 0.1) ** 0.5 * (1 - q) ** 0.6, b0 = head + q * len, b1 = b0 + len / S + 0.01;
+      const q = s2 / S, tail = (1 - q) ** 1.1, wq = w * Math.min(1, (q + 0.5 / S) / 0.1) ** 0.5 * (1 - q) ** 0.6, b1 = head - q * len, b0 = b1 - len / S - 0.01; // 拖尾朝旋转的反方向（原来拖尾在前，看着像倒着转，用户 11-09）
       g.fillStyle(0x8a1408, 0.6 * tail); band(r - wq, r + wq, b0, b1, g); // 暗红主体（怪下面）
       const G2 = glow || g; G2.fillStyle(0xd83a14, (glow ? 0.4 : 0.6) * tail * (0.7 + 0.3 * f)); band(r - wq * 0.55, r + wq * 0.55, b0, b1, G2); // 橙红芯（叠加：交叠处变亮）
       if (q < 0.45) { G2.fillStyle(0xffe0a8, 0.75 * (1 - q / 0.45)); band(r + wq * 0.55, r + wq, b0, b1, G2); } // 刀头外沿一条细亮弧
@@ -174,7 +174,7 @@ function devilFx(ground, glow, x, y, r, t, seed, a = 1) {
   for (let l = 0; l < L; l++) {
     const f = l / (L - 1), cy = y - 1 - f * h, cx = x + Math.sin(t * 5 + f * 2.5 + seed) * r * 0.2 * f, rx = r * (0.4 + 0.9 * f), w = 2.5 + f * 3, a0 = -t * (16 - f * 4) + seed + l * 1.9, arc = 3.6, S = 14;
     for (let s = 0; s < S; s++) {
-      const q = s / S, k = (1 - q) ** 0.8 * a, ww = Math.max(0.6, w * (1 - q * 0.7)), b0 = a0 + q * arc, b1 = b0 + arc / S;
+      const q = s / S, k = (1 - q) ** 0.8 * a, ww = Math.max(0.6, w * (1 - q * 0.7)), b1 = a0 - q * arc, b0 = b1 - arc / S; // 拖尾朝旋转的反方向（和大旋风一致）
       glow.fillStyle(0xa01208, 0.45 * k); band(cx, cy, rx - ww * 1.6, rx - ww, 0.35, b0, b1);
       glow.fillStyle(0xff3c10, 0.8 * k); band(cx, cy, rx - ww, rx - ww * 0.3, 0.35, b0, b1);
       glow.fillStyle(0xffc070, 0.95 * k); band(cx, cy, rx - ww * 0.3, rx, 0.35, b0, b1);
