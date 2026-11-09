@@ -381,60 +381,129 @@ class MobileUI extends UI {
     mkCard(this, c, 10, y, u, w - 20);
   }
   /* 天赋：复用星图，窄屏默认收起两侧栏 */
-  /* 天赋：专精（mastery-v1）。顶栏点数 / 洗点 / 汇总 → 专精页签 → 专精条 → 被动 / 大天赋列表，每行 [−][+] */
+  /* 天赋：专精（mastery-v1；交互按 11-09 设计稿）。顶栏 洗点 / 汇总 → 可用点数 → 两个专精切换 → 可滚动的档位阶梯（专精条卡 + 1/5/10/15/20 档的被动、大天赋卡）→ 底部汇总条；点卡片出底部抽屉（现在 / 下一级 / −1 加满 +1） */
   win_tree(c, w, h) {
-    const m = mstS(), pts = treePoints(), R = () => { refreshStats(); save(); this.refresh(); }, slots = MST.picks[MST.picks.length - 1][1];
-    T(this, 12, 12, `天赋点 ${pts} · 已点 ${mstSpent()}`, { size: 8, color: pts ? COL.good : COL.emberHi, parent: c });
-    mkBtn(this, c, w - 120, 6, 52, 22, '洗点', () => this.ask('洗点：退回全部天赋点？', () => { const n = mstSpent(); mstReset(); sfx('craft'); toast(`退回 ${n} 点，可以重新分配`, COL.emberHi); R(); }, '洗点', '专精保留，点数全部退回。免费。'), { size: 8, disabled: !mstSpent(), whyDisabled: '还没有点天赋' });
-    mkBtn(this, c, w - 64, 6, 52, 22, '汇总', () => this.showLines(this.mstSummary(), m.picks.map(mid => ({ l: `换掉${MST_BY[mid].n}`, fn: () => this.ask(`换掉专精：${MST_BY[mid].n}？`, () => { mstUnpick(mid); this.mstTab = null; R(); }, '换掉', '它上面的点数全部退回，之后可以选别的专精。') }))), { size: 8 });
-    let y = 34; const tw = Math.floor((w - 24 - (slots - 1) * 4) / slots);
+    const m = mstS(), pts = treePoints(), slots = MST.picks[MST.picks.length - 1][1], R = () => { refreshStats(); save(); this.refresh(); };
+    T(this, 12, 6, '天赋', { size: 12, scale: 2, parent: c });
+    mkBtn(this, c, w - 112, 6, 52, 28, '洗点', () => this.ask('洗点：退回全部天赋点？', () => { const n = mstSpent(); mstReset(); sfx('craft'); toast(`退回 ${n} 点，可以重新分配`, COL.emberHi); R(); }, '退回', '专精保留，点数全部退回。免费。'), { size: 8, disabled: !mstSpent(), whyDisabled: '还没有点天赋' });
+    mkBtn(this, c, w - 56, 6, 44, 28, '汇总', () => this.showLines(this.mstSummary(), m.picks.map(mid => ({ l: `换掉${MST_BY[mid].n}`, fn: () => this.ask(`换掉专精：${MST_BY[mid].n}？`, () => { mstUnpick(mid); this.mstTab = null; R(); }, '换掉', '它上面的点数全部退回，之后可以选别的专精。') }))), { size: 8 });
+    // 可用点数（黄底 = 还有点没花）+ 已点
+    const pw = textW(`可用 ${pts} 点`, 12) + 16; rect(this, 12, 40, pw, 18, pts ? '#ffd23a' : '#1b2042', 1, c); T(this, 12 + pw / 2, 49, `可用 ${pts} 点`, { size: 12, color: pts ? '#2a1d00' : COL.dim, align: 'center', valign: 'middle', shadow: false, parent: c });
+    T(this, 20 + pw, 44, `已点 ${mstSpent()} / ${Math.max(0, (S.level || 1) - 1)}`, { size: 8, color: COL.dim, parent: c });
+    // 专精切换
     if (!m.picks.includes(this.mstTab)) this.mstTab = m.picks[0] || null;
-    for (let i = 0; i < slots; i++) { const mid = m.picks[i], M = MST_BY[mid], x = 12 + i * (tw + 4);
-      if (M) mkBtn(this, c, x, y, tw, 26, M.n, () => { this.mstTab = mid; this.refresh(); }, { size: 8, style: this.mstTab === mid ? 's' : 'n', color: M.c });
-      else if (i >= mstPickMax()) { const lv = (MST.picks.find(([, k]) => k > i) || [99])[0]; mkBtn(this, c, x, y, tw, 26, `Lv${lv} 开放`, () => {}, { size: 8, disabled: true, whyDisabled: `第 ${i + 1} 个专精 Lv${lv} 开放` }); }
-      else { const why = mstWhy('pick', '__', 1); mkBtn(this, c, x, y, tw, 26, why && why !== '先选这个专精' ? why.replace(/^第 \d 个专精 /, '') : '＋ 选专精', () => { this.mstTab = null; this.refresh(); }, { size: 8, style: !this.mstTab ? 'w' : 'n', disabled: !!why && why !== '先选这个专精', whyDisabled: why || '' }); } }
-    y += 32; const M = MST_BY[this.mstTab];
-    if (!M) { // 选专精：6 张卡片
-      T(this, 12, y, m.picks.length ? '选第 2 个专精（换专精要先退掉现在的）' : '选你的第 1 个专精（Lv10 再选第 2 个）', { size: 8, color: COL.dim, parent: c }); y += 14;
-      const ch = Math.floor((h - y - 8) / 6);
-      MASTERY.forEach((X, i) => { const yy = y + i * ch, taken = m.picks.includes(X.id), b = mkBtn(this, c, 12, yy, w - 24, ch - 4, '', () => this.ask(`选择专精：${X.n}？`, () => { mstDo('pick', X.id, 1); this.mstTab = X.id; sfx('craft'); R(); }, '选择', `大天赋：${X.keys.map(k => k.n).join('、')}`), { size: 8, disabled: taken, whyDisabled: '已选' });
-        T(this, 10, 5, X.n, { color: X.c, parent: b }); T(this, 10, 20, wrapText('大天赋：' + X.keys.map(k => k.n).join('、'), w - 48, 8)[0], { size: 8, color: COL.dim, parent: b }); });
-      return;
-    }
-    // 专精条
-    const b = mstBar(M.id), bw = w - 24 - 76;
-    T(this, 12, y + 2, `${M.n} · 专精条 ${b}/${MST.barMax}`, { size: 8, color: M.c, parent: c });
-    rect(this, 12, y + 15, bw, 6, '#1a1426', 1, c); if (b) rect(this, 12, y + 15, Math.round(bw * b / MST.barMax), 6, M.c, 1, c);
-    for (const t of [...new Set([...MST.tiers.pass, ...MST.tiers.key, MST.tiers.elemBar])]) rect(this, 12 + Math.round(bw * t / MST.barMax) - 1, y + 13, 1, 10, b >= t ? '#ffffff' : '#5a5070', 1, c); // 档位刻度
+    const tw = Math.floor((w - 24 - 6) / slots);
+    for (let i = 0; i < slots; i++) { const mid = m.picks[i], M = MST_BY[mid], x = 12 + i * (tw + 6);
+      if (M) { const sp = mstBar(mid) + M.pass.reduce((a, q) => a + mstRank(q.id), 0) + M.keys.filter(k => mstHas(k.id)).length;
+        mkBtn(this, c, x, 64, tw, 30, `${M.n}  ${sp}点`, () => { this.mstTab = mid; this.mstScroll = 0; this.refresh(); }, { size: 12, style: this.mstTab === mid ? 's' : 'n', color: this.mstTab === mid ? COL.text : COL.dim }); }
+      else if (i >= mstPickMax()) { const lv = (MST.picks.find(([, k]) => k > i) || [99])[0]; mkBtn(this, c, x, 64, tw, 30, `Lv${lv} 开放`, () => {}, { size: 8, disabled: true, whyDisabled: `第 ${i + 1} 个专精 Lv${lv} 开放` }); }
+      else mkBtn(this, c, x, 64, tw, 30, '＋ 选专精', () => { this.mstTab = null; this.refresh(); }, { size: 12, style: this.mstTab ? 'n' : 'w' }); }
+    const top = 100, M = MST_BY[this.mstTab];
+    if (!M) return this.mstPickList(c, w, h, top);
+    // 底部汇总条
+    const add = {}; for (const part of masteryParts()) for (const k in part.add || {}) add[k] = (add[k] || 0) + part.add[k];
+    const sb = h - 40; mkBtn(this, c, 12, sb, w - 24, 32, '', () => this.showLines(this.mstSummary()), { size: 8 });
+    T(this, 22, sb + 4, '加成汇总（点开看全部）', { size: 8, color: COL.dim, parent: c });
+    T(this, 22, sb + 16, wrapText(mstLines(add).slice(0, 3).join(' · ') || '还没有加成', w - 56, 8)[0], { size: 8, parent: c });
+    // 档位阶梯（可滚动）
+    const vh = sb - 6 - top, lc = this.add.container(0, top); c.add(lc);
+    const mg = this.make.graphics({ add: false }); mg.fillStyle(0xffffff).fillRect(c.x, c.y + top, w, vh); lc.setMask(mg.createGeometryMask()); c.once('destroy', () => mg.destroy());
+    const cw = w - 24, b = mstBar(M.id), tap = fn => () => { const p = this.input.activePointer; if (this.mstDrag && this.mstDrag.moved) return; if (p && (p.worldY < c.y + top || p.worldY > c.y + top + vh)) return; fn(); };
+    let y = 0;
+    // 专精条卡
+    rect(this, 12, y, cw, 64, '#1b2042', 1, lc); const g0 = this.add.graphics(); lc.add(g0); g0.lineStyle(1, 0x2e3670).strokeRect(12.5, y + 0.5, cw - 1, 63);
+    T(this, 20, y + 5, '专精条 · 到刻度解锁下一档', { size: 8, color: COL.dim, parent: lc });
+    T(this, 20, y + 17, `${b}`, { size: 12, scale: 2, color: M.c, parent: lc }); T(this, 20 + textW(`${b}`, 12) * 2 + 4, y + 25, `/ ${MST.barMax}`, { size: 8, color: COL.dim, parent: lc });
     const pm = (kind, id, x, yy) => { const wm = mstWhy(kind, id, -1), wp = mstWhy(kind, id, 1);
-      mkBtn(this, c, x, yy, 30, 28, '−', () => { if (mstDo(kind, id, -1)) R(); }, { disabled: !!wm, whyDisabled: wm || '' });
-      mkBtn(this, c, x + 34, yy, 30, 28, '+', () => { if (mstDo(kind, id, 1)) { sfx('click'); R(); } }, { style: wp ? 'n' : 'w', disabled: !!wp, whyDisabled: wp || '' }); };
-    pm('bar', M.id, w - 76, y);
-    const bl = mstLines(M.bar, Math.max(1, b)).slice(0, 3).join('，');
-    T(this, 12, y + 26, wrapText((b ? '' : '每点：') + bl, w - 24, 8)[0], { size: 8, color: COL.faint, parent: c });
-    y += 40;
-    // 被动 / 大天赋 分页
-    const sub = this.mstSub || 'pass', hw = Math.floor((w - 28) / 2);
-    [['pass', `被动 ${M.pass.length}`], ['key', `大天赋 ${M.keys.length}`]].forEach(([k, n], i) => mkBtn(this, c, 12 + i * (hw + 4), y, hw, 24, n, () => { this.mstSub = k; this.refresh(); }, { size: 8, style: sub === k ? 's' : 'n' }));
-    y += 30; const rh = Math.min(36, Math.floor((h - y - 4) / Math.max(M.pass.length, M.keys.length)));
-    if (sub === 'pass') M.pass.forEach((p, i) => { const yy = y + i * rh, r = mstRank(p.id), lock = mstBar(M.id) < p.tier;
-      const zr = rect(this, 12, yy, w - 92, rh - 3, '#000000', 0.001, c).setInteractive(); zr.on('pointerup', () => this.showLines([{ t: `${p.n}  ${r}/${MST.passMax} 级`, c: M.c }, { t: '1 级：' + (mstLines(p.add, 1 / MST.passRef).join('，') || '—') + '\n' + MST.passRef + ' 级：' + mstLines(p.add, 1).join('，') + '\n' + MST.passMax + ' 级：' + mstLines(p.add, MST.passMax / MST.passRef).join('，'), s: 8 }, r ? { t: '现在：' + mstLines(p.add, r / MST.passRef).join('，'), s: 8, c: COL.good } : null, { t: `专精条 ${p.tier} 点解锁`, s: 8, c: COL.dim }].filter(Boolean)));
-      T(this, 12, yy + 2, `${p.n}  ${r}/${MST.passMax}`, { size: 8, color: lock ? COL.faint : r ? COL.emberHi : COL.text, parent: c });
-      T(this, 12, yy + 15, wrapText(lock ? `专精条 ${p.tier} 点解锁` : mstLines(p.add, Math.max(1, r) / MST.passRef).join('，'), w - 96, 8)[0], { size: 8, color: lock ? COL.faint : COL.dim, parent: c });
-      pm('pass', p.id, w - 76, yy); });
-    else M.keys.forEach((k, i) => { const yy = y + i * rh, on = mstHas(k.id), wp = mstWhy('key', k.id, 1), wm = mstWhy('key', k.id, -1);
-      const zr = rect(this, 12, yy, w - 76, rh - 3, '#000000', 0.001, c).setInteractive(); zr.on('pointerup', () => this.showLines([{ t: k.n + (on ? '（已点）' : ''), c: M.c }, { t: k.d, s: 8 }, { t: `专精条 ${k.tier} 点${k.need ? `，${MPASS[k.need].n} ${MST.keyNeed} 级` : ''}`, s: 8, c: COL.dim }]));
-      T(this, 12, yy + 2, k.n + (k.elem ? ' · 元素' : ''), { size: 8, color: on ? COL.emberHi : wp && !on ? COL.faint : COL.text, parent: c });
-      T(this, 12, yy + 15, wrapText(!on && wp ? wp : k.d, w - 92, 8)[0], { size: 8, color: !on && wp ? COL.faint : COL.dim, parent: c });
-      mkBtn(this, c, w - 64, yy, 52, 28, on ? '退回' : '点亮', () => { if (mstDo('key', k.id, on ? -1 : 1)) { sfx('craft'); R(); } }, { size: 8, style: on ? 'n' : 'w', disabled: on ? !!wm : !!wp, whyDisabled: (on ? wm : wp) || '' }); });
+      mkBtn(this, lc, x, yy, 30, 28, '−', tap(() => { if (mstDo(kind, id, -1)) R(); }), { disabled: !!wm, whyDisabled: wm || '' });
+      mkBtn(this, lc, x + 34, yy, 30, 28, '+', tap(() => { if (mstDo(kind, id, 1)) { sfx('click'); R(); } }), { style: wp ? 'n' : 'w', disabled: !!wp, whyDisabled: wp || '' }); };
+    pm('bar', M.id, w - 84, y + 8);
+    const tx = 20, tW = cw - 16, ty = y + 42; rect(this, tx, ty, tW, 4, '#10132a', 1, lc); if (b) rect(this, tx, ty, Math.round(tW * b / MST.barMax), 4, M.c, 1, lc);
+    for (const t of [1, 5, 10, 15, 20]) { const xx = tx + Math.round(tW * t / MST.barMax) - 1; rect(this, xx, ty - 3, 1, 10, b >= t ? '#e8ebf7' : '#3a4280', 1, lc); }
+    T(this, 20, y + 50, wrapText(mstLines(M.bar, Math.max(1, b)).slice(0, 3).join('，') + (b ? '' : '（每点）'), cw - 16, 8)[0], { size: 8, color: COL.faint, parent: lc });
+    y += 72;
+    // 各档
+    const col2 = Math.floor((cw - 6) / 2), ch = 60;
+    for (const t of [1, 5, 10, 15, 20]) {
+      const locked = b < t, items = [...M.pass.filter(p => p.tier === t).map(p => ['pass', p]), ...M.keys.filter(k => k.tier === t).map(k => ['key', k])];
+      if (!items.length) continue;
+      const gd = this.add.graphics(); lc.add(gd); gd.fillStyle(locked ? 0x1b2042 : hex(M.c)).fillCircle(22, y + 9, 9); if (locked) gd.lineStyle(1, 0x3a4280).strokeCircle(22, y + 9, 9);
+      T(this, 22, y + 9, String(t), { size: 8, color: locked ? COL.faint : '#10132a', align: 'center', valign: 'middle', shadow: false, parent: lc });
+      T(this, 36, y + 3, `专精条 ${t} 点`, { size: 12, color: locked ? COL.faint : COL.text, parent: lc });
+      const chip = locked ? `还差 ${t - b} 点` : '已解锁', cwid = textW(chip, 8) + 12;
+      rect(this, 12 + cw - cwid, y + 2, cwid, 14, locked ? '#1b2042' : M.c, 1, lc); T(this, 12 + cw - cwid / 2, y + 9, chip, { size: 8, color: locked ? COL.dim : '#10132a', align: 'center', valign: 'middle', shadow: false, parent: lc });
+      y += 22;
+      items.forEach(([kind, o], i) => { const x = 12 + (i % 2) * (col2 + 6), yy = y + Math.floor(i / 2) * (ch + 6);
+        const isP = kind === 'pass', r = isP ? mstRank(o.id) : 0, on = !isP && mstHas(o.id), can = !mstWhy(kind, o.id, 1) && !on;
+        const lit = isP ? r > 0 : on, bd = locked ? 0x2e3670 : lit ? hex(M.c) : can ? 0xffd23a : 0x2e3670;
+        const bg = rect(this, x, yy, col2, ch, lit ? '#1d2c55' : locked ? '#141834' : '#1b2042', 1, lc).setInteractive();
+        bg.on('pointerup', tap(() => this.mstSheet(kind, o.id)));
+        const gb = this.add.graphics(); lc.add(gb); gb.lineStyle(1, bd, locked ? 0.7 : 1).strokeRect(x + 0.5, yy + 0.5, col2 - 1, ch - 1);
+        T(this, x + 7, yy + 5, o.n, { size: 12, color: locked ? COL.faint : isP ? COL.text : '#ffe27a', parent: lc });
+        const badge = isP ? '被动' : o.elem ? '元素' : '大天赋', bw2 = textW(badge, 8) + 8;
+        rect(this, x + col2 - bw2 - 5, yy + 6, bw2, 12, isP ? '#10132a' : o.elem ? '#9fe0d6' : '#ffd23a', 1, lc); T(this, x + col2 - bw2 / 2 - 5, yy + 12, badge, { size: 8, color: isP ? COL.dim : '#2a1d00', align: 'center', valign: 'middle', shadow: false, parent: lc });
+        if (isP) { for (let k = 0; k < MST.passMax; k++) rect(this, x + 7 + k * 11, yy + 25, 9, 4, k < r ? M.c : '#2e3670', 1, lc); T(this, x + 7 + MST.passMax * 11 + 3, yy + 22, `${r}/${MST.passMax}`, { size: 8, color: COL.dim, parent: lc }); }
+        else T(this, x + 7, yy + 21, on ? '已点亮' : o.need ? `挂在 ${MPASS[o.need].n} 3 级${mstRank(o.need) >= MST.keyNeed ? ' ✓' : `（现 ${mstRank(o.need)}）`}` : '不挂被动', { size: 8, color: on || (o.need && mstRank(o.need) >= MST.keyNeed) ? COL.good : COL.dim, parent: lc });
+        const eff = isP ? (r ? mstLines(o.add, r / MST.passRef).join('，') : '每级 ' + (mstLines(o.add, 1 / MST.passRef).join('，') || '—')) : o.d;
+        TW(this, x + 7, yy + 34, wrapText(eff, col2 - 14, 8).slice(0, 2).join('\n'), col2 - 14, { size: 8, color: locked ? COL.faint : COL.dim, parent: lc }); });
+      y += Math.ceil(items.length / 2) * (ch + 6) + 6;
+    }
+    // 滚动：在阶梯区域上下拖
+    const max = Math.max(0, y - vh); this.mstScroll = clamp(this.mstScroll || 0, 0, max); lc.y = top - this.mstScroll;
+    this.mstVP = { top: c.y + top, bot: c.y + top + vh, max, lc, base: top };
+    if (!this._mstDragInit) { this._mstDragInit = 1;
+      this.input.on('pointerdown', p => { const V = this.mstVP; this.mstDrag = this.winId === 'tree' && V && p.worldY >= V.top && p.worldY <= V.bot ? { y: p.worldY, s: this.mstScroll || 0, moved: false } : null; });
+      this.input.on('pointermove', p => { const D = this.mstDrag, V = this.mstVP; if (!D || !p.isDown || this.winId !== 'tree' || !V || !V.lc.scene) return; const dy = p.worldY - D.y; if (Math.abs(dy) > 6) D.moved = true; if (!D.moved) return; this.mstScroll = clamp(D.s - dy, 0, V.max); V.lc.y = V.base - this.mstScroll; });
+      this.input.on('pointerup', () => { const D = this.mstDrag; if (D) setTimeout(() => { if (this.mstDrag === D) this.mstDrag = null; }, 0); }); }
+  }
+  // 选专精：6 张卡，点开底部抽屉看详情再选
+  mstPickList(c, w, h, top) {
+    const m = mstS(); T(this, 12, top, m.picks.length ? '选第 2 个专精' : '选第 1 个专精（Lv10 再选第 2 个）', { size: 8, color: COL.dim, parent: c });
+    const cw = Math.floor((w - 24 - 6) / 2), ch = Math.min(84, Math.floor((h - top - 20) / 3) - 6);
+    MASTERY.forEach((X, i) => { const x = 12 + (i % 2) * (cw + 6), y = top + 14 + Math.floor(i / 2) * (ch + 6), taken = m.picks.includes(X.id);
+      const bg = rect(this, x, y, cw, ch, taken ? '#141834' : '#1b2042', 1, c).setInteractive(); bg.on('pointerup', () => { if (!taken) this.mstSheet('pick', X.id); });
+      const g = this.add.graphics(); c.add(g); g.lineStyle(1, taken ? 0x2e3670 : hex(X.c)).strokeRect(x + 0.5, y + 0.5, cw - 1, ch - 1);
+      T(this, x + 8, y + 6, X.n + (taken ? '（已选）' : ''), { size: 12, color: taken ? COL.faint : X.c, parent: c });
+      TW(this, x + 8, y + 24, wrapText(mstLines(X.bar, 1).slice(0, 2).join('，') + ' / 点', cw - 16, 8).slice(0, 2).join('\n'), cw - 16, { size: 8, color: COL.dim, parent: c });
+      TW(this, x + 8, y + ch - 24, wrapText('大天赋：' + X.keys.map(k => k.n).join('、'), cw - 16, 8).slice(0, 2).join('\n'), cw - 16, { size: 8, color: COL.faint, parent: c }); });
+  }
+  // 底部抽屉：被动（现在 / 下一级 / −1 加满 +1）、大天赋（效果 / 条件 / 点亮或退回）、选专精
+  mstSheet(kind, id) {
+    this.closePopup(); hideTip();
+    const c = this.add.container(0, 0).setDepth(250), R = () => { refreshStats(); save(); this.refresh(); this.mstSheet(kind, id); }; this.popC = c;
+    rect(this, 0, 0, W, H, COL.ink, 0.6, c).setInteractive().on('pointerup', () => this.closePopup());
+    const pw = W - 16, inner = this.add.container(16, 0); let y = 0; const L = (t, o = {}) => { const tt = TW(this, 0, y, t, pw - 16, { size: o.size || 8, color: o.color || COL.text, parent: inner }); y += tt.h + (o.gap ?? 6); };
+    const acts = [];
+    if (kind === 'pick') { const X = MST_BY[id];
+      L(X.n, { size: 12, color: X.c, gap: 4 }); L(`${X.pass.length} 个被动 · ${X.keys.length} 个大天赋`, { color: COL.dim });
+      L('专精条每点：' + mstLines(X.bar, 1).slice(0, 4).join('，'));
+      L('大天赋：' + X.keys.map(k => k.n).join('、'), { color: '#ffe27a' });
+      acts.push({ l: `选择 ${X.n}`, style: 'w', fn: () => { mstDo('pick', id, 1); this.mstTab = id; this.mstScroll = 0; sfx('craft'); refreshStats(); save(); this.refresh(); this.closePopup(); }, keep: 1 }); }
+    else if (kind === 'pass') { const p = MPASS[id], M = MST_BY[p.m], r = mstRank(id), wp = mstWhy('pass', id, 1), wm = mstWhy('pass', id, -1);
+      L(`被动 · 专精条 ${p.tier} 点解锁`, { color: COL.dim, gap: 2 }); L(`${p.n}   ${r} / ${MST.passMax} 级`, { size: 12, color: M.c });
+      L(r ? `现在：${mstLines(p.add, r / MST.passRef).join('，')}` : '现在：还没有点', { color: COL.dim });
+      if (r < MST.passMax) L(`下一级：${mstLines(p.add, (r + 1) / MST.passRef).join('，')}`, { color: '#ffd23a' });
+      if (wp && r < MST.passMax) L(wp, { color: '#ffb27a' }); if (wm && r) L('不能退：' + wm, { color: '#ffb27a' });
+      const room = () => Math.min(MST.passMax - mstRank(id), treePoints());
+      acts.push({ l: '−1', fn: () => { if (mstDo('pass', id, -1)) R(); }, disabled: !!wm, why: wm, keep: 1 }, { l: '加满', fn: () => { let n = room(); while (n-- > 0 && mstDo('pass', id, 1)); sfx('click'); R(); }, disabled: !!wp, why: wp, keep: 1 }, { l: '+1 点', style: 'w', fn: () => { if (mstDo('pass', id, 1)) { sfx('click'); R(); } }, disabled: !!wp, why: wp, keep: 1, wide: 1 }); }
+    else { const k = MKEY[id], M = MST_BY[k.m], on = mstHas(id), wp = mstWhy('key', id, 1), wm = mstWhy('key', id, -1);
+      L(`${k.elem ? '元素大天赋' : '大天赋'} · 专精条 ${k.tier} 点解锁`, { color: COL.dim, gap: 2 }); L(`${k.n}   ${on ? '已点亮' : '未点亮'}`, { size: 12, color: '#ffe27a' });
+      L(k.d); L(`条件：专精条 ${k.tier} 点${k.need ? `，${MPASS[k.need].n} ${MST.keyNeed} 级` : ''}；花 1 点`, { color: COL.dim });
+      if (!on && wp) L(wp, { color: '#ffb27a' });
+      acts.push(on ? { l: '退回（返还 1 点）', fn: () => { if (mstDo('key', id, -1)) R(); }, disabled: !!wm, why: wm, keep: 1, wide: 1 } : { l: '点亮（花 1 点）', style: 'w', fn: () => { if (mstDo('key', id, 1)) { sfx('craft'); R(); } }, disabled: !!wp, why: wp, keep: 1, wide: 1 }); }
+    const ph = y + 64, py = H - NAV_H - ph;
+    c.add(this.add.tileSprite(8, py, pw, ph + 8, 'n_win').setOrigin(0)); const fr = nine(this, 8, py, pw, ph + 8, 'o_frame', 8).setInteractive(); c.add(fr);
+    rect(this, W / 2 - 16, py + 4, 32, 3, '#3a4280', 1, c); inner.y = py + 14; c.add(inner);
+    const all = [...acts, { l: '关闭' }], wide = all.filter(a => a.wide).length, unit = Math.floor((pw - 16 - (all.length - 1) * 4) / (all.length + wide)); let bx = 16;
+    all.forEach(a => { const bw = unit * (a.wide ? 2 : 1); mkBtn(this, c, bx, py + ph - 38, bw, 30, a.l, () => { if (!a.keep) this.closePopup(); if (a.fn) a.fn(); }, { size: a.wide ? 12 : 8, style: a.style || 'n', disabled: !!a.disabled, whyDisabled: a.why || '' }); bx += bw + 4; });
   }
   mstSummary() {
     const m = mstS(), L = [{ t: `天赋汇总 · 已点 ${mstSpent()} / ${Math.max(0, S.level - 1)}`, c: COL.emberHi }];
     if (!m.picks.length) return [...L, { t: '还没有选专精', s: 8, c: COL.dim }];
     const add = {}; for (const part of masteryParts()) for (const k in part.add || {}) add[k] = (add[k] || 0) + part.add[k];
-    L.push({ t: mstLines(add).join('，') || '（还没有加成）', s: 8 });
+    L.push({ t: mstLines(add).join('\n') || '（还没有加成）', s: 8 });
     const keys = Object.keys(m.key).map(id => MKEY[id]).filter(Boolean);
-    if (keys.length) keys.forEach(k => L.push({ t: `【${k.n}】${k.d}`, s: 8, c: COL.good }));
+    keys.forEach(k => L.push({ t: `【${k.n}】${k.d}`, s: 8, c: COL.good }));
     L.push({ t: '换专精：点下面的“换掉”，那个专精上的点数全部退回。', s: 8, c: COL.dim });
     return L;
   }
