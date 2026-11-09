@@ -304,7 +304,7 @@ const dollSig = eq => ['wl', 'wr', 'shield', 'core', 'engine'].map(k => eq[k] ? 
 // 画出一帧纸娃娃（outline 后的画布）
 // view：0 正面，1 侧面，2 背面（旋风斩转身用）。侧面把身子压窄、脸只露一只眼在边上；背面盖住脸、两手的武器前后对调
 const DOLL_SIDE = r => (r.slice(2, 10) + '').padEnd(8, '.');
-function dollCanvas(eq, fr, view = 0) {
+function dollCanvas(eq, fr, view = 0, noMain = false) { // noMain：正面不画主手武器（战场上武器是单独一张图，跟着出手方向转）
   const c = document.createElement('canvas'); c.width = DOLL_W; c.height = DOLL_H; const x = c.getContext('2d');
   const put = (img, dx, dy, alpha = 1) => { x.globalAlpha = alpha; x.drawImage(img, dx, dy); x.globalAlpha = 1; };
   // 盾：背在身后
@@ -320,8 +320,19 @@ function dollCanvas(eq, fr, view = 0) {
   const hr = hd[['f', 's', 'b'][view]]; // 戴了头冠：身子不画头，整颗换掉
   const body = hr ? rows.map((r, j) => j <= 5 ? '.'.repeat(r.length) : r) : rows, bx = view === 1 ? DOLL_OX + 1 : DOLL_OX - 1;
   put(sprite(recolor(body, { F: boots, G: 'p', b: 'w' })), bx, DOLL_OY - 1);
-  if (view === 0) held(eq.wl, 'front', 1); else if (view === 2) held(eq.wr, 'front', 1);
+  if (view === 0) { if (!noMain) held(eq.wl, 'front', 1); } else if (view === 2) held(eq.wr, 'front', 1);
   else if (eq.wl) { const h = HELD[eq.wl.b]; if (h) { const [wr, ax, ay] = h; put(sprite(wr), DOLL_OX + 9 - ax, DOLL_OY + 7 - ay - 1); } } // 侧面：武器伸在身前
   if (hr) put(sprite(hr, undefined, null, hd.pal), DOLL_W / 2 - hr[0].length / 2 - 1, DOLL_OY + 5 - hr.length); // 头最后画，武器不挡脸
   return c;
+}
+// 主手武器单独的图：战场上画大一点（WPN_SCALE 倍），握把对准前手，枪口朝出手方向
+// base：图里武器本来指的方向（握把 → 武器重心），转的时候减掉；朝左时用左右镜像的那张，武器不会倒过来
+const WPN_SCALE = 1.5;
+function heldWeapon(b) {
+  const h = HELD[b]; if (!h) return null;
+  const [rows, ax, ay] = h, cv = sprite(rows), w = cv.width, hh = cv.height;
+  let sx = 0, sy = 0, n = 0; rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.') { sx += i; sy += j; n++; } }));
+  const dx = sx / n - ax, dy = sy / n - ay, base = Math.hypot(dx, dy) < 0.5 ? 0 : Math.atan2(dy, dx);
+  const fl = document.createElement('canvas'); fl.width = w; fl.height = hh; const x = fl.getContext('2d'); x.translate(w, 0); x.scale(-1, 1); x.drawImage(cv, 0, 0);
+  return { cv, fl, ox: (ax + 1.5) / w, oy: (ay + 1.5) / hh, oxF: (w - ax - 1.5) / w, base, baseF: Math.PI - base };
 }

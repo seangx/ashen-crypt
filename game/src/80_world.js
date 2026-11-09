@@ -184,8 +184,9 @@ class World extends Phaser.Scene {
     if (sig !== this.dollSig) { // 装备变了：重画纸娃娃
       this.dollSig = sig; this.dollN = (this.dollN || 0) + 1;
       const putTex = (key, cv) => { const t = this.textures.exists(key) && this.textures.get(key); if (t && t.context && t.width === cv.width && t.height === cv.height) { t.context.clearRect(0, 0, t.width, t.height); t.context.drawImage(cv, 0, 0); t.refresh(); return; } if (t) this.textures.remove(key); this.textures.addCanvas(key, cv); }; // 原地重画：残影、转身残像还拿着这些贴图，删掉重建会让它们读到空纹理崩溃
-      for (const f of [0, 1]) { const cv = dollCanvas(S.equip, f); for (const [k, c] of [['doll_', cv], ['doll_fl_', silhouette(cv, '#ffffff')]]) { const key = k + f; putTex(key, c); } }
+      for (const f of [0, 1]) { const cv = dollCanvas(S.equip, f, 0, true); for (const [k, c] of [['doll_', cv], ['doll_fl_', silhouette(cv, '#ffffff')]]) { const key = k + f; putTex(key, c); } }
       for (const v of [1, 2]) putTex('doll_v' + v, dollCanvas(S.equip, 0, v)); // 转身用的侧面、背面
+      this.wpn = S.equip.wl ? heldWeapon(S.equip.wl.b) : null; if (this.wpn) { putTex('wpn', this.wpn.cv); putTex('wpn_f', this.wpn.fl); }
       this.hero.setTexture('doll_0'); if (this.heroCS && this.heroCS.cs) this.heroCS.cs.setTexture('doll_0'); G.ui && G.ui.dollChanged && G.ui.dollChanged(); // 影子也要换到新纹理，旧的已经删掉
     }
     // 旋风斩转身：正 → 侧 → 背 → 另一侧，一圈 4 帧；身后拖两个旧帧的淡残影
@@ -194,6 +195,17 @@ class World extends Phaser.Scene {
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
     if (player.chill > 0) this.hero.setTint(0xb8e6ff); else if (this.hero.isTinted) this.hero.clearTint(); // 角色被冰缓
     this.hero.setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(ySort(player.y)).setAlpha(player.dashT > 0 ? 0.5 : 1);
+    // 主手武器：单独一张图，握把在前手，朝最近一次出手的方向转（没出手时平端朝面向）；出手瞬间往后顶一下；旋风斩转身时藏起来（侧面、背面图里自带武器）
+    if (!this.heroW) { this.heroW = this.add.image(0, 0, 'px').setScale(WPN_SCALE); this.wA = 0; }
+    { const wp = this.wpn, hw = this.heroW, on = !!wp && !this.spinRate; hw.setVisible(on);
+      if (on) {
+        const at = AIM_HOLD - (player.aimT || 0), tgt = player.aimT > 0 ? player.aimA : player.face < 0 ? Math.PI : 0;
+        let d = tgt - this.wA; d = Math.atan2(Math.sin(d), Math.cos(d)); this.wA += d * Math.min(1, dt * 22);
+        const L = Math.cos(this.wA) < 0, kick = at < 0.08 ? 1.5 * (1 - at / 0.08) : 0, hx = player.x + (player.face < 0 ? -3.5 : 3.5) - Math.cos(this.wA) * kick, hy = player.y - 8 + (this.spinRate ? 0 : bob) - Math.sin(this.wA) * kick;
+        hw.setTexture(L ? 'wpn_f' : 'wpn').setOrigin(L ? wp.oxF : wp.ox, wp.oy).setRotation(this.wA - (L ? wp.baseF : wp.base)).setPosition(hx, hy)
+          .setDepth(ySort(player.y) + (Math.sin(this.wA) < -0.6 ? -0.001 : 0.001)).setAlpha(player.dashT > 0 ? 0.5 : 1); // 朝上举时放到身后
+        if (player.fbT > 0.12) hw.setTintFill(0xffffff); else if (player.chill > 0) hw.setTint(0xb8e6ff); else if (hw.isTinted) hw.clearTint();
+      } }
     if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x7a2a1a));
     this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(-ph * Math.PI / 2 - i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
     this.heroSh.setPosition(player.x, player.y + 1);
