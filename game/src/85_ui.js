@@ -116,10 +116,8 @@ function baseLines(it) {
   const b = baseOf(it), q = it.q, out = [], dim = '#b8afc4';
   if (it.kind === 'gem') return gemLines(it);
   if (it.kind === 'weapon') { // 主手只给数值（spec-skill-gems）：类别、对口、暴击；伤害按技能石算
-    const cat = GEMC.cats[b.cat], g = S.equip.gem, sk = skillItem({ ...S.equip, wl: it }), sb = sk ? sk.fb : null;
+    const cat = GEMC.cats[b.cat], sk = skillItem({ ...S.equip, wl: it, gem: basicGem({ ...S.equip, wl: it }) }), sb = sk ? sk.fb : null; // 伤害在魂龛 / 宝石那边看，这里只给武器本身的数值
     out.push([`类别：${cat ? cat.n : '—'}${cat ? `（对口：${cat.tags.map(t => TAG_N[t] || t).join('、')}）` : ''}${b.retired ? ' · 已停止掉落' : ''}`, COL.dim]);
-    if (sb && sb.min) { const [mn, mx] = weaponBase(sb, q); out.push([`${sb.n}：${ELEM_N[sb.el]}伤害 ${fmt(mn)}–${fmt(mx)}${sb.cont ? ' / 秒' : ''}${sb.aff ? ' · 对口 ×' + GEMC.affinity : ''}`, ELEM_C[sb.el]]); }
-    else if (g && GEM_BY[g.b].form === 'shieldThrow') out.push(['当前技能圣盾掷：伤害看盾的护甲', COL.dim]);
     const p = []; if (b.crit) p.push(`暴击 ${b.crit}%`); if (sb && sb.aps) p.push(`每秒攻击 ${r1(sb.aps)}`); if (p.length) out.push([p.join(' · '), dim]);
     return out; }
   if (it.kind === 'off') { // 副手：不带技能，只强化主手技能
