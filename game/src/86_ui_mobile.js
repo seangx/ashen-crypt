@@ -384,6 +384,10 @@ class MobileUI extends UI {
   win_tree(c, w, h) {
     if (!this._treeInit) { this._treeInit = 1; treeUI.left = false; treeUI.right = false; }
     super.win_tree(c, w, h);
+    // 顶上一条：剩余点数 + 洗点（左栏收起时也看得到；桌面版的“全部重置”在左栏底部）
+    const n = S.tree.length, pts = treePoints(), bx = treeUI.left ? null : 18;
+    if (bx != null) { rect(this, bx - 2, 17, 104, 15, '#0d0a12', 0.75, c); T(this, bx, 20, `天赋点 ${pts} · 已点 ${n}`, { size: 8, color: pts ? COL.good : COL.emberHi, parent: c }); }
+    if (!treeUI.right) mkBtn(this, c, w - 66, 15, 48, 20, '洗点', () => this.ask('洗点：退回全部天赋点？', () => { treeKeep([]); refreshStats(); save(); sfx('craft'); toast(`退回 ${n} 点天赋，可以重新分配`, COL.emberHi); this.refresh(); }, '洗点', `退回已点的 ${n} 点，重新分配。目前免费。`), { size: 8, disabled: !n, whyDisabled: '还没有点天赋' });
   }
   /* 结算：竖屏原生 */
   win_summary(c, w, h) {
@@ -585,7 +589,8 @@ class MobileUI extends UI {
     all.forEach((a, i) => mkBtn(this, c, 20 + i * (bw + 4), py + ph - 38, bw, 30, a.l, () => { this.closePopup(); if (a.fn) a.fn(); }, { size: 8, style: a.style || 'n', disabled: !!a.disabled, locked: !!a.why && !!a.disabled, whyDisabled: a.why }));
   }
   // 手机确认弹窗：确认 / 取消（点外面也算取消）
-  ask(title, fn, ok = '确认', body = '') { this.showLines([{ t: title, c: COL.emberHi }, body && { t: body, s: 8, c: COL.dim }], [{ l: ok, fn, style: 'r' }], '取消'); }
+  ask(title, fn, ok = '确认', body = '') { if (typeof fn === 'string' && typeof body === 'function') [fn, ok, body] = [body, fn, ok]; // 兼容 ask(标题, 按钮, 说明, 回调) 的写法（原来有 5 处这么写，点确认没反应）
+    this.showLines([{ t: title, c: COL.emberHi }, body && { t: body, s: 8, c: COL.dim }], [{ l: ok, fn, style: 'r' }], '取消'); }
   // 物品详情弹窗里的操作
   itemActs(it) {
     const f = findItem(it.id), A = [], R = () => { save(); this.refresh(); }; it.isNew = false; if (!f) return A;
