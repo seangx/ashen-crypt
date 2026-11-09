@@ -148,10 +148,10 @@ function whirlFx(ground, blade, glow, x, y, R, f, t, eye, ang) { // ang：角色
   ground.fillStyle(0x0a0508, 0.2 + 0.15 * f).fillCircle(x, y, R);
   ground.lineStyle(1, 0xd06a40, 0.18 + 0.12 * f).strokeCircle(x, y, R);
   // 风暴之眼：吸扯范围外往里流的风线
-  if (eye) { const PR = R * RL.areaEye.pullR; for (let k = 0; k < 14; k++) { const ph = (t * 0.9 + k * 0.37) % 1, rr = PR - (PR - R) * ph, an = k * 2.4 - t * 1.5 - ph * 1.2; for (let s = 0; s < 6; s++) { const r2 = rr + s * 1.5; ground.fillStyle(0xd08a60, 0.45 * Math.sin(ph * Math.PI) * (1 - s / 6)).fillRect(Math.round(x + Math.cos(an + s * 0.02) * r2), Math.round(y + Math.sin(an + s * 0.02) * r2), 1, 1); } } }
+  if (eye) { const PR = R * RL.areaEye.pullR; for (let k = 0; k < 14; k++) { const ph = (t * 0.9 + k * 0.37) % 1, rr = PR - (PR - R) * ph, an = k * 2.4 + t * 1.5 + ph * 1.2; for (let s = 0; s < 6; s++) { const r2 = rr + s * 1.5; ground.fillStyle(0xd08a60, 0.45 * Math.sin(ph * Math.PI) * (1 - s / 6)).fillRect(Math.round(x + Math.cos(an + s * 0.02) * r2), Math.round(y + Math.sin(an + s * 0.02) * r2), 1, 1); } } }
   // 刀光：层层套着的月牙（参考暴走巨刃的红色版）。每道月牙半径、粗细、长度、起点各不相同，起点按螺旋错开（里圈在前），一起转；
   // 暗红主体画在怪下面，叠加层上画橙色芯和刀头的细亮边，月牙交叠处自然变亮。层数越高月牙越多（5 → 12），最外一道的外沿 = 判定半径
-  const g = blade, cy = y - 3, n = 5 + Math.round(f * 7), S = 12, rot = -t * spd;
+  const g = blade, cy = y - 3, n = 5 + Math.round(f * 7), S = 12, rot = t * spd; // 顺时针（屏幕坐标 y 朝下，角度增大 = 顺时针；用户 11-09：原来逆时针看着不对）
   const band = (r0, r1, b0, b1, G) => { const m = 2, pts = []; for (let j = 0; j <= m; j++) { const a = b0 + (b1 - b0) * j / m; pts.push({ x: x + Math.cos(a) * r1, y: cy + Math.sin(a) * r1 }); } for (let j = m; j >= 0; j--) { const a = b0 + (b1 - b0) * j / m; pts.push({ x: x + Math.cos(a) * Math.max(0, r0), y: cy + Math.sin(a) * Math.max(0, r0) }); } G.fillPoints(pts, true); };
   const hr = k => { const v = Math.sin(k * 12.9898) * 43758.5453; return v - Math.floor(v); };
   for (let j = 0; j < n; j++) {
@@ -163,7 +163,7 @@ function whirlFx(ground, blade, glow, x, y, R, f, t, eye, ang) { // ang：角色
       if (q < 0.45) { G2.fillStyle(0xffe0a8, 0.75 * (1 - q / 0.45)); band(r + wq * 0.55, r + wq, b0, b1, G2); } // 刀头外沿一条细亮弧
     }
   }
-  for (let k = 0; k < 8; k++) { const an = -t * spd * 0.6 + k * 0.79, rr = R * (0.4 + ((t * 2.5 + k * 0.37) % 1) * 0.7); ground.fillStyle(0x8a6a4a, 0.5 * (1 - rr / (R * 1.15))).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr), 1, 1); } // 往外甩的尘土
+  for (let k = 0; k < 8; k++) { const an = t * spd * 0.6 + k * 0.79, rr = R * (0.4 + ((t * 2.5 + k * 0.37) % 1) * 0.7); ground.fillStyle(0x8a6a4a, 0.5 * (1 - rr / (R * 1.15))).fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr), 1, 1); } // 往外甩的尘土
 }
 // 旋风之心的小旋风：和大旋风同一套红橙色月牙拖影，竖着叠成一个漏斗（每层是一道压扁的转动月牙，越往上越宽）。
 // ground 画脚下的伤害范围（半径 r），glow 是叠加发光层；a = 淡入淡出
@@ -172,7 +172,7 @@ function devilFx(ground, glow, x, y, r, t, seed, a = 1) {
   const L = 5, h = r * 3;
   const band = (cx, cy, rx0, rx1, sq, b0, b1) => { const n = 3, pts = []; for (let j = 0; j <= n; j++) { const an = b0 + (b1 - b0) * j / n; pts.push({ x: cx + Math.cos(an) * rx1, y: cy + Math.sin(an) * rx1 * sq }); } for (let j = n; j >= 0; j--) { const an = b0 + (b1 - b0) * j / n; pts.push({ x: cx + Math.cos(an) * rx0, y: cy + Math.sin(an) * rx0 * sq }); } glow.fillPoints(pts, true); };
   for (let l = 0; l < L; l++) {
-    const f = l / (L - 1), cy = y - 1 - f * h, cx = x + Math.sin(t * 5 + f * 2.5 + seed) * r * 0.2 * f, rx = r * (0.4 + 0.9 * f), w = 2.5 + f * 3, a0 = -t * (16 - f * 4) + seed + l * 1.9, arc = 3.6, S = 14;
+    const f = l / (L - 1), cy = y - 1 - f * h, cx = x + Math.sin(t * 5 + f * 2.5 + seed) * r * 0.2 * f, rx = r * (0.4 + 0.9 * f), w = 2.5 + f * 3, a0 = t * (16 - f * 4) + seed + l * 1.9, arc = 3.6, S = 14;
     for (let s = 0; s < S; s++) {
       const q = s / S, k = (1 - q) ** 0.8 * a, ww = Math.max(0.6, w * (1 - q * 0.7)), b1 = a0 - q * arc, b0 = b1 - arc / S; // 拖尾朝旋转的反方向（和大旋风一致）
       glow.fillStyle(0xa01208, 0.45 * k); band(cx, cy, rx - ww * 1.6, rx - ww, 0.35, b0, b1);
