@@ -451,10 +451,14 @@ class MobileUI extends UI {
     }
     // 滚动：在阶梯区域上下拖
     const max = Math.max(0, y - vh); this.mstScroll = clamp(this.mstScroll || 0, 0, max); lc.y = top - this.mstScroll;
-    this.mstVP = { top: c.y + top, bot: c.y + top + vh, max, lc, base: top };
+    // 可视区外的卡片和按钮关掉点击：原来它们只是被遮住，压在底部导航上把点击吃掉（天赋页里点不了“装备”“宝石”）
+    const hits = [], walk = (o, oy) => { for (const x of o.list || []) { const yy = oy + (x.y || 0); if (x.input) hits.push({ o: x, y0: yy - (x.displayOriginY || 0), h: x.displayHeight || x.height || 0 }); if (x.list) walk(x, yy); } }; walk(lc, 0);
+    const sync = () => { for (const H of hits) if (H.o.input) { const a = lc.y + H.y0, b2 = a + H.h; H.o.input.enabled = a >= top - 2 && b2 <= top + vh + 2; } };
+    sync();
+    this.mstVP = { top: c.y + top, bot: c.y + top + vh, max, lc, base: top, sync };
     if (!this._mstDragInit) { this._mstDragInit = 1;
       this.input.on('pointerdown', p => { const V = this.mstVP; this.mstDrag = this.winId === 'tree' && V && p.worldY >= V.top && p.worldY <= V.bot ? { y: p.worldY, s: this.mstScroll || 0, moved: false } : null; });
-      this.input.on('pointermove', p => { const D = this.mstDrag, V = this.mstVP; if (!D || !p.isDown || this.winId !== 'tree' || !V || !V.lc.scene) return; const dy = p.worldY - D.y; if (Math.abs(dy) > 6) D.moved = true; if (!D.moved) return; this.mstScroll = clamp(D.s - dy, 0, V.max); V.lc.y = V.base - this.mstScroll; });
+      this.input.on('pointermove', p => { const D = this.mstDrag, V = this.mstVP; if (!D || !p.isDown || this.winId !== 'tree' || !V || !V.lc.scene) return; const dy = p.worldY - D.y; if (Math.abs(dy) > 6) D.moved = true; if (!D.moved) return; this.mstScroll = clamp(D.s - dy, 0, V.max); V.lc.y = V.base - this.mstScroll; V.sync(); });
       this.input.on('pointerup', () => { const D = this.mstDrag; if (D) setTimeout(() => { if (this.mstDrag === D) this.mstDrag = null; }, 0); }); }
   }
   // 选专精：6 张卡，点开底部抽屉看详情再选
