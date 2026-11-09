@@ -113,9 +113,9 @@ function rollUnique(ilvl, boss, ladder) {
   if (!pool.length) return null;
   return newUnique(wpick(pool, u => u.w || LOOT.uniqueBossOnlyWeight.w).id, ilvl, boss ? G2.uniques.randChest : 0);
 }
-function rollItem(ilvl, rarBonus = 0, boss = false, rarity = null, ladder = false) { // rarity：指定稀有度（不出独特）；ladder：天梯宝箱
-  if (rarity === null && rnd() < (boss ? DROP.uniqueBoss : DROP.unique) * (1 + (LX.unique || 0) / 100)) { const u = rollUnique(ilvl, boss, ladder); if (u) return u; }
-  const [kind, b] = wpick(allBases().filter(x => (x[2].req || 1) <= ilvl), x => (x[2].w || 1000) * (1 + ((LX.call || {})[x[0]] || 0) / 100));
+function rollItem(ilvl, rarBonus = 0, boss = false, rarity = null, ladder = false, only = null) { // rarity：指定稀有度（不出独特）；ladder：天梯宝箱；only：只出这个部位（骨坊）
+  if (rarity === null && !only && rnd() < (boss ? DROP.uniqueBoss : DROP.unique) * (1 + (LX.unique || 0) / 100)) { const u = rollUnique(ilvl, boss, ladder); if (u) return u; }
+  const [kind, b] = wpick(allBases().filter(x => (x[2].req || 1) <= ilvl && (!only || x[0] === only)), x => (x[2].w || 1000) * (1 + ((LX.call || {})[x[0]] || 0) / 100));
   const rar = rarity ?? wpick([0, 1, 2], r => RARITY_W[r] * (r === 2 ? 1 + rarBonus / 100 : 1));
   return newItem(kind, b, ilvl, rollQuality(ilvl), rar);
 }
@@ -125,12 +125,12 @@ function rollShard(ilvl) {
   for (const a of AFF) a.tiers.forEach((t, i) => { if (ilvl >= t[2] && ilvl < t[3] && !exTier(a, i)) opts.push({ k: a.k, w: t[1] }); });
   return opts.length ? wpick(opts, o => o.w).k : AFF[0].k;
 }
-// 掉落的符文带随机初始经验：rand^(expBase + expPerIlvl·物品等级) × cap × capGrowth^物品等级（data/loot.json 的 runeDrop）
+// 掉落的宝石按层数定等级：1 + floor(物品等级 / lvlPer) ± lvlSpread，经验取该等级的门槛（data/loot.json 的 runeDrop）
+const lvlXp = L => L > 1 ? MOD_XP[L - 2] : 0;
+function dropXp(ilvl) { const R = LOOT.runeDrop; return lvlXp(clamp(1 + Math.floor(ilvl / R.lvlPer) + ri(-R.lvlSpread, R.lvlSpread), 1, MOD_MAX)); }
 function rollModDrop(ilvl) {
   const d = wpick(MODS.filter(m => m.req <= ilvl), m => m.w);
-  const R = LOOT.runeDrop, cap = R.cap * Math.pow(R.capGrowth, ilvl);
-  const xp = clamp(Math.round(Math.pow(rnd(), R.expBase + R.expPerIlvl * ilvl) * cap), 0, MOD_XP[MOD_XP.length - 1]);
-  return newMod(d.id, xp);
+  return newMod(d.id, dropXp(ilvl));
 }
 
 /* 技能石（spec-skill-gems）：{ kind:'gem', b:技能石 id, var:来源底子, lvl, xp, q, sock, mods } */
@@ -145,8 +145,7 @@ function newGem(id, o = {}) {
 }
 function rollGemDrop(ilvl) {
   const G = wpick(GEMS.filter(g => g.req <= ilvl && g.w > 0), g => g.w);
-  const R = LOOT.runeDrop, cap = R.cap * Math.pow(R.capGrowth, ilvl);
-  const xp = clamp(Math.round(Math.pow(rnd(), R.expBase + R.expPerIlvl * ilvl) * cap), 0, MOD_XP[MOD_XP.length - 1]);
+  const xp = dropXp(ilvl);
   const sw = GEMC.sockW, sock = wpick(sw.map((w, i) => i + 1), n => sw[n - 1]);
   return newGem(G.id, { xp, q: ri(GEMC.dropQ[0], GEMC.dropQ[1]), sock });
 }
@@ -193,7 +192,7 @@ function unequip(slot) { const it = S.equip[slot]; if (!it) return; S.equip[slot
 function salvage(it) {
   const SH = CRAFT.shatter, got = {};
   for (const x of it.affs || []) { const n = SH.perAffix + (x.t + 1 >= SH.bonusTier ? SH.bonus : 0); S.shards[x.k] = (S.shards[x.k] || 0) + n; got[x.k] = (got[x.k] || 0) + n; }
-  removeItem(it);
+  removeItem(it); const c = gainCoins(coinOfItem(it)); Object.defineProperty(got, 'coins', { value: c }); // 骨币不算进碎片合计
   return got;
 }
 

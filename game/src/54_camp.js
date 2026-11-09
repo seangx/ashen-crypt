@@ -20,10 +20,10 @@ function salvWhy(it) {
 }
 // 按规则分解一批装备（只动背包里的，身上穿着的不动）
 function autoSalvage(items) {
-  const out = { n: 0, shards: 0 };
+  const out = { n: 0, shards: 0, coins: 0 };
   for (const it of items) {
     if (!S.stash.includes(it) || !salvWhy(it)) continue;
-    const g = salvage(it); out.n++; out.shards += Object.values(g).reduce((a, b) => a + b, 0);
+    const g = salvage(it); out.n++; out.shards += Object.values(g).reduce((a, b) => a + b, 0); out.coins += g.coins || 0;
   }
   return out;
 }
@@ -36,7 +36,7 @@ const bulkYield = it => (it.affs || []).reduce((a, x) => a + CRAFT.shatter.perAf
 // pick：Map(id → true/false) 单件点选，覆盖品质勾选
 const bulkHit = (it, pick) => pick && pick.has(it.id) ? pick.get(it.id) : !!bulkSel()[bulkCat(it)];
 function bulkList(pick) { return S.stash.filter(it => bulkOk(it) && bulkHit(it, pick)); }
-function bulkSalvage(list) { const out = { n: 0, shards: 0 }; for (const it of list) { if (!bulkOk(it)) continue; out.shards += Object.values(salvage(it)).reduce((a, b) => a + b, 0); out.n++; } save(); return out; }
+function bulkSalvage(list) { const out = { n: 0, shards: 0, coins: 0 }; for (const it of list) { if (!bulkOk(it)) continue; const g = salvage(it); out.shards += Object.values(g).reduce((a, b) => a + b, 0); out.coins += g.coins || 0; out.n++; } save(); return out; }
 // 营地里角色的走位：在篝火边慢慢踱步；快出发时走向地窖入口（天梯走向石碑）
 const CAMP_HOME = { x: 240, y: 158 };
 function campTarget() {

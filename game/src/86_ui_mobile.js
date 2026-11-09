@@ -193,7 +193,7 @@ class MobileUI extends UI {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) { this.decoId = null; return; }
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
-    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk', 'trig', 'tbag', 'tcraft', 'reels', 'stones'].includes(id);
+    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk', 'trig', 'tbag', 'tcraft', 'reels', 'stones', 'shop'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
     const y = native ? MTOP + 8 : Math.round(clamp((H - NAV_H - h) / 2, MTOP + 12, H)), c = this.add.container(this.panMax ? 4 - this.pan : Math.round((W - w) / 2), y).setDepth(100); this.winC = c; c.w = w;
@@ -201,7 +201,7 @@ class MobileUI extends UI {
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
     this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
-    const title = { stones: '属性石', trig: '魂龛', tbag: '换魂龛', tcraft: '魂龛打造', reels: '骸骨轮盘', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
+    const title = { stones: '属性石', trig: '魂龛', tbag: '换魂龛', tcraft: '魂龛打造', reels: '骸骨轮盘', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '天梯', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', shop: '骨坊', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: '#2a1306', shadow: false, align: 'center', parent: c }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });
@@ -274,7 +274,7 @@ class MobileUI extends UI {
     if (f.where === 'stash') {
       if (it.kind === 'off') B(0, '装副手', () => { equipItem(it, 'wr'); save(); this.refresh(); }, { style: 'w', disabled: !unlocked('wr') });
       else if (it.kind === 'gem') B(0, '去魂龛', () => this.openWin('trig'), { style: 'w' }); else B(0, it.kind === 'weapon' ? '装主手' : '装备', () => { equipItem(it); save(); this.refresh(); }, { style: 'w' });
-      B(2, '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { style: 'n' });
+      B(2, '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n || g.coins) toast(`得到 ${n} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { style: 'n' });
     } else {
       B(0, '卸下', () => { unequip(f.slot); save(); this.refresh(); });
       if (it.sock || ['core', 'engine', 'hub'].includes(f.slot)) B(1, '辅助宝石', () => { modWeapon = f.slot; gemSeg = 'support'; this.openWin('mods'); });
@@ -355,7 +355,7 @@ class MobileUI extends UI {
     B(2, 0, `立誓 ×${glyphN('oath')}`, () => done(craftOath(it)), { disabled: !!ow });
     B(0, 1, useHope ? '带希望符' : '不带希望', () => { useHope = !useHope; this.refresh(); }, { style: useHope ? 's' : 'n', disabled: !glyphN('hope') });
     B(1, 1, useChaos ? '带混沌符' : '不带混沌', () => { useChaos = !useChaos; this.refresh(); }, { style: useChaos ? 's' : 'n', disabled: !glyphN('chaos') });
-    B(2, 1, '拆解', () => this.ask(`拆解 ${itemName(it)}？`, '拆解', '会变成词条碎片，不能撤销。', () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片`); }), { style: 'n' });
+    B(2, 1, '拆解', () => this.ask(`拆解 ${itemName(it)}？`, '拆解', '会变成词条碎片，不能撤销。', () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片${coinTxt(g)}`); }), { style: 'n' });
     y += 62;
     const opts = craftable(it) ? AFF.filter(a => shardN(a.k) > 0 && canAdd(it, a)) : [];
     const per = Math.max(1, Math.floor((h - y - 16) / 30)), pages = Math.max(1, Math.ceil(opts.length / per)); addPage = Math.min(addPage, pages - 1);
@@ -400,7 +400,7 @@ class MobileUI extends UI {
       : lad ? [win ? `跳 ${r.lad.jump} 层，已解锁到第 ${S.ladder.unlocked} 层` : '天梯失败没有损失', COL.dim]
       : r.descent.floors ? [`打通到第 ${r.descent.from + r.descent.floors - 1} 层 · 最深纪录第 ${S.maxDepth - 1} 层`, COL.good] : null;
     const floors = lad ? `${r.L}` : r.descent.from === r.base ? `${r.base}` : `${r.descent.from}–${r.base}`;
-    const cols = [['i_ladder', floors, '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
+    const cols = [['i_ladder', floors, '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.coins ? `骨币 +${r.salv.coins}` : r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
     const kept = g.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it));
     const extra = [...g.mods.map(m => ['mod_' + m.mid, '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n])];
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
@@ -450,7 +450,7 @@ class MobileUI extends UI {
     const tw = Math.floor((w - 28) / 3); ['普通', '罕见', '稀有'].forEach((n, i) => tog(12 + i * (tw + 2), y, tw, R.rar[i], n, () => { R.rar[i] = !R.rar[i]; })); y += 34;
     const t = TW(this, 12, y, '独特、传奇、溢彩装备和印记、符文、墓图永远不会被自动分解；身上穿着的也不会。带收藏词条的装备不按稀有度分解。', w - 24, { size: 8, color: COL.faint, parent: c }); y += t.h + 6;
     const n = S.stash.filter(salvWhy).length;
-    mkBtn(this, c, 12, y, w - 24, 30, `现在分解背包（${n} 件）`, () => this.ask(`分解背包里 ${n} 件？`, '分解', '会变成词条碎片，不能撤销。', () => { const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个`, '#d9cfb8'); save(); this.refresh(); }), { size: 8, style: 'w', disabled: !n }); y += 38;
+    mkBtn(this, c, 12, y, w - 24, 30, `现在分解背包（${n} 件）`, () => this.ask(`分解背包里 ${n} 件？`, '分解', '会变成词条碎片和骨币，不能撤销。', () => { const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个${coinTxt(g)}`, '#d9cfb8'); save(); this.refresh(); }), { size: 8, style: 'w', disabled: !n }); y += 38;
     T(this, 12, y, `收藏词条 ${fav.length} 个${R.fav ? '' : '（默认）'}`, { size: 8, color: COL.emberHi, parent: c });
     if (R.fav) mkBtn(this, c, w - 84, y - 9, 72, 28, '恢复默认', () => { R.fav = null; save(); this.refresh(); }, { size: 8 });
     y += 18;
@@ -509,11 +509,31 @@ class MobileUI extends UI {
       T(this, w - 12, y + i * 11, `${r.date.slice(5, 10)} ${ELEM_N[r.build.elem]} ${wp ? nm(wp) : ''}`, { size: 8, color: COL.faint, align: 'right', parent: c });
     });
   }
+  /* 骨坊：选部位，花骨币赌一件未鉴定装备（economy.shop） */
+  win_shop(c, w, h) {
+    let y = 14; const price = shopPrice(), why = shopWhy();
+    img(this, 12, y - 1, 'coin', c).setScale(2); T(this, 30, y, `骨币 ${fmt(S.coins || 0)}`, { color: COL.emberHi, parent: c });
+    T(this, w - 12, y + 2, `储物箱 ${S.stash.length}/${STASH_CAP}`, { size: 8, color: COL.dim, align: 'right', parent: c }); y += 20;
+    const t = TW(this, 12, y, `选一个部位，花 ${price} 骨币买一件未鉴定装备，买下才揭晓。物品等级 = 已到的最深层（${shopIlvl()}），只出罕见和稀有，${Math.round(ECO.shop.unique * 100)}% 是这个部位的独特装备。骨币来自分解装备和宝石。`, w - 24, { size: 8, color: COL.dim, parent: c }); y += t.h + 8;
+    const hw = Math.floor((w - 28) / 2);
+    SHOP_SLOTS.forEach((s, i) => mkBtn(this, c, 12 + (i % 2) * (hw + 4), y + (i / 2 | 0) * 34, hw, 30, `${SLOTS.find(x => x.id === s).n} · ${price}`, () => {
+      const it = gamble(s); if (!it) return; this.shopLast = it; sfx('craft'); toast(`揭晓：${itemName(it)}`, icol(it)); this.refresh();
+    }, { size: 8, icon: 'coin', iconX: 6, labelX: 18, style: why ? 'n' : 'w', disabled: !!why, whyDisabled: why || '' }));
+    y += 3 * 34 + 8;
+    const it = this.shopLast;
+    if (it && (S.stash.includes(it) || Object.values(S.equip).includes(it))) {
+      rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 8; T(this, 12, y, '刚买到', { size: 8, color: COL.dim, parent: c }); y += 13;
+      mkCell(this, c, 12, y, it, { size: TOUCH, acts: v => this.itemActs(v) });
+      T(this, 48, y + 1, itemName(it), { color: icol(it), parent: c });
+      T(this, 48, y + 16, `物品等级 ${it.ilvl} · 词条 ${(it.affs || []).length} 条 · 点图标操作`, { size: 8, color: COL.dim, parent: c });
+      mkBtn(this, c, 12, y + 40, w - 24, 28, '去储物箱看看', () => { this.closeWin(); this.openWin('gear'); }, { size: 8 });
+    }
+  }
   /* 菜单：底部导航放不下的页面 */
   win_more(c, w, h) {
-    const items = [['ladder', '天梯', 'i_ladder'], ['settings', '设置', null], ['mods', '辅助宝石', 'mod_Chain'], ['stones', '属性石 · 镶嵌与合成', 'shard'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['depart', '地窖入口 · 选层', 'torch']];
+    const items = [['ladder', '天梯', 'i_ladder'], ['settings', '设置', null], ['mods', '辅助宝石', 'mod_Chain'], ['stones', '属性石 · 镶嵌与合成', 'shard'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['shop', '骨坊 · 赌部件', 'coin'], ['depart', '地窖入口 · 选层', 'torch']];
     items.forEach(([id, n, ic], i) => {
-      const y = 20 + i * 40, open = !MENU.some(m => m.id === id) || unlocked(id);
+      const y = 20 + i * 40, open = (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'shop' || unlocked('shop'));
       mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, iconX: 10, labelX: 34, disabled: !open || (RUN && id === 'depart'), locked: !open, whyDisabled: open ? '任务进行中' : `${n}：${unlockText(id)}` });
     });
     T(this, w / 2, 20 + items.length * 40 + 6, RUN ? '任务进行中 · 装备、天赋等修改立即生效' : '营地', { size: 8, color: COL.dim, align: 'center', parent: c });
@@ -523,8 +543,8 @@ class MobileUI extends UI {
   updateCamp() {
     if (!this.campC) this.buildCamp();
     const show = !RUN && !this.winId; this.campC.setVisible(show); if (!show) return;
-    const F = [['depart', '地窖入口', 'torch'], ['ladder', '天梯石碑', 'i_ladder'], ['salvage', '分解祭坛', 'shard'], ['gear', '储物箱', 'i_w_crossbow'], ['help', '手册', 'i_book']];
-    const ok = id => (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'salvage' || unlocked('salvage')); const key = F.map(f => +ok(f[0])).join('') + descentStart();
+    const F = [['depart', '地窖入口', 'torch'], ['ladder', '天梯石碑', 'i_ladder'], ['salvage', '分解祭坛', 'shard'], ['gear', '储物箱', 'i_w_crossbow'], ['help', '手册', 'i_book'], ['shop', '骨坊', 'coin']];
+    const ok = id => (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'salvage' || unlocked('salvage')) && (id !== 'shop' || unlocked('shop')); const key = F.map(f => +ok(f[0])).join('') + descentStart();
     if (key === this.campKey) return; this.campKey = key;
     const c = this.campC; c.removeAll(true); const bw = Math.floor((W - 16) / 3);
     c.add(nine(this, 4, 0, W - 8, 92, 'f_win', 6));
@@ -573,7 +593,7 @@ class MobileUI extends UI {
       if (it.kind === 'off') A.push({ l: '装副手', style: 'w', fn: () => { equipItem(it, 'wr'); R(); }, disabled: !unlocked('wr'), why: `副手：${unlockText('wr')}` });
       else if (it.kind === 'gem') A.push({ l: '去魂龛', style: 'w', fn: () => this.openWin('trig') });
       else if (slotsFor(it)[0]) A.push({ l: it.kind === 'weapon' ? '装主手' : '装备', style: 'w', fn: () => { equipItem(it); R(); } });
-      A.push({ l: '拆解', fn: () => this.ask(`拆解 ${itemName(it)}？`, () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n) toast(`得到 ${n} 个词条碎片`, '#d9cfb8'); R(); }, '拆解', '会变成词条碎片，不能撤销。') });
+      A.push({ l: '拆解', fn: () => this.ask(`拆解 ${itemName(it)}？`, () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n || g.coins) toast(`得到 ${n} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); R(); }, '拆解', '会变成词条碎片，不能撤销。') });
     } else {
       A.push({ l: '卸下', fn: () => { unequip(f.slot); R(); } });
       if (stoneSockN(it) > 0) A.push({ l: '属性石', fn: () => this.openWin('stones') });
