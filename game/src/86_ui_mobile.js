@@ -386,19 +386,20 @@ class MobileUI extends UI {
     const m = mstS(), pts = treePoints(), slots = MST.picks[MST.picks.length - 1][1], R = () => { refreshStats(); save(); this.refresh(); };
     T(this, 12, 6, '天赋', { size: 12, scale: 2, parent: c });
     mkBtn(this, c, w - 112, 6, 52, 28, '洗点', () => this.ask('洗点：退回全部天赋点？', () => { const n = mstSpent(); mstReset(); sfx('craft'); toast(`退回 ${n} 点，可以重新分配`, COL.emberHi); R(); }, '退回', '专精保留，点数全部退回。免费。'), { size: 8, disabled: !mstSpent(), whyDisabled: '还没有点天赋' });
-    mkBtn(this, c, w - 56, 6, 44, 28, '汇总', () => this.showLines(this.mstSummary(), m.picks.map(mid => ({ l: `换掉${MST_BY[mid].n}`, fn: () => this.ask(`换掉专精：${MST_BY[mid].n}？`, () => { mstUnpick(mid); this.mstTab = null; R(); }, '换掉', '它上面的点数全部退回，之后可以选别的专精。') }))), { size: 8 });
+    mkBtn(this, c, w - 56, 6, 44, 28, '汇总', () => this.showLines(this.mstSummary(), m.picks.map(mid => ({ l: `换掉${MST_BY[mid].n}`, fn: () => this.ask(`换掉专精：${MST_BY[mid].n}？`, () => { mstUnpick(mid); this.mstTab = null; this.mstPicking = true; R(); }, '换掉', '它上面的点数全部退回，之后可以选别的专精。') }))), { size: 8 });
     // 可用点数（黄底 = 还有点没花）+ 已点
     const pw = textW(`可用 ${pts} 点`, 12) + 16; rect(this, 12, 40, pw, 18, pts ? '#ffd23a' : '#1b2042', 1, c); T(this, 12 + pw / 2, 49, `可用 ${pts} 点`, { size: 12, color: pts ? '#2a1d00' : COL.dim, align: 'center', valign: 'middle', shadow: false, parent: c });
     T(this, 20 + pw, 44, `已点 ${mstSpent()} / ${Math.max(0, (S.level || 1) - 1)}`, { size: 8, color: COL.dim, parent: c });
     // 专精切换
     if (!m.picks.includes(this.mstTab)) this.mstTab = m.picks[0] || null;
+    const picking = !m.picks.length || (this.mstPicking && m.picks.length < mstPickMax()); // 选专精列表单独一个开关：原来用 mstTab = null，刷新时又被切回第一个专精，第 2 个专精选不了
     const tw = Math.floor((w - 24 - 6) / slots);
     for (let i = 0; i < slots; i++) { const mid = m.picks[i], M = MST_BY[mid], x = 12 + i * (tw + 6);
       if (M) { const sp = mstBar(mid) + M.pass.reduce((a, q) => a + mstRank(q.id), 0) + M.keys.filter(k => mstHas(k.id)).length;
-        mkBtn(this, c, x, 64, tw, 30, `${M.n}  ${sp}点`, () => { this.mstTab = mid; this.mstScroll = 0; this.refresh(); }, { size: 12, style: this.mstTab === mid ? 's' : 'n', color: this.mstTab === mid ? COL.text : COL.dim }); }
+        mkBtn(this, c, x, 64, tw, 30, `${M.n}  ${sp}点`, () => { this.mstTab = mid; this.mstPicking = false; this.mstScroll = 0; this.refresh(); }, { size: 12, style: !picking && this.mstTab === mid ? 's' : 'n', color: !picking && this.mstTab === mid ? COL.text : COL.dim }); }
       else if (i >= mstPickMax()) { const lv = (MST.picks.find(([, k]) => k > i) || [99])[0]; mkBtn(this, c, x, 64, tw, 30, `Lv${lv} 开放`, () => {}, { size: 8, disabled: true, whyDisabled: `第 ${i + 1} 个专精 Lv${lv} 开放` }); }
-      else mkBtn(this, c, x, 64, tw, 30, '＋ 选专精', () => { this.mstTab = null; this.refresh(); }, { size: 12, style: this.mstTab ? 'n' : 'w' }); }
-    const top = 100, M = MST_BY[this.mstTab];
+      else mkBtn(this, c, x, 64, tw, 30, '＋ 选专精', () => { this.mstPicking = true; this.refresh(); }, { size: 12, style: picking ? 'w' : 'n' }); }
+    const top = 100, M = picking ? null : MST_BY[this.mstTab];
     if (!M) return this.mstPickList(c, w, h, top);
     // 底部汇总条
     const add = {}; for (const part of masteryParts()) for (const k in part.add || {}) add[k] = (add[k] || 0) + part.add[k];
@@ -450,10 +451,14 @@ class MobileUI extends UI {
     }
     // 滚动：在阶梯区域上下拖
     const max = Math.max(0, y - vh); this.mstScroll = clamp(this.mstScroll || 0, 0, max); lc.y = top - this.mstScroll;
-    this.mstVP = { top: c.y + top, bot: c.y + top + vh, max, lc, base: top };
+    // 可视区外的卡片和按钮关掉点击：原来它们只是被遮住，压在底部导航上把点击吃掉（天赋页里点不了“装备”“宝石”）
+    const hits = [], walk = (o, oy) => { for (const x of o.list || []) { const yy = oy + (x.y || 0); if (x.input) hits.push({ o: x, y0: yy - (x.displayOriginY || 0), h: x.displayHeight || x.height || 0 }); if (x.list) walk(x, yy); } }; walk(lc, 0);
+    const sync = () => { for (const H of hits) if (H.o.input) { const a = lc.y + H.y0, b2 = a + H.h; H.o.input.enabled = a >= top - 2 && b2 <= top + vh + 2; } };
+    sync();
+    this.mstVP = { top: c.y + top, bot: c.y + top + vh, max, lc, base: top, sync };
     if (!this._mstDragInit) { this._mstDragInit = 1;
       this.input.on('pointerdown', p => { const V = this.mstVP; this.mstDrag = this.winId === 'tree' && V && p.worldY >= V.top && p.worldY <= V.bot ? { y: p.worldY, s: this.mstScroll || 0, moved: false } : null; });
-      this.input.on('pointermove', p => { const D = this.mstDrag, V = this.mstVP; if (!D || !p.isDown || this.winId !== 'tree' || !V || !V.lc.scene) return; const dy = p.worldY - D.y; if (Math.abs(dy) > 6) D.moved = true; if (!D.moved) return; this.mstScroll = clamp(D.s - dy, 0, V.max); V.lc.y = V.base - this.mstScroll; });
+      this.input.on('pointermove', p => { const D = this.mstDrag, V = this.mstVP; if (!D || !p.isDown || this.winId !== 'tree' || !V || !V.lc.scene) return; const dy = p.worldY - D.y; if (Math.abs(dy) > 6) D.moved = true; if (!D.moved) return; this.mstScroll = clamp(D.s - dy, 0, V.max); V.lc.y = V.base - this.mstScroll; V.sync(); });
       this.input.on('pointerup', () => { const D = this.mstDrag; if (D) setTimeout(() => { if (this.mstDrag === D) this.mstDrag = null; }, 0); }); }
   }
   // 选专精：6 张卡，点开底部抽屉看详情再选
@@ -478,7 +483,7 @@ class MobileUI extends UI {
       L(X.n, { size: 12, color: X.c, gap: 4 }); L(`${X.pass.length} 个被动 · ${X.keys.length} 个大天赋`, { color: COL.dim });
       L('专精条每点：' + mstLines(X.bar, 1).slice(0, 4).join('，'));
       L('大天赋：' + X.keys.map(k => k.n).join('、'), { color: '#ffe27a' });
-      acts.push({ l: `选择 ${X.n}`, style: 'w', fn: () => { mstDo('pick', id, 1); this.mstTab = id; this.mstScroll = 0; sfx('craft'); refreshStats(); save(); this.refresh(); this.closePopup(); }, keep: 1 }); }
+      acts.push({ l: `选择 ${X.n}`, style: 'w', fn: () => { mstDo('pick', id, 1); this.mstTab = id; this.mstPicking = false; this.mstScroll = 0; sfx('craft'); refreshStats(); save(); this.refresh(); this.closePopup(); }, keep: 1 }); }
     else if (kind === 'pass') { const p = MPASS[id], M = MST_BY[p.m], r = mstRank(id), wp = mstWhy('pass', id, 1), wm = mstWhy('pass', id, -1);
       L(`被动 · 专精条 ${p.tier} 点解锁`, { color: COL.dim, gap: 2 }); L(`${p.n}   ${r} / ${MST.passMax} 级`, { size: 12, color: M.c });
       L(r ? `现在：${mstLines(p.add, r / MST.passRef).join('，')}` : '现在：还没有点', { color: COL.dim });
