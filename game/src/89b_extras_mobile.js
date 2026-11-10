@@ -2,8 +2,8 @@
    - 物品图标：62_icons.js 的 SVG 启动前画成 128 像素画布，这里注册成线性过滤的贴图 iv_键，格子里缩到格子大小（技能石、符文仍用像素图）
    - 档次（越高叠得越多）：罕见 / 稀有白色底光，稀有起有扫光（70_gfx 的 mkCell 已有），独特加旋转光芒，传奇加外圈呼吸光晕和星点，溢彩加彩虹流光和星点
    - 血球：生命和灯火合成一个球，左半生命（球边浅蓝是护盾），右半灯火，中间铜隔条 */
-const TIER_OF = it => !it || it.kind === 'mod' || it.kind === 'gem' ? null : it.ex ? 'ex' : it.leg ? 'leg' : 'r' + (it.rar || 0);
-const QUAL_TINT = ['#8a8f9e', '#9aa0ae', '#c9cfdc', '#7cd06a', '#5ee05a', '#4fb8ff', '#3f8cff', '#b86cff', '#d36cff', '#ff9a3d', '#ffd23a']; // 品质 0–10
+const TIER_OF = it => !it || it.kind === 'mod' || it.kind === 'gem' ? null : it.ex ? 'ex' : it.la ? 'leg' : 'r' + (it.rar || 0); // 传奇（稀有 + 传奇词条）用原来熔铸传奇的光晕
+const GEN_TINT = ['#c9cfdc', '#4fb8ff', '#ffd23a']; // 底材一代 / 二代 / 三代
 {
   const _bt = buildTextures;
   buildTextures = function (sc) {
@@ -24,7 +24,7 @@ const QUAL_TINT = ['#8a8f9e', '#9aa0ae', '#c9cfdc', '#7cd06a', '#5ee05a', '#4fb8
     const key = 'i_' + iconOf(it), vk = 'iv_' + iconOf(it);
     const icon = c.list.find(ch => ch.type === 'Image' && ch.texture && ch.texture.key === key);
     if (icon && sc.textures.exists(vk)) { icon.setTexture(vk).setOrigin(0.5).setPosition(s / 2, s / 2).setDisplaySize(s * 0.84, s * 0.84); if (t === 'r0') icon.setTint(0xd8d8d8); }
-    const qt = c.list.find(ch => ch.type === 'Text' && it.q && ch.text === String(it.q)); if (qt) qt.setTint(hex(QUAL_TINT[it.q] || COL.dim));
+    const qt = c.list.find(ch => ch.type === 'Text' && it.gen && ch.text === String(it.gen + 1)); if (qt) qt.setTint(hex(GEN_TINT[it.gen] || COL.dim));
     if (G.fx === false || !t || t === 'r0') return c;
     const at = icon ? c.list.indexOf(icon) : c.list.length, layers = [], tw = [];
     const im = (k, a, sz) => { const i = sc.add.image(s / 2, s / 2, k).setDisplaySize(s * sz, s * sz).setAlpha(a); layers.push(i); return i; };

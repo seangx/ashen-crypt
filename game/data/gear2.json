@@ -83,6 +83,18 @@
     "BoneTotem": {"imp": ["trigDmg", 10, 20], "t": "触发技能伤害提高 #%"},
     "GraveLantern": {"imp": ["baseCrit", 3, 5], "t": "基础暴击率 +#%"}
   },
+  "gen3": {
+    "_说明": "三代底材的第二隐性 [stat, 数值, 文字]：主手按类别，其余按部位",
+    "melee": ["inc:melee", 20, "近战伤害提高 #%"],
+    "bow": ["inc:proj", 20, "投射物伤害提高 #%"],
+    "gun": ["ailEff:all", 20, "异常效果提高 #%"],
+    "caster": ["inc:aoe", 20, "范围伤害提高 #%"],
+    "off": ["trigDmg", 12, "触发技能伤害提高 #%"],
+    "shield": ["res:all", 8, "全抗 +#"],
+    "core": ["lifeInc", 8, "生命提高 #%"],
+    "engine": ["moveInc", 8, "移动速度提高 #%"],
+    "hub": ["pen:all", 5, "穿抗 #%"]
+  },
   "armor": {
     "_说明": "防具隐性（11-10 用户批注：防具也要有基础词条，不只是护甲 / 生命 / 闪避）。imp [stat, 品质 0, 品质 10]，和武器隐性一样按品质线性",
     "TitaniumShield": {"imp": ["block", 6, 12], "t": "格挡 #%"},

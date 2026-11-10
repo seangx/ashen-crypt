@@ -32,18 +32,23 @@ const G2 = DATA.gear2, G2W = G2.weapons, G2D = G2.defense, STONES = G2.stones;
     if (w.new && !WEAPONS[k]) { const c = WEAPONS[w.new.clone]; WEAPONS[k] = { ...c, key: k, n: w.new.n, ic: w.new.ic, cat: w.cat }; if (ASTRO.weapons) ASTRO.weapons[k] = { ...ASTRO.weapons[w.new.clone] }; if (DATA.items.weapons) DATA.items.weapons[k] = { ...DATA.items.weapons[w.new.clone], n: w.new.n }; }
     const W = WEAPONS[k]; W.crit = w.crit; W.bel = w.el; W.cat = w.cat; W.w = W.w || 1000; W.pc = w.pc;
     GEMC.pow[k] = w.pow; GEMC.spd[k] = w.spd / 1.2;
-    IMPL[k] = { g2: w.imp, knock: w.knock, t: w.t.replace('#', `${w.imp[1]}–${w.imp[2]}`), fx: {} };
+    IMPL[k] = { g2: w.imp, knock: w.knock, t: w.t.replace('#', `${w.imp[1]}–${w.imp[2]}`), tt: w.t.replace(/^命中击退，/, ''), fx: {} };
   }
   for (const k of GEMC.retired) { WEAPONS[k].w = 0; delete IMPL[k]; }
   for (const [ck, c] of Object.entries(GEMC.cats)) c.bases = Object.keys(G2W).filter(k => G2W[k].cat === ck);
   // 3. 副手：隐性改成 §5，不再有“主手技能总增”；所有副手共用词条池
-  for (const [k, o] of Object.entries(G2.off)) if (ARMORS.off[k]) { ARMORS.off[k].sup = {}; ARMORS.off[k].imp2 = o.imp; ARMORS.off[k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); ARMORS.off[k].tags = ['Offhand', 'any']; }
+  for (const [k, o] of Object.entries(G2.off)) if (ARMORS.off[k]) { ARMORS.off[k].sup = {}; ARMORS.off[k].imp2 = o.imp; ARMORS.off[k].impT = o.t; ARMORS.off[k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); ARMORS.off[k].tags = ['Offhand', 'any']; }
   // 4. 防具隐性（盾、头冠）
   for (const [k, o] of Object.entries(G2.armor || {})) for (const kind of ['shield', 'core', 'engine', 'hub']) if (ARMORS[kind][k]) { ARMORS[kind][k].imp2 = o.imp; ARMORS[kind][k].impT = o.t; ARMORS[kind][k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); }
 }
 // 隐性按品质 0 → 10 线性
 const g2v = (r, q) => r[1] + (r[2] - r[1]) * clamp(q || 0, 0, 10) / 10;
-function implFx(it) { const I = IMPL[it.b]; if (!I) return {}; if (!I.g2) return I.fx; const [s] = I.g2, v = g2v(I.g2, it.q), fx = {};
+// 二代起隐性 ×impMul（往小走的隐性，比如碎骨锤的近战伤害降低，就除）
+const impV = (r, it) => { const v = g2v(r, it.q), m = (it.gen || 0) >= 1 ? GENS.impMul : 1; return r[1] > r[2] ? v / m : v * m; };
+// 三代底材的第二隐性：主手按类别，其余按部位
+const gen3Imp = it => it && (it.gen || 0) >= 2 && it.kind !== 'gem' ? (it.kind === 'weapon' ? G2.gen3[(WEAPONS[it.b] || {}).cat] : G2.gen3[it.kind]) || null : null;
+const impText = (t, v) => t.replace('#', Math.round(v * 10) / 10);
+function implFx(it) { const I = IMPL[it.b]; if (!I) return {}; if (!I.g2) return I.fx; const [s] = I.g2, v = impV(I.g2, it), fx = {};
   if (s.startsWith('ail:')) fx.ail = { [s.slice(4)]: v / 100 }; else if (s === 'meleeLess') fx.inc = -v; else fx[s] = v; if (I.knock) fx.knock = 1; return fx; }
 // 属性石：stone = { kind:'stone', sid, t(1..5) }，插在 it.stones
 const stoneOf = sid => STONES.list[sid];

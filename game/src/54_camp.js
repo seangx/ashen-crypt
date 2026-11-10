@@ -14,7 +14,7 @@ function salvFav() {
 // 这件会不会被自动分解：返回原因（old 太旧 / rar 按稀有度），不分解返回 null。
 // 独特、传奇、溢彩、印记永远不分解；太旧的装备不看收藏词条，直接分解
 function salvWhy(it) {
-  if (!it || it.kind === 'chip' || it.kind === 'gem' || it.u || it.leg || it.ex) return null; // 技能石不自动分解
+  if (!it || it.kind === 'chip' || it.kind === 'gem' || it.u || it.la || it.ex) return null; // 技能石不自动分解
   const R = salvRules();
   if (R.old && it.ilvl < salvLv()) return 'old';
   const fav = salvFav(); if (it.affs.some(x => fav.includes(x.k))) return null;
@@ -30,9 +30,9 @@ function autoSalvage(items) {
   return out;
 }
 // 批量拆解（手动多选）：按品质勾选 + 单件点选；只动背包里的装备，印记不动，身上穿着的不在背包里
-const BULK_CATS = ['普通', '罕见', '稀有', '独特'];
+const BULK_CATS = ['普通', '罕见', '稀有', '神话 / 传奇'];
 const bulkSel = () => { if (!Array.isArray(S.bulkSal) || S.bulkSal.length !== 4) S.bulkSal = [true, false, false, false]; return S.bulkSal; };
-const bulkCat = it => (it.u || it.leg || it.ex || it.rar >= 3) ? 3 : (it.rar | 0);
+const bulkCat = it => (it.u || it.la || it.ex || it.rar >= 3) ? 3 : (it.rar | 0);
 const bulkOk = it => !!it && it.kind !== 'chip' && it.kind !== 'gem' && S.stash.includes(it);
 const bulkYield = it => (it.affs || []).reduce((a, x) => a + CRAFT.shatter.perAffix + (x.t + 1 >= CRAFT.shatter.bonusTier ? CRAFT.shatter.bonus : 0), 0);
 // pick：Map(id → true/false) 单件点选，覆盖品质勾选

@@ -295,7 +295,7 @@ function mkCell(sc, parent, x, y, it, o = {}) {
     if (it.kind === 'gem') { const gr = sc.add.graphics(); gr.lineStyle(1, hex(COL.cyan), 0.85); gr.strokeCircle(s / 2, s / 2, s / 2 - 2); c.add(gr); T(sc, 1, s - 8, String(it.lvl), { size: 'num', color: COL.cyan, parent: c }); } // 技能石：圆形宝石框 + 等级
     else if (isMod) T(sc, 1, s - 8, String(it.lvl), { size: 'num', color: modActiveHere(it, o.host) ? COL.text : COL.bad, parent: c });
     else if (it.kind === 'map') T(sc, 1, s - 8, String(it.tier), { size: 'num', color: COL.text, parent: c });
-    else if (it.q) T(sc, 1, s - 8, String(it.q), { size: 'num', color: COL.dim, parent: c });
+    else if (it.gen) T(sc, 1, s - 8, String(it.gen + 1), { size: 'num', color: COL.dim, parent: c }); // 底材代数：二代、三代左下角标 2 / 3
     if (!isMod && o.upg && isUpgrade(it)) img(sc, s - 7, 1, 'up', c);
     if (it.isNew) { rect(sc, 0, 0, 13, 10, '#e2553a', 1, c); T(sc, 6.5, 5, '新', { size: 8, color: '#ffffff', align: 'center', valign: 'middle', shadow: false, parent: c }); } // 没看过的：左上角“新”（原来是 2×2 的小点，看不出来）
   } else if (o.ghost) { const g = img(sc, Math.round((s - 14) / 2), Math.round((s - 14) / 2), o.ghost, c); g.setTintFill(hex('#3a3049')); }
@@ -338,7 +338,7 @@ function showTip(content) { if (G.ui && G.ui.scrollDrag && G.ui.scrollDrag.moved
 function hideTip() { G.ui && G.ui.setTip(null); }
 function toast(msg, color) { G.ui && G.ui.toast(msg, color); }
 function feed(msg, color) { G.ui && G.ui.feed(msg, color); }
-function feedItem(it) { feed(it.kind === 'gem' ? `技能石 ${itemName(it)} · ${it.lvl} 级 · ${it.sock} 槽` : `${itemName(it)} · ${QN[it.q]} · ${rarName(it)}`, it.kind === 'gem' ? COL.cyan : icol(it)); }
+function feedItem(it) { feed(it.kind === 'gem' ? `技能石 ${itemName(it)} · ${it.lvl} 级 · ${it.sock} 槽` : `${itemName(it)} · ${GEN_N[it.gen || 0]} · ${rarName(it)}`, it.kind === 'gem' ? COL.cyan : icol(it)); }
 
 /* ---------- 场景背景 ---------- */
 const SCONCES = [{ x: 90, y: 38 }, { x: 240, y: 38 }, { x: 390, y: 38 }];

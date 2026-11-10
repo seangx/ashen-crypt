@@ -10,15 +10,11 @@ const itemTags = it => it.fb ? it.fb.tags : it.kind === 'gem' ? gemTags(it) : it
 const canRollOn = (a, it) => !a.off && a.on.includes(it.kind) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
 const offTagOk = (it, tag) => { const t = (ARMORS.off[it.b] || {}).tags || []; return t.includes('any') || t.includes(tag); }; // 副手：箭袋只出投射物类，法源 / 图腾 / 提灯什么都能出 // tag 只限制武器
 const KIND_TAG = { shield: 'Shield', core: 'Core', engine: 'Engine', hub: 'Nexus', chip: 'Chip' };
-function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : baseOf(it).n; }
-const qv = (v, q) => Array.isArray(v) ? v[q] : v; // 按品质取值
+function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : (it.kind !== 'gem' && it.gen ? GENS.list[it.gen].n : '') + baseOf(it).n; }
+const qv = (v, q) => { if (!Array.isArray(v)) return v; const x = clamp(q || 0, 0, v.length - 1), i = Math.floor(x), f = x - i; return f && i + 1 < v.length ? v[i] + (v[i + 1] - v[i]) * f : v[i]; }; // 按底材档位取值（档位可以是小数：三代底材按物品等级插值）
 
-// 品质：在物品等级覆盖的档位里按权重抽
-function rollQuality(ilvl) {
-  const ok = QUAL.map((q, i) => i).filter(i => ilvl >= QUAL[i][1] && ilvl <= QUAL[i][2]);
-  if (!ok.length) return ilvl < 1 ? 0 : QUAL.length - 1;
-  return wpick(ok, i => QUAL[i][3]);
-}
+// 底材档位：只看物品等级（第几代 + 代内进度），不再随机抽品质
+const rollQuality = ilvl => genQ(ilvl);
 // 武器底材伤害 = 原作按品质的数值 × 伤害效率 I
 function weaponBase(b, q) { return [Math.round(qv(b.min, q) * b.I), Math.round(qv(b.max, q) * b.I)]; }
 const engineBase = weaponBase;
@@ -28,7 +24,7 @@ function rollSockets(kind, b) {
   return 0;
 }
 function newItem(kind, b, ilvl, q, rar) {
-  const it = { id: S.nextId++, kind, b, ilvl, q, rar: 0, affs: [], sock: rollSockets(kind, b), mods: [] };
+  const it = { id: S.nextId++, kind, b, ilvl, q: genQ(ilvl), gen: genOf(ilvl), rar: 0, affs: [], sock: rollSockets(kind, b), mods: [] }; // q 参数已不用：底材档位由物品等级决定
   it.mods = Array(it.sock).fill(null);
   setRarity(it, rar);
   it.fp = rollFp(it.rar);
@@ -100,7 +96,8 @@ function allBases() {
 const uniqueTop = (a, ilvl) => { if (LOOT.uniqueFixedTier.mode !== 'ilvl') return a.tiers.length - 1; let top = 0; a.tiers.forEach((t, i) => { if (ilvl >= t[2]) top = i; }); return top; };
 function newUnique(id, ilvl, rand2) {
   const u = UNIQUE_BY[id];
-  const it = newItem(u.kind, u.b, Math.max(ilvl, u.req), rollQuality(Math.max(ilvl, u.req)), 0);
+  if (u.leg) return makeLegendary(newItem(u.kind, u.b, Math.max(ilvl, u.req), 0, 2), id); // 传奇词条模板不再作为独特掉：给同底材的传奇
+  const it = newItem(u.kind, u.b, Math.max(ilvl, u.req), 0, 0);
   it.rar = 3; it.u = id; it.rn = u.n; it.fp = 0; it.lp = ri(...LOOT.legendary.potential);
   it.uv = u.rules.map(([, lo, hi]) => lo === hi ? lo : rollRange(lo, hi));
   for (const [fam, N] of u.fixed) { const a = AFF_BY[fam]; if (!a) continue; const t = clamp(uniqueTop(a, it.ilvl) - (N - 1), 0, a.tiers.length - 1); it.affs.push({ k: fam, t, v: rollVal(a, t) }); }
@@ -118,7 +115,16 @@ function rollItem(ilvl, rarBonus = 0, boss = false, rarity = null, ladder = fals
   if (rarity === null && !only && rnd() < (boss ? DROP.uniqueBoss : DROP.unique) * (1 + (LX.unique || 0) / 100)) { const u = rollUnique(ilvl, boss, ladder); if (u) return u; }
   const [kind, b] = wpick(allBases().filter(x => (x[2].req || 1) <= ilvl && (!only || x[0] === only)), x => (x[2].w || 1000) * (1 + ((LX.call || {})[x[0]] || 0) / 100));
   const rar = rarity ?? wpick([0, 1, 2], r => RARITY_W[r] * (r === 2 ? 1 + rarBonus / 100 : 1));
-  return newItem(kind, b, ilvl, rollQuality(ilvl), rar);
+  const it = newItem(kind, b, ilvl, 0, rar);
+  if (rar === 2) { const L = LOOT.legendaryRare; if (rnd() < (ladder ? L.ladder : boss ? L.boss : L.normal)) makeLegendary(it); }
+  return it;
+}
+// 传奇：稀有装备带一条传奇词条（同部位的模板），数值随物品等级：等级越高越靠近上限
+function legPool(it) { return LEGA.filter(u => u.kind === it.kind && u.req <= Math.max(it.ilvl, 1)); }
+function rollLegVal(lo, hi, ilvl) { if (lo === hi) return lo; const f = clamp(rf(0, 0.5) + (ilvl || 1) / 200, 0, 1); return Math.round(lo + (hi - lo) * f); }
+function makeLegendary(it, id) {
+  if (it.rar !== 2) return it; const pool = legPool(it); const u = id ? UNIQUE_BY[id] : pool.length ? wpick(pool, x => x.w || 40) : null; if (!u) return it;
+  it.la = u.id; it.uv = u.rules.map(([, lo, hi]) => rollLegVal(lo, hi, it.ilvl)); return it;
 }
 // 词条碎片：在这个物品等级能出的词条里按权重抽一个词条族
 function rollShard(ilvl) {
@@ -191,7 +197,7 @@ function stashTrim() {
   let over = gearCount() - STASH_CAP; if (over <= 0) return;
   const fav = typeof salvFav === 'function' ? salvFav() : [], st = typeof STATS !== 'undefined' ? STATS : null;
   const val = x => { if (!st) return (x.rar | 0) * 1000 + (x.ilvl || 0); let c = VAL_CACHE.get(x); if (!c || c.st !== st) VAL_CACHE.set(x, c = { st, v: itemValue(x) }); return c.v; }; // 换上后的估值（秒伤 + 有效生命），装备不变就用缓存（WeakMap，不进存档）
-  const cands = S.stash.filter(x => x.kind !== 'gem' && x.kind !== 'chip' && !(x.u || x.leg || x.ex) && !(x.affs || []).some(a => fav.includes(a.k))).sort((a, b) => val(a) - val(b));
+  const cands = S.stash.filter(x => x.kind !== 'gem' && x.kind !== 'chip' && !(x.u || x.la || x.ex) && !(x.affs || []).some(a => fav.includes(a.k))).sort((a, b) => val(a) - val(b));
   for (const x of cands) { if (over <= 0) break; pickSalvage(x); over--; if (RUN && !RUN.trimTold) { RUN.trimTold = 1; toast(`储物箱满了（${STASH_CAP} 件）：自动拆掉最不值钱的装备`, '#d9cfb8'); } } // 独特、传奇、溢彩、带收藏词条的不拆；更好的估值高，排在最后
 }
 function equipItem(it, slot) {

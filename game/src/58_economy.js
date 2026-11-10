@@ -1,7 +1,7 @@
 /* ---------- 骨币经济：分解给骨币、骨坊赌部件、同名宝石合成（data/camp.json 的 economy） ---------- */
 const ECO = DATA.camp.economy;
 function gainCoins(n) { n = Math.max(0, Math.round(n || 0)); if (!n) return 0; S.coins = (S.coins || 0) + n; unlockEvent('gainCoin'); return n; }
-const coinOfItem = it => { const C = ECO.coin, r = it.u || it.leg || it.ex ? 2 : clamp(it.rar | 0, 0, 2); return Math.round(C.rar[r] * (1 + (it.ilvl || 1) / C.ilvlDiv)); };
+const coinOfItem = it => { const C = ECO.coin, r = it.u || it.la || it.ex ? 2 : clamp(it.rar | 0, 0, 2); return Math.round(C.rar[r] * (1 + (it.ilvl || 1) / C.ilvlDiv)); };
 const coinOfGem = g => ECO.coin.gem + (g.lvl || 1);
 const coinOfRune = m => ECO.coin.rune + Math.floor((m.lvl || 1) / 2);
 

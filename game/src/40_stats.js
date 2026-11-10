@@ -23,8 +23,9 @@ function computeStats(eq = S.equip) {
   const items = Object.values(eq).filter(Boolean);
   const A = sumGlobal(items);
   { const ad = (k, v) => A[k] = (A[k] || 0) + v; stoneSum(items, ad); // gear-v2：属性石、副手隐性、“全部”类词条摊到每种元素
-    const ob = eq.wr && eq.wr.kind === 'off' && ARMORS.off[eq.wr.b]; if (ob && ob.imp2) ad(ob.imp2[0], g2v(ob.imp2, eq.wr.q));
-    for (const k of ARMOR_KINDS) { const it = eq[k], ab = it && ARMORS[it.kind] && ARMORS[it.kind][it.b]; if (ab && ab.imp2) ad(ab.imp2[0], g2v(ab.imp2, it.q)); } // 防具隐性
+    const ob = eq.wr && eq.wr.kind === 'off' && ARMORS.off[eq.wr.b]; if (ob && ob.imp2) ad(ob.imp2[0], impV(ob.imp2, eq.wr));
+    for (const k of ARMOR_KINDS) { const it = eq[k], ab = it && ARMORS[it.kind] && ARMORS[it.kind][it.b]; if (ab && ab.imp2) ad(ab.imp2[0], impV(ab.imp2, it)); } // 防具隐性
+    for (const it of items) { const g3 = gen3Imp(it); if (g3) ad(g3[0], g3[1]); } // 三代底材的第二隐性
     if (A.gainPct) ad('soulRegen', A.gainPct);
     for (const k of ['pen', 'ailEff', 'res']) if (A[k + ':all']) for (const e of [...ELEM, 'burn']) ad(k + ':' + e, A[k + ':all']); }
   const TS = treeStats(S.tree, eq), TA = TS.add, TM = TS.more, FL = TS.flag;
@@ -68,7 +69,7 @@ function computeStats(eq = S.equip) {
     P.res[e] = Math.round(r); // defense-v3：抗性是点数，不封顶，减伤按怪物等级换算（resDrL）
   }
   // 移动：所有遁靴共享按品质的推力表
-  const eng = eq.engine; const thrust = ENGINE_THRUST[eng ? eng.q : 0];
+  const eng = eq.engine; const thrust = qv(ENGINE_THRUST, eng ? eng.q : 0);
   const eb = eng ? baseOf(eng) : null;
   P.speed = (PLAYER.baseSpeed + thrust * PLAYER.thrustToSpeed) * (TM.speed ?? 1) * (1 + ((A.velocity || 0) + (A.moveInc || 0) + (TA.velocity || 0) + (TA.moveInc || 0) + (eb && eb.thrustInc ? qv(eb.thrustInc, eng.q) : 0)) / 100) * (1 + P.time * MECH.timeFlow);
   P.accel = P.speed * PLAYER.accelMul * Math.max(MECH.massAccelMin, 1 + P.mass * MECH.massAccel);
@@ -139,7 +140,7 @@ function weaponStats(it, P, isEngine) {
     pierce: qv(b.pierce || 0, q), chain: qv(b.chain || 0, q), split: qv(b.split || 0, q), ret: b.ret || 0, extra: qv(b.extra || 0, q), extraChance: 0,
     pierceMore: 1, chainInc: 0, splitInc: 0, knock: b.knock || 0, more: 1, dotMore: 1, debrisMore: 1, blindMore: 1, radMore: 1, doubleChance: 0, procMul: 1, burnMore: 1, freezeInc: 0, emberMore: 1, brightLess: 1,
     armorOnHit: 0, thorns: 0, dashOnHit: 0, cull: 0, perDashInc: 0, bossMore: b.bossMore ? 1 + qv(b.bossMore, q) / 10 : 1 };
-  const TA = P.tree.add, TM = P.tree.more, UW = (UNIQUE_BY[it.u] || {}).when, U = k => UW && !has(UW) ? 0 : uval(it, k); // when：技能石有这个标签，独特规则才生效
+  const TA = P.tree.add, TM = P.tree.more, UW = (ruleSrc(it) || {}).when, U = k => UW && !has(UW) ? 0 : uval(it, k); // when：技能石有这个标签，独特规则才生效
   const IM = it.kind === 'weapon' && !it.th && (!it.fb || it.gem) && IMPL[it.b] ? implFx(it) : {}; // 底子的隐性倾向
   W.chain += IM.chain || 0; W.pierce += IM.pierce || 0; if (IM.knock) W.knock = 1; W.pierceMore *= IM.pierceMore || 1; W.bossMore *= 1 + (IM.bossInc || 0) / 100; W.impSpawn = IM.spawn || 0;
   for (const e of ELEM) W.ail[e] = (b['ail_' + e] || 0) + (TA['ail:' + e] || 0) + U('ail:' + e) / 100 + ((IM.ail || {})[e] || 0) + (e === b.el ? TA.ailNative || 0 : 0); // tree-v3：本源异常 = 技能自身元素的异常

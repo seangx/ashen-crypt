@@ -428,7 +428,7 @@ class World extends Phaser.Scene {
   }
   beam(g, dp, t) {
     const it = dp.item || dp.map; const x = Math.round(dp.x), y = Math.round(dp.y - dp.z) - 6;
-    const c = hex(icol(it)); const h = it.leg || it.ex ? 80 : it.rar === 3 ? 70 : it.rar === 2 ? 50 : 30;
+    const c = hex(icol(it)); const h = it.la || it.ex ? 80 : it.rar === 3 ? 70 : it.rar === 2 ? 50 : 30;
     const a = .4 + Math.sin(t * 5) * .12;
     for (let i = 0; i < 6; i++) { const seg = h / 6; g.fillStyle(c, a * (i + 1) / 6); g.fillRect(x - 1, y - h + i * seg, 3, seg + 1); }
     g.fillStyle(c, a * .35); g.fillRect(x - 3, y - h * .5, 7, h * .5);

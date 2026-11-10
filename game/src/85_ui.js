@@ -41,12 +41,12 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   if (it.kind === 'gem') { T(sc, 0, cy, `技能石 · ${it.lvl} 级 · 品质 ${it.q || 0}%`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
   else {
   T(sc, 0, cy, `${rarName(it)} · ${KIND_N[it.kind]}${it.rar === 2 ? ' · ' + b.n : ''} · 物品等级 ${it.ilvl}`, { size: 8, color: COL.dim, parent: c }); cy += 11;
-  for (let i = 0; i <= 10; i++) rect(sc, i * 5, cy + 2, 4, 3, i <= it.q ? COL.ember : '#2f2740', 1, c);
-  T(sc, 58, cy, `品质：${QN[it.q]}`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
+  { const g = it.gen || 0, L = GENS.list; for (let i = 0; i < 3; i++) rect(sc, i * 9, cy + 2, 8, 3, i <= g ? COL.ember : '#2f2740', 1, c); T(sc, 30, cy, `底材：${GEN_N[g]}${g + 1 < L.length ? ` · ${L[g + 1].from} 级起出${GEN_N[g + 1]}` : ''}`, { size: 8, color: COL.dim, parent: c }); cy += 11; } }
   rect(sc, 0, cy + 1, w, 1, '#3a3049', 1, c); cy += 4;
   const ln = (t, col = '#b8afc4') => { const r = TW(sc, 0, cy, ulk(t), w, { size: 8, color: col, parent: c }); cy += r.h; };
   for (const [t, col] of baseLines(it)) ln(t, col);
-  if (it.kind === 'weapon' && IMPL[it.b]) ln(`隐性：${IMPL[it.b].t}`, '#c9b98a'); // 底子的隐性倾向
+  if (it.kind === 'weapon' && IMPL[it.b] && IMPL[it.b].g2) { const I = IMPL[it.b]; ln(`隐性：${I.knock ? '命中击退，' : ''}${impText(I.tt || I.t.replace(/\d+(\.\d+)?–\d+(\.\d+)?/, '#'), impV(I.g2, it))}`, '#c9b98a'); } // 底子的隐性（二代起 ×1.5）
+  { const g3 = gen3Imp(it); if (g3) ln(`三代隐性：${impText(g3[2], g3[1])}`, '#e6c86e'); }
   if (it.sock) {
     const hub = it.kind === 'hub';
     for (let i = 0; i < it.sock; i++) {
@@ -77,8 +77,9 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   });
   if (it.oath) ln(oathText(it.oath), '#c0392b'); // 誓约：暗红，在词条最下面
   if (it.u) { rect(sc, 0, cy + 1, w, 1, '#5a3a14', 1, c); cy += 4; for (const r of ruleLines(it)) ln(r, '#ff9a3c'); }
+  if (it.la && !it.u) { rect(sc, 0, cy + 1, w, 1, '#5a1f3a', 1, c); cy += 4; ln(`传奇词条 · ${UNIQUE_BY[it.la].n}之力`, LEG_C); for (const r of ruleLines(it)) ln(r, LEG_C); }
   if (it.rar < 3 && it.kind !== 'map' && it.kind !== 'gem') { T(sc, 0, cy + 1, ulk(`词条 ${it.affs.length}/${AFF_MAX}{u:craft| · 锻造潜力 ${it.fp || 0}}`), { size: 8, color: it.fp > 0 ? COL.faint : COL.bad, parent: c }); cy += 11; }
-  if (it.u) { T(sc, 0, cy + 1, ulk(it.leg ? '传奇：已熔铸' : `传奇潜力 {u:fuse|${it.lp || 0}}`), { size: 8, color: it.leg ? LEG_C : COL.faint, parent: c }); cy += 11; }
+  if (it.u) { T(sc, 0, cy + 1, ulk(it.leg ? '已熔铸' : `熔铸潜力 {u:fuse|${it.lp || 0}}`), { size: 8, color: it.leg ? RCOL[3] : COL.faint, parent: c }); cy += 11; }
   if (o.compare) for (const ln of compareLines(it)) { const t = TW(sc, 0, cy + 1, ln.t, w, { size: 8, color: ln.c, parent: c }); cy += t.h; }
   return { c, h: cy };
 }
@@ -122,12 +123,12 @@ function baseLines(it) {
     const p = []; if (b.crit) p.push(`暴击 ${b.crit}%`); if (sb && sb.aps) p.push(`每秒攻击 ${r1(sb.aps)}`); if (p.length) out.push([p.join(' · '), dim]);
     return out; }
   if (it.kind === 'off') { // 副手：不带技能，只强化主手技能
-    out.push([`副手 · ${b.d}`, COL.dim]); const o = offSupport(it), r = v => Math.round(v);
+    out.push([`副手 · ${b.impT ? impText(b.impT, impV(b.imp2, it)) : b.d}`, COL.dim]); const o = offSupport(it), r = v => Math.round(v);
     const L = { chain: v => `主手弹射 +${v}（可弹射技能）`, more: v => `主手技能伤害总增 ${r(v)}%`, extra: v => `主手投射物 +${v}（投射物技能）`, inc: v => `主手技能伤害提高 ${r(v)}%`, projInc: v => `投射物伤害提高 ${r(v)}%`, aoeInc: v => `范围提高 ${r(v)}%`, areaInc: v => `范围伤害提高 ${r(v)}%（范围技能）`, aspdMore: v => `主手攻速总增 ${r(v)}%`, critInc: v => `暴击率提高 ${r(v)}%`, critDmg: v => `暴击伤害 +${r(v)}%`, ail: v => `异常效果提高 ${r(v)}%`, gain: v => `额外获得 ${r(v)}% 主手元素伤害` };
     for (const k of OFF_SUP) if (o[k] >= 0.5) out.push([L[k](o[k]), '#9fd8ff']);
     return out; }
   if (it.kind === 'weapon' || it.kind === 'engine') {
-    if (it.kind === 'engine') { out.push([DASH_N[b.dash], COL.cyan]); out.push([`移动推力 ${ENGINE_THRUST[q]}` + (b.thrustInc ? `，移动速度提高 ${qv(b.thrustInc, q)}%` : ''), dim]); }
+    if (it.kind === 'engine') { out.push([DASH_N[b.dash], COL.cyan]); out.push([`移动推力 ${Math.round(qv(ENGINE_THRUST, q))}` + (b.thrustInc ? `，移动速度提高 ${qv(b.thrustInc, q)}%` : ''), dim]); }
     else if (FORM_N[b.form]) out.push([FORM_N[b.form], COL.dim]);
     if (b.min) { const [mn, mx] = weaponBase(b, q); out.push([`${ELEM_N[b.el]}伤害 ${fmt(mn)}–${fmt(mx)}${b.cont ? ' / 秒' : ''}`, ELEM_C[b.el]]); }
     if (b.aura) out.push([`每秒 ${qv(b.aura, q)} ${ELEM_N[b.el]}伤害`, ELEM_C[b.el]]);
@@ -159,7 +160,7 @@ function baseLines(it) {
     if (b.res) p.push(`${ELEM_N[b.el]}抗性 +${qv(b.res, q)}%`);
     if (b.energy) p.push(`${ATTR_N.energy} +${qv(b.energy, q)}`); if (b.mass) p.push(`护甲提高 ${2 * qv(b.mass, q)}%`); if (b.time) p.push(`攻击速度提高 ${qv(b.time, q)}%`); // 体魄 / 时砂已下线，换算成护甲 / 攻速
     out.push([p.join('，'), '#e9d9a8']);
-    if (b.imp2) { const v = g2v(b.imp2, q); out.push([`隐性：${b.impT.replace('#', Math.round(v * 10) / 10)}`, '#c9b98a']); }
+    if (b.imp2) out.push([`隐性：${impText(b.impT, impV(b.imp2, it))}`, '#c9b98a']);
     if (it.kind === 'hub') out.push(['插在升级槽里的符文会随击杀成长；力场符文只在这里生效', COL.faint]);
   }
   return out;
@@ -448,7 +449,7 @@ class UI extends Phaser.Scene {
       const cx = 10 + (i % cols) * (cs + gap), cy = y + (i / cols | 0) * (cs + gap);
       mkCell(this, c, cx, cy, it, { size: cs, sel: on, direct: true, onClick: v => { if (!v || !bulkOk(v)) return; pick.set(v.id, !bulkHit(v, pick)); this.refresh(); } });
       if (on) T(this, cx + cs - 2, cy + 1, '✕', { size: 8, color: '#ff6a5a', align: 'right', parent: c }); });
-    if (S.stash.length > cols * rows) T(this, 10, y + rows * (cs + gap) + 1, `另 ${S.stash.length - cols * rows} 件未显示（按品质勾选仍会计入）`, { size: 8, color: COL.faint, parent: c });
+    if (S.stash.length > cols * rows) T(this, 10, y + rows * (cs + gap) + 1, `另 ${S.stash.length - cols * rows} 件未显示（按稀有度勾选仍会计入）`, { size: 8, color: COL.faint, parent: c });
     const by = h - (mob ? 50 : 26);
     T(this, w / 2, by - 16, list.length ? `已选 ${list.length} 件 · 约得词条碎片 ${yld}` : '还没有选中任何装备', { size: 8, color: list.length ? COL.emberHi : COL.faint, align: 'center', parent: c });
     const hw = Math.floor((w - 24) / 2);
@@ -670,10 +671,10 @@ class UI extends Phaser.Scene {
     const items = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash];
     const us = items.filter(x => x.u && !x.leg);
     let u = us.find(x => x.id === craftId) || us[0]; craftId = u && u.id;
-    T(this, 10, 24, `独特装备 ${us.length}`, { size: 8, color: COL.dim, parent: c });
+    T(this, 10, 24, `神话装备 ${us.length}`, { size: 8, color: COL.dim, parent: c });
     us.slice(0, 48).forEach((x, i) => mkCell(this, c, 10 + (i % 8) * 16, 36 + (i / 8 | 0) * 16, x, { size: 16, sel: x === u, onClick: v => { craftId = v.id; fuseId = null; this.refresh(); } }));
-    TW(this, 10, 150, `独特装备保留规则和固定词条，再从同部位的稀有装备上随机转移“传奇潜力”条词条（档位不变）。稀有装备会被消耗。`, 128, { size: 8, color: COL.faint, parent: c });
-    if (!u) { TW(this, 146, 30, '没有可以熔铸的独特装备。', 160, { size: 8, color: COL.faint, parent: c }); return; }
+    TW(this, 10, 150, `神话装备保留规则和固定词条，再从同部位的稀有装备上随机转移“熔铸潜力”条词条（档位不变）。稀有装备会被消耗。`, 128, { size: 8, color: COL.faint, parent: c });
+    if (!u) { TW(this, 146, 30, '没有可以熔铸的神话装备。', 160, { size: 8, color: COL.faint, parent: c }); return; }
     mkCard(this, c, 146, 6, u, 160);
     const rs = items.filter(x => x.kind === u.kind && x.rar === 2 && !x.u);
     let r = rs.find(x => x.id === fuseId) || null;
@@ -905,7 +906,7 @@ class UI extends Phaser.Scene {
       const z = this.add.zone(x - 2, y - 1, 94, 18).setOrigin(0).setInteractive(); c.add(z);
       z.on('pointerover', () => showTip([{ t: `天梯 ${r.lvl} 层 · 用时 ${mmss(r.time)} · 跳 ${r.jump} 层`, c: COL.emberHi }, { t: new Date(r.date).toLocaleString('zh-CN'), s: 8, c: COL.dim },
         { t: `秒伤 ${fmt(r.build.dps)} · 生命 ${fmt(r.build.life || 0)} · 护盾 ${fmt(r.build.shield ?? r.build.deflect ?? 0)} · 护甲 ${fmt(r.build.armor)} · ${ELEM_N[r.build.elem]}`, s: 8 },
-        ...r.build.equip.map(q => ({ t: `${SLOTS.find(s => s.id === q.slot).n}：${nm(q)} · ${RAR[q.rar].n} · ${QN[q.q]}`, s: 8, c: RCOL[q.rar] })),
+        ...r.build.equip.map(q => ({ t: `${SLOTS.find(s => s.id === q.slot).n}：${nm(q)} · ${q.la ? '传奇' : RAR[q.rar].n} · ${q.gen != null ? GEN_N[q.gen] : QN[q.q] || ''}`, s: 8, c: RCOL[q.rar] })),
         { t: r.build.keys.length ? '核心天赋：' + r.build.keys.map(k => TREE.nodes[k].n).join('、') : '没有核心天赋', s: 8, c: '#ff9a3c' }]));
       z.on('pointerout', hideTip);
     });
@@ -1028,7 +1029,7 @@ class UI extends Phaser.Scene {
     tog(26, R.on, '自动分解', () => { R.on = !R.on; }, [{ t: '关掉后带回的装备都留着，可以在铁砧手动拆解。', s: 8 }]);
     ['普通', '罕见', '稀有'].forEach((n, i) => tog(44 + i * 16, R.rar[i], `${n}装备`, () => { R.rar[i] = !R.rar[i]; }, [{ t: `分解${n}装备（带收藏词条的留下）`, s: 8 }]));
     tog(94, R.old, `旧装备（物品等级 < ${Math.max(1, back)}）`, () => { R.old = !R.old; }, [{ t: `物品等级低于 最深层 − ${CAMP.salvageIlvlBack} 的装备全部分解，不看稀有度和收藏词条。`, s: 8 }]);
-    TW(this, 10, 114, '独特、传奇、溢彩装备和技能石、符文永远不会被自动分解；身上穿着的也不会。', 160, { size: 8, color: COL.faint, parent: c });
+    TW(this, 10, 114, '神话、传奇、溢彩装备和技能石、符文永远不会被自动分解；身上穿着的也不会。', 160, { size: 8, color: COL.faint, parent: c });
     const n = S.stash.filter(salvWhy).length;
     mkBtn(this, c, 10, h - 30, 160, 20, confirmKey === 'salvNow' ? `确认分解 ${n} 件` : `现在分解背包（${n} 件）`, () => { if (!confirm2('salvNow')) return this.refresh(); const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个${coinTxt(g)}`, '#d9cfb8'); save(); this.refresh(); }, { size: 8, style: confirmKey === 'salvNow' ? 'r' : 'w', disabled: !n });
     // 收藏词条：带这些词条族的装备不按稀有度分解

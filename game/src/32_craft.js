@@ -19,7 +19,7 @@ function syncRarity(it) {
 /* 能不能做：返回 null 表示可以，否则返回原因 */
 function anvilWhy(it) {
   if (!it) return '先选一件装备';
-  if (!craftable(it)) return '独特装备不能在铁砧上改';
+  if (!craftable(it)) return '神话装备不能在铁砧上改';
   if (!(it.fp > 0)) return '锻造潜力已经用完';
   return null;
 }
@@ -90,7 +90,7 @@ function craftUp(it, i, hope, chaos) {
 const oathOpts = it => OATH.list.filter(o => oathFits(o, it) && o.id !== it.oath);
 function addOath(it) { const ok = oathOpts(it); if (ok.length) it.oath = pick(ok).id; return it; }
 const oathText = id => { const o = OATH_BY[id]; return o ? `誓约：${o.pos}；${o.neg}` : ''; };
-function oathWhy(it) { if (!craftable(it)) return '独特装备、地图、符文不能立誓'; if (glyphN('oath') <= 0) return `没有立誓符（天梯 ${OATH.glyphLadder} 层起的宝箱 ${OATH.glyphDrop}% 掉）`; if (!oathOpts(it).length) return '这个部位没有能出的誓约'; return anvilWhy(it); }
+function oathWhy(it) { if (!craftable(it)) return '神话装备、地图、符文不能立誓'; if (glyphN('oath') <= 0) return `没有立誓符（天梯 ${OATH.glyphLadder} 层起的宝箱 ${OATH.glyphDrop}% 掉）`; if (!oathOpts(it).length) return '这个部位没有能出的誓约'; return anvilWhy(it); }
 function craftOath(it) { S.glyphs.oath--; const old = it.oath; addOath(it); return `${old ? '换成' : '立下'}${oathText(it.oath)}，${spendFp(it, [OATH.fpCost, OATH.fpCost])}`; }
 function craftRefine(it, i) {
   const x = it.affs[i]; S.glyphs.refine--; x.v = rollVal(AFF_BY[x.k], x.t);
@@ -121,9 +121,9 @@ function makeExalted(it) {
 
 /* 传奇熔铸：独特 + 同部位稀有 → 传奇（独特的规则和固定词条 + 转移“传奇潜力”条稀有词条） */
 function fuseWhy(u, r) {
-  if (!u || !u.u) return '先选一件独特装备';
-  if (u.leg) return '已经是传奇';
-  if (!(u.lp > 0)) return '这件独特装备没有传奇潜力';
+  if (!u || !u.u) return '先选一件神话装备';
+  if (u.leg) return '已经熔铸过';
+  if (!(u.lp > 0)) return '这件神话装备没有熔铸潜力';
   if (!r) return '再选一件同部位的稀有装备';
   if (r.kind !== u.kind) return '部位不同';
   if (r.rar !== 2 || r.u) return '只能用稀有装备';

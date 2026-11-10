@@ -112,7 +112,7 @@ function treeLines(nd) {
 function treeStats(ids = S.tree, eq = S.equip) {
   const add = {}, more = {}, flag = {};
   const A = (k, v) => add[k] = (add[k] || 0) + v, M = (k, v) => more[k] = (more[k] ?? 1) * v;
-  const uniqueRules = it => { const u = UNIQUE_BY[it.u]; if (!u) return; u.rules.forEach(([k], i) => { const v = it.uv[i];
+  const uniqueRules = it => { const u = ruleSrc(it); if (!u) return; u.rules.forEach(([k], i) => { const v = it.uv[i];
     if (['energyInc', 'rangeInc', 'dodge', 'velocity', 'dashMax', 'armorInc', 'shieldRegenPct'].includes(k)) A(k, v);
     else if (k === 'energyAdd') A('energy', v); else if (k === 'aspdLessAll') M('aspd', 1 - v / 100); else if (k === 'resAll') A('res:all', v); else if (k === 'rangedDRU') A('rangedDR', v); else if (k === 'rangedSpike') flag.rangedSpike = 1;
     else if (k === 'critLess') M('crit', 1 - v / 100); else if (k === 'armorLess') M('armor', 1 - v / 100); else if (k === 'shockMul') flag.shockMul = (flag.shockMul || 1) * (1 + v / 100);
@@ -145,7 +145,7 @@ function treeStats(ids = S.tree, eq = S.equip) {
     else if (k === 'shieldRegenMore') M('deflRate', 1 + v / 100); else if (k === 'speedMore') M('speed', 1 + v / 100); else if (k === 'projMore') M('dmg:proj', 1 + v / 100); else if (k === 'lifeMore') M('life', 1 + v / 100);
     else if (k === 'chillLess') flag.chillMul = (flag.chillMul || 1) * (1 - v / 100);
     else flag[k] = (1 + (flag[k] || 0) / 100) * (1 + v / 100) * 100 - 100; } }; // fullShieldMore / frozenMore / delayMore / dmgMore / burnMore：按 % 存，叠加时相乘
-  for (const k in eq) if (eq[k] && eq[k].u) uniqueRules(eq[k]);
+  for (const k in eq) if (eq[k] && (eq[k].u || eq[k].la)) uniqueRules(eq[k]);
   for (const k in eq) if (eq[k] && eq[k].oath) oathRules(eq[k]);
   for (const nd of masteryParts()) { // 专精改版：加成来自专精条、被动、大天赋（星盘 ids 不再生效）
     for (const k in nd.add || {}) add[k] = (add[k] || 0) + nd.add[k];

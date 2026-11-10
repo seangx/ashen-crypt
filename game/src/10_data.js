@@ -26,14 +26,18 @@ const ATTR_N = { mass: '体魄', energy: '魂力', time: '时砂' };
 
 // 品质 11 档：[名字, 物品等级下限, 上限, 掉落权重]
 const QUAL = LOOT.quality.list.map(q => [q.n, q.ilvlMin, q.ilvlMax, q.w]);
-const QN = QUAL.map(q => q[0]);
+const QN = QUAL.map(q => q[0]); // 旧品质名（11-10 起不再显示，存档迁移用）
+// 底材三代（data/loot.json 的 gens）：物品等级决定第几代，代内数值随等级小涨，换代跳一截
+const GENS = LOOT.gens, GEN_N = ['一代', '二代', '三代'];
+const genOf = ilvl => { let g = 0; GENS.list.forEach((x, i) => { if ((ilvl || 1) >= x.from) g = i; }); return g; };
+const genQ = ilvl => { const L = GENS.list, g = genOf(ilvl), x = L[g], end = g + 1 < L.length ? L[g + 1].from - 1 : GENS.topLvl, f = end > x.from ? clamp(((ilvl || 1) - x.from) / (end - x.from), 0, 1) : 1; return +(x.q[0] + (x.q[1] - x.q[0]) * f).toFixed(2); };
 
 // 稀有度
-const RAR = [{ n: '普通', max: 0 }, { n: '罕见', max: 2 }, { n: '稀有', max: 4 }, { n: '独特', max: 0 }];
+const RAR = [{ n: '普通', max: 0 }, { n: '罕见', max: 2 }, { n: '稀有', max: 4 }, { n: '神话', max: 0 }];
 const RCOL = ['#c9c2b4', '#78a9ff', '#ffd84a', '#ff8a3d'];
-const LEG_C = '#ff5fa2', EX_C = '#7dffcf'; // 传奇（熔铸过的独特）、溢彩（带只能掉落的顶档词条）
-const icol = it => it.leg ? LEG_C : it.ex ? EX_C : RCOL[it.rar];
-const rarName = it => it.leg ? '传奇' : it.ex ? '溢彩' + RAR[it.rar].n : RAR[it.rar].n;
+const LEG_C = '#ff5fa2', EX_C = '#7dffcf'; // 传奇（稀有 + 传奇词条）、溢彩（带只能掉落的顶档词条）
+const icol = it => it.la ? LEG_C : it.ex ? EX_C : RCOL[it.rar];
+const rarName = it => it.leg ? '神话 · 已熔铸' : it.la ? (it.ex ? '溢彩传奇' : '传奇') : it.ex ? '溢彩' + RAR[it.rar].n : RAR[it.rar].n;
 
 // 装备槽
 const SLOTS = [
