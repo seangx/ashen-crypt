@@ -1,0 +1,1166 @@
+{
+ "_说明": "职业（design/class-v1.md，2026-11-10 替换按标签分的专精）。6 个基础职业，选 2 个；每个职业两种元素、一种保命方式。bar 专精条每点的加成（通用伤害 + 两种元素 + 保命），pass 6 个被动（每级 = add ÷ passRef，最多 passMax 级），keys 5 个大天赋：src 是原来 tree.json 里那个大天赋的 id（效果和文字照搬），need 挂在第几个被动下。档位见 mastery.json 的 tiers。adv 是 15 个高级职业：两个基础职业的专精条都到 advBar 点解锁，3 个被动 + 1 个招牌大天赋（挂在第 2 个被动下）；同系的 6 个强化那个元素的主效果，跨系的 9 个要求敌人同时带两种减益（flag x:甲:乙 = 总增 %）。efx:元素 = 该元素主效果的强度提高 %。",
+ "advBar": 10,
+ "classes": [
+  {
+   "id": "warrior",
+   "n": "骸骨武士",
+   "c": "#e0b48a",
+   "el": [
+    "kin",
+    "exp"
+   ],
+   "def": "护甲 · 贴身减伤",
+   "bar": {
+    "inc:all": 2,
+    "inc:kin": 1.5,
+    "inc:exp": 1.5,
+    "armorInc": 0.7,
+    "closeCap": 0.4
+   },
+   "pass": [
+    {
+     "n": "碎颅",
+     "add": {
+      "inc:kin": 15,
+      "bossInc": 10
+     }
+    },
+    {
+     "n": "铁脊",
+     "add": {
+      "aspd": 8,
+      "closePer": 0.5
+     }
+    },
+    {
+     "n": "围城",
+     "add": {
+      "closePer": 0.5,
+      "closeCap": 5
+     }
+    },
+    {
+     "n": "重手",
+     "add": {
+      "inc:exp": 15,
+      "aspd": 5
+     }
+    },
+    {
+     "n": "铁壁",
+     "add": {
+      "armorInc": 20,
+      "armor": 15
+     }
+    },
+    {
+     "n": "旋身",
+     "add": {
+      "inc:melee": 15,
+      "aoeInc": 10
+     }
+    }
+   ],
+   "keys": [
+    {
+     "src": "melee8",
+     "need": 0
+    },
+    {
+     "src": "meleec0_6",
+     "need": 2
+    },
+    {
+     "src": "meleec1_6",
+     "need": 3
+    },
+    {
+     "src": "guardc1_6",
+     "need": 4
+    },
+    {
+     "src": "meleec3_6",
+     "need": 1
+    }
+   ]
+  },
+  {
+   "id": "hunter",
+   "n": "猎手",
+   "c": "#b8d06a",
+   "el": [
+    "kin",
+    "nuc"
+   ],
+   "def": "移速 · 远离减伤",
+   "bar": {
+    "inc:all": 2,
+    "inc:kin": 1.5,
+    "inc:nuc": 1.5,
+    "moveInc": 0.5,
+    "critInc": 0.5,
+    "farDR": 0.4
+   },
+   "pass": [
+    {
+     "n": "凝神",
+     "add": {
+      "critInc": 12,
+      "inc:all": 8
+     }
+    },
+    {
+     "n": "贯穿",
+     "add": {
+      "pierce": 1,
+      "inc:kin": 10
+     }
+    },
+    {
+     "n": "孤行",
+     "add": {
+      "farDR": 12,
+      "moveInc": 5
+     }
+    },
+    {
+     "n": "淬毒",
+     "add": {
+      "inc:nuc": 15,
+      "efx:nuc": 10
+     }
+    },
+    {
+     "n": "流影",
+     "add": {
+      "dashRegen": 20,
+      "moveInc": 5
+     }
+    },
+    {
+     "n": "散射",
+     "add": {
+      "inc:proj": 15,
+      "projSpd": 15
+     }
+    }
+   ],
+   "keys": [
+    {
+     "src": "projc0_6",
+     "need": 0
+    },
+    {
+     "src": "projc3_6",
+     "need": 1
+    },
+    {
+     "src": "lampc0_6",
+     "need": 2
+    },
+    {
+     "src": "dotc0_6",
+     "need": 3
+    },
+    {
+     "src": "projc1_6",
+     "need": 5
+    }
+   ]
+  },
+  {
+   "id": "storm",
+   "n": "唤雷者",
+   "c": "#7fc8ff",
+   "el": [
+    "ele",
+    "cold"
+   ],
+   "def": "护盾",
+   "bar": {
+    "inc:all": 2,
+    "inc:ele": 1.5,
+    "inc:cold": 1.5,
+    "deflectInc": 1.0,
+    "projSpd": 0.6
+   },
+   "pass": [
+    {
+     "n": "链电",
+     "add": {
+      "chain": 1,
+      "inc:ele": 10
+     }
+    },
+    {
+     "n": "弹跳",
+     "add": {
+      "chain": 1,
+      "chainStep": 4
+     }
+    },
+    {
+     "n": "守望",
+     "add": {
+      "deflectInc": 25,
+      "energy": 4
+     }
+    },
+    {
+     "n": "霜息",
+     "add": {
+      "inc:cold": 15,
+      "efx:cold": 10
+     }
+    },
+    {
+     "n": "庇护",
+     "add": {
+      "deflectInc": 20,
+      "res:all": 10
+     }
+    },
+    {
+     "n": "缓流",
+     "add": {
+      "projSlow": 15,
+      "projDur": 15
+     }
+    }
+   ],
+   "keys": [
+    {
+     "src": "projc2_6",
+     "need": 0
+    },
+    {
+     "src": "proj8",
+     "need": 1
+    },
+    {
+     "src": "guard8",
+     "need": 2
+    },
+    {
+     "src": "guardc2_6",
+     "need": 3
+    },
+    {
+     "src": "guardc3_6",
+     "need": 4
+    }
+   ]
+  },
+  {
+   "id": "pyre",
+   "n": "焚化者",
+   "c": "#ff8a3d",
+   "el": [
+    "exp",
+    "ele"
+   ],
+   "def": "灯火",
+   "bar": {
+    "inc:all": 2,
+    "inc:exp": 1.5,
+    "inc:ele": 1.5,
+    "lampMax": 0.6,
+    "burnLess": 0.25,
+    "aoeInc": 0.6
+   },
+   "pass": [
+    {
+     "n": "预兆",
+     "add": {
+      "delayInc": 20,
+      "aoeInc": 5
+     }
+    },
+    {
+     "n": "扩张之环",
+     "add": {
+      "aoeInc": 15,
+      "areaInc": 10
+     }
+    },
+    {
+     "n": "灯油",
+     "add": {
+      "lampMax": 15,
+      "burnLess": 10
+     }
+    },
+    {
+     "n": "坠星",
+     "add": {
+      "delayInc": 20,
+      "inc:exp": 10
+     }
+    },
+    {
+     "n": "灯芯",
+     "add": {
+      "soulKillInc": 20,
+      "burnLess": 8
+     }
+    },
+    {
+     "n": "残步",
+     "add": {
+      "emberStep": 10
+     }
+    }
+   ],
+   "keys": [
+    {
+     "src": "area8",
+     "need": 0
+    },
+    {
+     "src": "areac2_6",
+     "need": 1
+    },
+    {
+     "src": "areac0_6",
+     "need": 3
+    },
+    {
+     "src": "lampc2_6",
+     "need": 4
+    },
+    {
+     "src": "lamp8",
+     "need": 5
+    }
+   ]
+  },
+  {
+   "id": "warden",
+   "n": "守墓人",
+   "c": "#ffe27a",
+   "el": [
+    "pla",
+    "cold"
+   ],
+   "def": "全抗 · 精英减伤",
+   "bar": {
+    "inc:all": 2,
+    "inc:pla": 1.5,
+    "inc:cold": 1.5,
+    "res:all": 0.5,
+    "eliteDR": 0.3,
+    "meleeDR": 0.3
+   },
+   "pass": [
+    {
+     "n": "坚守",
+     "add": {
+      "eliteDR": 6,
+      "armorInc": 15
+     }
+    },
+    {
+     "n": "镇压",
+     "add": {
+      "ctrlWeaken": 12
+     }
+    },
+    {
+     "n": "圣印",
+     "add": {
+      "inc:pla": 15,
+      "efx:pla": 10
+     }
+    },
+    {
+     "n": "专注",
+     "add": {
+      "aspd": 8,
+      "inc:all": 10
+     }
+    },
+    {
+     "n": "积蓄",
+     "add": {
+      "chargeInc": 10,
+      "inc:all": 10
+     }
+    },
+    {
+     "n": "饮魂",
+     "add": {
+      "shieldOnHit": 1.5,
+      "deflectInc": 10
+     }
+    }
+   ],
+   "keys": [
+    {
+     "src": "guardc0_6",
+     "need": 0
+    },
+    {
+     "src": "areac1_6",
+     "need": 1
+    },
+    {
+     "src": "lampc1_6",
+     "need": 2
+    },
+    {
+     "src": "meleec2_6",
+     "need": 3
+    },
+    {
+     "src": "areac3_6",
+     "need": 4
+    }
+   ]
+  },
+  {
+   "id": "plague",
+   "n": "瘟医",
+   "c": "#8fe05a",
+   "el": [
+    "nuc",
+    "pla"
+   ],
+   "def": "生命回复",
+   "bar": {
+    "inc:all": 2,
+    "inc:nuc": 1.5,
+    "inc:pla": 1.5,
+    "dotInc": 1.5,
+    "lifeRegen": 0.45,
+    "durInc": 0.6
+   },
+   "pass": [
+    {
+     "n": "蔓延",
+     "add": {
+      "dotInc": 25
+     }
+    },
+    {
+     "n": "久燃",
+     "add": {
+      "durInc": 15,
+      "dotInc": 10
+     }
+    },
+    {
+     "n": "溃烂",
+     "add": {
+      "dotInc": 20,
+      "efx:nuc": 10
+     }
+    },
+    {
+     "n": "剧毒",
+     "add": {
+      "double": 5,
+      "dotInc": 10
+     }
+    },
+    {
+     "n": "添油",
+     "add": {
+      "lampMax": 10,
+      "moveInc": 5
+     }
+    },
+    {
+     "n": "回生",
+     "add": {
+      "lifeRegen": 8,
+      "res:all": 6
+     }
+    }
+   ],
+   "keys": [
+    {
+     "src": "dot8",
+     "need": 0
+    },
+    {
+     "src": "dotc1_6",
+     "need": 1
+    },
+    {
+     "src": "dotc3_6",
+     "need": 2
+    },
+    {
+     "src": "dotc2_6",
+     "need": 3
+    },
+    {
+     "src": "lampc3_6",
+     "need": 4
+    }
+   ]
+  }
+ ],
+ "adv": [
+  {
+   "id": "warrior_hunter",
+   "n": "碎甲宗师",
+   "of": [
+    "warrior",
+    "hunter"
+   ],
+   "c": "#e9e0c9",
+   "el": [
+    "kin"
+   ],
+   "note": "都带物理",
+   "pass": [
+    {
+     "n": "物理精通",
+     "add": {
+      "inc:kin": 20
+     }
+    },
+    {
+     "n": "破甲强化",
+     "add": {
+      "efx:kin": 20
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "断骨",
+    "flag": {
+     "sunMaxAdd": 5
+    },
+    "add": {},
+    "d": "破甲上限 +5 层（10 → 15）"
+   }
+  },
+  {
+   "id": "warrior_storm",
+   "n": "雷铸卫士",
+   "of": [
+    "warrior",
+    "storm"
+   ],
+   "c": "#c98cff",
+   "el": [
+    "kin",
+    "ele"
+   ],
+   "note": "物理 × 闪电",
+   "pass": [
+    {
+     "n": "双修",
+     "add": {
+      "inc:kin": 12,
+      "inc:ele": 12
+     }
+    },
+    {
+     "n": "并蒂",
+     "add": {
+      "efx:kin": 10,
+      "efx:ele": 10
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "破甲感电",
+    "flag": {
+     "x:kin:ele": 30
+    },
+    "add": {},
+    "d": "敌人身上同时带破甲和感电时，受到你的伤害总增 30%"
+   }
+  },
+  {
+   "id": "warrior_pyre",
+   "n": "烬主",
+   "of": [
+    "warrior",
+    "pyre"
+   ],
+   "c": "#ff8a3d",
+   "el": [
+    "exp"
+   ],
+   "note": "都带火焰",
+   "pass": [
+    {
+     "n": "火焰精通",
+     "add": {
+      "inc:exp": 20
+     }
+    },
+    {
+     "n": "灼烧强化",
+     "add": {
+      "efx:exp": 20
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "余烬不灭",
+    "flag": {
+     "emberHeir": 1
+    },
+    "add": {
+     "efx:exp": 50
+    },
+    "d": "灼烧累积 +50%；烧着的敌人死亡时，剩余灼烧的一半传给最近的敌人"
+   }
+  },
+  {
+   "id": "warrior_warden",
+   "n": "圣殿武士",
+   "of": [
+    "warrior",
+    "warden"
+   ],
+   "c": "#c98cff",
+   "el": [
+    "kin",
+    "pla"
+   ],
+   "note": "物理 × 圣光",
+   "pass": [
+    {
+     "n": "双修",
+     "add": {
+      "inc:kin": 12,
+      "inc:pla": 12
+     }
+    },
+    {
+     "n": "并蒂",
+     "add": {
+      "efx:kin": 10,
+      "efx:pla": 10
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "破甲审判",
+    "flag": {
+     "x:kin:pla": 30
+    },
+    "add": {},
+    "d": "敌人身上同时带破甲和审判时，受到你的伤害总增 30%"
+   }
+  },
+  {
+   "id": "warrior_plague",
+   "n": "刽子手",
+   "of": [
+    "warrior",
+    "plague"
+   ],
+   "c": "#c98cff",
+   "el": [
+    "exp",
+    "nuc"
+   ],
+   "note": "火焰 × 瘟疫",
+   "pass": [
+    {
+     "n": "双修",
+     "add": {
+      "inc:exp": 12,
+      "inc:nuc": 12
+     }
+    },
+    {
+     "n": "并蒂",
+     "add": {
+      "efx:exp": 10,
+      "efx:nuc": 10
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "灼烧疫病",
+    "flag": {
+     "x:exp:nuc": 30
+    },
+    "add": {},
+    "d": "敌人身上同时带灼烧和疫病时，受到你的伤害总增 30%"
+   }
+  },
+  {
+   "id": "hunter_storm",
+   "n": "风暴游侠",
+   "of": [
+    "hunter",
+    "storm"
+   ],
+   "c": "#c98cff",
+   "el": [
+    "nuc",
+    "cold"
+   ],
+   "note": "瘟疫 × 寒霜",
+   "pass": [
+    {
+     "n": "双修",
+     "add": {
+      "inc:nuc": 12,
+      "inc:cold": 12
+     }
+    },
+    {
+     "n": "并蒂",
+     "add": {
+      "efx:nuc": 10,
+      "efx:cold": 10
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "疫病冰缓",
+    "flag": {
+     "x:nuc:cold": 30
+    },
+    "add": {},
+    "d": "敌人身上同时带疫病和冰缓时，受到你的伤害总增 30%"
+   }
+  },
+  {
+   "id": "hunter_pyre",
+   "n": "纵火者",
+   "of": [
+    "hunter",
+    "pyre"
+   ],
+   "c": "#c98cff",
+   "el": [
+    "nuc",
+    "ele"
+   ],
+   "note": "瘟疫 × 闪电",
+   "pass": [
+    {
+     "n": "双修",
+     "add": {
+      "inc:nuc": 12,
+      "inc:ele": 12
+     }
+    },
+    {
+     "n": "并蒂",
+     "add": {
+      "efx:nuc": 10,
+      "efx:ele": 10
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "疫病感电",
+    "flag": {
+     "x:nuc:ele": 30
+    },
+    "add": {},
+    "d": "敌人身上同时带疫病和感电时，受到你的伤害总增 30%"
+   }
+  },
+  {
+   "id": "hunter_warden",
+   "n": "守夜人",
+   "of": [
+    "hunter",
+    "warden"
+   ],
+   "c": "#c98cff",
+   "el": [
+    "kin",
+    "cold"
+   ],
+   "note": "物理 × 寒霜",
+   "pass": [
+    {
+     "n": "双修",
+     "add": {
+      "inc:kin": 12,
+      "inc:cold": 12
+     }
+    },
+    {
+     "n": "并蒂",
+     "add": {
+      "efx:kin": 10,
+      "efx:cold": 10
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "破甲冰缓",
+    "flag": {
+     "x:kin:cold": 30
+    },
+    "add": {},
+    "d": "敌人身上同时带破甲和冰缓时，受到你的伤害总增 30%"
+   }
+  },
+  {
+   "id": "hunter_plague",
+   "n": "疫医",
+   "of": [
+    "hunter",
+    "plague"
+   ],
+   "c": "#8fe05a",
+   "el": [
+    "nuc"
+   ],
+   "note": "都带瘟疫",
+   "pass": [
+    {
+     "n": "瘟疫精通",
+     "add": {
+      "inc:nuc": 20
+     }
+    },
+    {
+     "n": "疫病强化",
+     "add": {
+      "efx:nuc": 20
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "沉疴",
+    "flag": {
+     "plagueDoc": 1
+    },
+    "add": {},
+    "d": "疫病持续时间 +50%"
+   }
+  },
+  {
+   "id": "storm_pyre",
+   "n": "雷霆使者",
+   "of": [
+    "storm",
+    "pyre"
+   ],
+   "c": "#7fc8ff",
+   "el": [
+    "ele"
+   ],
+   "note": "都带闪电",
+   "pass": [
+    {
+     "n": "闪电精通",
+     "add": {
+      "inc:ele": 20
+     }
+    },
+    {
+     "n": "感电强化",
+     "add": {
+      "efx:ele": 20
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "雷霆万钧",
+    "flag": {
+     "stormLord": 1
+    },
+    "add": {},
+    "d": "感电持续时间翻倍；小伤害叠感电的上限从 25 层提到 50 层"
+   }
+  },
+  {
+   "id": "storm_warden",
+   "n": "凛冬使",
+   "of": [
+    "storm",
+    "warden"
+   ],
+   "c": "#9fe3ff",
+   "el": [
+    "cold"
+   ],
+   "note": "都带寒霜",
+   "pass": [
+    {
+     "n": "寒霜精通",
+     "add": {
+      "inc:cold": 20
+     }
+    },
+    {
+     "n": "冰缓强化",
+     "add": {
+      "efx:cold": 20
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "极寒",
+    "flag": {
+     "winterKing": 1
+    },
+    "add": {},
+    "d": "碎冰结算的比例从 30% 提到 50%，并波及周围的敌人（一半伤害）"
+   }
+  },
+  {
+   "id": "storm_plague",
+   "n": "风暴巫医",
+   "of": [
+    "storm",
+    "plague"
+   ],
+   "c": "#c98cff",
+   "el": [
+    "ele",
+    "pla"
+   ],
+   "note": "闪电 × 圣光",
+   "pass": [
+    {
+     "n": "双修",
+     "add": {
+      "inc:ele": 12,
+      "inc:pla": 12
+     }
+    },
+    {
+     "n": "并蒂",
+     "add": {
+      "efx:ele": 10,
+      "efx:pla": 10
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "感电审判",
+    "flag": {
+     "x:ele:pla": 30
+    },
+    "add": {},
+    "d": "敌人身上同时带感电和审判时，受到你的伤害总增 30%"
+   }
+  },
+  {
+   "id": "pyre_warden",
+   "n": "净化者",
+   "of": [
+    "pyre",
+    "warden"
+   ],
+   "c": "#c98cff",
+   "el": [
+    "exp",
+    "cold"
+   ],
+   "note": "火焰 × 寒霜",
+   "pass": [
+    {
+     "n": "双修",
+     "add": {
+      "inc:exp": 12,
+      "inc:cold": 12
+     }
+    },
+    {
+     "n": "并蒂",
+     "add": {
+      "efx:exp": 10,
+      "efx:cold": 10
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "灼烧冰缓",
+    "flag": {
+     "x:exp:cold": 30
+    },
+    "add": {},
+    "d": "敌人身上同时带灼烧和冰缓时，受到你的伤害总增 30%"
+   }
+  },
+  {
+   "id": "pyre_plague",
+   "n": "瘟火祭司",
+   "of": [
+    "pyre",
+    "plague"
+   ],
+   "c": "#c98cff",
+   "el": [
+    "exp",
+    "pla"
+   ],
+   "note": "火焰 × 圣光",
+   "pass": [
+    {
+     "n": "双修",
+     "add": {
+      "inc:exp": 12,
+      "inc:pla": 12
+     }
+    },
+    {
+     "n": "并蒂",
+     "add": {
+      "efx:exp": 10,
+      "efx:pla": 10
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "灼烧审判",
+    "flag": {
+     "x:exp:pla": 30
+    },
+    "add": {},
+    "d": "敌人身上同时带灼烧和审判时，受到你的伤害总增 30%"
+   }
+  },
+  {
+   "id": "warden_plague",
+   "n": "裁决者",
+   "of": [
+    "warden",
+    "plague"
+   ],
+   "c": "#ffe27a",
+   "el": [
+    "pla"
+   ],
+   "note": "都带圣光",
+   "pass": [
+    {
+     "n": "圣光精通",
+     "add": {
+      "inc:pla": 20
+     }
+    },
+    {
+     "n": "审判强化",
+     "add": {
+      "efx:pla": 20
+     }
+    },
+    {
+     "n": "历练",
+     "add": {
+      "inc:all": 10,
+      "res:all": 6
+     }
+    }
+   ],
+   "sig": {
+    "n": "终审",
+    "flag": {
+     "arbiter": 1
+    },
+    "add": {},
+    "d": "审判的斩杀线 ×1.5"
+   }
+  }
+ ]
+}

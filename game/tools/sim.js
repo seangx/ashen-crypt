@@ -181,12 +181,12 @@ if (seedsArg) {
       manageTrigs(); placeRunes();
       // 专精（mastery-v1）：流派先选核心大天赋所在的专精，第二个选防御大天赋所在的（没有就守备）；random 随机选两个、随机加点
       if (opt.tree === 'auto') {
-        const zoneOf = id => ((id || '').match(/^[a-z]+?(?=c?\d)/) || [])[0], Z = ['melee', 'area', 'proj', 'dot', 'guard', 'lamp'];
+        const zoneOf = id => (MKEY[id] || {}).m, Z = MASTERY.map(M => M.id); // 职业改版：大天赋在哪个职业里就选哪个
         if (B === 'random') {
           const m = mstS(); while (m.picks.length < mstPickMax()) { const c = Z.filter(z => !m.picks.includes(z)); mstDo('pick', c[Math.floor(Math.random() * c.length)], 1); }
           for (let g = 0; g < 300 && treePoints() > 0; g++) { const acts = m.picks.flatMap(mid => [['bar', mid], ...MST_BY[mid].pass.map(p => ['pass', p.id]), ...MST_BY[mid].keys.map(k => ['key', k.id])]).filter(([k, id]) => !mstWhy(k, id, 1)); if (!acts.length) break; const [k, id] = acts[Math.floor(Math.random() * acts.length)]; mstDo(k, id, 1); }
         } else {
-          const keys = [BP.treeKey, ...(BP.defKeys || [])].filter(Boolean), z1 = zoneOf(keys[0]) || 'melee', z2 = keys.map(zoneOf).find(z => z && z !== z1) || (z1 === 'guard' ? 'lamp' : 'guard');
+          const keys = [BP.treeKey, ...(BP.defKeys || [])].filter(Boolean), z1 = zoneOf(keys[0]) || 'warrior', z2 = keys.map(zoneOf).find(z => z && z !== z1) || (z1 === 'warden' ? 'storm' : 'warden');
           mstAuto([z1, z2].slice(0, mstPickMax()), keys);
         }
         A.refreshStats ? A.refreshStats() : refreshStats();

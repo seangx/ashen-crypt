@@ -109,6 +109,7 @@ const hasAil = m => m.rad.length > 0 || m.burn > 0.5 || m.shock > 0 || m.chill >
 function deathRules(m) {
   const FL = STATS.flag; const near = (r, n) => mobs.filter(x => x !== m && !x.dead && dist2(x, m) < r * r).sort((a, b) => dist2(a, m) - dist2(b, m)).slice(0, n);
   if (FL.shockSpread && m.shock > 0) for (const x of near(RL.shockSpread.r, RL.shockSpread.n)) { x.shock = Math.max(x.shock, m.shock); x.shockT = MECH.shockDur; fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: x.x, y2: x.y - 5, el: 'ele' }); }
+  if (FL.emberHeir && m.burn > 0.5) for (const x of near(70, 1)) x.burn += m.burn * 0.5; // 烬主：剩余灼烧的一半传给最近的敌人
   if (FL.contagion && (m.rad.length || m.burn > 0.5)) for (const x of near(RL.contagion.r, RL.contagion.n)) { x.rad.push(...m.rad.map(r => ({ ...r }))); if (m.burn > 0.5) x.burn = Math.max(x.burn, m.burn * RL.contagion.burnPct / 100); } // tree-v3 §3.4 传染：任何持续伤害（疫病、灼烧）
   elemDeath(m, near);
   if (FL.deathBoom && !m.boss) { const R = RL.deathBoom, el = STATS.addEl || 'exp'; fx({ t: 'boom', x: m.x, y: m.y - 4, r: R.r, el }); for (const x of near(R.r, 99)) damage(x, mitigate(x, el, m.max * R.pct / 100), el, false, true); } // tree-v3 §3.2 殉爆：元素 = 主附加元素
@@ -142,6 +143,7 @@ function hitMob(m, W, o = {}) {
   if (W.doubleChance && rnd() < W.doubleChance) mul *= 2;
   if (W.killInc && RUN) mul *= 1 + Math.min(RL.killInc.max, W.killInc * RUN.kills) / 100;
   mul *= ruleMul(m) * elemMul(m) * (1 + buffV('dmg') / 100); // 战吼
+  { const F = STATS.flag; if (F) { const X = F._x || (F._x = Object.keys(F).filter(k => k.startsWith('x:')).map(k => [k.split(':')[1], k.split(':')[2], F[k]])); for (const [a, b, v] of X) if (hasDeb(m, a) && hasDeb(m, b)) mul *= 1 + v / 100; } } // 跨系高级职业：敌人同时带两种减益
   if (STATS.flag.ctrlPrison && !isCtrl(m)) mul *= 1 - RL.ctrlPrison.less / 100; /* 寒狱：对未受控的敌人总降 */
   if (m.frzT > 0 && STATS.frozenTaken) mul *= 1 + STATS.frozenTaken; // 冻结的敌人受到的伤害提高
   if (m.frzT > 0 && STATS.flag.frozenMore) mul *= 1 + STATS.flag.frozenMore / 100; // 誓约：对冻结的敌人总增
@@ -182,7 +184,7 @@ function aoePull(x, y, r) {
 // 寒霜：冰缓叠层（每层移速、攻速 -chillPer%），叠满冻结；冻结后 freezeImmune 秒免疫、层数清零（spec-bd-gear §1）
 const chillEff = () => ailEff('cold'); // 冰缓效果提高%
 const chillK = m => m.frzT > 0 ? 0 : 1 - Math.min(0.9, m.chill * MECH.chillPer / 100 * chillEff()); // 速度倍率：冻结时 0
-function shatter(m) { const d = (m.coldAcc || 0) * EFX.shatterPct; m.coldAcc = 0; if (d > 0 && !m.dead) { fx({ t: 'shatter', x: m.x, y: m.y - m.size }); damage(m, d, 'cold', false, true); } } // 碎冰：这一轮累计寒霜伤害的一部分
+function shatter(m) { const wk = STATS.flag && STATS.flag.winterKing, d = (m.coldAcc || 0) * (wk ? 0.5 : EFX.shatterPct); m.coldAcc = 0; if (d > 0 && !m.dead) { fx({ t: 'shatter', x: m.x, y: m.y - m.size }); if (wk) for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < 40 * 40) damage(n, d * 0.5, 'cold', false, true); damage(m, d, 'cold', false, true); } } // 凛冬使：50%，波及周围 // 碎冰：这一轮累计寒霜伤害的一部分
 function chillOn(m, n, W) {
   if (m.dead || m.frzT > 0) return;
   if (m.frzImm > 0) { m.chill = Math.min(MECH.chillMax - 1, m.chill + n); m.chillT = MECH.chillDur; if (m.chill >= MECH.chillMax - 1 && m.coldAcc > 0) { shatter(m); m.chill = 0; } return; } // 免疫期：照常冰缓，但叠不到冻结
@@ -193,19 +195,21 @@ function chillOn(m, n, W) {
 function chillPlayer(n) { player.chill = Math.min(MECH.playerChillMax, (player.chill || 0) + n); player.chillT = MECH.chillDur; }
 const pChillK = () => 1 - (player.chill || 0) * MECH.chillPer / 100;
 const ailEff = e => ailEffG(e);
+const hasDeb = (m, e) => e === 'kin' ? m.sun >= 1 : e === 'exp' ? m.burn > 0.5 : e === 'ele' ? m.shock > 0 : e === 'nuc' ? m.rad.length > 0 : e === 'cold' ? m.chill > 0 || m.frzT > 0 : m.judgeT > 0 || m.blindT > 0; // 敌人身上有没有这个系的减益
 /* 技能 v3：六系主效果。技能是什么元素就挂什么，必定触发；装备上的“某异常几率”改成这个效果的强度加成 */
 function mainFx(m, W, by, tick, o) {
   const e = W.el, d = by[e] || 0; if (m.dead || !(d > 0) || o.ground || o.efx || o.re) return;
-  const bonus = 1 + (W.ail[e] || 0), eff = ailEffG(e) * (W.ailEffT ? 1 + W.ailEffT / 100 : 1), r = d / m.max * (m.boss ? EFX.bossK : m.elite ? EFX.eliteK : 1);
+  const F = STATS.flag || {}, TAe = (STATS.tree && STATS.tree.add) || {};
+  const bonus = (1 + (W.ail[e] || 0)) * (1 + (TAe['efx:' + e] || 0) / 100), eff = ailEffG(e) * (W.ailEffT ? 1 + W.ailEffT / 100 : 1), r = d / m.max * (m.boss ? EFX.bossK : m.elite ? EFX.eliteK : 1);
   switch (e) {
-    case 'kin': m.sun = Math.min(EFX.sunMax, (m.sun || 0) + tick * bonus); m.sunT = EFX.sunDur; break; // 破甲
+    case 'kin': m.sun = Math.min(EFX.sunMax + (F.sunMaxAdd || 0), (m.sun || 0) + tick * bonus); m.sunT = EFX.sunDur; break; // 破甲（碎甲宗师：上限 +5）
     case 'exp': if (bonus > 1) m.burn += d * MECH.burnFromFire * (bonus - 1) * eff * (W.burnMore || 1); break; // 灼烧：基础的那份在下面（所有火焰伤害都进灼烧池）
-    case 'ele': { const big = Math.ceil(Math.sqrt(r) * EFX.shockK * bonus), n = Math.max(big, Math.min(EFX.shockSoft, m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)), EFX.shockMin); // 感电：越重层数越高
-      m.shock = Math.min(MECH.shockMax, Math.max(m.shock, n)); m.shockT = MECH.shockDur; break; }
-    case 'nuc': { const pr = W.cont ? 0.25 : 1; if (rnd() >= pr) break; const dps = d * MECH.radPct * EFX.radK * bonus * W.radMore * W.dotMore * eff / MECH.radDur / pr; // 疫病：一次一层
-      if (m.rad.length >= 30) { const x = m.rad[m.rad.length - 1]; x.dps += dps; x.t = MECH.radDur; } else m.rad.push({ dps, t: MECH.radDur }); break; }
+    case 'ele': { const big = Math.ceil(Math.sqrt(r) * EFX.shockK * bonus), n = Math.max(big, Math.min(EFX.shockSoft * (F.stormLord ? 2 : 1), m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)), EFX.shockMin); // 感电：越重层数越高
+      m.shock = Math.min(MECH.shockMax, Math.max(m.shock, n)); m.shockT = MECH.shockDur * (F.stormLord ? 2 : 1); break; } // 雷霆使者：持续翻倍、小伤害上限翻倍
+    case 'nuc': { const pr = W.cont ? 0.25 : 1; if (rnd() >= pr) break; const dur = MECH.radDur * (F.plagueDoc ? 1.5 : 1), dps = d * MECH.radPct * EFX.radK * bonus * W.radMore * W.dotMore * eff / MECH.radDur / pr; // 疫病：一次一层（疫医：持续 +50%）
+      if (m.rad.length >= 30) { const x = m.rad[m.rad.length - 1]; x.dps += dps; x.t = dur; } else m.rad.push({ dps, t: dur }); break; }
     case 'cold': m.coldAcc = (m.coldAcc || 0) + d; m.chillF = (m.chillF || 0) + EFX.chillK * bonus * tick * (o.chill || 1); while (m.chillF >= 1 && !m.dead) { m.chillF--; chillOn(m, 1, W); } break; // 冰缓 → 碎冰
-    case 'pla': { const line = (m.boss ? EFX.judgeBoss : m.elite ? EFX.judgeElite : EFX.judge) * clamp(0.4 + Math.sqrt(r), 0.4, 1) * Math.min(1.5, bonus * eff); // 审判：斩杀
+    case 'pla': { const line = (m.boss ? EFX.judgeBoss : m.elite ? EFX.judgeElite : EFX.judge) * clamp(0.4 + Math.sqrt(r), 0.4, 1) * Math.min(1.5, bonus * eff) * (F.arbiter ? 1.5 : 1); m.judgeT = 4; // 审判：斩杀（裁决者：线 ×1.5）；留一个 4 秒的审判印记给跨系大天赋认
       if (m.hp / m.max < line) { fx({ t: 'judge', x: m.x, y: m.y - m.size }); kill(m); } break; }
   }
 }
@@ -795,6 +799,7 @@ function logic(dt) {
     // 异常
     if (m.shockT > 0) { m.shockT -= dt; if (m.shockT <= 0) m.shock = 0; }
     if (m.sunT > 0) { m.sunT -= dt; if (m.sunT <= 0) m.sun = 0; }
+    if (m.judgeT > 0) m.judgeT -= dt;
     if (m.chillT > 0) { m.chillT -= dt; if (m.chillT <= 0) m.chill = 0; }
     if (m.frzImm > 0) m.frzImm -= dt;
     if (m.shredT > 0) m.shredT -= dt;
