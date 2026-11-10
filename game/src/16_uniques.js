@@ -2,8 +2,10 @@
    名单、底材、需求等级、掉落权重、保底词条（族 + 档位）来自原作配置（bases.json 的 unique_affixes）；
    专属规则的具体数值原作表里没有，这里按原作描述自定。名字和文字为原创。
    fixed: [词条族, 档位 N（T1 最高）]；rules: [规则键, 下限, 上限]。表在 data/uniques.json。 */
-const UNIQUES = DATA.uniques.list; // data/uniques.json
-const UNIQUE_BY = Object.fromEntries(UNIQUES.map(u => [u.id, u]));
+const UNIQUE_BY = Object.fromEntries(DATA.uniques.list.map(u => [u.id, u])); // 含传奇词条模板，按规则查数值用
+const UNIQUES = DATA.uniques.list.filter(u => !u.leg); // 神话（data/uniques.json）
+const LEGA = DATA.uniques.list.filter(u => u.leg); // 传奇词条模板：稀有装备带一条（11-10 稀有度改版）
+const ruleSrc = it => it ? UNIQUE_BY[it.u] || UNIQUE_BY[it.la] || null : null; // 神话的规则，或传奇装备的传奇词条
 const RULE_TEXT = {
   knock: () => '命中击退敌人', knockMore: v => `伤害总增 ${v}%`, aspdLess: v => `攻击速度总降 ${v}%`,
   afterPct: v => `余震每次保留 ${v}% 伤害`, afterRep: v => `余震多重复 ${v} 次`, convKinThermal: v => `${v}% 的物理伤害平均转换为火焰、圣光、闪电、寒霜、瘟疫`, pierceInf: () => '投射物无限穿透',
@@ -31,11 +33,11 @@ const RULE_TEXT = {
   emberGrip: () => '附加特效总是同时引燃（灼烧）', boneBreak: v => `碎裂特效 ${v}% 几率再碎一次（×0.5）`, wildfire: () => '灼烧中的敌人死亡时，把一半灼烧传给 40 码内的敌人',
   burnKeepU: () => '灼烧不再自然衰减', chainBlast: v => `雷爆特效额外跳向最近 2 个敌人（${v}% 伤害）`, frostCoffin: v => `冻结时间 +${v}%；冻结的敌人死亡时向 4 个敌人射出冰片`,
   judgeBlind: v => `对致盲的敌人伤害总增 ${v}%`, plagueTide: v => `疫染特效 +${v}%；死亡传染全部层数、范围 ×1.5`,
-  returnLight: v => `每局一次：灯火低于 10% 时回到 ${v}%`, lightEater: v => `命中额外回灯火（每秒最多 ${v}）；光照半径始终最小`, lampChain: v => `灯火状态始终为「暗」；灯火消耗 −${v}%`,
-  darkWalker: v => `对光照半径外的敌人伤害总增 ${v}%`, whirlHeart: () => '旋风之心：【近战·范围】技能总增；代价：非【近战】技能伤害总降 30%', aegisBurst: () => '回响圣盾：【盾】技能总增', otherLess: v => `代价：非【盾】技能伤害总降 ${v}%`,
-  vortexTreads: () => `旋风斩常驻且叠满层时移速 +${UQX.vortex.moveFull}%、受到的伤害 −${UQX.vortex.takenFull}%；代价：没有层数时移速 −${UQX.vortex.moveNone}%`,
+  returnLight: v => `每局一次：灯火低于 10% 时回到 ${v}%`, lightEater: v => `命中额外回灯火（每秒最多 ${v}）`, lampChain: v => `灯火状态始终为「暗」；灯火消耗 −${v}%`,
+  darkWalker: v => `对光照半径外的敌人伤害总增 ${v}%`, whirlHeart: () => '旋风之心：【近战·范围】技能总增', aegisBurst: () => '回响圣盾：【盾】技能总增', otherLess: v => `代价：非【盾】技能伤害总降 ${v}%`,
+  vortexTreads: () => `旋风斩常驻且叠满层时移速 +${UQX.vortex.moveFull}%、受到的伤害 −${UQX.vortex.takenFull}%`,
   chainCrown: () => ruleText('chainCrown'), projCrown: () => ruleText('projCrown'), durCrown: () => ruleText('durCrown'), velCrown: () => ruleText('velCrown'), meleeCrown: () => ruleText('meleeCrown'), multicrit: () => ruleText('multicrit'), dashMax: v => `冲刺槽 +${v}`, finale: () => ruleText('finale'), splitEnd: () => ruleText('splitEnd'),
 };
 for (const k of ELEM) RULE_TEXT['ail:' + k] = v => `${AIL[k].n}几率 +${v}%`;
-const ruleLines = it => { const u = UNIQUE_BY[it.u]; return u ? [...u.rules.map(([k], i) => RULE_TEXT[k](it.uv[i])), ...(u.when ? [`以上规则只在【${TAG_N[u.when] || u.when}】技能上生效`] : [])] : []; };
-const uval = (it, k) => { const u = it && UNIQUE_BY[it.u]; if (!u) return 0; let s = 0; u.rules.forEach(([kk], i) => { if (kk === k) s += it.uv[i]; }); return s; };
+const ruleLines = it => { const u = ruleSrc(it); return u ? [...u.rules.map(([k], i) => RULE_TEXT[k](it.uv[i])), ...(u.when ? [`以上规则只在【${TAG_N[u.when] || u.when}】技能上生效`] : [])] : []; };
+const uval = (it, k) => { const u = ruleSrc(it); if (!u) return 0; let s = 0; u.rules.forEach(([kk], i) => { if (kk === k) s += it.uv[i]; }); return s; };

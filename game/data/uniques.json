@@ -1,5 +1,5 @@
 {
- "_说明": "独特装备。b 底材；req 需求物品等级；w 掉落权重（0 = 只从 Boss 掉）；fixed 保底词条 [词条族, 档位 N]（N=1 最高档，见 loot.json 的 uniqueFixedTier）；rules 专属规则 [规则键, 下限, 上限]，掉落时在范围里掷；sock 固定符文槽数；when 技能石要有这个标签规则才生效（spec-skill-gems §4）。规则键的含义见 src/16_uniques.js 的 RULE_TEXT，改规则类的（blindAura、dodgeSpikes 等）参数在 rules.json。 gear-v2 / uniques-audit（10-27）：底子按武器表重新指定，固定词条换成新词条族，抗性改成点数；删除经卷头冠。",
+ "_说明": "独特装备。b 底材；req 需求物品等级；w 掉落权重（0 = 只从 Boss 掉）；fixed 保底词条 [词条族, 档位 N]（N=1 最高档，见 loot.json 的 uniqueFixedTier）；rules 专属规则 [规则键, 下限, 上限]，掉落时在范围里掷；sock 固定符文槽数；when 技能石要有这个标签规则才生效（spec-skill-gems §4）。规则键的含义见 src/16_uniques.js 的 RULE_TEXT，改规则类的（blindAura、dodgeSpikes 等）参数在 rules.json。 gear-v2 / uniques-audit（10-27）：底子按武器表重新指定，固定词条换成新词条族，抗性改成点数；删除经卷头冠。 11-10：去掉全部独特的代价规则；风暴之眼从头冠挪到法阵。 11-10 稀有度改版：leg=true 的不再作为独特（神话）掉落，变成传奇词条的模板——稀有装备掉落时有几率带上一条，只出在同部位，数值随物品等级。其余是神话。",
  "list": [
   {
    "id": "StormCrown",
@@ -25,11 +25,6 @@
      "shockMul",
      20,
      40
-    ],
-    [
-     "armorLess",
-     15,
-     15
     ]
    ],
    "_说明": "弹射标签的独特（design/spec-tags.md）"
@@ -37,8 +32,8 @@
   {
    "id": "StormEye",
    "n": "风暴之眼",
-   "kind": "core",
-   "b": "PhantomCore",
+   "kind": "hub",
+   "b": "IridiumNexus",
    "req": 20,
    "w": 40,
    "ladderOnly": 20,
@@ -58,11 +53,6 @@
      "rangeInc",
      15,
      25
-    ],
-    [
-     "projLess",
-     30,
-     30
     ]
    ],
    "_说明": "ladderOnly：只在天梯宝箱里出，或天梯最高层达到这个数以后的普通掉落里出"
@@ -87,7 +77,8 @@
      1
     ]
    ],
-   "_说明": "投射物标签的独特（design/spec-tags.md）"
+   "_说明": "投射物标签的独特（design/spec-tags.md）",
+   "leg": true
   },
   {
    "id": "StarTrail",
@@ -109,7 +100,8 @@
      1
     ]
    ],
-   "_说明": "投射物速度 / 持续时间的独特（design/spec-spark.md 第五版）"
+   "_说明": "投射物速度 / 持续时间的独特（design/spec-spark.md 第五版）",
+   "leg": true
   },
   {
    "id": "EverEmber",
@@ -131,7 +123,8 @@
      1
     ]
    ],
-   "_说明": "持续标签的独特（design/spec-tags.md）"
+   "_说明": "持续标签的独特（design/spec-tags.md）",
+   "leg": true
   },
   {
    "id": "SkullSplitter",
@@ -153,7 +146,8 @@
      1
     ]
    ],
-   "_说明": "近战标签的独特（design/spec-tags.md）"
+   "_说明": "近战标签的独特（design/spec-tags.md）",
+   "leg": true
   },
   {
    "id": "RustBlaster",
@@ -183,7 +177,8 @@
      40,
      60
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "RockCat",
@@ -204,11 +199,6 @@
     ]
    ],
    "rules": [
-    [
-     "aspdLess",
-     20,
-     30
-    ],
     [
      "afterPct",
      85,
@@ -306,7 +296,8 @@
      15,
      25
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "FungusFury",
@@ -331,7 +322,8 @@
      2,
      3
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "BigBertha",
@@ -356,11 +348,6 @@
      "debrisPerEnergy",
      2,
      4
-    ],
-    [
-     "aspdLess",
-     50,
-     70
     ],
     [
      "ail:kin",
@@ -392,7 +379,8 @@
      1,
      2
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "DeathRay",
@@ -418,7 +406,8 @@
      20,
      30
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "TheTwin",
@@ -510,7 +499,8 @@
      50,
      50
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "LeesTempests",
@@ -567,7 +557,8 @@
      2,
      3
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "Goroboro",
@@ -587,13 +578,9 @@
      "kinBaseInc",
      80,
      120
-    ],
-    [
-     "aspdLess",
-     20,
-     30
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "Arestum",
@@ -624,7 +611,8 @@
      1,
      2
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "GlassShield",
@@ -644,11 +632,6 @@
      "rangeInc",
      15,
      25
-    ],
-    [
-     "resAll",
-     -40,
-     -40
     ],
     [
      "blindAura",
@@ -710,7 +693,8 @@
      30,
      50
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "MoonKing",
@@ -736,7 +720,8 @@
      1,
      1
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "Siebenmeilen",
@@ -761,7 +746,8 @@
      20,
      40
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "StoneOfBalu",
@@ -786,13 +772,9 @@
      "energyInc",
      20,
      40
-    ],
-    [
-     "aspdLessAll",
-     10,
-     15
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "CritRipper",
@@ -808,11 +790,6 @@
     ]
    ],
    "rules": [
-    [
-     "critLess",
-     40,
-     80
-    ],
     [
      "multicrit",
      1,
@@ -839,7 +816,8 @@
      1,
      1
     ]
-   ]
+   ],
+   "leg": true
   },
   {
    "id": "GrandFinale",
@@ -912,11 +890,6 @@
      "aoeInc",
      20,
      30
-    ],
-    [
-     "earlyWarn",
-     1,
-     1
     ]
    ]
   },
@@ -938,11 +911,6 @@
      "groundStack",
      3,
      3
-    ],
-    [
-     "durLess",
-     30,
-     30
     ]
    ]
   },
@@ -966,11 +934,6 @@
      "martyrThrow",
      15,
      25
-    ],
-    [
-     "martyrArmor",
-     1,
-     1
     ]
    ],
    "_说明": "martyrThrow 以 0.1% 为单位"
@@ -993,11 +956,6 @@
      "echoCrown",
      25,
      35
-    ],
-    [
-     "chainLess",
-     1,
-     1
     ]
    ]
   },
@@ -1020,11 +978,6 @@
      "winterHeart",
      80,
      100
-    ],
-    [
-     "winterCost",
-     50,
-     50
     ]
    ]
   },
@@ -1051,11 +1004,6 @@
      "frozenTaken",
      15,
      25
-    ],
-    [
-     "projSlowU",
-     20,
-     20
     ]
    ]
   },
@@ -1083,11 +1031,6 @@
      "iceGround",
      1,
      1
-    ],
-    [
-     "moveLess",
-     15,
-     15
     ]
    ]
   },
@@ -1114,11 +1057,6 @@
      "freezeDur",
      20,
      35
-    ],
-    [
-     "fireResLess",
-     40,
-     40
     ]
    ]
   },
@@ -1163,7 +1101,8 @@
      60
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "PrismCircle",
@@ -1207,7 +1146,8 @@
      25
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "EmberGrip",
@@ -1233,7 +1173,8 @@
      1
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "BoneBreaker",
@@ -1259,7 +1200,8 @@
      30
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "WildfireCircle",
@@ -1330,7 +1272,8 @@
      50
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "JudgeShield",
@@ -1352,7 +1295,8 @@
      20
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "PlagueTide",
@@ -1374,7 +1318,8 @@
      50
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "ReturnLight",
@@ -1396,7 +1341,8 @@
      60
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "LightEater",
@@ -1422,7 +1368,8 @@
      3
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "LampChain",
@@ -1444,7 +1391,8 @@
      40
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "DarkWalker",
@@ -1466,7 +1414,8 @@
      30
     ]
    ],
-   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+   "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9",
+   "leg": true
   },
   {
    "id": "WhirlHeartU",
@@ -1512,11 +1461,6 @@
      "aegisBurst",
      1,
      1
-    ],
-    [
-     "otherLess",
-     20,
-     20
     ]
    ],
    "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"

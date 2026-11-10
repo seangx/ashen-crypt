@@ -23,6 +23,7 @@ function load(data) {
   S = freshState();
   if (raw) try { const o = JSON.parse(raw); if (o.v === 4 && (o.gemV || 0) >= 3) S = Object.assign(S, o); else if (o.v === 4) { S.wiped = 1; const tell = () => G.ui ? toast('地窖已重塑，旧的旅程已封存', COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); } } catch (e) { } // 魂龛改版不兼容老存档（system-v2 §11）：直接清档
   S.shards ??= {}; S.glyphs = { ...freshState().glyphs, ...(S.glyphs || {}) };
+  if (!S.equip.wl && !S.stash.length && !S.uqV) S.uqV = 3; // 新档：不用跑装备改版迁移
   // 新做装系统之前的存档：丢掉骰子和魂萃词条，装备补上锻造潜力，独特装备补上传奇潜力
   if (!S.craftV) {
     delete S.dice; delete S.astral;
@@ -58,6 +59,35 @@ function load(data) {
   if (!S.gemV) { migrateGems(); S.gemV = 1; }
   if ((S.gemV || 0) < 3) starterTrigs(); S.trigs ??= [null, null, null, null]; S.trigBag ??= []; castStarterFix();
   if (!S.legacyV) migrateLegacy(); delete S.chips;
+  if ((S.uqV || 0) < 2) migrateUniqueCosts();
+  if ((S.uqV || 0) < 3) migrateRarityV2();
+}
+// 11-10 稀有度改版：底材按物品等级换成三代（不再有 11 档品质）；拆成传奇词条的独特 → 同底材的传奇（规则数值、词条保留）
+function migrateRarityV2() {
+  let nLeg = 0; const names = [];
+  for (const it of [...Object.values(S.equip), ...S.stash].filter(Boolean)) {
+    if (['gem', 'mod', 'stone', 'trig', 'chip', 'map'].includes(it.kind)) continue;
+    it.gen = genOf(it.ilvl); it.q = genQ(it.ilvl);
+    const u = UNIQUE_BY[it.u]; if (!u || !u.leg) continue;
+    it.la = it.u; delete it.u; delete it.lp; delete it.leg; delete it.stoneN; it.rar = 2; it.rn = pick(RARE_A) + pick(RARE_B[it.kind]); it.fp = rollFp(2);
+    const n = stoneSockN(it); S.stones = S.stones || []; for (const st of (it.stones || []).slice(n)) if (st) S.stones.unshift(st); it.stones = (it.stones || []).slice(0, n); while (it.stones.length < n) it.stones.push(null);
+    nLeg++; names.push(u.n);
+  }
+  for (const p of S.reelsPending || []) p.opts = null; // 轮盘里还没选的重新掷（选项可能是已经拆掉的独特）
+  S.uqV = 3;
+  const lines = ['底材改成三代：物品等级 1 级起一代，30 级起二代（精制），60 级起三代（远古）。原来的 11 档品质（朽坏…永恒）去掉了，已有装备按物品等级换算，数值和以前差不多。', '二代起隐性 ×1.5，三代多一条第二隐性。', '稀有度：普通 → 罕见 → 稀有 → 传奇（稀有 + 一条传奇词条），独特装备改叫神话。'];
+  if (nLeg) lines.push(`${nLeg} 件独特装备（${[...new Set(names)].join('、')}）的效果改成了传奇词条，这些装备变成了同底材的传奇：效果和词条都保留。`);
+  if (S.stash.length || Object.values(S.equip).some(Boolean)) { S.notice = { t: '装备改版', lines }; const tell = () => G.ui ? G.ui.openWin('notice') : setTimeout(tell, 600); setTimeout(tell, 2500); }
+}
+// 11-10 独特去代价：删掉的规则让 uv 错位，按规则名重新对齐；风暴之眼从头冠挪到法阵，身上的放回背包
+const UQ_OLD_RULES = { StormCrown: ['chainCrown', 'shockMul', 'armorLess'], StormEye: ['areaEye', 'rangeInc', 'projLess'], RockCat: ['aspdLess', 'afterPct', 'afterRep'], BigBertha: ['flatPerArmor', 'debrisPerEnergy', 'aspdLess', 'ail:kin'], Goroboro: ['kinBaseInc', 'aspdLess'], GlassShield: ['rangeInc', 'resAll', 'blindAura'], StoneOfBalu: ['energyAdd', 'energyInc', 'aspdLessAll'], CritRipper: ['critLess', 'multicrit'], DoomCrown: ['delayCrown', 'delayAdd', 'aoeInc', 'earlyWarn'], ScorchedCircle: ['groundStack', 'durLess'], MartyrShield: ['martyrThrow', 'martyrArmor'], EchoCrown: ['echoCrown', 'chainLess'], WinterHeart: ['winterHeart', 'winterCost'], ShardCrown: ['shardCrown', 'frozenTaken', 'projSlowU'], EverwinterCircle: ['autoNova', 'iceGround', 'moveLess'], CoffinShield: ['coffin', 'freezeDur', 'fireResLess'], EchoAegis: ['aegisBurst', 'otherLess'] };
+function migrateUniqueCosts() {
+  for (const it of [...Object.values(S.equip), ...S.stash].filter(Boolean)) {
+    const old = UQ_OLD_RULES[it.u], u = UNIQUE_BY[it.u]; if (!old || !u) continue;
+    if (Array.isArray(it.uv) && it.uv.length === old.length) it.uv = u.rules.map(([k, lo, hi]) => { const i = old.indexOf(k); return i >= 0 ? it.uv[i] : lo === hi ? lo : rollRange(lo, hi); });
+    if (it.u === 'StormEye' && it.kind !== u.kind) { for (const k in S.equip) if (S.equip[k] === it) S.equip[k] = null; S.stash = S.stash.filter(x => x !== it); const n = newUnique('StormEye', it.ilvl || 1); n.uv = it.uv; n.lp = it.lp ?? n.lp; n.q = it.q; n.isNew = 1; S.stash.unshift(n); S.stones = S.stones || []; for (const st of it.stones || []) if (st) S.stones.unshift(st); } // 词条按法阵重掷，镶的属性石退回
+  }
+  S.uqV = 2;
 }
 // 遗留系统清理（spec-legacy-cleanup §4）：墓图、命盘、印记、体魄 / 时砂、铁骨 / 流沙力场。东西不凭空消失：退成碎片或换部位
 const RETUNED_U = ['GruvaksHorn', 'Arestum', 'StoneOfBalu']; // 规则条数 / 含义变了的独特：按新规则重掷数值

@@ -371,10 +371,10 @@ class MobileUI extends UI {
     const items = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash], us = items.filter(x => x.u && !x.leg);
     let u = us.find(x => x.id === craftId) || us[0]; craftId = u && u.id;
     const cols = MCOLS, st = TOUCH; let y = 38;
-    T(this, 10, y, `独特装备 ${us.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
+    T(this, 10, y, `神话装备 ${us.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
     us.slice(0, cols * 2).forEach((x, i) => mkCell(this, c, 9 + (i % cols) * st, y + (i / cols | 0) * st, x, { size: st, sel: x === u, direct: true, onClick: v => { craftId = v.id; fuseId = null; this.refresh(); } }));
     y += Math.max(1, Math.ceil(Math.min(us.length, cols * 2) / cols)) * st + 6;
-    if (!u) return TW(this, 10, y, '没有可以熔铸的独特装备。独特装备保留固定词条，再从同部位稀有装备转移词条。', w - 20, { size: 8, color: COL.faint, parent: c });
+    if (!u) return TW(this, 10, y, '没有可以熔铸的神话装备。神话装备保留规则和固定词条，再从同部位稀有装备转移词条。', w - 20, { size: 8, color: COL.faint, parent: c });
     const rs = items.filter(x => x.kind === u.kind && x.rar === 2 && !x.u), r = rs.find(x => x.id === fuseId) || null, why = fuseWhy(u, r);
     mkBtn(this, c, 10, y, w - 20, 28, '熔铸', () => this.ask('熔铸这两件装备？', '熔铸', '材料装备会被消耗。', () => { craftLog.unshift(craftFuse(u, r)); fuseId = null; sfx('craft'); save(); this.refresh(); }), { style: 'w', size: 8, disabled: !!why });
     y += 34; T(this, 10, y, `同部位的稀有装备 ${rs.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
@@ -603,7 +603,7 @@ class MobileUI extends UI {
       [[-5, '−5'], [-1, '−1'], [1, '+1'], [5, '+5']].forEach(([d, l], i) => mkBtn(this, c, 12 + i * (bw4 + 3), y, bw4, 28, l, () => { setLv(d); save(); this.refresh(); }, { size: 8 }));
       mkBtn(this, c, w - 82, y, 70, 28, '跟随最深层', () => { R.lvl = null; save(); this.refresh(); }, { size: 8, style: R.lvl == null ? 's' : 'n' }); } y += 34;
     const tw = Math.floor((w - 28) / 3); ['普通', '罕见', '稀有'].forEach((n, i) => tog(12 + i * (tw + 2), y, tw, R.rar[i], n, () => { R.rar[i] = !R.rar[i]; })); y += 34;
-    const t = TW(this, 12, y, '独特、传奇、溢彩装备和印记、符文、墓图永远不会被自动分解；身上穿着的也不会。带收藏词条的装备不按稀有度分解。', w - 24, { size: 8, color: COL.faint, parent: c }); y += t.h + 6;
+    const t = TW(this, 12, y, '神话、传奇、溢彩装备和印记、符文、墓图永远不会被自动分解；身上穿着的也不会。带收藏词条的装备不按稀有度分解。', w - 24, { size: 8, color: COL.faint, parent: c }); y += t.h + 6;
     const n = S.stash.filter(salvWhy).length;
     mkBtn(this, c, 12, y, w - 24, 30, `现在分解背包（${n} 件）`, () => this.ask(`分解背包里 ${n} 件？`, '分解', '会变成词条碎片和骨币，不能撤销。', () => { const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个${coinTxt(g)}`, '#d9cfb8'); save(); this.refresh(); }), { size: 8, style: 'w', disabled: !n }); y += 38;
     T(this, 12, y, `收藏词条 ${fav.length} 个${R.fav ? '' : '（默认）'}`, { size: 8, color: COL.emberHi, parent: c });
@@ -661,7 +661,7 @@ class MobileUI extends UI {
     let y = 14; const price = shopPrice(), why = shopWhy();
     img(this, 12, y - 1, 'coin', c).setScale(2); T(this, 30, y, `骨币 ${fmt(S.coins || 0)}`, { color: COL.emberHi, parent: c });
     T(this, w - 12, y + 2, `储物箱 ${gearCount()}/${STASH_CAP}`, { size: 8, color: COL.dim, align: 'right', parent: c }); y += 20;
-    const t = TW(this, 12, y, `选一个部位，花 ${price} 骨币买一件未鉴定装备，买下才揭晓。物品等级 = 已到的最深层（${shopIlvl()}），只出罕见和稀有，${Math.round(ECO.shop.unique * 100)}% 是这个部位的独特装备。骨币来自分解装备和宝石。`, w - 24, { size: 8, color: COL.dim, parent: c }); y += t.h + 8;
+    const t = TW(this, 12, y, `选一个部位，花 ${price} 骨币买一件未鉴定装备，买下才揭晓。物品等级 = 已到的最深层（${shopIlvl()}），只出罕见和稀有，${Math.round(ECO.shop.unique * 100)}% 是这个部位的神话装备。骨币来自分解装备和宝石。`, w - 24, { size: 8, color: COL.dim, parent: c }); y += t.h + 8;
     const hw = Math.floor((w - 28) / 2);
     SHOP_SLOTS.forEach((s, i) => mkBtn(this, c, 12 + (i % 2) * (hw + 4), y + (i / 2 | 0) * 34, hw, 30, `${SLOTS.find(x => x.id === s).n} · ${price}`, () => {
       const it = gamble(s); if (!it) return; this.shopLast = it; sfx('craft'); toast(`揭晓：${itemName(it)}`, icol(it)); this.refresh();

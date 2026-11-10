@@ -326,7 +326,7 @@ function vortexState() {
   let full = false, any = false; whirlWs().forEach(([W, i]) => { if (!alwaysWhirl(W)) return; const n = player.spin[i].n; if (n >= W.stackMax) full = true; if (n > 0) any = true; });
   return full ? 1 : any ? 0.5 : 0;
 }
-const vortexMove = () => { const v = vortexState(); return v === 1 ? 1 + UQX.vortex.moveFull / 100 : v === 0 ? 1 - UQX.vortex.moveNone / 100 : 1; };
+const vortexMove = () => { const v = vortexState(); return v === 1 ? 1 + UQX.vortex.moveFull / 100 : 1; }; // 独特去代价（11-10）：没有层数时不再减速
 // 受击反馈：最多每 0.4 秒一次，强度按这一下占最大生命的比例（以前每一下都把生命球刷白、角色闪白，怪多时一直闪）
 function hurtFeedback(d) {
   if (G.time - (player.fbT0 || -9) < 0.4) return;
@@ -594,8 +594,9 @@ function projHit(p, m) {
     if (p.pierce > 0) { p.pierced = true; return false; } // 无限穿透：有穿透就穿过所有敌人（同一串对同一个敌人每 rehit 秒最多打一次）
     return true;
   }
-  const bn = p.bn || 0; // 已经弹射了几次
+  const bn = p.bn || 0, shocked = m.shock > 0; // 已经弹射了几次
   hitMob(m, p.W, { mul: mul * (1 + p.W.chainStep * bn), procK: p.kid ? 0.5 : 1 }); if (bn && STATS.flag.chainCrown) shockOn(m); // 分裂出来的每发触发系数 ×0.5
+  if (STATS.flag.chainCrown && shocked && !p.forked && !p.didFork && !p.shard && !p.oshard) { p.didFork = 1; for (let i = 0; i < SP.forkN; i++) shoot(p.W, m.x, m.y - 5, p.a + (i - (SP.forkN - 1) / 2) * 1.2, { pierce: 0, chain: 0, sch: 0, split: 0, ret: 0, hit: new Set([m]), mul: p.mul * SP.forkMul, life: 0.8, forked: 1 }); } // 雷冠：投射物第一次打中感电的敌人时分叉
   fx({ t: 'hit', x: m.x, y: m.y - 5, el: p.el });
   if (p.first && p.split > 0) { // 分裂：向前方散开
     const s = p.split;

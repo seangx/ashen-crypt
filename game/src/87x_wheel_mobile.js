@@ -101,7 +101,7 @@ Object.assign(MobileUI.prototype, {
     draw(this.time.now);
     const by = cy + R + 34, bw = Math.floor((w - 28) / 2), hope = (S.glyphs && S.glyphs.hope) || 0;
     if (A.phase === 'idle') {
-      T_(this, c, w / 2, by - 10, `8 件独特转出 1 件 · ★ 同标签更容易中 · ${Math.round(REEL.jackpot * 100)}% 三连全拿`, { size: 8, color: '#d8def5' });
+      T_(this, c, w / 2, by - 10, `8 件神话 / 独特魂龛转出 1 件 · ★ 同标签更容易中 · ${Math.round(REEL.jackpot * 100)}% 三连全拿`, { size: 8, color: '#d8def5' });
       mkBtn(this, c, 14, by + 6, w - 28, 44, '转！', () => { A.phase = 'spin'; A.t0 = this.time.now; A.dur = 4200; A.r0 = A.rot; const tgt = -Math.PI / 2 - (Wh.win + 0.5) * seg + (rnd() - 0.5) * seg * 0.6;
         A.r1 = tgt + Math.ceil((A.r0 - tgt) / PI2) * PI2 + PI2 * 7; A.tick = Math.floor((A.r0 + Math.PI / 2) / seg); sfx('chest'); this.refresh(); }, { style: 'w', size: 12 });
       mkBtn(this, c, 14, by + 58, bw, 30, `放弃（+${REEL.skipShards} 碎片）`, () => { reelSkip(); this.wh = null; toast(`碎片 +${REEL.skipShards}`); if (S.reelsPending.length) this.refresh(); else this.closeWin(); }, { size: 8, style: 'r' });
@@ -120,7 +120,7 @@ Object.assign(MobileUI.prototype, {
       bub(this, c, x, y, cw, chh, 0x4f5d9a, { r: 12, ring: 0xffa31a });
       const nmAll = jx.length ? '三连！' + [nm, ...jx.map(i => wheelName(Wh.opts[i]))].join(' · ') : nm;
       T_(this, c, w / 2, y + 8, nmAll, { size: textW(nmAll, 12) <= cw - 16 ? 12 : 8, color: '#ffd23a' });
-      T_(this, c, w / 2, y + 28, `${tw ? '魂龛' : KIND_N[it.kind] || it.kind} · ${it.ilvl} 级 · 独特${Wh.tag[Wh.win] ? '   ★ 同标签' : ''}`, { size: 8, color: '#e0e4f0' });
+      T_(this, c, w / 2, y + 28, `${tw ? '魂龛' : KIND_N[it.kind] || it.kind} · ${it.ilvl} 级 · ${tw ? '独特' : '神话'}${Wh.tag[Wh.win] ? '   ★ 同标签' : ''}`, { size: 8, color: '#e0e4f0' });
       const mx = Math.max(1, Math.floor((chh - 50) / 13)), L = lines.length > mx ? [...lines.slice(0, mx - 1), lines[mx - 1].slice(0, -1) + '…'] : lines;
       T(this, x + 12, y + 44, L.join('\n'), { size: 8, color: '#b6f09a', parent: c });
       mkBtn(this, c, 14, by + 6, w - 28, 44, jx.length ? '全拿（3 件）' : '收下', () => { wheelTake(); this.wh = null; toast(jx.length ? '三件都进背包了' : `${nm} 进背包了`, '#ffd23a'); if (S.reelsPending.length) this.refresh(); else this.closeWin(); }, { style: 'w', size: 12 });
