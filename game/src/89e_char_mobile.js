@@ -20,7 +20,7 @@ Object.assign(MobileUI.prototype, {
     // ---- 六系 ----
     H('六系'); note('伤害提高只对那个元素的技能生效；主效果强度是破甲、灼烧这些减益的强弱');
     for (const e of ELEM) { const inc = (TA['inc:' + e] || 0) + (R['inc:' + e] || 0), efx = ((1 + (TA['efx:' + e] || 0) / 100) * (1 + (F.pureHeart || 0) / 100) - 1) * 100, pen = R['pen:' + e] || 0;
-      row(`${ELEM_N[e]} · ${AIL_MAIN[e]}`, `伤害提高 ${n1(inc)}% · 主效果 +${n1(efx)}% · 穿抗 ${n1(pen)}%${fxOn(e) ? ' · 有副效果' : ''}`, ELEM_C[e]); }
+      row(`${ELEM_N[e]} · ${AIL_MAIN[e]}`, `伤害提高 ${n1(inc)}% · 主效果 +${n1(efx)}% · 穿抗 ${n1(pen)}%${fxOn(e) ? ' · ' + FX_N[e] : ''}`, ELEM_C[e]); }
     // ---- 防御 ----
     H('防御');
     row('生命 / 护盾', `${fmt(P.life)} / ${fmt(P.shield)}（护盾每秒回复 ${n1(P.shieldRegen || 0)}）`, '#ff8a7a');
