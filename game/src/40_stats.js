@@ -237,6 +237,7 @@ function weaponStats(it, P, isEngine) {
   const conv = (from, to, pct) => { if (!pct) return; const mn = W.min[from] * pct, mx = W.max[from] * pct; W.min[from] -= mn; W.max[from] -= mx; for (const e of to) { W.min[e] += mn / to.length; W.max[e] += mx / to.length; } };
   if (W.frostNova && b.el !== 'cold') { conv(b.el, ['cold'], 1); W.ail.cold += W.ail[b.el]; W.ail[b.el] = 0; W.el = 'cold'; } // 圣钟插霜环符文：元素改成寒霜
   if (W.convTo && W.convTo !== W.el) { const fr = W.el || b.el; conv(fr, [W.convTo], 1); W.ail[W.convTo] += W.ail[fr]; W.ail[fr] = 0; W.el = W.convTo; } // 转换符文：本源元素和本源异常一起换
+  W.ailCh = { kin: Math.max(0, W.ail.kin - (b.ail_kin || 0)), pla: Math.max(0, W.ail.pla - (b.ail_pla || 0)) }; // 碎骨 / 致盲的触发几率：只算装备明写的（攻城骨弩、等离子枪固有），技能底子数据里旧版的几率不算（11-11 用户：清掉）
   if (P.flag.mutate) W.more *= 0.8; // 异变
   if (P.flag.dmgMore) W.more *= 1 + P.flag.dmgMore / 100; // 誓约：伤害总增
   if (has('Delayed') && P.flag.delayMore) W.more *= 1 + P.flag.delayMore / 100; // 誓约：延迟类伤害总增

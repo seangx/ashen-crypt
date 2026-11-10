@@ -167,7 +167,7 @@ function hitMob(m, W, o = {}) {
   const tick = W.cont ? 1 / W.aps : 1;
   mainFx(m, W, by, tick, o); // v3：技能元素的主效果，必定触发
   elemOnHit(m, W, o, by); // 副效果：装备给的
-  for (const e of ['kin', 'pla']) if (W.ail[e] && rnd() < W.ail[e] * tick) ailment(m, e, by[e] || total, W, o); // 副效果（装备给几率）：碎骨、致盲
+  for (const e of ['kin', 'pla']) { const ch = (W.ailCh || {})[e] || 0; if (ch && rnd() < ch * tick) ailment(m, e, by[e] || total, W, o); } // 装备明写的碎骨、致盲几率
   if (W.kinShock && by.kin && rnd() < W.kinShock * tick) ailment(m, 'ele', by.kin, W, o);
   { const ach = (W.afterCh || 0) + (STATS.flag.quake ? 0.1 : 0); if (ach && !o.re && !o.ground && !o.arc && !m.dead && rnd() < ach * tick) m.after.push({ n: 1 + (STATS.afterRep || 0) + (W.afterRep || 0), t: MECH.afterTick, d: total * 0.6, k: 0.6, el: top }); } // 余震：几率以 60% 再结算（任意元素）
   if (by.exp) { m.burn += by.exp * MECH.burnFromFire * ailEff('burn'); if (W.burnSlow) m.burnSlow = W.burnSlow; } // 火焰伤害都会累积灼烧
