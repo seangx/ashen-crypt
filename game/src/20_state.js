@@ -62,6 +62,8 @@ function load(data) {
   if ((S.uqV || 0) < 2) migrateUniqueCosts();
   if ((S.uqV || 0) < 3) migrateRarityV2();
   if ((S.skV || 0) < 3) migrateSkillV3();
+  if ((S.clsV || 0) < 1) { const had = S.mst && ((S.mst.picks || []).length || Object.keys(S.mst.bar || {}).length); S.mst = mstFresh(); S.clsV = 1; // 职业改版：专精换成职业，点数全部退回
+    if (had) { S.notice = { t: '职业改版', lines: [...((S.notice && S.notice.lines) || []), '专精换成了职业：骸骨武士、猎手、唤雷者、焚化者、守墓人、瘟医，选两个。每个职业有两种元素和自己的保命方式，原来的大天赋分到了各个职业里。', '两个职业的专精条都到 10 点，解锁它们合成的高级职业（一共 15 个）。', '你的天赋点已经全部退回，去“职业”页重新分配。'] }; const tell = () => G.ui ? G.ui.openWin('notice') : setTimeout(tell, 600); setTimeout(tell, 2500); } }
 }
 // 技能 v3：输出技能只留在出手类 / 常驻魂龛里，响应类魂龛里的退回背包（现在给功能技能用）
 function migrateSkillV3() {

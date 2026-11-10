@@ -4,7 +4,7 @@
    ========================================================= */
 MNAV.splice(0, MNAV.length,
   { id: 'gear', n: '装备', ic: 'i_w_crossbow' }, { id: 'trig', n: '魂龛', ic: null }, { id: 'battle', n: '战斗', ic: 'torch' },
-  { id: 'tree', n: '天赋', ic: 'i_star' }, { id: 'craft', n: '铁砧', ic: 'i_anvil' });
+  { id: 'tree', n: '职业', ic: 'i_star' }, { id: 'craft', n: '铁砧', ic: 'i_anvil' });
 const DK = 0x1a1426, CY = 0xffc83a; // 弹壳风：粗深色描边、亮黄选中
 let trigSel = 0, gemPick = null, gemTab = 'all', supFit = true, gemPage = 0, tbagSel = null, tcraftAff = null;
 const hx = s => typeof s === 'number' ? s : parseInt(String(s).slice(1), 16);
