@@ -53,9 +53,9 @@
    "n": "骨刺",
    "ic": "w_spike",
    "form": "stab",
+   "rngMul": 3.5,
    "src": [
-    "Spikes",
-    "Thorns"
+    "Spikes"
    ],
    "tags": [
     "Hit",
@@ -690,6 +690,7 @@
    "n": "霜刺",
    "ic": "w_spike",
    "form": "stab",
+   "rngMul": 3.5,
    "src": [
     "FrostStabBase"
    ],

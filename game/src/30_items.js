@@ -142,7 +142,7 @@ function rollModDrop(ilvl) {
 }
 
 /* 技能石（spec-skill-gems）：{ kind:'gem', b:技能石 id, var:来源底子, lvl, xp, q, sock, mods } */
-const gemVar = g => g.var || GEM_BY[g.b].src[0];
+const gemVar = g => { const L = GEM_BY[g.b].src; return g.var && (!L.length || L.includes(g.var)) ? g.var : L[0]; }; // 变体不在列表里（骨刺的荆棘甲变体已删）退回第一个
 const gemTags = g => { const G = GEM_BY[g.b], v = G.src.length ? gemVar(g) : null; return v && WEAPONS[v] ? WEAPONS[v].tags.filter(t => t !== 'Weapon') : G.tags; };
 const utilVal = g => { const G = GEM_BY[g.b], U = G.util; return Math.round((U.v[0] + (U.v[1] - U.v[0]) * (clamp(g.lvl || 1, 1, MOD_MAX) - 1) / Math.max(1, MOD_MAX - 1)) * (1 + (g.q || 0) / 100) * 10) / 10; }; // 功能技能的数值：按等级、品质
 const gemTag3 = g => { const G = GEM_BY[g.b] || g; return [G.kind3, ELEM_N[G.el], F3_N[G.f3], ...(G.mech || []).map(k => MECH_N[k])].filter(Boolean); }; // 显示用的三层标签
@@ -167,7 +167,7 @@ function gemBase(g, wl) {
   const cat = GEMC.cats[wb.cat], tags = gemTags(g);
   const aff = cat && cat.tags.some(t => tags.includes(t)) ? GEMC.affinity : 1;
   const f = gemMul(G, g.lvl) * (1 + (g.q || 0) / 100) * aff / GEMC.affinity * (GEMC.pow[wl.b] ?? 1); // 对口时 ×1，不对口 ÷1.2（数据里的旧伤害已经是对口强度）
-  return { ...src, key: G.id, n: G.n, tags: [...tags, 'Weapon'], I: src.I * f, gI: f, aps: src.aps == null ? src.aps : qv(src.aps, q) * (GEMC.spd[wl.b] ?? 1), crit: wb.crit, aff: aff > 1, gem: G.id, el: G.el || src.el, ...(g.basic && wb.bel ? { el: wb.bel } : {}) }; // v3：技能石固定一种元素 // gear-v2：普攻用武器自带元素
+  return { ...src, key: G.id, n: G.n, tags: [...tags, 'Weapon'], I: src.I * f, gI: f, aps: src.aps == null ? src.aps : qv(src.aps, q) * (GEMC.spd[wl.b] ?? 1), rngMul: (src.rngMul || 1) * (g.basic ? 1 : G.rngMul || 1), /* 骨刺、霜刺：技能射程 ×3.5（底技能不变） */ crit: wb.crit, aff: aff > 1, gem: G.id, el: G.el || src.el, ...(g.basic && wb.bel ? { el: wb.bel } : {}) }; // v3：技能石固定一种元素 // gear-v2：普攻用武器自带元素
 }
 // 技能格“需要盾牌”：装着圣盾掷但没有盾（此时技能改成骨矢 1 级）
 const needShield = (eq = S.equip) => !!(eq.gem && eq.gem.kind === 'gem' && GEM_BY[eq.gem.b].form === 'shieldThrow' && !eq.shield);
