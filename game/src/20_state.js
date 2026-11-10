@@ -23,7 +23,7 @@ function load(data) {
   S = freshState();
   if (raw) try { const o = JSON.parse(raw); if (o.v === 4 && (o.gemV || 0) >= 3) S = Object.assign(S, o); else if (o.v === 4) { S.wiped = 1; const tell = () => G.ui ? toast('地窖已重塑，旧的旅程已封存', COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); } } catch (e) { } // 魂龛改版不兼容老存档（system-v2 §11）：直接清档
   S.shards ??= {}; S.glyphs = { ...freshState().glyphs, ...(S.glyphs || {}) };
-  if (!S.equip.wl && !S.stash.length && !S.uqV) S.uqV = 3; // 新档：不用跑装备改版迁移
+  if (!S.equip.wl && !S.stash.length && !S.uqV) { S.uqV = 3; S.skV = 3; } // 新档：不用跑装备改版 / 技能重做的迁移
   // 新做装系统之前的存档：丢掉骰子和魂萃词条，装备补上锻造潜力，独特装备补上传奇潜力
   if (!S.craftV) {
     delete S.dice; delete S.astral;
@@ -61,6 +61,17 @@ function load(data) {
   if (!S.legacyV) migrateLegacy(); delete S.chips;
   if ((S.uqV || 0) < 2) migrateUniqueCosts();
   if ((S.uqV || 0) < 3) migrateRarityV2();
+  if ((S.skV || 0) < 3) migrateSkillV3();
+}
+// 技能 v3：输出技能只留在出手类 / 常驻魂龛里，响应类魂龛里的退回背包（现在给功能技能用）
+function migrateSkillV3() {
+  const moved = [];
+  for (const T of [...(S.trigs || []), ...(S.trigBag || [])]) { if (!T || !T.socks) continue; const C = TCOND[T.c]; if (!C || C.kind === 'cast' || T.c === 'always') continue;
+    T.socks.forEach((g, k) => { if (g && g.kind === 'gem' && GEM_BY[g.b] && !GEM_BY[g.b].util) { T.socks[k] = null; S.stash.unshift(g); moved.push(GEM_BY[g.b].n); } }); }
+  const had = (S.skV == null) && (S.stash.length || (S.trigs || []).some(Boolean)); S.skV = 3;
+  if (had) { const lines = ['技能重做：每个技能现在只有一种元素，标签改成“元素 · 形态 · 机制”。', '六个元素各有一个主效果：物理破甲、火焰灼烧、闪电感电、瘟疫疫病、寒霜冰缓（叠满碎冰）、圣光审判（斩杀）。原来的附加元素、附加特效、共鸣取消了。', '新技能：霜刺、雷斩、圣裁、腐爪、落雷；功能技能：骨盾、回春、石肤、战吼、疾步、聚火。', '输出技能只能插在出手类魂龛（出手、命中、暴击、残灯）和常驻；击杀、受击、冲刺、定时这些响应类魂龛现在插功能技能。'];
+    if (moved.length) lines.push(`${moved.length} 颗输出技能从响应类魂龛退回了背包：${[...new Set(moved)].join('、')}。`);
+    S.notice = { t: '技能重做', lines }; const tell = () => G.ui ? G.ui.openWin('notice') : setTimeout(tell, 600); setTimeout(tell, 2500); }
 }
 // 11-10 稀有度改版：底材按物品等级换成三代（不再有 11 档品质）；拆成传奇词条的独特 → 同底材的传奇（规则数值、词条保留）
 function migrateRarityV2() {

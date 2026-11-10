@@ -80,7 +80,7 @@ function spawnMob(type, o = {}) {
   const HD = o.boss ? null : PROG.run.horde; // 怪海：普通怪更多更脆
   const hp = d.hp * monHp(L) * (elite ? ELITE.hp : 1) * (1 + (mx.mobHp || 0) / 100) * (HD ? HD.hp : 1);
   const m = { type, d, x, y, hp, max: hp, dmg: d.dmg * monDmg(L) * (elite ? ELITE.dmg : 1) * (1 + (mx.mobDmg || 0) / 100) * (HD ? HD.dmg : 1), spd: d.spd * (elite ? ELITE.spd : 1) * (1 + (mx.mobSpd || 0) / 100), size: d.size + (elite ? ELITE.size : 0), res: Object.fromEntries(ELEM.map(e => [e, ((d.res || {})[e] || 0) + (mx.mobRes || 0)])), el: d.el,
-    elite, boss: !!o.boss, rise: o.boss ? 0.8 : 0.4, atkCd: 1, cd: rf(0.5, d.cd || 2), fl: 0, shock: 0, shockT: 0, chill: 0, chillT: 0, frzT: 0, frzImm: 0, blindT: 0, blindK: 0, burn: 0, burnT: 0, rad: [], after: [], t: 0, face: 1, vx: 0, vy: 0, kx: 0, ky: 0, ramT: 0, fat: 0 };
+    elite, boss: !!o.boss, rise: o.boss ? 0.8 : 0.4, atkCd: 1, cd: rf(0.5, d.cd || 2), fl: 0, sun: 0, sunT: 0, coldAcc: 0, chillF: 0, shock: 0, shockT: 0, chill: 0, chillT: 0, frzT: 0, frzImm: 0, blindT: 0, blindK: 0, burn: 0, burnT: 0, rad: [], after: [], t: 0, face: 1, vx: 0, vy: 0, kx: 0, ky: 0, ramT: 0, fat: 0 };
   if (elite) rollEliteAffixes(m); // defense-v3 §8.3 精英词缀
   mobs.push(m); return m;
 }
@@ -141,7 +141,7 @@ function hitMob(m, W, o = {}) {
   if (W.perDashInc) mul *= 1 + W.perDashInc * Math.floor(player.dash);
   if (W.doubleChance && rnd() < W.doubleChance) mul *= 2;
   if (W.killInc && RUN) mul *= 1 + Math.min(RL.killInc.max, W.killInc * RUN.kills) / 100;
-  mul *= ruleMul(m) * elemMul(m);
+  mul *= ruleMul(m) * elemMul(m) * (1 + buffV('dmg') / 100); // 战吼
   if (STATS.flag.ctrlPrison && !isCtrl(m)) mul *= 1 - RL.ctrlPrison.less / 100; /* 寒狱：对未受控的敌人总降 */
   if (m.frzT > 0 && STATS.frozenTaken) mul *= 1 + STATS.frozenTaken; // 冻结的敌人受到的伤害提高
   if (m.frzT > 0 && STATS.flag.frozenMore) mul *= 1 + STATS.flag.frozenMore / 100; // 誓约：对冻结的敌人总增
@@ -164,9 +164,9 @@ function hitMob(m, W, o = {}) {
   if (W.pull && !m.boss) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * MECH.pull; m.ky += dy / d * MECH.pull; }
   else if (W.knock && !m.boss) { const dx = m.x - player.x, dy = m.y - player.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * MECH.knockback; m.ky += dy / d * MECH.knockback; }
   const tick = W.cont ? 1 / W.aps : 1;
-  for (const e in by) if (W.ail[e] && rnd() < W.ail[e] * tick) ailment(m, e, by[e], W, o);
+  mainFx(m, W, by, tick, o); // v3：技能元素的主效果，必定触发
+  for (const e of ['kin', 'pla']) if (W.ail[e] && rnd() < W.ail[e] * tick) ailment(m, e, by[e] || total, W, o); // 副效果（装备给几率）：碎骨、致盲
   if (W.kinShock && by.kin && rnd() < W.kinShock * tick) ailment(m, 'ele', by.kin, W, o);
-  if (W.atk) elemOnHit(m, W, o); // 元素系统：附加特效
   { const ach = (W.afterCh || 0) + (STATS.flag.quake ? 0.1 : 0); if (ach && !o.re && !o.ground && !o.arc && !m.dead && rnd() < ach * tick) m.after.push({ n: 1 + (STATS.afterRep || 0) + (W.afterRep || 0), t: MECH.afterTick, d: total * 0.6, k: 0.6, el: top }); } // 余震：几率以 60% 再结算（任意元素）
   if (by.exp) { m.burn += by.exp * MECH.burnFromFire * ailEff('burn'); if (W.burnSlow) m.burnSlow = W.burnSlow; } // 火焰伤害都会累积灼烧
   if (W.meleeRe && !o.re && !m.dead && rnd() < W.meleeRe) total += hitMob(m, W, { ...o, re: 1 }); // 碎颅冠：近战命中再结算一次
@@ -182,16 +182,33 @@ function aoePull(x, y, r) {
 // 寒霜：冰缓叠层（每层移速、攻速 -chillPer%），叠满冻结；冻结后 freezeImmune 秒免疫、层数清零（spec-bd-gear §1）
 const chillEff = () => ailEff('cold'); // 冰缓效果提高%
 const chillK = m => m.frzT > 0 ? 0 : 1 - Math.min(0.9, m.chill * MECH.chillPer / 100 * chillEff()); // 速度倍率：冻结时 0
+function shatter(m) { const d = (m.coldAcc || 0) * EFX.shatterPct; m.coldAcc = 0; if (d > 0 && !m.dead) { fx({ t: 'shatter', x: m.x, y: m.y - m.size }); damage(m, d, 'cold', false, true); } } // 碎冰：这一轮累计寒霜伤害的一部分
 function chillOn(m, n, W) {
   if (m.dead || m.frzT > 0) return;
-  if (m.frzImm > 0) { m.chill = Math.min(MECH.chillMax - 1, m.chill + n); m.chillT = MECH.chillDur; return; } // 免疫期：照常冰缓，但叠不到冻结
+  if (m.frzImm > 0) { m.chill = Math.min(MECH.chillMax - 1, m.chill + n); m.chillT = MECH.chillDur; if (m.chill >= MECH.chillMax - 1 && m.coldAcc > 0) { shatter(m); m.chill = 0; } return; } // 免疫期：照常冰缓，但叠不到冻结
   m.chill = Math.min(MECH.chillMax, m.chill + n); m.chillT = MECH.chillDur;
-  if (m.chill >= MECH.chillMax) { m.frzT = MECH.freezeDur * chillEff() * (STATS.freezeMul || 1) * (1 + ((W && W.freezeInc) || 0) / 100) * (m.boss || m.elite ? MECH.freezeBossMul : 1); if (STATS.flag.coffin) player.shield = Math.min(STATS.shield, player.shield + STATS.shield * UQX.coffinShield / 100); m.slam = null; m.chill = 0; m.chillT = 0; if (RUN) { RUN.freezes = (RUN.freezes || 0) + 1; if (RUN.dmg) RUN.dmg.fz = (RUN.dmg.fz || 0) + 1; } fx({ t: 'freeze', x: m.x, y: m.y - m.size }); }
+  if (m.chill >= MECH.chillMax) { shatter(m); if (m.dead) return; m.frzT = MECH.freezeDur * chillEff() * (STATS.freezeMul || 1) * (1 + ((W && W.freezeInc) || 0) / 100) * (m.boss || m.elite ? MECH.freezeBossMul : 1); if (STATS.flag.coffin) player.shield = Math.min(STATS.shield, player.shield + STATS.shield * UQX.coffinShield / 100); m.slam = null; m.chill = 0; m.chillT = 0; if (RUN) { RUN.freezes = (RUN.freezes || 0) + 1; if (RUN.dmg) RUN.dmg.fz = (RUN.dmg.fz || 0) + 1; } fx({ t: 'freeze', x: m.x, y: m.y - m.size }); }
 }
 // 角色被寒霜怪打中：叠冰缓（移速、攻速降低），不会被冻结
 function chillPlayer(n) { player.chill = Math.min(MECH.playerChillMax, (player.chill || 0) + n); player.chillT = MECH.chillDur; }
 const pChillK = () => 1 - (player.chill || 0) * MECH.chillPer / 100;
 const ailEff = e => ailEffG(e);
+/* 技能 v3：六系主效果。技能是什么元素就挂什么，必定触发；装备上的“某异常几率”改成这个效果的强度加成 */
+function mainFx(m, W, by, tick, o) {
+  const e = W.el, d = by[e] || 0; if (m.dead || !(d > 0) || o.ground || o.efx || o.re) return;
+  const bonus = 1 + (W.ail[e] || 0), eff = ailEffG(e) * (W.ailEffT ? 1 + W.ailEffT / 100 : 1), r = d / m.max * (m.boss ? EFX.bossK : m.elite ? EFX.eliteK : 1);
+  switch (e) {
+    case 'kin': m.sun = Math.min(EFX.sunMax, (m.sun || 0) + tick * bonus); m.sunT = EFX.sunDur; break; // 破甲
+    case 'exp': if (bonus > 1) m.burn += d * MECH.burnFromFire * (bonus - 1) * eff * (W.burnMore || 1); break; // 灼烧：基础的那份在下面（所有火焰伤害都进灼烧池）
+    case 'ele': { const big = Math.ceil(Math.sqrt(r) * EFX.shockK * bonus), n = Math.max(big, Math.min(EFX.shockSoft, m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)), EFX.shockMin); // 感电：越重层数越高
+      m.shock = Math.min(MECH.shockMax, Math.max(m.shock, n)); m.shockT = MECH.shockDur; break; }
+    case 'nuc': { const pr = W.cont ? 0.25 : 1; if (rnd() >= pr) break; const dps = d * MECH.radPct * EFX.radK * bonus * W.radMore * W.dotMore * eff / MECH.radDur / pr; // 疫病：一次一层
+      if (m.rad.length >= 30) { const x = m.rad[m.rad.length - 1]; x.dps += dps; x.t = MECH.radDur; } else m.rad.push({ dps, t: MECH.radDur }); break; }
+    case 'cold': m.coldAcc = (m.coldAcc || 0) + d; m.chillF = (m.chillF || 0) + EFX.chillK * bonus * tick * (o.chill || 1); while (m.chillF >= 1 && !m.dead) { m.chillF--; chillOn(m, 1, W); } break; // 冰缓 → 碎冰
+    case 'pla': { const line = (m.boss ? EFX.judgeBoss : m.elite ? EFX.judgeElite : EFX.judge) * clamp(0.4 + Math.sqrt(r), 0.4, 1) * Math.min(1.5, bonus * eff); // 审判：斩杀
+      if (m.hp / m.max < line) { fx({ t: 'judge', x: m.x, y: m.y - m.size }); kill(m); } break; }
+  }
+}
 function ailment(m, e, d, W, o) {
   const ailEff = x => ailEffG(x) * (x === W.el && W.ailEffT ? 1 + W.ailEffT / 100 : 1); // 魂龛词条：本源异常效果
   switch (e) {
@@ -209,6 +226,7 @@ function ailment(m, e, d, W, o) {
 }
 function damage(m, amt, el, crit, small) {
   if (m.dead || amt <= 0) return;
+  if (m.sun > 0) amt *= 1 + Math.floor(m.sun) * EFX.sunPer / 100; // 破甲：受到的所有伤害提高
   if (STATS.fullLampDmg && player.soul >= STATS.soulMax * 0.9) amt *= 1 + STATS.fullLampDmg / 100; // gear-v2：满灯伤害
   if (m.ax) amt = eliteTaken(m, amt, small); // 精英词缀：坚壁、镜反
   if (!small) { if (STATS.flag.lightEater) lampGain('eat', 0.3, STATS.flag.lightEater); lampGain('hit', STATS.lampOnHit, 2); if (crit) lampGain('crit', STATS.lampOnCrit, 3); }
@@ -326,7 +344,7 @@ function vortexState() {
   let full = false, any = false; whirlWs().forEach(([W, i]) => { if (!alwaysWhirl(W)) return; const n = player.spin[i].n; if (n >= W.stackMax) full = true; if (n > 0) any = true; });
   return full ? 1 : any ? 0.5 : 0;
 }
-const vortexMove = () => { const v = vortexState(); return v === 1 ? 1 + UQX.vortex.moveFull / 100 : 1; }; // 独特去代价（11-10）：没有层数时不再减速
+const vortexMove = () => { const v = vortexState(); return (v === 1 ? 1 + UQX.vortex.moveFull / 100 : 1) * (1 + buffV('haste') / 100); }; // 独特去代价（11-10）：没有层数时不再减速
 // 受击反馈：最多每 0.4 秒一次，强度按这一下占最大生命的比例（以前每一下都把生命球刷白、角色闪白，怪多时一直闪）
 function hurtFeedback(d) {
   if (G.time - (player.fbT0 || -9) < 0.4) return;
@@ -374,6 +392,7 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
   lampGain('struck', STATS.lampOnStruck, 2);
   if (STATS.flag.vortexTreads && vortexState() === 1) d *= 1 - UQX.vortex.takenFull / 100; // 旋涡之履
   if (player.guardT > 0) d *= 1 - MECH.meleeGuardLess;
+  d *= 1 - buffV('guard') / 100; // 石肤
   d *= 1 - Math.max(0, ...whirlWs().map(([W, i]) => Math.min(WH.drCap, WH.drPerStack * player.spin[i].n))) / 100; // 旋身：每层当前旋转减伤，有上限
   if (src && src.cap) d = Math.min(d, STATS.life * src.cap / 100); // 红圈重击单次最多打掉生命上限的 cap%：威胁是“这趟走不深”，不是一下秒掉
   hurtLog(d, el, src); // defense-v3 §8.4 受伤来源
@@ -460,7 +479,23 @@ const inRange = (W, r) => mobs.some(m => !m.dead && m.rise <= 0.2 && dist2(m, pl
 const AIM_HOLD = 0.6;
 function aimAt(a) { player.aimA = a; player.aimT = AIM_HOLD; player.face = Math.cos(a) >= 0 ? 1 : -1; return a; }
 const aiming = () => player.aimT > 0; // aimT 在 playerStep 里倒数（模拟器不走 G.time）
+// 功能技能（防御 / 增益 / 资源）：被触发时生效，不出手
+function castUtil(W) {
+  const U = W.util, v = W.uv, B = player.buffs || (player.buffs = {}), set = k => { B[k] = { t: U.dur, v: Math.max(v, B[k] && B[k].t > 0 ? B[k].v : 0) }; };
+  let c = '#ffe27a', s = '';
+  switch (U.k) {
+    case 'shield': if (STATS.shield > 0) { player.shield = Math.min(STATS.shield, player.shield + STATS.shield * v / 100); s = '骨盾'; c = '#9fe3ff'; } else { player.life = Math.min(STATS.life, player.life + STATS.life * v / 200); s = '骨盾'; c = '#9fe3ff'; } break;
+    case 'heal': player.life = Math.min(STATS.life, player.life + STATS.life * v / 100); s = '回春'; c = '#8fe05a'; break;
+    case 'lamp': player.soul = Math.min(STATS.soulMax, player.soul + v); s = '聚火'; c = '#ffb347'; break;
+    case 'guard': set('guard'); s = '石肤'; c = '#e9e0c9'; break;
+    case 'dmg': set('dmg'); s = '战吼'; c = '#ff8a3d'; break;
+    case 'haste': set('haste'); s = '疾步'; c = '#7fc8ff'; break;
+  }
+  fx({ t: 'buff', x: player.x, y: player.y - 6, c, s }); return true;
+}
+const buffV = k => { const b = player.buffs && player.buffs[k]; return b && b.t > 0 ? b.v : 0; };
 function fire(W, i) {
+  if (W.util) return castUtil(W);
   const px = player.x, py = player.y - 6;
   switch (W.form) {
     case 'aura': { // 瘟疫光环插在魂龛：常驻的由下面的光环循环每 auraTick 结算，这里不出手；其他魂龛触发一次 = 结算 1 秒的量
@@ -523,6 +558,12 @@ function fire(W, i) {
       if (mines.length >= MINE_MAX) mines[0].dead = true;
       projs.push({ W, mine: 1, x: px + rf(-4, 4), y: player.y + rf(-2, 2), arm: MECH.mineArm, life: MECH.mineLife, el: W.el, hit: new Set() });
       return true;
+    }
+    case 'cleave': { // 劈斩（v3）：朝最近的敌人挥一下，前方扇形里的都中
+      const tg = nearest(px, py, W.rng); if (!tg) return false;
+      const a = aimAt(Math.atan2(tg.y - 4 - py, tg.x - px)), half = W.b.arc || 0.9; let hits = 0;
+      for (const m of mobs) { if (m.dead || m.rise > 0.2) continue; const dx = m.x - px, dy = m.y - 4 - py; if (Math.hypot(dx, dy) > W.rng + m.size) continue; let da = Math.abs(Math.atan2(dy, dx) - a); if (da > Math.PI) da = Math.PI * 2 - da; if (da < half) { hitMob(m, W); hits++; } }
+      fx({ t: 'cleave', x: px, y: py, a, r: W.rng, arc: half, el: W.el }); sfx('slash'); player.swing[i] = 0.18; return true;
     }
     case 'stab': { // 骨刺：从地下刺向射程内若干最近的敌人
       const n = 1 + W.extra;
@@ -648,6 +689,7 @@ function logic(dt) {
   if (player.aimT > 0) player.aimT -= dt;
   if (RUN) { closeStep(); if (RUN.gd) { RUN.gd.t += dt - 1 / 60; if (player.closeN > 0) RUN.gd.closeT += dt - 1 / 60; } }
   if (player.guardT > 0) player.guardT -= dt;
+  if (player.buffs) for (const k in player.buffs) if (player.buffs[k].t > 0) player.buffs[k].t -= dt;
   player.shield = Math.min(P.shield, player.shield + P.shieldRegen * lampShieldRegen() * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
   player.swing = player.swing.map(v => Math.max(0, v - dt));
   player.orbitA += dt * 5 * (1 + 0.12 * Math.max(0, ...player.spin.map(s => s.n))); // 旋转层数越高转得越快
@@ -736,7 +778,7 @@ function logic(dt) {
       return;
     }
     player.wcd[i] -= dt * pChillK();
-    if (player.wcd[i] <= 0) { if (W.basic ? castAttack(W, i) : fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
+    if (player.wcd[i] <= 0) { if (W.basic ? castAttack(W, i) : fire(W, i)) player.wcd[i] = (W.aps ? 1 / W.aps : 0.5) / (1 + buffV('haste') / 100); else player.wcd[i] = 0.05; } // 疾步：出手更快
   });
   // 魂龛【常驻】里的瘟疫光环：每 auraTick 结算一次（灯火见底就停）
   for (const [W, i] of combatWs()) if (i >= 2 && W.form === 'aura') { const t = STATS.trigs[W.trigSlot - 1]; if (!t || t.mode !== 'always' || !lampOk()) continue; if ((W._at = (W._at || 0) - dt) <= 0) { W._at = MECH.auraTick; auraHit(W); } }
@@ -752,6 +794,7 @@ function logic(dt) {
     if (m.boss && m.t > MECH.fatigueStart) m.fat = Math.min(MECH.fatigueMax, Math.floor(m.t - MECH.fatigueStart));
     // 异常
     if (m.shockT > 0) { m.shockT -= dt; if (m.shockT <= 0) m.shock = 0; }
+    if (m.sunT > 0) { m.sunT -= dt; if (m.sunT <= 0) m.sun = 0; }
     if (m.chillT > 0) { m.chillT -= dt; if (m.chillT <= 0) m.chill = 0; }
     if (m.frzImm > 0) m.frzImm -= dt;
     if (m.shredT > 0) m.shredT -= dt;
@@ -886,7 +929,7 @@ function stepThrow(p, dt) { // 飞盾：直线飞，无限穿透（同一敌人�
 function stepMeteors(dt) { // 陨石落地：圈内一次命中，击退 + 眩晕；插符文的留火地
   for (const M of meteors) {
     M.t -= dt; if (M.t > 0) { if (STATS.flag.earlyWarn) for (const m of mobs) if (!m.dead && !m.boss && m.frzT <= 0 && !(m.stunT > 0) && dist2(m, M) < (M.r + m.size) ** 2) { const dx = m.x - M.x, dy = m.y - M.y, l = Math.hypot(dx, dy) || 1; m.x += dx / l * UQX.doomDodge * dt; m.y += dy / l * UQX.doomDodge * dt; } continue; } // 末日冠代价：圈里的怪往外躲
-    fx({ t: 'meteorHit', x: M.x, y: M.y, r: M.r }); sfx('boom');
+    fx({ t: M.W.b.bolt ? 'boltHit' : M.W.b.smite ? 'smiteHit' : 'meteorHit', x: M.x, y: M.y, r: M.r }); sfx('boom');
     const kb = MT.knockPx * Math.log(50); let kills = 0, hd = 0, hn = 0;
     for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, M) < (M.r + m.size) ** 2) {
       const d = hitMob(m, M.W, { mul: M.mul }); hd += d; hn++;

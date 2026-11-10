@@ -82,6 +82,13 @@ const CryptFX = window.Phaser && Phaser.Renderer.WebGL ? class extends Phaser.Re
 const MFX = { h0: 150, dx: 0.55 };
 function meteorFx(sc, gg, pg, glow, M, t) {
   const k = clamp(1 - Math.max(0, M.t) / M.T, 0, 1), r = M.r, ry = r * 0.6;
+  const vb = M.W && M.W.b; if (vb && (vb.bolt || vb.smite)) { // v3：落雷 / 圣裁——地上一圈收拢的预警，落点上方聚光
+    const c = vb.bolt ? 0x7fc8ff : 0xffe27a, n = Math.max(10, r * 0.8 | 0), rr = r * (1.25 - 0.25 * k);
+    gg.fillStyle(c, 0.06 + 0.12 * k).fillEllipse(M.x, M.y, r * 2, ry * 2);
+    for (let i = 0; i < n; i++) { if ((i & 1) && k < 0.8) continue; const a = (vb.bolt ? -t * 3 : t * 1.2) + i / n * Math.PI * 2; gg.fillStyle(k > 0.8 ? 0xffffff : c, 0.5 + 0.45 * k).fillRect(Math.round(M.x + Math.cos(a) * rr), Math.round(M.y + Math.sin(a) * rr * 0.6), 2, 1); }
+    if (vb.smite) { const h = 60 * (1 - k); pg.fillStyle(0xfff2b0, 0.25 + 0.5 * k).fillRect(Math.round(M.x) - 1, Math.round(M.y - 70 - h), 2, 8 + 62 * k); if (glow) glow.fillStyle(c, 0.25 * k).fillCircle(M.x, M.y - 4, r * 0.5); }
+    else if (rnd() < 0.25 + k * 0.5) { const a = rf(0, Math.PI * 2), d = rf(0, r); pg.fillStyle(0xd8f4ff, 0.9).fillRect(Math.round(M.x + Math.cos(a) * d), Math.round(M.y + Math.sin(a) * d * 0.6 - rf(0, 6)), 1, 2); }
+    return; }
   gg.fillStyle(0x3a0e06, 0.18 + 0.22 * k).fillEllipse(M.x, M.y, r * 2, ry * 2);
   const n = Math.max(12, r * 0.9 | 0), rot = t * 1.6 + M.x;
   for (let i = 0; i < n; i++) { if ((i & 1) && k < 0.85) continue; const a = rot + i / n * Math.PI * 2; gg.fillStyle(k > 0.85 ? 0xffe070 : 0xff7a2a, 0.55 + 0.4 * k); gg.fillRect(Math.round(M.x + Math.cos(a) * r), Math.round(M.y + Math.sin(a) * ry), 2, 1); }

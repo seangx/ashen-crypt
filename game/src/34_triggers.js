@@ -64,6 +64,8 @@ const AUTO_NOVA = ['GemNova', 'GemFrostNova'], alwaysOk = b => TRG.alwaysOnly.in
 function trigCanSock(T, k, x) {
   if (!T || k >= T.sock) return false; if (!x) return true;
   if (isSkill(x)) {
+    if (GEM_BY[x.b].util && TCOND[T.c].kind === 'cast') return false; // 功能技能只插响应类魂龛
+    if (!GEM_BY[x.b].util && TCOND[T.c].kind !== 'cast' && T.c !== 'always') return false; // 输出技能只插出手类魂龛（出手、命中、暴击、残灯）和常驻（11-10 用户定）
     if (T.c === 'always' && !alwaysOk(x.b)) return false;
     const n = T.socks.filter((s, i) => i !== k && isSkill(s)).length; return n < trigMaxSkills(T);
   }
@@ -163,6 +165,7 @@ function trigStats(P, eq) {
     const skills = T.socks.filter(isSkill), sups = T.socks.filter(isSupport), FT = P.flag || {}, costMul = (FT.rapid ? 1.25 : 1) * (FT.chainCharge && !cast ? 1.3 : 1) * (FT.auraPower && T.c === 'always' ? 1.5 : 1) * sups.reduce((m, s) => { const c = TRG.supCost[s.mid] || TRG.defCost; return m * (eq.wl && eq.wl.u === 'Slotfather' && c > 1 ? 1 + (c - 1) / 2 : c); }, 1) /* 符文教父：辅助石消耗倍率超过 1 的部分减半 */ * (1 - ((A.costLess || 0) + (P.raw.costLess || 0) + ((IMPL[eq.wl && eq.wl.b] && implFx(eq.wl).costLess) || 0)) / 100);
     const ws = []; if (on) skills.forEach((g, j) => {
       if (T.c === 'always' && !TRG.alwaysOnly.includes(g.b) && !(AUTO_NOVA.includes(g.b) && P.flag && P.flag.autoNova)) return; // 永冬法阵摘了：常驻里的新星不放
+      if (GEM_BY[g.b].util) { if (cast || T.c === 'always') return; ws.push({ util: GEM_BY[g.b].util, uv: utilVal(g), key: g.b, n: GEM_BY[g.b].n, form: 'util', b: {}, min: {}, max: {}, dps: 0, aps: 1, crit: 0, ail: {}, more: 1, rng: 0, aoeR: 0, extra: 0, chain: 0, proc: 0, tags: [], cost: gemCost(g) * (TRG.skillCostMul || 1), trigSlot: i + 1, wi: TRIG_BASE + i * TRIG_PER + j }); return; } // 功能技能：不算伤害
       const sl = A.supLv ? sups.map(m => ({ ...m, lvl: Math.min(MOD_MAX, (m.lvl || 1) + 1) })) : sups;
       const g2 = { ...g, mods: sl.filter(m => supportFits(m, g)), sock: sups.length }, sh = GEM_BY[g.b].form === 'shieldThrow'; // 圣盾掷：盾变成虚拟武器，没拿盾就不放
       const sk = sh ? null : skillItem({ ...eq, gem: g2 }), W = sh ? shieldWeapon(eq.shield, P, g2) : sk && weaponStats(sk, P); if (!W) return;

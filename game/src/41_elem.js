@@ -6,6 +6,7 @@ const EL_FX_N = { kin: '碎裂', exp: '引燃', ele: '雷爆', cold: '霜结', p
 let ELQ = [];
 function elemStats(P) {
   const W0 = P.weapons && P.weapons[0]; P.addEl = null; P.addEl2 = null; P.resoN = 0; P.reso = 1;
+  return; // v3：附加元素 / 附加特效 / 共鸣取消（副效果第二期从装备来）
   if (!W0 || !W0.flat) return;
   const avg = e => { const f = W0.flat[e]; return f ? (f[0] + f[1]) / 2 : 0; };
   const L = ELEM.map(e => [e, avg(e) + (e === W0.el ? 1e-6 : 0)]).filter(x => x[1] > 0.01).sort((a, b) => b[1] - a[1]);
