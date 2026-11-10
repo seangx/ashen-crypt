@@ -179,6 +179,6 @@ Object.assign(MobileUI.prototype, {
     const sel = isR ? rbRunes(rb.r) : rbGems(rb.g), n = sel.reduce((a, x) => a + (isR ? coinOfRune(x) : coinOfGem(x)), 0);
     TW(this, 12, y, `将拆解：${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}\n预计得到 ${n} 骨币${!isR && sel.some(g => (g.mods || []).some(Boolean)) ? '\n技能宝石上插着的辅助宝石会退回库存' : ''}`, w - 24, { size: 8, color: COL.text, parent: c }); y += 44;
     TW(this, 12, y, '身上的技能宝石和槽里的辅助宝石永远不会被拆。', w - 24, { size: 8, color: COL.dim, parent: c });
-    mkBtn(this, c, 12, h - 44, w - 24, 30, '拆解', () => this.ask(`拆解 ${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}？`, () => { let k = 0; sel.forEach(x => { k += isR ? salvageRune(x) : salvageGem(x); }); save(); toast(`得到 ${k} 骨币`, '#d9cfb8'); sfx('craft'); this.refresh(); }, '拆解', '不能撤销。'), { style: 'r', disabled: !sel.length });
+    mkBtn(this, c, 12, h - 44, w - 24, 30, '拆解', () => this.ask(`拆解 ${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}？`, () => { const g = {}; for (const x of sel) { const k = `${isR ? MOD_BY[x.mid].n : itemName(x)} ${x.lvl} 级`; g[k] = (g[k] || 0) + 1; } let k = 0; sel.forEach(x => { k += isR ? salvageRune(x) : salvageGem(x); }); save(); sfx('craft'); this.resultPop(`拆解 ${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}`, sel, [{ t: `骨币 +${k}`, c: COL.emberHi }, Object.entries(g).map(([n, c]) => n + (c > 1 ? ' ×' + c : '')).join('，')]); this.refresh(); }, '拆解', '不能撤销。'), { style: 'r', disabled: !sel.length });
   },
 });

@@ -26,7 +26,7 @@ Object.assign(MobileUI.prototype, {
   win_stones(c, w, h) {
     const bag = S.stones || [], fz = stoneFuseN();
     TW(this, 12, 8, '武器、副手加伤害，护甲部位加防御；同件装备同种石头只算最高阶一颗', w - 24 - (fz ? 76 : 0), { size: 8, color: COL.dim, parent: c });
-    if (fz) mkBtn(this, c, w - 84, 4, 72, 28, `一键合成 ${fz}`, () => { const n = stoneFuseAll(); sfx('craft'); toast(`合成 ${n} 次`, '#ffe066'); this.refresh(); }, { size: 8, style: 'w' });
+    if (fz) mkBtn(this, c, w - 84, 4, 72, 28, `一键合成 ${fz}`, () => { this.stoneReport(); this.refresh(); }, { size: 8, style: 'w' });
     let y = 38; const slots = STONE_SLOTS();
     if (!slots.length) { T_(this, c, w / 2, y + 8, '没有带孔的装备：魔法装备 1–2 孔、稀有 2–3 孔', { size: 8, color: COL.dim }); y += 30; }
     slots.forEach(sl => { const it = S.equip[sl.id], n = stoneSockN(it); it.stones = it.stones || [];

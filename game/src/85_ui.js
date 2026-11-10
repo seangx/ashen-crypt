@@ -433,7 +433,7 @@ class UI extends Phaser.Scene {
   closePrep() { if (this.winId === 'prep') this.closeWin(true); }
   prepCdText() { const R = RUN && RUN.prep; return !R ? '' : R.cd ? `${Math.max(1, Math.ceil(R.t))} 秒后自动继续 · 点任意处取消` : S.auto.loop ? '倒计时已取消' : ''; }
   openBulk() { this.bulkPick = new Map(); this.openWin('bulk'); }
-  doBulk() { const g = bulkSalvage(bulkList(this.bulkPick)); this.bulkPick = new Map(); if (g.n) toast(`拆解 ${g.n} 件，得到 ${g.shards} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); this.refresh(); }
+  doBulk() { const list = bulkList(this.bulkPick); if (this.salvReport) this.salvReport('拆解完成', list, () => bulkSalvage(list)); else { const g = bulkSalvage(list); if (g.n) toast(`拆解 ${g.n} 件，得到 ${g.shards} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); } this.bulkPick = new Map(); this.refresh(); }
   /* 批量拆解：按品质多选 + 单件点选（点一下加入/移出），确认后一起拆 */
   win_bulk(c, w, h) {
     const mob = typeof MOBILE !== 'undefined' && MOBILE, sel = bulkSel(), pick = this.bulkPick || (this.bulkPick = new Map());
@@ -444,12 +444,14 @@ class UI extends Phaser.Scene {
     BULK_CATS.forEach((n, i) => { const cnt = all.filter(it => bulkCat(it) === i).length;
       mkBtn(this, c, 10 + i * (bw + 4), y, bw, bh, `${sel[i] ? '■' : '□'} ${n} ${cnt}`, () => { sel[i] = !sel[i]; [...pick.keys()].forEach(id => { const it = findItem(id); if (it && bulkCat(it.it) === i) pick.delete(id); }); save(); this.refresh(); }, { size: 8, style: sel[i] ? 'w' : 'n' }); });
     y += bh + 6;
-    const cs = mob ? 30 : 18, gap = mob ? 2 : 1, cols = Math.max(1, Math.floor((w - 20 + gap) / (cs + gap))), rows = mob ? Math.max(1, Math.floor((h - y - 110) / (cs + gap))) : 4;
+    const cs = mob ? 30 : 18, gap = mob ? 2 : 1, cols = Math.max(1, Math.floor((w - 20 + gap) / (cs + gap))), rows = mob ? 999 : 4;
+    const SA = mob && this.scrollArea ? this.scrollArea(c, 0, y, w, h - y - 76, 'bulk') : null, pc = SA ? SA.lc : c, y0 = SA ? 0 : y; // 手机：格子区上下滑，全部装备都能点到
     S.stash.slice(0, cols * rows).forEach((it, i) => { if (!it) return; const ok = bulkOk(it), on = ok && bulkHit(it, pick);
-      const cx = 10 + (i % cols) * (cs + gap), cy = y + (i / cols | 0) * (cs + gap);
-      mkCell(this, c, cx, cy, it, { size: cs, sel: on, direct: true, onClick: v => { if (!v || !bulkOk(v)) return; pick.set(v.id, !bulkHit(v, pick)); this.refresh(); } });
-      if (on) T(this, cx + cs - 2, cy + 1, '✕', { size: 8, color: '#ff6a5a', align: 'right', parent: c }); });
-    if (S.stash.length > cols * rows) T(this, 10, y + rows * (cs + gap) + 1, `另 ${S.stash.length - cols * rows} 件未显示（按稀有度勾选仍会计入）`, { size: 8, color: COL.faint, parent: c });
+      const cx = 10 + (i % cols) * (cs + gap), cy = y0 + (i / cols | 0) * (cs + gap);
+      mkCell(this, pc, cx, cy, it, { size: cs, sel: on, direct: true, onClick: v => { if (!v || !bulkOk(v)) return; pick.set(v.id, !bulkHit(v, pick)); this.refresh(); } });
+      if (on) T(this, cx + cs - 2, cy + 1, '✕', { size: 8, color: '#ff6a5a', align: 'right', parent: pc }); });
+    if (SA) SA.done(Math.ceil(S.stash.length / cols) * (cs + gap));
+    else if (S.stash.length > cols * rows) T(this, 10, y + rows * (cs + gap) + 1, `另 ${S.stash.length - cols * rows} 件未显示（按稀有度勾选仍会计入）`, { size: 8, color: COL.faint, parent: c });
     const by = h - (mob ? 50 : 26);
     T(this, w / 2, by - 16, list.length ? `已选 ${list.length} 件 · 约得词条碎片 ${yld}` : '还没有选中任何装备', { size: 8, color: list.length ? COL.emberHi : COL.faint, align: 'center', parent: c });
     const hw = Math.floor((w - 24) / 2);

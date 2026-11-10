@@ -334,14 +334,14 @@ class MobileUI extends UI {
     if (craftTab === 1 && unlocked('fuse')) return this.fusePaneM(c, w, h);
     const all = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash].filter(x => x.kind !== 'gem'); // 技能石不能上铁砧（原来混进来，点到会报错）
     let it = all.find(x => x.id === craftId); if (!it) { it = all.find(craftable) || all[0]; craftId = it && it.id; craftAff = -1; }
-    GLYPHS.forEach((g, i) => T(this, 118 + i * 23, 14, `${g.n.slice(0, 1)}${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: c }));
+    const gst = Math.min(23, Math.floor((w - 122) / GLYPHS.length)); GLYPHS.forEach((g, i) => T(this, 118 + i * gst, 14, `${g.n.slice(0, 1)}${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: c }));
     const cols = MCOLS, st = TOUCH, SA = this.scrollArea(c, 0, 36, w, 2 * st, 'craft'); // 选装备：两行高，上下滑动
-    if (this.cPageFor !== it && it) { this.scrollPos = this.scrollPos || {}; this.scrollPos.craft = Math.max(0, (Math.floor(all.indexOf(it) / cols) - 1) * st); } this.cPageFor = it; // 换了要锻的装备：滚到它那一行
+    if (this.cPageFor !== it && it) { this.scrollPos = this.scrollPos || {}; this.scrollPos.craft = Math.max(0, (Math.floor(all.indexOf(it) / cols) - 1) * st); this.scrollPos.craftBody = 0; } this.cPageFor = it; // 换了要锻的装备：滚到它那一行
     all.forEach((x, i) => mkCell(this, SA.lc, 9 + (i % cols) * st, (i / cols | 0) * st, x, { size: st, sel: x === it, direct: true, onClick: v => { craftId = v.id; craftAff = -1; craftLog = []; addPage = 0; this.cPageFor = v; this.refresh(); } }));
     SA.done(Math.ceil(all.length / cols) * st);
-    let y = 36 + 2 * st + 6;
+    const top = 36 + 2 * st + 6, SB = this.scrollArea(c, 0, top, w, h - top, 'craftBody'); c = SB.lc; let y = 0; // 下半截（词条卡、操作、加词条）整块上下滑：词条多了不再掉出屏幕
     if (craftLog[0]) { const r = TW(this, 10, y, craftLog[0], w - 20, { size: 8, color: COL.good, parent: c }); y += r.h + 4; }
-    if (!it) return T(this, 10, y, '没有可锻造的装备。', { size: 8, color: COL.faint, parent: c });
+    if (!it) { T(this, 10, y, '没有可锻造的装备。', { size: 8, color: COL.faint, parent: c }); return SB.done(20); }
     if (craftAff >= it.affs.length) craftAff = -1;
     const card = mkCard(this, c, 10, y, it, w - 20, { pick: craftable(it) ? i => { craftAff = craftAff === i ? -1 : i; this.refresh(); } : null, selAff: craftAff });
     y += card.h + 6;
@@ -360,12 +360,11 @@ class MobileUI extends UI {
     B(2, 1, '拆解', () => this.ask(`拆解 ${itemName(it)}？`, '拆解', '会变成词条碎片，不能撤销。', () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片${coinTxt(g)}`); }), { style: 'n' });
     y += 62;
     const opts = craftable(it) ? AFF.filter(a => shardN(a.k) > 0 && canAdd(it, a)) : [];
-    const per = Math.max(1, Math.floor((h - y - 16) / 30)), pages = Math.max(1, Math.ceil(opts.length / per)); addPage = Math.min(addPage, pages - 1);
     T(this, 10, y + 2, `加词条（${opts.length} 种可加）`, { size: 8, color: COL.dim, parent: c });
-    if (pages > 1) { mkBtn(this, c, w - 70, y - 8, 28, 28, '<', () => { addPage = (addPage + pages - 1) % pages; this.refresh(); }, { size: 8 }); mkBtn(this, c, w - 38, y - 8, 28, 28, '>', () => { addPage = (addPage + 1) % pages; this.refresh(); }, { size: 8 }); }
     y += 16; const aw = anvilWhy(it);
-    if (!opts.length) TW(this, 10, y, aw || (it.affs.length >= AFF_MAX ? `已经有 ${AFF_MAX} 条词条` : '没有能加到这件装备上的碎片。'), w - 20, { size: 8, color: COL.faint, parent: c });
-    opts.slice(addPage * per, addPage * per + per).forEach((a, i) => mkBtn(this, c, 10, y + i * 30, w - 20, 28, `${a.type === 'P' ? '前' : '后'} ${affName(a)} ×${shardN(a.k)}`, () => done(craftAdd(it, a.k, useHope)), { size: 8, labelX: 4, disabled: !!addWhy(it, a.k) }));
+    if (!opts.length) { const r = TW(this, 10, y, aw || (it.affs.length >= AFF_MAX ? `已经有 ${AFF_MAX} 条词条` : '没有能加到这件装备上的碎片。'), w - 20, { size: 8, color: COL.faint, parent: c }); y += r.h + 4; }
+    opts.forEach((a, i) => mkBtn(this, c, 10, y + i * 30, w - 20, 28, `${a.type === 'P' ? '前' : '后'} ${affName(a)} ×${shardN(a.k)}`, () => done(craftAdd(it, a.k, useHope)), { size: 8, labelX: 4, disabled: !!addWhy(it, a.k) }));
+    SB.done(y + opts.length * 30 + 8);
   }
   fusePaneM(c, w, h) {
     const items = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash], us = items.filter(x => x.u && !x.leg);
@@ -376,7 +375,7 @@ class MobileUI extends UI {
     y += Math.max(1, Math.ceil(Math.min(us.length, cols * 2) / cols)) * st + 6;
     if (!u) return TW(this, 10, y, '没有可以熔铸的神话装备。神话装备保留规则和固定词条，再从同部位稀有装备转移词条。', w - 20, { size: 8, color: COL.faint, parent: c });
     const rs = items.filter(x => x.kind === u.kind && x.rar === 2 && !x.u), r = rs.find(x => x.id === fuseId) || null, why = fuseWhy(u, r);
-    mkBtn(this, c, 10, y, w - 20, 28, '熔铸', () => this.ask('熔铸这两件装备？', '熔铸', '材料装备会被消耗。', () => { craftLog.unshift(craftFuse(u, r)); fuseId = null; sfx('craft'); save(); this.refresh(); }), { style: 'w', size: 8, disabled: !!why });
+    mkBtn(this, c, 10, y, w - 20, 28, '熔铸', () => this.ask('熔铸这两件装备？', '熔铸', '材料装备会被消耗。', () => { const msg = craftFuse(u, r); craftLog.unshift(msg); fuseId = null; sfx('craft'); save(); this.refresh(); if (u.leg) this.popup((p, pw) => { const t = TW(this, 0, 0, msg, pw, { size: 8, color: COL.good, parent: p }); return t.h + 6 + mkCard(this, p, 0, t.h + 6, u, pw).h; }); }), { style: 'w', size: 8, disabled: !!why });
     y += 34; T(this, 10, y, `同部位的稀有装备 ${rs.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
     rs.slice(0, cols * 2).forEach((x, i) => mkCell(this, c, 9 + (i % cols) * st, y + (i / cols | 0) * st, x, { size: st, sel: x === r, direct: true, onClick: v => { fuseId = v.id; this.refresh(); } }));
     y += Math.max(1, Math.ceil(Math.min(rs.length, cols * 2) / cols)) * st + 6;
@@ -605,11 +604,11 @@ class MobileUI extends UI {
     const tw = Math.floor((w - 28) / 3); ['普通', '罕见', '稀有'].forEach((n, i) => tog(12 + i * (tw + 2), y, tw, R.rar[i], n, () => { R.rar[i] = !R.rar[i]; })); y += 34;
     const t = TW(this, 12, y, '神话、传奇、溢彩装备和印记、符文、墓图永远不会被自动分解；身上穿着的也不会。带收藏词条的装备不按稀有度分解。', w - 24, { size: 8, color: COL.faint, parent: c }); y += t.h + 6;
     const n = S.stash.filter(salvWhy).length;
-    mkBtn(this, c, 12, y, w - 24, 30, `现在分解背包（${n} 件）`, () => this.ask(`分解背包里 ${n} 件？`, '分解', '会变成词条碎片和骨币，不能撤销。', () => { const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个${coinTxt(g)}`, '#d9cfb8'); save(); this.refresh(); }), { size: 8, style: 'w', disabled: !n }); y += 38;
+    mkBtn(this, c, 12, y, w - 24, 30, `现在分解背包（${n} 件）`, () => this.ask(`分解背包里 ${n} 件？`, '分解', '会变成词条碎片和骨币，不能撤销。', () => { this.salvReport('分解完成', S.stash.filter(salvWhy), () => autoSalvage([...S.stash])); save(); this.refresh(); }), { size: 8, style: 'w', disabled: !n }); y += 38;
     T(this, 12, y, `收藏词条 ${fav.length} 个${R.fav ? '' : '（默认）'}`, { size: 8, color: COL.emberHi, parent: c });
     if (R.fav) mkBtn(this, c, w - 84, y - 9, 72, 28, '恢复默认', () => { R.fav = null; save(); this.refresh(); }, { size: 8 });
     y += 18;
-    const list = AFF.filter(a => !a.tk).sort((a, b) => (fav.includes(b.k) - fav.includes(a.k)) || (affName(a) < affName(b) ? -1 : 1));
+    const list = AFF.filter(a => !a.tk && !a.off).sort((a, b) => (fav.includes(b.k) - fav.includes(a.k)) || (affName(a) < affName(b) ? -1 : 1));
     const rows = Math.max(1, Math.floor((h - y - 40) / 24)), per = rows * 2, pages = Math.ceil(list.length / per); this.salvPage = Math.min(this.salvPage || 0, pages - 1);
     list.slice(this.salvPage * per, this.salvPage * per + per).forEach((a, i) => {
       const on = fav.includes(a.k), b = mkBtn(this, c, 12 + (i % 2) * (hw + 4), y + (i / 2 | 0) * 24, hw, 22, affName(a), () => { R.fav = on ? fav.filter(k => k !== a.k) : [...fav, a.k]; save(); this.refresh(); }, { size: 8, labelX: 16, color: on ? COL.emberHi : COL.text });

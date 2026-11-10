@@ -152,7 +152,7 @@ Object.assign(MobileUI.prototype, {
     });
     c = lc0; SA.done(Math.ceil(list.length / cols) * (cs + 2));
     if (!list.length) T_(this, c, w / 2, y + 44, gemTab === 'sup' ? (supFit && fsk.length && S.mods.some(m => !MOD_BY[m.mid].field) ? '没有适配' + itemName(fsk[0]) + '的辅助石' : '还没有辅助石') : '还没有宝石', { size: 8, color: '#b9c2ea' });
-    { const mc = mergeCount(); mkBtn(this, c, 8, h - 32, 100, 28, mc ? `一键合成 · ${mc}` : '一键合成', () => { const r = mergeAll(); sfx('craft'); toast(`合成 ${r.n} 次` + (r.ups.length ? '：' + r.ups.slice(0, 3).map(x => `${x.kind === 'mod' ? MOD_BY[x.mid].n : itemName(x)} ${x.lvl}级`).join('、') + (r.ups.length > 3 ? ' 等' : '') : ''), '#ffe066'); this.refresh(); }, { size: 8, style: mc ? 'w' : 'n', disabled: !mc, whyDisabled: `同名、同等级的宝石凑够 ${ECO.merge.n} 颗才能合成（插在魂龛里的不算）` }); } // 同名同级 → 高一级
+    { const mc = mergeCount(); mkBtn(this, c, 8, h - 32, 100, 28, mc ? `一键合成 · ${mc}` : '一键合成', () => { this.mergeReport(); this.refresh(); }, { size: 8, style: mc ? 'w' : 'n', disabled: !mc, whyDisabled: `同名、同等级的宝石凑够 ${ECO.merge.n} 颗才能合成（插在魂龛里的不算）` }); } // 同名同级 → 高一级
     if (pg > 1) { mkBtn(this, c, w - 112, h - 32, 30, 28, '<', () => { gemPage--; this.refresh(); }, { disabled: gemPage <= 0 }); T_(this, c, w - 66, h - 24, `${gemPage + 1}/${pg}`, { size: 8 }); mkBtn(this, c, w - 38, h - 32, 30, 28, '>', () => { gemPage++; this.refresh(); }, { disabled: gemPage >= pg - 1 }); }
   },
   /* 触发器背包 / 掉落对比：点一个 → 当前 vs 新（孔数、秒伤变化），只有 分解 / 替换 */
@@ -198,8 +198,8 @@ Object.assign(MobileUI.prototype, {
     for (const [op, nm, d] of ops) {
       const why = trigCraftWhy(T0, op), cost = op === 'resock' ? '重铸符 1' : `碎片 ${trigOpCost(T0, op)}`;
       mkBtn(this, c, 10, y, 88, 28, nm, () => { const r = trigCraft(T0, op, op === 'reroll' ? tcraftAff : null); toast(r); if (op === 'reroll') tcraftAff = null; this.refresh(); }, { size: 8, style: why ? 'n' : 'w', disabled: !!why });
-      T(this, 106, y + 4, cost + ' · ' + d, { size: 8, parent: c, color: '#e0e4f0' }); if (why) T(this, 106, y + 16, why, { size: 8, parent: c, color: '#ff8a7a' });
-      y += 34;
+      let ty = y + 3; ty += TW(this, 106, ty, cost + ' · ' + d, w - 116, { size: 8, parent: c, color: '#e0e4f0' }).h; if (why) ty += TW(this, 106, ty, why, w - 116, { size: 8, parent: c, color: '#ff8a7a' }).h; // 说明折行，不再超出右边
+      y = Math.max(y + 34, ty + 6);
     }
     mkBtn(this, c, w / 2 - 40, h - 36, 80, 28, '返回', () => this.openWin('trig'), { size: 8 });
   },
