@@ -35,17 +35,17 @@ function elemFx(m, W, e, A) {
     case 'nuc': m.rad.push({ dps: A * 0.15 * (F.plagueTide ? 1.5 : 1), t: 4 }); break;
   }
 }
-// 命中时：附加元素特效
-function elemOnHit(m, W, o) {
-  const P = STATS, F = P.flag; if (!P.addEl || !W.flat || o.arc || o.re || o.ground || o.efx) return;
-  const tick = W.cont ? 1 / (W.aps || 1) : 1; let e = P.addEl;
-  if (F.prismFx) { const sum = ELEM.reduce((s, x) => s + elemA(W, x), 0); e = ELEM[(P.prismI = ((P.prismI || 0) + 1) % 6)]; return elemFx(m, W, e, sum * 0.4 * tick); }
-  let A = elemA(W, e) * tick; if (A <= 0) return;
-  if (F.mutate) e = W.el; // 异变：特效换成本源元素
-  elemFx(m, W, e, A);
-  if ((F.mixed || F.twinFx) && P.addEl2) elemFx(m, W, P.addEl2, elemA(W, P.addEl2) * tick * (F.twinFx ? 1 : 0.6));
+// 副效果（技能 v3 第二期）：只从装备来。带“某系之力”传奇词条或对应的神话才有；技能是这个元素才触发，
+// 强度 = 这一下该元素伤害 × sideK ×（1 + 副效果效果提高%）。棱镜法阵不看元素，六种轮流；余烬之握总是额外引燃
+const FX_BY = { kin: 'boneBreak', exp: 'wildfire', ele: 'chainBlast', cold: 'frostCoffin', pla: 'judgeBlind', nuc: 'plagueTide' }; // 这些神话 / 传奇词条自带对应系的副效果
+const fxOn = e => { const F = STATS.flag || {}; return !!(F['fx:' + e] || F[FX_BY[e]]); };
+function elemOnHit(m, W, o, by) {
+  const F = STATS.flag; if (!F || o.arc || o.re || o.ground || o.efx) return;
+  const e = W.el, d = by[e] || 0; if (!(d > 0)) return;
+  const A = d * EFX.sideK * (1 + ((STATS.addFx || 0) + (F.addFx || 0)) / 100);
+  if (F.prismFx) return elemFx(m, W, ELEM[(STATS.prismI = ((STATS.prismI || 0) + 1) % 6)], A * F.prismFx / 100);
+  if (fxOn(e)) { elemFx(m, W, e, A); if (F.twinFx) elemFx(m, W, e, A * F.twinFx / 100); }
   if (F.emberGrip && e !== 'exp') elemFx(m, W, 'exp', A);
-  if (F.echoFx && rnd() < 0.25) elemFx(m, W, e, A);
 }
 function elemStep(dt) {
   if (!ELQ.length) return;
@@ -55,10 +55,10 @@ function elemStep(dt) {
     if (q.chain) mobs.filter(n => !n.dead && !hit.includes(n)).sort((a, b) => ((a.x - q.x) ** 2 + (a.y - q.y) ** 2) - ((b.x - q.x) ** 2 + (b.y - q.y) ** 2)).slice(0, 2).forEach(n => { fx({ t: 'bolt', x1: q.x, y1: q.y - 5, x2: n.x, y2: n.y - 5, el: 'ele' }); damage(n, mitigate(n, 'ele', q.d * 0.6), 'ele', false, true); }); }
   ELQ = ELQ.filter(q => !q.done);
 }
-// 死亡：瘟疫传染（基础：一半层数传给最近 2 个）、野火圈、霜棺
+// 死亡：瘟疫传染（副效果：一半层数传给最近 2 个）、野火圈、霜棺
 function elemDeath(m, near) {
   const F = STATS.flag;
-  if (m.rad.length && !F.contagion) { const full = F.plagueTide && STATS.addEl === 'nuc', r = 60 * (full ? 1.5 : 1);
+  if (m.rad.length && !F.contagion && fxOn('nuc')) { const full = !!F.plagueTide, r = 60 * (full ? 1.5 : 1); // 死亡传染是瘟疫的副效果：要“疫染之力”或瘟潮靴
     for (const x of near(r, 2)) x.rad.push(...m.rad.slice(0, full ? 99 : Math.ceil(m.rad.length / 2)).map(q => ({ ...q }))); }
   if (F.wildfire && m.burn > 0) { const d = m.burn * 0.5; fx({ t: 'ring', x: m.x, y: m.y - 4, r: 40, el: 'exp' }); for (const x of near(40, 99)) x.burn += d; }
   if (F.frostCoffin && m.frzT > 0) for (const x of near(70, 4)) { fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: x.x, y2: x.y - 5, el: 'cold' }); damage(x, mitigate(x, 'cold', m.max * 0.1), 'cold', false, true); chillOn(x, 2); }

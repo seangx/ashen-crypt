@@ -29,15 +29,18 @@ const RULE_TEXT = {
   shardCrown: () => '派生物再派生一层（每层 ×0.5）', frozenTaken: v => `冻结的敌人受到的伤害提高 ${v}%`, projSlowU: v => `代价：投射物速度降低 ${v}%（寒魄球用起来是好处）`,
   autoNova: v => `新星每 ${UQX.autoNovaEvery} 秒自动脉冲一次（×${v}%），不再按攻速出手`, iceGround: () => `脚下留 ${UQX.iceGround.dur} 秒冰地，每秒叠 ${UQX.iceGround.chillPerSec} 层冰缓`, moveLess: v => `代价：移速 −${v}%`,
   coffin: () => `每冻结一个敌人回 ${UQX.coffinShield}% 护盾`, freezeDur: v => `冻结时间 +${v}%`, fireResLess: v => `代价：火焰抗性 −${v}`,
-  twinFx: v => `附加特效同时带出第二多的附加元素（效果 ${v}%→100%）`, prismFx: v => `附加特效轮流变成六种元素，基数为全部附加伤害的 ${v}%`, pureHeart: v => `元素共鸣每个 +${v}%，没有上限`,
-  emberGrip: () => '附加特效总是同时引燃（灼烧）', boneBreak: v => `碎裂特效 ${v}% 几率再碎一次（×0.5）`, wildfire: () => '灼烧中的敌人死亡时，把一半灼烧传给 40 码内的敌人',
-  burnKeepU: () => '灼烧不再自然衰减', chainBlast: v => `雷爆特效额外跳向最近 2 个敌人（${v}% 伤害）`, frostCoffin: v => `冻结时间 +${v}%；冻结的敌人死亡时向 4 个敌人射出冰片`,
-  judgeBlind: v => `对致盲的敌人伤害总增 ${v}%`, plagueTide: v => `疫染特效 +${v}%；死亡传染全部层数、范围 ×1.5`,
+  twinFx: v => `副效果每次触发两次（第二次 ${v}%）`, prismFx: v => `不论技能是什么元素，命中时轮流触发六种副效果（强度 ${v}%）`, pureHeart: v => `技能元素的主效果强度 +${v}%`,
+  emberGrip: () => '你的命中总是额外引燃（不论技能是什么元素）', boneBreak: v => `物理技能命中时碎裂（波及周围）；碎裂 ${v}% 几率再碎一次（×0.5）`, wildfire: () => '火焰技能命中时引燃；灼烧中的敌人死亡时，把一半灼烧传给 40 码内的敌人',
+  burnKeepU: () => '灼烧不再自然衰减', chainBlast: v => `闪电技能命中时雷爆；雷爆额外跳向最近 2 个敌人（${v}% 伤害）`, frostCoffin: v => `寒霜技能命中时霜结；冻结时间 +${v}%；冻结的敌人死亡时向 4 个敌人射出冰片`,
+  judgeBlind: v => `圣光技能命中时致盲；对致盲的敌人伤害总增 ${v}%`, plagueTide: v => `瘟疫技能命中时疫染；带疫病的敌人死亡时传染全部层数、范围 ×1.5`,
   returnLight: v => `每局一次：灯火低于 10% 时回到 ${v}%`, lightEater: v => `命中额外回灯火（每秒最多 ${v}）`, lampChain: v => `灯火状态始终为「暗」；灯火消耗 −${v}%`,
   darkWalker: v => `对光照半径外的敌人伤害总增 ${v}%`, whirlHeart: () => '旋风之心：【近战·范围】技能总增', aegisBurst: () => '回响圣盾：【盾】技能总增', otherLess: v => `代价：非【盾】技能伤害总降 ${v}%`,
   vortexTreads: () => `旋风斩常驻且叠满层时移速 +${UQX.vortex.moveFull}%、受到的伤害 −${UQX.vortex.takenFull}%`,
   chainCrown: () => ruleText('chainCrown'), projCrown: () => ruleText('projCrown'), durCrown: () => ruleText('durCrown'), velCrown: () => ruleText('velCrown'), meleeCrown: () => ruleText('meleeCrown'), multicrit: () => ruleText('multicrit'), dashMax: v => `冲刺槽 +${v}`, finale: () => ruleText('finale'), splitEnd: () => ruleText('splitEnd'),
 };
-for (const k of ELEM) RULE_TEXT['ail:' + k] = v => `${AIL[k].n}几率 +${v}%`;
+for (const k of ELEM) RULE_TEXT['ail:' + k] = v => k === 'kin' || k === 'pla' ? `${AIL[k].n}几率 +${v}%` : `${AIL[k].n}效果 +${v}%`; // v3：灼烧 / 感电 / 疫病 / 冰缓必定触发，这类加成改成强度
+const FX_TEXT = { kin: '物理技能命中时碎裂：周围的敌人受到这一下 18% 的伤害', exp: '火焰技能命中时引燃：额外累积这一下 15% 的灼烧', ele: '闪电技能命中时雷爆：半秒后在命中点炸开，周围的敌人受到这一下 24% 的伤害', cold: '寒霜技能命中时霜结：多叠 1 层冰缓；打中冻结的敌人额外造成这一下 45% 的伤害', pla: '圣光技能命中时致盲 2 秒；打中已经致盲的敌人回一点护盾', nuc: '瘟疫技能命中时疫染：多叠一层疫病；带疫病的敌人死亡时，把一半层数传给最近 2 个敌人' };
+for (const k of ELEM) RULE_TEXT['fx:' + k] = () => FX_TEXT[k]; // 六系副效果（传奇词条）
+for (const k of ELEM) RULE_TEXT['efx:' + k] = v => treeText('efx:' + k, v); // 六系主效果强度（传奇词条）
 const ruleLines = it => { const u = ruleSrc(it); return u ? [...u.rules.map(([k], i) => RULE_TEXT[k](it.uv[i])), ...(u.when ? [`以上规则只在【${TAG_N[u.when] || u.when}】技能上生效`] : [])] : []; };
 const uval = (it, k) => { const u = ruleSrc(it); if (!u) return 0; let s = 0; u.rules.forEach(([kk], i) => { if (kk === k) s += it.uv[i]; }); return s; };
