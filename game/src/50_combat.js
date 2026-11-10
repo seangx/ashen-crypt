@@ -108,7 +108,7 @@ function ruleMul(m) {
 const hasAil = m => m.rad.length > 0 || m.burn > 0.5 || m.shock > 0 || m.chill > 0 || m.blindT > 0 || m.frzT > 0; // 带任何异常（蚀骨）
 function deathRules(m) {
   const FL = STATS.flag; const near = (r, n) => mobs.filter(x => x !== m && !x.dead && dist2(x, m) < r * r).sort((a, b) => dist2(a, m) - dist2(b, m)).slice(0, n);
-  if (FL.shockSpread && m.shock > 0) for (const x of near(RL.shockSpread.r, RL.shockSpread.n)) { x.shock = Math.max(x.shock, m.shock); x.shockT = MECH.shockDur; fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: x.x, y2: x.y - 5, el: 'ele' }); }
+  if (FL.shockSpread && m.shock > 0) for (const x of near(RL.shockSpread.r, RL.shockSpread.n)) { x.shock = Math.max(x.shock, m.shock); x.shockT = shockDur(); fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: x.x, y2: x.y - 5, el: 'ele' }); }
   if (FL.emberHeir && m.burn > 0.5) for (const x of near(70, 1)) x.burn += m.burn * 0.5; // 烬主：剩余灼烧的一半传给最近的敌人
   if (FL.contagion && (m.rad.length || m.burn > 0.5)) for (const x of near(RL.contagion.r, RL.contagion.n)) { x.rad.push(...m.rad.map(r => ({ ...r }))); if (m.burn > 0.5) x.burn = Math.max(x.burn, m.burn * RL.contagion.burnPct / 100); } // tree-v3 §3.4 传染：任何持续伤害（疫病、灼烧）
   elemDeath(m, near);
@@ -143,7 +143,6 @@ function hitMob(m, W, o = {}) {
   if (W.doubleChance && rnd() < W.doubleChance) mul *= 2;
   if (W.killInc && RUN) mul *= 1 + Math.min(RL.killInc.max, W.killInc * RUN.kills) / 100;
   mul *= ruleMul(m) * elemMul(m) * (1 + buffV('dmg') / 100); // 战吼
-  { const F = STATS.flag; if (F) { const X = F._x || (F._x = Object.keys(F).filter(k => k.startsWith('x:')).map(k => [k.split(':')[1], k.split(':')[2], F[k]])); for (const [a, b, v] of X) if (hasDeb(m, a) && hasDeb(m, b)) mul *= 1 + v / 100; } } // 跨系高级职业：敌人同时带两种减益
   if (STATS.flag.ctrlPrison && !isCtrl(m)) mul *= 1 - RL.ctrlPrison.less / 100; /* 寒狱：对未受控的敌人总降 */
   if (m.frzT > 0 && STATS.frozenTaken) mul *= 1 + STATS.frozenTaken; // 冻结的敌人受到的伤害提高
   if (m.frzT > 0 && STATS.flag.frozenMore) mul *= 1 + STATS.flag.frozenMore / 100; // 誓约：对冻结的敌人总增
@@ -175,7 +174,7 @@ function hitMob(m, W, o = {}) {
   return total;
 }
 // 雷冠：弹射打中的敌人感电（至少 1 层）
-function shockOn(m) { m.shock = Math.max(m.shock, 1); m.shockT = MECH.shockDur; }
+function shockOn(m) { m.shock = Math.max(m.shock, 1); m.shockT = shockDur(); }
 // 风暴之眼：单次的范围命中把命中点 pullR 倍半径内的普通怪往命中点拉一下
 function aoePull(x, y, r) {
   if (!STATS.flag.areaEye) return; const E = RL.areaEye, pr = r * E.pullR, k = E.pull * 0.3;
@@ -195,6 +194,7 @@ function chillOn(m, n, W) {
 function chillPlayer(n) { player.chill = Math.min(MECH.playerChillMax, (player.chill || 0) + n); player.chillT = MECH.chillDur; }
 const pChillK = () => 1 - (player.chill || 0) * MECH.chillPer / 100;
 const ailEff = e => ailEffG(e);
+const shockDur = () => MECH.shockDur * (STATS.flag && STATS.flag.stormLord ? 2 : 1); // 雷霆使者：感电持续翻倍（所有来源）
 const hasDeb = (m, e) => e === 'kin' ? m.sun >= 1 : e === 'exp' ? m.burn > 0.5 : e === 'ele' ? m.shock > 0 : e === 'nuc' ? m.rad.length > 0 : e === 'cold' ? m.chill > 0 || m.frzT > 0 : m.judgeT > 0 || m.blindT > 0; // 敌人身上有没有这个系的减益
 /* 技能 v3：六系主效果。技能是什么元素就挂什么，必定触发；装备上的“某异常几率”改成这个效果的强度加成 */
 function mainFx(m, W, by, tick, o) {
@@ -205,7 +205,7 @@ function mainFx(m, W, by, tick, o) {
     case 'kin': m.sun = Math.min(EFX.sunMax + (F.sunMaxAdd || 0), (m.sun || 0) + tick * bonus); m.sunT = EFX.sunDur; break; // 破甲（碎甲宗师：上限 +5）
     case 'exp': if (bonus > 1) m.burn += d * MECH.burnFromFire * (bonus - 1) * eff * (W.burnMore || 1); break; // 灼烧：基础的那份在下面（所有火焰伤害都进灼烧池）
     case 'ele': { const big = Math.ceil(Math.sqrt(r) * EFX.shockK * bonus), n = Math.max(big, Math.min(EFX.shockSoft * (F.stormLord ? 2 : 1), m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)), EFX.shockMin); // 感电：越重层数越高
-      m.shock = Math.min(MECH.shockMax, Math.max(m.shock, n)); m.shockT = MECH.shockDur * (F.stormLord ? 2 : 1); break; } // 雷霆使者：持续翻倍、小伤害上限翻倍
+      m.shock = Math.min(MECH.shockMax, Math.max(m.shock, n)); m.shockT = shockDur(); break; } // 雷霆使者：持续翻倍、小伤害上限翻倍
     case 'nuc': { const pr = W.cont ? 0.25 : 1; if (rnd() >= pr) break; const dur = MECH.radDur * (F.plagueDoc ? 1.5 : 1), dps = d * MECH.radPct * EFX.radK * bonus * W.radMore * W.dotMore * eff / MECH.radDur / pr; // 疫病：一次一层（疫医：持续 +50%）
       if (m.rad.length >= 30) { const x = m.rad[m.rad.length - 1]; x.dps += dps; x.t = dur; } else m.rad.push({ dps, t: dur }); break; }
     case 'cold': m.coldAcc = (m.coldAcc || 0) + d; m.chillF = (m.chillF || 0) + EFX.chillK * bonus * tick * (o.chill || 1); while (m.chillF >= 1 && !m.dead) { m.chillF--; chillOn(m, 1, W); } break; // 冰缓 → 碎冰
@@ -222,7 +222,7 @@ function ailment(m, e, d, W, o) {
       break; }
     case 'exp': m.burn += d * MECH.burnFromFire * ailEff('exp') * (W.burnMore || 1); break; // 火焰本源异常：灼烧
     case 'ele': m.shock = Math.min(MECH.shockMax, m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)); // 织雷之心：游雷一次叠两层
-      m.shockT = MECH.shockDur; break;
+      m.shockT = shockDur(); break;
     case 'pla': m.blindT = MECH.blindDur; m.blindK = Math.min(MECH.blindMax, MECH.blindLess * W.blindMore * ailEff('pla')); break;
     case 'cold': chillOn(m, o.chill || 1, W); break;
     case 'nuc': m.rad.push({ dps: d * MECH.radPct * W.radMore * W.dotMore * ailEff('nuc') / MECH.radDur, t: MECH.radDur }); break;
@@ -231,6 +231,7 @@ function ailment(m, e, d, W, o) {
 function damage(m, amt, el, crit, small) {
   if (m.dead || amt <= 0) return;
   if (m.sun > 0) amt *= 1 + Math.floor(m.sun) * EFX.sunPer / 100; // 破甲：受到的所有伤害提高
+  { const F = STATS.flag; if (F) { const X = F._x || (F._x = Object.keys(F).filter(k => k.startsWith('x:')).map(k => [k.split(':')[1], k.split(':')[2], F[k]])); for (const [a, b, v] of X) if (hasDeb(m, a) && hasDeb(m, b)) amt *= 1 + v / 100; } } // 跨系高级职业：敌人同时带两种减益时，所有伤害（含持续伤害）总增
   if (STATS.fullLampDmg && player.soul >= STATS.soulMax * 0.9) amt *= 1 + STATS.fullLampDmg / 100; // gear-v2：满灯伤害
   if (m.ax) amt = eliteTaken(m, amt, small); // 精英词缀：坚壁、镜反
   if (!small) { if (STATS.flag.lightEater) lampGain('eat', 0.3, STATS.flag.lightEater); lampGain('hit', STATS.lampOnHit, 2); if (crit) lampGain('crit', STATS.lampOnCrit, 3); }
@@ -717,7 +718,7 @@ function logic(dt) {
   // 光环类独特规则：每秒一次
   if ((P.flag.blindAura || P.flag.shockAura) && (RUN.auraT = (RUN.auraT || 0) - dt) <= 0) {
     RUN.auraT = RL.aura.every;
-    for (const m of mobs) if (!m.dead && dist2(m, player) < RL.aura.r ** 2) { if (P.flag.blindAura) { m.blindT = MECH.blindDur; m.blindK = MECH.blindLess; } if (P.flag.shockAura) { m.shock = Math.min(MECH.shockMax, m.shock + 1); m.shockT = MECH.shockDur; } }
+    for (const m of mobs) if (!m.dead && dist2(m, player) < RL.aura.r ** 2) { if (P.flag.blindAura) { m.blindT = MECH.blindDur; m.blindK = MECH.blindLess; } if (P.flag.shockAura) { m.shock = Math.min(MECH.shockMax, m.shock + 1); m.shockT = shockDur(); } }
     fx({ t: 'ring', x: player.x, y: player.y - 4, r: RL.aura.r, el: P.flag.shockAura ? 'ele' : 'pla' });
   }
   if (RUN.ending) {

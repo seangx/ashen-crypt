@@ -30,10 +30,10 @@ const mstBar = mid => mstS().bar[mid] || 0, mstRank = pid => mstS().pas[pid] || 
 // 能不能加 / 减：返回 null 表示可以，否则是原因（界面上直接显示）
 function mstWhy(kind, id, dir) {
   const m = mstS();
-  if (kind === 'pick') return m.picks.includes(id) ? '已选' : m.picks.length >= mstPickMax() ? (mstPickMax() < MST.picks[MST.picks.length - 1][1] ? `第 ${m.picks.length + 1} 个专精 Lv${MST.picks.find(([, k]) => k > m.picks.length)[0]} 开放` : '最多选 2 个专精') : null;
+  if (kind === 'pick') return m.picks.includes(id) ? '已选' : m.picks.length >= mstPickMax() ? (mstPickMax() < MST.picks[MST.picks.length - 1][1] ? `第 ${m.picks.length + 1} 个职业 Lv${MST.picks.find(([, k]) => k > m.picks.length)[0]} 开放` : '最多选 2 个职业') : null;
   const o = kind === 'bar' ? MST_BY[id] : kind === 'pass' ? MPASS[id] : MKEY[id], mid = kind === 'bar' ? id : o && o.m;
   const M0 = MST_BY[mid];
-  if (M0 && M0.adv) { if (!o || !M0.of.every(x => m.picks.includes(x))) return '先选这两个职业'; if (dir > 0 && !advOpen(M0)) return `两个职业的专精条都要 ${CLS.advBar} 点`; }
+  if (M0 && M0.adv) { if (kind === 'bar') return '高级职业没有专精条'; if (!o || !M0.of.every(x => m.picks.includes(x))) return '先选这两个职业'; if (dir > 0 && !advOpen(M0)) return `两个职业的专精条都要 ${CLS.advBar} 点`; }
   else if (!o || !m.picks.includes(mid)) return '先选这个职业';
   if (dir > 0) {
     if (treePoints() <= 0) return '没有天赋点';
@@ -57,7 +57,7 @@ function mstDo(kind, id, dir) {
   return true;
 }
 // 退掉一个专精：它上面的点全部退回
-function mstUnpick(mid) { const m = mstS(), M = MST_BY[mid]; if (!M) return; for (const A of ADV) if (A.of.includes(mid)) { A.pass.forEach(p => delete m.pas[p.id]); A.keys.forEach(k => delete m.key[k.id]); } /* 高级职业跟着退 */ delete m.bar[mid]; M.pass.forEach(p => delete m.pas[p.id]); M.keys.forEach(k => delete m.key[k.id]); m.picks = m.picks.filter(x => x !== mid); }
+function mstUnpick(mid) { const m = mstS(), M = MST_BY[mid]; if (!M) return; for (const A of ADV) if (A.of.includes(mid)) { delete m.bar[A.id]; A.pass.forEach(p => delete m.pas[p.id]); A.keys.forEach(k => delete m.key[k.id]); } /* 高级职业跟着退 */ delete m.bar[mid]; M.pass.forEach(p => delete m.pas[p.id]); M.keys.forEach(k => delete m.key[k.id]); m.picks = m.picks.filter(x => x !== mid); }
 function mstReset() { const keep = mstS().picks; S.mst = { ...mstFresh(), picks: keep }; } // 洗点：点数全退，专精保留（要换专精再点“换”）
 // 加成的来源：专精条 × 点数、被动 × 级 ÷ passRef、已点的大天赋（交给 treeStats 汇总）
 function masteryParts() {
@@ -77,10 +77,13 @@ function mstAuto(picks, keys = []) {
   const m = mstS(); for (const p of picks) if (!m.picks.includes(p)) mstDo('pick', p, 1);
   for (let guard = 0; guard < 500 && treePoints() > 0; guard++) {
     let did = false;
-    for (const kid of keys) { const k = MKEY[kid]; if (!k || mstHas(kid) || !m.picks.includes(k.m)) continue;
-      if (mstBar(k.m) < k.tier) { did = mstDo('bar', k.m, 1); break; }
+    for (const kid of keys) { const k = MKEY[kid], KM = k && MST_BY[k.m]; if (!k || mstHas(kid) || !(KM.adv ? KM.of.every(x => m.picks.includes(x)) : m.picks.includes(k.m))) continue;
+      if (KM.adv) { const low = KM.of.find(x => mstBar(x) < CLS.advBar); if (low) { did = mstDo('bar', low, 1); break; } }
+      else if (mstBar(k.m) < k.tier) { did = mstDo('bar', k.m, 1); break; }
       if (k.need && mstRank(k.need) < MST.keyNeed) { did = mstDo('pass', k.need, 1); break; }
       did = mstDo('key', kid, 1); break; }
+    if (did) continue;
+    { const A = advOf(m.picks); if (advOpen(A)) { for (const [kd, id] of [...A.pass.map(p => ['pass', p.id]), ['key', A.keys[0].id]]) if (!mstWhy(kd, id, 1)) { did = mstDo(kd, id, 1); break; } } } // 高级职业解锁了先点它
     if (did) continue;
     for (const mid of m.picks) { const M = MST_BY[mid]; const opts = [['bar', mid], ...M.pass.map(p => ['pass', p.id])]; for (const [kd, id] of opts) if (!mstWhy(kd, id, 1)) { did = mstDo(kd, id, 1); break; } if (did) break; }
     if (!did) break;

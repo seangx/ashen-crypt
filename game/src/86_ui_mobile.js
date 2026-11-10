@@ -488,12 +488,12 @@ class MobileUI extends UI {
   }
   mstSummary() {
     const m = mstS(), L = [{ t: `天赋汇总 · 已点 ${mstSpent()} / ${Math.max(0, S.level - 1)}`, c: COL.emberHi }];
-    if (!m.picks.length) return [...L, { t: '还没有选专精', s: 8, c: COL.dim }];
+    if (!m.picks.length) return [...L, { t: '还没有选职业', s: 8, c: COL.dim }];
     const add = {}; for (const part of masteryParts()) for (const k in part.add || {}) add[k] = (add[k] || 0) + part.add[k];
     L.push({ t: mstLines(add).join('\n') || '（还没有加成）', s: 8 });
     const keys = Object.keys(m.key).map(id => MKEY[id]).filter(Boolean);
     keys.forEach(k => L.push({ t: `【${k.n}】${k.d}`, s: 8, c: COL.good }));
-    L.push({ t: '换专精：点下面的“换掉”，那个专精上的点数全部退回。', s: 8, c: COL.dim });
+    L.push({ t: '换职业：点下面的“换掉”，那个职业和高级职业上的点数全部退回。', s: 8, c: COL.dim });
     return L;
   }
   /* 结算：竖屏原生 */
