@@ -249,7 +249,7 @@ function weaponStats(it, P, isEngine) {
   conv('kin', [...THERMAL_E, 'nuc'], U('convKinThermal') / 100); /* 三棱穿心弩：另外 5 种元素 */ conv('exp', ['nuc'], U('convExpNuc') / 100); conv('pla', ['nuc'], U('convPlaNuc') / 100);
   // 额外获得：按加成前总伤害的比例
   const tmin = ELEM.reduce((s, e) => s + W.min[e], 0), tmax = ELEM.reduce((s, e) => s + W.max[e], 0);
-  for (const e in gain) if (ok(e)) { W.min[e] += tmin * gain[e]; W.max[e] += tmax * gain[e]; }
+  { const el = W.el || b.el; for (const e in gain) { W.min[el] += tmin * gain[e]; W.max[el] += tmax * gain[e]; } } // v3：额外获得的伤害都算技能自己的元素
   // 提高（同类相加）与总增（相乘）
   if (isEngine) inc += P.dashDmg;
   const implThermal = b.thermalInc || 0;
