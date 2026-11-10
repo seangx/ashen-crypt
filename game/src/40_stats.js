@@ -287,6 +287,7 @@ function weaponStats(it, P, isEngine) {
   W.dps = b.aura ? W.auraDps : W.avg * critE * W.aps * (b.form === 'stab' ? 1 : n) * (b.pellets || 1);
   W.dps *= 1 + W.meleeRe;
   if (b.form === 'reflect') W.dps = 0;
+  if (b.form === 'ram') W.dps = W.avg * critE * (1 + W.meleeRe) / MECH.ramCd * 0.6; // 撞击没有攻速：按每 ramCd 秒撞一只、平均速度倍率约 0.6 估算（以前面板是 0）
   W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : b.form === 'shieldThrow' ? SHT.estHits * (1 + W.chain * 0.5) * (1 + W.chainStep * W.chain / 2) * (P.flag.echoShield ? 1 + SHT.echoMul * 2 : 1) : b.form === 'orb' ? W.orbEst : b.form === 'meteor' ? (W.meteor ? W.meteorMul * (1 + MT.estGround) : 1) * (P.flag.starfall ? MT.sfN * MT.sfMul : 1) : W.frostNova ? W.novaMul * (P.flag.shatter ? 1 + NV.estShatter : 1) : 1; // 霜环：符文倍数 × 碎冰估算 // 旋转满层时的伤害倍数（dps 不含）
   if (W.spark) { // 游雷：每颗的倍数（颗数 sparkN + 投射物 已在 dps 里）。穿透是无限的（有就穿过所有敌人），弹射 = 碰屏幕边反弹的次数
     W.pierce += SP.basePierce; const L = SP.life * W.sparkLifeMul, v = W.spd * SP.speedMul, pr = W.pierce > 0;
