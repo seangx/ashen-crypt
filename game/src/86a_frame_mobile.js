@@ -65,7 +65,7 @@ Object.assign(MobileUI.prototype, {
   },
   /* 弹窗：内容画进可滚动的主体，按钮固定在底部（内容再长也不会把按钮挤出屏幕） */
   popup(build, acts = [], closeL = '关闭') {
-    this.closePopup(); hideTip();
+    this.closePopup(); hideTip(); this.initTapCancel();
     const c = this.add.container(0, 0).setDepth(250); this.popC = c;
     const dim = rect(this, 0, 0, W, H, COL.ink, 0.6, c).setInteractive(); dim.on('pointerup', () => this.closePopup());
     const pw = W - 24, iw = pw - 16, maxH = H - NAV_H - 30; let ph = 0, py = 0;
@@ -82,8 +82,16 @@ Object.assign(MobileUI.prototype, {
   showLines(lines, acts = [], closeL) {
     this.popup((p, w) => { let y = 0; for (const l of lines) { if (!l || !l.t) continue; const t = TW(this, 0, y, l.t, w, { size: l.s || 12, color: l.c || COL.text, parent: p }); y += t.h + 1; } return y; }, acts, closeL);
   },
+  // 手指按下后移动超过 8 像素 = 在滑动，不是点击：主体里的东西这一下都不响应（不管内容滚不滚得动）
+  initTapCancel() {
+    if (this._tapCancel) return; this._tapCancel = 1;
+    const frames = () => [this.F, ...(this.F ? this.F.subs : []), this.popF, ...(this.popF ? this.popF.subs : [])].filter(F => F && F.panel && F.sync);
+    this.input.on('pointerdown', p => { this.tcD = { x: p.worldX, y: p.worldY, off: false }; });
+    this.input.on('pointermove', p => { const D = this.tcD; if (!D || !p.isDown || D.off) return; if (Math.hypot(p.worldX - D.x, p.worldY - D.y) > 8) { D.off = true; for (const F of frames()) { F.dragging = true; F.sync(true); } hideTip(); } });
+    this.input.on('pointerup', () => { const D = this.tcD; this.tcD = null; if (D && D.off) setTimeout(() => { for (const F of frames()) { F.dragging = false; F.sync(); } }, 0); });
+  },
   // 建一个骨架：build(F) 里往 F.body / F.head() / F.foot() 画，返回后排版
   mkFrame(x, y, w, h, key, depth, build) {
-    const F = new MFrame(this, x, y, w, h, key, depth); build(F); F.build(); for (const f of F.pending || []) f(); F.pending = null; return F;
+    this.initTapCancel(); const F = new MFrame(this, x, y, w, h, key, depth); build(F); F.build(); for (const f of F.pending || []) f(); F.pending = null; return F;
   },
 });

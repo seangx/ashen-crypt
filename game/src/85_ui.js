@@ -438,21 +438,22 @@ class UI extends Phaser.Scene {
   win_bulk(c, w, h) {
     const mob = typeof MOBILE !== 'undefined' && MOBILE, sel = bulkSel(), pick = this.bulkPick || (this.bulkPick = new Map());
     const all = S.stash.filter(bulkOk), list = bulkList(pick), yld = list.reduce((a, it) => a + bulkYield(it), 0);
-    let y = mob ? 20 : 10;
-    T(this, 10, y, mob ? '勾选品质，或点物品单独加入/移出' : '勾选品质，或点物品单独加入/移出；身上穿着的不会被拆', { size: 8, color: COL.dim, parent: c }); y += 14;
+    const Fr = mob && this.F, B = c; if (Fr) c = Fr.head(10); // 手机：头 = 勾稀有度；主体 = 储物箱格子（上下滑）；底 = 已选数量和拆解
+    let y = mob ? 4 : 10;
+    T(this, 10, y, mob ? '勾选稀有度，或点物品单独加入 / 移出' : '勾选品质，或点物品单独加入/移出；身上穿着的不会被拆', { size: 8, color: COL.dim, parent: c }); y += 14;
     const bh = mob ? 40 : 18, bw = Math.floor((w - 20 - 3 * 4) / 4);
     BULK_CATS.forEach((n, i) => { const cnt = all.filter(it => bulkCat(it) === i).length;
       mkBtn(this, c, 10 + i * (bw + 4), y, bw, bh, `${sel[i] ? '■' : '□'} ${n} ${cnt}`, () => { sel[i] = !sel[i]; [...pick.keys()].forEach(id => { const it = findItem(id); if (it && bulkCat(it.it) === i) pick.delete(id); }); save(); this.refresh(); }, { size: 8, style: sel[i] ? 'w' : 'n' }); });
     y += bh + 6;
     const cs = mob ? 30 : 18, gap = mob ? 2 : 1, cols = Math.max(1, Math.floor((w - 20 + gap) / (cs + gap))), rows = mob ? 999 : 4;
-    const SA = mob && this.scrollArea ? this.scrollArea(c, 0, y, w, h - y - 76, 'bulk') : null, pc = SA ? SA.lc : c, y0 = SA ? 0 : y; // 手机：格子区上下滑，全部装备都能点到
+    if (Fr) { Fr.hh = y; c = B; y = 2; } const pc = c, y0 = y;
     S.stash.slice(0, cols * rows).forEach((it, i) => { if (!it) return; const ok = bulkOk(it), on = ok && bulkHit(it, pick);
       const cx = 10 + (i % cols) * (cs + gap), cy = y0 + (i / cols | 0) * (cs + gap);
       mkCell(this, pc, cx, cy, it, { size: cs, sel: on, direct: true, onClick: v => { if (!v || !bulkOk(v)) return; pick.set(v.id, !bulkHit(v, pick)); this.refresh(); } });
       if (on) T(this, cx + cs - 2, cy + 1, '✕', { size: 8, color: '#ff6a5a', align: 'right', parent: pc }); });
-    if (SA) SA.done(Math.ceil(S.stash.length / cols) * (cs + gap));
+    if (Fr) { Fr.end(y + Math.ceil(S.stash.length / cols) * (cs + gap) + 4); c = Fr.foot(64); }
     else if (S.stash.length > cols * rows) T(this, 10, y + rows * (cs + gap) + 1, `另 ${S.stash.length - cols * rows} 件未显示（按稀有度勾选仍会计入）`, { size: 8, color: COL.faint, parent: c });
-    const by = h - (mob ? 50 : 26);
+    const by = Fr ? 20 : h - (mob ? 50 : 26);
     T(this, w / 2, by - 16, list.length ? `已选 ${list.length} 件 · 约得词条碎片 ${yld}` : '还没有选中任何装备', { size: 8, color: list.length ? COL.emberHi : COL.faint, align: 'center', parent: c });
     const hw = Math.floor((w - 24) / 2);
     mkBtn(this, c, 10, by, hw, bh, '返回', () => this.closeWin(), { size: 8 });
@@ -464,11 +465,12 @@ class UI extends Phaser.Scene {
   }
   win_prep(c, w, h) {
     const R = RUN.prep, title = `整备 · 第 ${RUN.base} 层通过`, mob = typeof MOBILE !== 'undefined' && MOBILE;
-    const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: COL.emberHi, align: 'center', parent: c });
+    const Fr = mob && this.F, rc = Fr ? this.winC : c; // 手机：主体 = 宝箱物品和入口（上下滑），底 = 倒计时和 返回 / 继续
+    const pw = textW(title) + 52; rc.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: COL.emberHi, align: 'center', parent: rc });
     const live = R.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it));
     const best = [...live].sort((a, b) => b.rar - a.rar || b.q - a.q), cs = mob ? 30 : 20, gap = mob ? 3 : 1, cols = Math.max(1, Math.floor((w - 20) / (cs + gap)));
     T(this, 12, 18, `宝箱 ${live.length} 件 · ` + (mob ? '点物品看详情、装备或拆解' : '悬停看详情，点一下装备'), { size: 8, color: COL.dim, parent: c });
-    const rows = mob ? 4 : 2, show = best.slice(0, cols * rows);
+    const rows = mob ? 999 : 2, show = best.slice(0, cols * rows);
     show.forEach((it, i) => mkCell(this, c, 12 + (i % cols) * (cs + gap), 32 + (i / cols | 0) * (cs + gap), it, mob ? { size: cs, upg: true, acts: v => this.itemActs(v) } : { size: cs, upg: true, onClick: v => { if (slotsFor(v)[0]) { equipItem(v); save(); refreshStats(); this.refresh(); } } }));
     if (!show.length) T(this, w / 2, 40, '没有留下装备', { size: 8, color: COL.faint, align: 'center', parent: c });
     if (best.length > show.length) T(this, w - 12, 18, `另 ${best.length - show.length} 件在背包`, { size: 8, color: COL.faint, align: 'right', parent: c });
@@ -479,7 +481,8 @@ class UI extends Phaser.Scene {
     tabs.forEach(([id, n], i) => mkBtn(this, c, 12 + i * (tw + 4), y, tw, bh, n, () => id === 'bulk' ? this.openBulk() : this.openWin(id)));
     y += bh + 6;
     if (mob && S.reelsPending && S.reelsPending.length) { mkBtn(this, c, 12, y, w - 24, bh, `骸骨轮盘 ×${S.reelsPending.length} · 现在开`, () => { R.cd = false; this.openWin('reels'); }, { style: 'w' }); y += bh + 6; } // 手机：整备页直接开轮盘
-    const by = mob ? Math.max(y + 18, h - bh - 12) : h - bh - 10, half = Math.floor((w - 28) / 2);
+    if (Fr) { Fr.end(y); c = Fr.foot(bh + 24); }
+    const by = Fr ? 18 : mob ? Math.max(y + 18, h - bh - 12) : h - bh - 10, half = Math.floor((w - 28) / 2);
     this.prepCdT = T(this, w / 2, by - 14, this.prepCdText(), { size: 8, color: COL.emberHi, align: 'center', parent: c });
     mkBtn(this, c, 12, by, half, bh, '返回营地', () => prepReturn(), { style: 'r' });
     mkBtn(this, c, 16 + half, by, half, bh, '继续下一层', () => prepContinue(), { style: 'w' });
@@ -1010,7 +1013,8 @@ class UI extends Phaser.Scene {
   win_notice(c, w, h) {
     const N = S.notice || { lines: [] }; let y = 8;
     for (const l of N.lines) { for (const r of wrapText('· ' + l, w - 24, 8)) { T(this, 12, y, r, { size: 8, color: COL.text, parent: c }); y += 11; } y += 3; }
-    mkBtn(this, c, w / 2 - 50, h - 28, 100, 20, '知道了', () => { delete S.notice; save(); this.closeWin(); }, { size: 8, style: 'w' });
+    const Fr = typeof MOBILE !== 'undefined' && MOBILE && this.F; if (Fr) Fr.end(y + 4); // 手机：说明再长也能滑，按钮固定在底
+    mkBtn(this, Fr ? Fr.foot(38) : c, w / 2 - 50, Fr ? 4 : h - 28, 100, Fr ? 28 : 20, '知道了', () => { delete S.notice; save(); this.closeWin(); }, { size: 8, style: 'w' });
   }
   win_depart(c, w, h) {
     T(this, w / 2, 14, `下一趟从第 ${descentStart()} 层出发`, { align: 'center', color: COL.emberHi, parent: c });
