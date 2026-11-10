@@ -56,6 +56,7 @@ if (seedsArg) {
     try { localStorage.clear(); } catch (e) { }
   }, opt.seed);
   await p.route('**/phaser.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(__dirname, 'vendor', 'phaser.min.js')), contentType: 'application/javascript' }));
+  await p.route('**/rexuiplugin.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(__dirname, 'vendor', 'rexuiplugin.min.js')), contentType: 'application/javascript' }));
   await p.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
   const html = require('./override').applyOverrides(fs.readFileSync(opt.html, 'utf8'), require('./override').overridesFrom(process.argv));
   const tmp = path.join(require('os').tmpdir(), 'ash-sim-' + process.pid + '.html');

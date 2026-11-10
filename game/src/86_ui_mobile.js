@@ -200,9 +200,11 @@ class MobileUI extends UI {
     const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[id] || 'f_win';
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
-    this.scrollVPs = []; this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
+    decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
     const title = { stones: '属性石', trig: '魂龛', tbag: '换魂龛', tcraft: '魂龛打造', reels: '骸骨轮盘', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '段位', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', shop: '骨坊', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: '#2a1306', shadow: false, align: 'center', parent: c }); }
+    // 窗口内容：rexUI 骨架（固定头 / 滚动主体 / 固定底，见 86a_frame_mobile.js）。主体坐标原点在标题彩带下面
+    { const top = title ? 14 : 6; if (this.F) this.F.destroy(); const F = this.mkFrame(c.x, c.y + top, w, h - top - 5, 'w:' + id, 101, F => { this.F = F; this['win_' + id](F.body, w, F.h); }); c.once('destroy', () => { F.destroy(); if (this.F === F) this.F = null; }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });
       mkBtn(this, c, this.pan, hy - 6, 26, 28, '<', () => { this.pan = Math.max(0, this.pan - 120); this.refresh(); }, { size: 8, disabled: this.pan <= 0 });
@@ -383,27 +385,6 @@ class MobileUI extends UI {
   }
   /* 天赋：复用星图，窄屏默认收起两侧栏 */
   /* 通用上下滑动区域（所有背包，11-09）：内容画进返回的 lc，最后 done(内容高度)。可视区外的格子关掉点击（不然会挡住下面的按钮）；拖动超过 6 像素算滑动，这一下不触发点击；右边一条滚动条 */
-  scrollArea(c, x, top, w, vh, key) {
-    const lc = this.add.container(0, top), ui = this; c.add(lc);
-    const mg = this.make.graphics({ add: false }); mg.fillStyle(0xffffff).fillRect(c.x + x, c.y + top, w, vh); lc.setMask(mg.createGeometryMask()); c.once('destroy', () => mg.destroy());
-    return { lc, done(contentH) {
-      ui.scrollPos = ui.scrollPos || {}; const max = Math.max(0, Math.ceil(contentH - vh)), s = ui.scrollPos[key] = clamp(ui.scrollPos[key] || 0, 0, max); lc.y = top - s;
-      const hits = [], walk = (o, oy) => { for (const q of o.list || []) { const yy = oy + (q.y || 0); if (q.input) hits.push({ o: q, y0: yy - (q.displayOriginY || 0), h: q.displayHeight || q.height || 0 }); if (q.list) walk(q, yy); } }; walk(lc, 0);
-      const bar = max > 0 ? ui.add.graphics() : null; if (bar) c.add(bar);
-      const V = { key, x0: c.x + x, x1: c.x + x + w, y0: c.y + top, y1: c.y + top + vh, max, lc, base: top,
-        sync(off) { for (const H of hits) if (H.o.input) { const a = lc.y + H.y0, b = a + H.h; H.o.input.enabled = !off && a >= top - 2 && b <= top + vh + 2; } },
-        drawBar() { if (!bar) return; const th = Math.max(16, vh * vh / (vh + max)), ty = top + (vh - th) * (ui.scrollPos[key] || 0) / max; bar.clear(); bar.fillStyle(0x000000, 0.35).fillRect(x + w - 3, top, 3, vh); bar.fillStyle(0xb9c2ea, 0.7).fillRect(x + w - 3, Math.round(ty), 3, Math.round(th)); } };
-      V.sync(); V.drawBar(); ui.scrollVPs.push(V); ui.initScroll();
-    } };
-  }
-  initScroll() {
-    if (this._scrollInit) return; this._scrollInit = 1;
-    this.input.on('pointerdown', p => { const V = !this.popC && (this.scrollVPs || []).find(v => v.lc.scene && v.max > 0 && p.worldX >= v.x0 && p.worldX <= v.x1 && p.worldY >= v.y0 && p.worldY <= v.y1); this.scrollDrag = V ? { V, x: p.worldX, y: p.worldY, s: (this.scrollPos || {})[V.key] || 0, moved: false } : null; });
-    this.input.on('pointermove', p => { const D = this.scrollDrag; if (!D || !p.isDown || !D.V.lc.scene) return; const dy = p.worldY - D.y;
-      if (!D.moved) { if (Math.abs(dy) <= 6 || Math.abs(dy) < Math.abs(p.worldX - D.x)) return; D.moved = true; D.V.sync(true); hideTip(); if (this.drag) { if (this.drag.img) this.drag.img.destroy(); this.drag = null; } } // 竖着拖 = 滑动（取消拖符文）
-      this.scrollPos[D.V.key] = clamp(D.s - dy, 0, D.V.max); D.V.lc.y = D.V.base - this.scrollPos[D.V.key]; D.V.drawBar(); });
-    this.input.on('pointerup', () => { const D = this.scrollDrag; this.scrollDrag = null; if (D && D.moved) setTimeout(() => { if (D.V.lc.scene) D.V.sync(); }, 0); });
-  }
   /* 天赋：专精（mastery-v1；交互按 11-09 设计稿）。顶栏 洗点 / 汇总 → 可用点数 → 两个专精切换 → 可滚动的档位阶梯（专精条卡 + 1/5/10/15/20 档的被动、大天赋卡）→ 底部汇总条；点卡片出底部抽屉（现在 / 下一级 / −1 加满 +1） */
   win_tree(c, w, h) {
     const m = mstS(), pts = treePoints(), slots = MST.picks[MST.picks.length - 1][1], R = () => { refreshStats(); save(); this.refresh(); };
@@ -723,17 +704,6 @@ class MobileUI extends UI {
     });
   }
   // 长按弹出的详情卡；点任意处关闭
-  popup(build, acts = [], closeL = '关闭') {
-    this.closePopup(); hideTip();
-    const c = this.add.container(0, 0).setDepth(250); this.popC = c;
-    const dim = rect(this, 0, 0, W, H, COL.ink, 0.6, c).setInteractive(); dim.on('pointerup', () => this.closePopup());
-    const pw = W - 24, in_ = this.add.container(12 + 8, 0); const hh = build(in_, pw - 16);
-    const ph = Math.min(H - 40, hh + 50), py = Math.round(Math.max(20, (H - NAV_H - ph) / 2));
-    const bg = nine(this, 12, py, pw, ph, 'o_frame', 8).setInteractive(); c.add(this.add.tileSprite(15, py + 3, pw - 6, ph - 6, 'n_win').setOrigin(0)); c.add(bg);
-    in_.y = py + 10; c.add(in_);
-    const all = [...acts, { l: closeL }], n = all.length, bw = Math.floor((pw - 16 - (n - 1) * 4) / n);
-    all.forEach((a, i) => mkBtn(this, c, 20 + i * (bw + 4), py + ph - 38, bw, 30, a.l, () => { this.closePopup(); if (a.fn) a.fn(); }, { size: 8, style: a.style || 'n', disabled: !!a.disabled, locked: !!a.why && !!a.disabled, whyDisabled: a.why }));
-  }
   // 手机确认弹窗：确认 / 取消（点外面也算取消）
   ask(title, fn, ok = '确认', body = '') { if (typeof fn === 'string' && typeof body === 'function') [fn, ok, body] = [body, fn, ok]; // 兼容 ask(标题, 按钮, 说明, 回调) 的写法（原来有 5 处这么写，点确认没反应）
     this.showLines([{ t: title, c: COL.emberHi }, body && { t: body, s: 8, c: COL.dim }], [{ l: ok, fn, style: 'r' }], '取消'); }
@@ -779,7 +749,6 @@ class MobileUI extends UI {
       c.destroy(); this.loadC = null;
     })();
   }
-  closePopup() { if (this.popC) { this.popC.destroy(); this.popC = null; } }
   showDetail(it, host, acts = []) {
     if (it.kind === 'mod') return this.showLines(modTip(it, host), acts);
     this.popup((p, w) => mkCard(this, p, 0, 0, it, w, { compare: !!slotsFor(it)[0] }).h, acts);
