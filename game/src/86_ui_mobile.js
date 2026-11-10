@@ -415,7 +415,7 @@ class MobileUI extends UI {
         if (isP) { for (let k = 0; k < MST.passMax; k++) rect(this, x + 7 + k * 11, yy + 25, 9, 4, k < r ? M.c : '#2e3670', 1, lc); T(this, x + 7 + MST.passMax * 11 + 3, yy + 22, `${r}/${MST.passMax}`, { size: 8, color: COL.dim, parent: lc }); }
         else T(this, x + 7, yy + 21, on ? '已点亮' : o.need ? `挂在 ${MPASS[o.need].n} 3 级${mstRank(o.need) >= MST.keyNeed ? ' ✓' : `（现 ${mstRank(o.need)}）`}` : '不挂被动', { size: 8, color: on || (o.need && mstRank(o.need) >= MST.keyNeed) ? COL.good : COL.dim, parent: lc });
         const eff = isP ? (r ? mstLines(o.add, r / MST.passRef).join('，') : '每级 ' + (mstLines(o.add, 1 / MST.passRef).join('，') || '—')) : o.d;
-        TW(this, x + 7, yy + 34, wrapText(eff, col2 - 14, 8).slice(0, 2).join('\n'), col2 - 14, { size: 8, color: locked ? COL.faint : COL.dim, parent: lc }); });
+        TW(this, x + 7, yy + 34, wrapText(eff, col2 - 14, 8).slice(0, 2).join('\n'), col2 - 14, { gloss: false, size: 8, color: locked ? COL.faint : COL.dim, parent: lc }); });
       y += Math.ceil(items.length / 2) * (ch + 6) + 6;
     }
     Fr.end(y);
@@ -434,10 +434,10 @@ class MobileUI extends UI {
       const gb = this.add.graphics(); c.add(gb); gb.lineStyle(1, !open ? 0x2e3670 : lit ? hex(M.c) : can ? 0xffd23a : 0x2e3670).strokeRect(x + 0.5, yy + 0.5, ww - 1, hh - 1);
       T(this, x + 7, yy + 5, o.n, { size: 12, color: !open ? COL.faint : isP ? COL.text : '#ffe27a', parent: c });
       if (isP) { for (let k = 0; k < MST.passMax; k++) rect(this, x + 7 + k * 9, yy + 24, 7, 4, k < r ? M.c : '#2e3670', 1, c); T(this, x + 7, yy + 31, `${r}/${MST.passMax}`, { size: 8, color: COL.dim, parent: c });
-        TW(this, x + 7, yy + 42, wrapText(r ? mstLines(o.add, r / MST.passRef).join('，') : '每级 ' + mstLines(o.add, 1 / MST.passRef).join('，'), ww - 14, 8).slice(0, 3).join('\n'), ww - 14, { size: 8, color: open ? COL.dim : COL.faint, parent: c }); }
+        TW(this, x + 7, yy + 42, wrapText(r ? mstLines(o.add, r / MST.passRef).join('，') : '每级 ' + mstLines(o.add, 1 / MST.passRef).join('，'), ww - 14, 8).slice(0, 3).join('\n'), ww - 14, { gloss: false, size: 8, color: open ? COL.dim : COL.faint, parent: c }); }
       else { const bw2 = textW('招牌', 8) + 8; rect(this, x + ww - bw2 - 5, yy + 6, bw2, 12, '#ffd23a', 1, c); T(this, x + ww - bw2 / 2 - 5, yy + 12, '招牌', { size: 8, color: '#2a1d00', align: 'center', valign: 'middle', shadow: false, parent: c });
         T(this, x + 7, yy + 21, on ? '已点亮' : `挂在 ${MPASS[o.need].n} ${MST.keyNeed} 级${mstRank(o.need) >= MST.keyNeed ? ' ✓' : `（现 ${mstRank(o.need)}）`}`, { size: 8, color: on || mstRank(o.need) >= MST.keyNeed ? COL.good : COL.dim, parent: c });
-        TW(this, x + 7, yy + 34, o.d, ww - 14, { size: 8, color: open ? COL.text : COL.faint, parent: c }); } };
+        TW(this, x + 7, yy + 34, o.d, ww - 14, { gloss: false, size: 8, color: open ? COL.text : COL.faint, parent: c }); } };
     { const k = M.keys[0], hh = 40 + wrapText(k.d, cw - 14, 8).length * 11; card('key', k, 12, y, cw, hh); y += hh + 6; }
     const pw3 = Math.floor((cw - 12) / 3); M.pass.forEach((p, i) => card('pass', p, 12 + i * (pw3 + 6), y, pw3, 84)); y += 90;
     const t = TW(this, 12, y, '换掉任何一个基础职业，高级职业跟着换，这里的点数全部退回。洗点免费。', cw, { size: 8, color: COL.faint, parent: c }); this.F.end(y + t.h + 6);
@@ -452,8 +452,8 @@ class MobileUI extends UI {
       T(this, x + 8, y + 6, X.n + (taken ? '（已选）' : ''), { size: 12, color: taken ? COL.faint : X.c, parent: c });
       X.el.forEach((e, k) => { rect(this, x + cw - 12 - k * 10, y + 8, 8, 8, '#10132a', 1, c); rect(this, x + cw - 11 - k * 10, y + 9, 6, 6, ELEM_C[e], 1, c); }); // 右上角：两种元素的色块
       T(this, x + 8, y + 24, X.el.map(e => ELEM_N[e]).join(' · '), { size: 8, color: COL.text, parent: c });
-      TW(this, x + 8, y + 36, wrapText('保命：' + X.def + (m.picks.length && !taken ? ' → ' + ((ADV.find(A => A.of.includes(X.id) && A.of.includes(m.picks[0])) || {}).n || '') : ''), cw - 16, 8).slice(0, 2).join('\n'), cw - 16, { size: 8, color: COL.dim, parent: c });
-      TW(this, x + 8, y + ch - 44, wrapText('大天赋：' + X.keys.map(k => k.n).join('、'), cw - 16, 8).slice(0, 4).join('\n'), cw - 16, { size: 8, color: COL.faint, parent: c }); });
+      TW(this, x + 8, y + 36, wrapText('保命：' + X.def + (m.picks.length && !taken ? ' → ' + ((ADV.find(A => A.of.includes(X.id) && A.of.includes(m.picks[0])) || {}).n || '') : ''), cw - 16, 8).slice(0, 2).join('\n'), cw - 16, { gloss: false, size: 8, color: COL.dim, parent: c });
+      TW(this, x + 8, y + ch - 44, wrapText('大天赋：' + X.keys.map(k => k.n).join('、'), cw - 16, 8).slice(0, 4).join('\n'), cw - 16, { gloss: false, size: 8, color: COL.faint, parent: c }); });
     this.F.end(top + 14 + Math.ceil(MASTERY.length / 2) * (ch + 6));
   }
   // 底部抽屉：被动（现在 / 下一级 / −1 加满 +1）、大天赋（效果 / 条件 / 点亮或退回）、选专精
@@ -585,10 +585,11 @@ class MobileUI extends UI {
   }
   /* 手册：竖屏原生 */
   win_help(c, w, h) {
-    const pages = helpPages(); pages[0] = ['操作', '手机上只有一个操作：移动。在屏幕左下按住拖动出现浮动摇杆，松手几秒后交还自动。两只手上的武器会自动攻击射程内最近的敌人；没有冲刺按钮和主动技能。底部导航打开装备、天赋、铁砧、符文、段位、设置；中间「战斗」回到战场。长按物品或词条看详情。每升一级得 1 个天赋点。'];
+    const pages = helpPages(); pages.splice(1, 0, ['名词', '']); pages[0] = ['操作', '手机上只有一个操作：移动。在屏幕左下按住拖动出现浮动摇杆，松手几秒后交还自动。两只手上的武器会自动攻击射程内最近的敌人；没有冲刺按钮和主动技能。底部导航打开装备、天赋、铁砧、符文、段位、设置；中间「战斗」回到战场。长按物品或词条看详情。每升一级得 1 个天赋点。'];
     const bw = Math.floor((w - 24) / 4), B = c; c = this.F.head(4 + Math.ceil(pages.length / 4) * 30 + 4);
     pages.forEach(([n], i) => mkBtn(this, c, 12 + (i % 4) * bw, 4 + (i / 4 | 0) * 30, bw - 2, 28, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
     c = B; let y = 4; const [n, txt] = pages[helpTopic];
+    if (n === '名词') { T(this, 12, y, '名词', { color: COL.emberHi, parent: c }); y += 18; y += TW(this, 12, y, '界面文字里带下划线的词都能点开看说明。', w - 24, { size: 8, color: COL.dim, parent: c, gloss: false }).h + 8; this.F.end(this.glossIndex(c, w, y) + 8); return; }
     T(this, 12, y, n, { color: COL.emberHi, parent: c }); y += 18;
     const t = TW(this, 12, y, txt, w - 24, { size: 12, color: COL.text, parent: c }); y += t.h + 8;
     if (n === '存档') {

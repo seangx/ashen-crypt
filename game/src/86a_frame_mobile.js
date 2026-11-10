@@ -85,7 +85,7 @@ Object.assign(MobileUI.prototype, {
   // 手指按下后移动超过 8 像素 = 在滑动，不是点击：主体里的东西这一下都不响应（不管内容滚不滚得动）
   initTapCancel() {
     if (this._tapCancel) return; this._tapCancel = 1;
-    const frames = () => [this.F, ...(this.F ? this.F.subs : []), this.popF, ...(this.popF ? this.popF.subs : [])].filter(F => F && F.panel && F.sync);
+    const frames = () => [this.F, ...(this.F ? this.F.subs : []), this.popF, ...(this.popF ? this.popF.subs : []), this.glossF].filter(F => F && F.panel && F.sync);
     this.input.on('pointerdown', p => { this.tcD = { x: p.worldX, y: p.worldY, off: false }; });
     this.input.on('pointermove', p => { const D = this.tcD; if (!D || !p.isDown || D.off) return; if (Math.hypot(p.worldX - D.x, p.worldY - D.y) > 8) { D.off = true; for (const F of frames()) { F.dragging = true; F.sync(true); } hideTip(); } });
     this.input.on('pointerup', () => { const D = this.tcD; this.tcD = null; if (D && D.off) setTimeout(() => { for (const F of frames()) { F.dragging = false; F.sync(); } }, 0); });

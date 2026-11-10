@@ -228,6 +228,7 @@ function TW(sc, x, y, str, maxW, o = {}) {
   const lines = wrapText(str, maxW, s);
   const t = T(sc, x, y, lines.join('\n'), o);
   t.lines = lines.length; t.h = lines.length * LH[s];
+  if (MOBILE && typeof glossLink === 'function') glossLink(sc, t, lines, s, o); // 专有名词：下划线 + 点开看说明
   return t;
 }
 function nine(sc, x, y, w, h, key, sl = 4) { return sc.add.nineslice(x, y, key, null, Math.max(w, sl * 2), Math.max(h, sl * 2), sl, sl, sl, sl).setOrigin(0); }
