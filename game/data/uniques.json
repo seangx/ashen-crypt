@@ -1,5 +1,5 @@
 {
- "_说明": "独特装备。b 底材；req 需求物品等级；w 掉落权重（0 = 只从 Boss 掉）；fixed 保底词条 [词条族, 档位 N]（N=1 最高档，见 loot.json 的 uniqueFixedTier）；rules 专属规则 [规则键, 下限, 上限]，掉落时在范围里掷；sock 固定符文槽数；when 技能石要有这个标签规则才生效（spec-skill-gems §4）。规则键的含义见 src/16_uniques.js 的 RULE_TEXT，改规则类的（blindAura、dodgeSpikes 等）参数在 rules.json。 gear-v2 / uniques-audit（10-27）：底子按武器表重新指定，固定词条换成新词条族，抗性改成点数；删除经卷头冠。 11-10：去掉全部独特的代价规则；风暴之眼从头冠挪到法阵。 11-10 稀有度改版：leg=true 的不再作为独特（神话）掉落，变成传奇词条的模板——稀有装备掉落时有几率带上一条，只出在同部位，数值随物品等级。其余是神话。",
+ "_说明": "独特装备。b 底材；req 需求物品等级；w 掉落权重（0 = 只从 Boss 掉）；fixed 保底词条 [词条族, 档位 N]（N=1 最高档，见 loot.json 的 uniqueFixedTier）；rules 专属规则 [规则键, 下限, 上限]，掉落时在范围里掷；sock 固定符文槽数；when 技能石要有这个标签规则才生效（spec-skill-gems §4）。规则键的含义见 src/16_uniques.js 的 RULE_TEXT，改规则类的（blindAura、dodgeSpikes 等）参数在 rules.json。 gear-v2 / uniques-audit（10-27）：底子按武器表重新指定，固定词条换成新词条族，抗性改成点数；删除经卷头冠。 11-10：去掉全部独特的代价规则；风暴之眼从头冠挪到法阵。 11-10 稀有度改版：leg=true 的不再作为独特（神话）掉落，变成传奇词条的模板——稀有装备掉落时有几率带上一条，只出在同部位，数值随物品等级。其余是神话。 技能 v3 第二期：FxKin…FxNuc 是六系副效果的传奇词条（规则键 fx:元素）。",
  "list": [
   {
    "id": "StormCrown",
@@ -1464,6 +1464,210 @@
     ]
    ],
    "_说明": "system-v2 §6.5 / lamp-v2 §5.5 / uniques-audit §9"
+  },
+  {
+   "id": "FxKin",
+   "n": "碎骨",
+   "kind": "weapon",
+   "b": "Spikes",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "fx:kin",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "FxExp",
+   "n": "引燃",
+   "kind": "hub",
+   "b": "AmberNexus",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "fx:exp",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "FxEle",
+   "n": "雷爆",
+   "kind": "core",
+   "b": "NebulaCore",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "fx:ele",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "FxCold",
+   "n": "霜结",
+   "kind": "off",
+   "b": "GraveLantern",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "fx:cold",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "FxPla",
+   "n": "致盲",
+   "kind": "shield",
+   "b": "SigilShield",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "fx:pla",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "FxNuc",
+   "n": "疫染",
+   "kind": "engine",
+   "b": "Thruster",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "fx:nuc",
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "EfxKin",
+   "n": "断甲",
+   "kind": "off",
+   "b": "BoneQuiver",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "efx:kin",
+     15,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "EfxExp",
+   "n": "炽燃",
+   "kind": "weapon",
+   "b": "StarfallRod",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "efx:exp",
+     15,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "EfxEle",
+   "n": "蓄雷",
+   "kind": "hub",
+   "b": "SilverNexus",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "efx:ele",
+     15,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "EfxCold",
+   "n": "凝霜",
+   "kind": "core",
+   "b": "CrystalCore",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "efx:cold",
+     15,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "EfxPla",
+   "n": "圣裁",
+   "kind": "engine",
+   "b": "Thruster",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "efx:pla",
+     15,
+     30
+    ]
+   ]
+  },
+  {
+   "id": "EfxNuc",
+   "n": "沉疫",
+   "kind": "shield",
+   "b": "PolymerShield",
+   "req": 10,
+   "w": 60,
+   "leg": true,
+   "fixed": [],
+   "rules": [
+    [
+     "efx:nuc",
+     15,
+     30
+    ]
+   ]
   }
  ]
 }

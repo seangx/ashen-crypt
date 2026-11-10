@@ -166,6 +166,7 @@ function hitMob(m, W, o = {}) {
   else if (W.knock && !m.boss) { const dx = m.x - player.x, dy = m.y - player.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * MECH.knockback; m.ky += dy / d * MECH.knockback; }
   const tick = W.cont ? 1 / W.aps : 1;
   mainFx(m, W, by, tick, o); // v3：技能元素的主效果，必定触发
+  elemOnHit(m, W, o, by); // 副效果：装备给的
   for (const e of ['kin', 'pla']) if (W.ail[e] && rnd() < W.ail[e] * tick) ailment(m, e, by[e] || total, W, o); // 副效果（装备给几率）：碎骨、致盲
   if (W.kinShock && by.kin && rnd() < W.kinShock * tick) ailment(m, 'ele', by.kin, W, o);
   { const ach = (W.afterCh || 0) + (STATS.flag.quake ? 0.1 : 0); if (ach && !o.re && !o.ground && !o.arc && !m.dead && rnd() < ach * tick) m.after.push({ n: 1 + (STATS.afterRep || 0) + (W.afterRep || 0), t: MECH.afterTick, d: total * 0.6, k: 0.6, el: top }); } // 余震：几率以 60% 再结算（任意元素）
@@ -200,7 +201,7 @@ const hasDeb = (m, e) => e === 'kin' ? m.sun >= 1 : e === 'exp' ? m.burn > 0.5 :
 function mainFx(m, W, by, tick, o) {
   const e = W.el, d = by[e] || 0; if (m.dead || !(d > 0) || o.ground || o.efx || o.re) return;
   const F = STATS.flag || {}, TAe = (STATS.tree && STATS.tree.add) || {};
-  const bonus = (1 + (W.ail[e] || 0)) * (1 + (TAe['efx:' + e] || 0) / 100), eff = ailEffG(e) * (W.ailEffT ? 1 + W.ailEffT / 100 : 1), r = d / m.max * (m.boss ? EFX.bossK : m.elite ? EFX.eliteK : 1);
+  const bonus = (1 + (W.ail[e] || 0)) * (1 + (TAe['efx:' + e] || 0) / 100) * (1 + (F.pureHeart || 0) / 100) /* 纯色之心：主效果强度 */, eff = ailEffG(e) * (W.ailEffT ? 1 + W.ailEffT / 100 : 1), r = d / m.max * (m.boss ? EFX.bossK : m.elite ? EFX.eliteK : 1);
   switch (e) {
     case 'kin': m.sun = Math.min(EFX.sunMax + (F.sunMaxAdd || 0), (m.sun || 0) + tick * bonus); m.sunT = EFX.sunDur; break; // 破甲（碎甲宗师：上限 +5）
     case 'exp': if (bonus > 1) m.burn += d * MECH.burnFromFire * (bonus - 1) * eff * (W.burnMore || 1); break; // 灼烧：基础的那份在下面（所有火焰伤害都进灼烧池）

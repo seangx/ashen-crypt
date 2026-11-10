@@ -23,7 +23,7 @@ const TREE_TEXT = {
   burnLess: v => `灯火燃烧降低 ${v}%`, soulKillInc: v => `击杀回灯火提高 ${v}%`, moveInc: v => `移动速度提高 ${v}%`,
 };
 const INC_N = { proj: '投射物', melee: '近战', engine: '遁靴' };
-const treeText = (k, v) => k.startsWith('efx:') ? `${({ kin: '破甲', exp: '灼烧', ele: '感电', cold: '冰缓', pla: '审判', nuc: '疫病' })[k.slice(4)]}效果提高 ${v}%` : k.startsWith('inc:') && k !== 'inc:all' ? `${INC_N[k.slice(4)] || ELEM_N[k.slice(4)]}伤害提高 ${v}%` : k.startsWith('ail:') ? `${AIL[k.slice(4)].n}几率 +${Math.round(v * 100)}%` : k.startsWith('res:') && k !== 'res:all' ? `${ELEM_N[k.slice(4)]}抗性 +${v}` : TREE_TEXT[k] ? TREE_TEXT[k](v) : `${k} +${v}`;
+const treeText = (k, v) => k.startsWith('efx:') ? `${({ kin: '破甲', exp: '灼烧', ele: '感电', cold: '冰缓', pla: '审判', nuc: '疫病' })[k.slice(4)]}效果提高 ${v}%` : k.startsWith('inc:') && k !== 'inc:all' ? `${INC_N[k.slice(4)] || ELEM_N[k.slice(4)]}伤害提高 ${v}%` : k.startsWith('ail:') ? `${AIL[k.slice(4)].n}${['kin', 'pla'].includes(k.slice(4)) ? '几率' : '效果'} +${Math.round(v * 100)}%` : k.startsWith('res:') && k !== 'res:all' ? `${ELEM_N[k.slice(4)]}抗性 +${v}` : TREE_TEXT[k] ? TREE_TEXT[k](v) : `${k} +${v}`;
 // 改规则的效果文字：{参数} 取 data/rules.json 里这条规则的参数，{v} 是天赋或装备给的数值，{别的规则.参数} 引用别的规则
 const RULES = DATA.rules; RULES.whirl = DATA.mechanics.whirl; RULES.spark = DATA.mechanics.spark; RULES.nova = DATA.mechanics.nova; RULES.meteor = DATA.mechanics.meteor; RULES.orb = DATA.mechanics.orb; RULES.shield = DATA.mechanics.shield; // {whirl.参数} 引用 mechanics.json 的 whirl
 const ruleText = (k, v) => { const R = RULES[k]; return R && R.text ? R.text.replace(/\{(\w+)(?:\.(\w+))?\}/g, (m, a, b) => b ? RULES[a][b] : a === 'v' ? v : R[a]) : null; };
@@ -114,6 +114,7 @@ function treeStats(ids = S.tree, eq = S.equip) {
   const A = (k, v) => add[k] = (add[k] || 0) + v, M = (k, v) => more[k] = (more[k] ?? 1) * v;
   const uniqueRules = it => { const u = ruleSrc(it); if (!u) return; u.rules.forEach(([k], i) => { const v = it.uv[i];
     if (['energyInc', 'rangeInc', 'dodge', 'velocity', 'dashMax', 'armorInc', 'shieldRegenPct'].includes(k)) A(k, v);
+    else if (k.startsWith('efx:')) A(k, v); // 传奇词条：某系主效果强度
     else if (k === 'energyAdd') A('energy', v); else if (k === 'aspdLessAll') M('aspd', 1 - v / 100); else if (k === 'resAll') A('res:all', v); else if (k === 'rangedDRU') A('rangedDR', v); else if (k === 'rangedSpike') flag.rangedSpike = 1;
     else if (k === 'critLess') M('crit', 1 - v / 100); else if (k === 'armorLess') M('armor', 1 - v / 100); else if (k === 'shockMul') flag.shockMul = (flag.shockMul || 1) * (1 + v / 100);
     else if (k === 'spinDecay') flag.spinDecay = (flag.spinDecay || 1) * (1 - v / 100);
