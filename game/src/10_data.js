@@ -54,6 +54,9 @@ const USOCKET_W = LOOT.sockets.hub;
 const SOCKET_KINDS = { core: 1, engine: 1 }; // 武器不再有符文槽（辅助符文插在技能石上）
 
 // 标签（原作同名机制）
+// 技能 v3 三层标签（design/skill-v3.md）：元素 · 形态 · 机制
+const EFX_D = { kin: '破甲：每次命中叠一层，目标受到的所有伤害提高，最多 10 层', exp: '灼烧：火焰伤害的一部分转成持续燃烧，打得越重烧得越狠', ele: '感电：这一下越重层数越高，目标短时间内更脆', nuc: '疫病：每次命中叠一层持续伤害，层数不设上限', cold: '冰缓：叠层减速，叠满碎冰——结算这一轮寒霜伤害的一部分', pla: '审判：目标血量低于一条线直接处决，打得越重线越高' };
+const F3_N = { melee: '近战', proj: '投射物', area: '范围' }, MECH_N = { chain: '弹射', pierce: '穿透', split: '分裂', dot: '持续', delay: '延迟', spawn: '派生' };
 const TAG_N = {
   Attack: '攻击', AttackSpeed: '攻速', Range: '射程', AoE: '范围', Projectile: '投射物', ProjectileCanReturn: '可返回', ProjectileCanPierce: '可穿透',
   ProjectileCanChain: '可弹射', ProjectileCanSplit: '可分裂', DoT: '持续伤害', Hit: '命中', Melee: '近战', Mine: '陷阱', Field: '力场', Reflect: '反伤',
@@ -70,6 +73,8 @@ const WEAPON_SKIN = DATA.items.weapons;
     const old = w.aps, nu = Array.isArray(old) ? old.map(f) : f(old), r = i => { const o = Array.isArray(old) ? old[Math.min(i, old.length - 1)] : old, n = Array.isArray(nu) ? nu[Math.min(i, nu.length - 1)] : nu; return o / n; };
     for (const key of ['min', 'max']) if (Array.isArray(w[key])) w[key] = w[key].map((v, i) => Math.round(v * r(i))); else if (typeof w[key] === 'number') w[key] = Math.round(w[key] * r(0));
     w.aps = nu; } }
+// 技能 v3：新技能的虚拟底子（data/gems.json 的 bases）——照抄一把旧武器的数值曲线，再覆盖形态参数
+for (const [k, B] of Object.entries(DATA.gems.bases || {})) { if (!B.clone) continue; ASTRO.weapons[k] = { ...ASTRO.weapons[B.clone], w: 0, ...(B.astro || {}) }; for (const e of ['kin', 'exp', 'ele', 'cold', 'pla', 'nuc']) delete ASTRO.weapons[k]['ail_' + e]; WEAPON_SKIN[k] = { ...WEAPON_SKIN[B.clone], ...(B.skin || {}) }; }
 const WEAPONS = {};
 for (const k in WEAPON_SKIN) WEAPONS[k] = { key: k, ...ASTRO.weapons[k], ...WEAPON_SKIN[k], tags: ASTRO.weapons[k].tags.filter(t => t !== 'Weapon').concat('Weapon') };
 // 遁靴（原作：引擎，冲刺即技能；本身也带武器标签）
@@ -178,6 +183,7 @@ function specAt(s, L) {
 // fit：weapon / engine / tag:标签，全部满足才能插
 const fitOf = conds => it => conds.every(c => c === 'weapon' ? it.kind === 'weapon' || it.kind === 'gem' : c === 'engine' ? it.kind === 'engine' : itemTags(it).includes(c.slice(4)));
 const WH = DATA.mechanics.whirl; // 旋风斩流派的数值
+const EFX = DATA.mechanics.efx; // 技能 v3：六系主效果
 const SP = DATA.mechanics.spark; // 游雷（电球）流派的数值
 const SHT = DATA.mechanics.shield; // 圣盾掷（飞盾圣骑）流派的数值
 const OB = DATA.mechanics.orb; // 寒魄球（冰封球）流派的数值

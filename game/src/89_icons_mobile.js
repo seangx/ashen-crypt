@@ -8,7 +8,7 @@ const ICO = (() => {
     fire: '#ff9a3c', frost: '#7fe3f0', storm: '#ffe066', holy: '#f2c46a', plague: '#9be05a', arcane: '#c98cff', steel: '#c9c1b4', blood: '#ff6b6b',
   };
   const shade = c => [mix(c, '#ffffff', 0.45), c, mix(c, '#2a2433', 0.55), mix(c, '#0d0a12', 0.75)];
-  const GEM_SCHOOL = { GemWhirl: 'steel', GemStab: 'steel', GemRam: 'blood', GemBolt: 'steel', GemTaser: 'storm', GemSpark: 'storm', GemSickle: 'blood', GemFirepot: 'fire', GemScatter: 'steel', GemPlague: 'plague', GemBeam: 'holy', GemFlame: 'fire', GemMiasma: 'plague', GemNova: 'arcane', GemFrostNova: 'frost', GemMeteor: 'fire', GemFrostOrb: 'frost', GemTrap: 'blood', GemShield: 'holy' };
+  const EL_SCHOOL = { kin: 'steel', exp: 'fire', cold: 'frost', ele: 'storm', pla: 'holy', nuc: 'plague' }, GEM_SCHOOL = new Proxy({}, { get: (_, id) => EL_SCHOOL[(GEM_BY[id] || {}).el] || 'steel' }); // v3：技能石颜色 = 元素
   // 技能符号 9×9（# 实心）
   const G = {
     GemWhirl: ['...###...', '.##...#..', '#....#.#.', '#...#...#', '#..#.#..#', '#...#...#', '.#.#....#', '..#...##.', '...###...'],
@@ -29,6 +29,11 @@ const ICO = (() => {
     GemMeteor: ['#........', '.#.......', '..#.#....', '...#.....', '....####.', '...######', '...######', '...######', '....####.'],
     GemFrostOrb: ['...###...', '..#####..', '.##.#.##.', '###.#.###', '#.#####.#', '###.#.###', '.##.#.##.', '..#####..', '...###...'],
     GemTrap: ['.#.#.#.#.', '..#####..', '.##...##.', '##.###.##', '.#.#.#.#.', '##.###.##', '.##...##.', '..#####..', '.#.#.#.#.'],
+    GemFrostStab: ['....#....', '...###...', '....#....', '.#..#..#.', '###.#.###', '.#..#..#.', '....#....', '...###...', '....#....'],
+    GemThunderCleave: ['......###', '....###..', '..###....', '.##......', '##...###.', '#...###..', '#..###...', '.#.##....', '..#......'],
+    GemJudgement: ['...###...', '...###...', '#########', '#########', '...###...', '...###...', '...###...', '...###...', '...###...'],
+    GemRotClaw: ['#..#..#..', '#..#..#..', '.#..#..#.', '.#..#..#.', '..#..#..#', '..#..#..#', '...#..#.#', '....#..##', '.....#..#'],
+    GemThunderfall: ['.#######.', '#########', '.#######.', '...##....', '..##.....', '.#####...', '...##....', '..##.....', '.#.......'],
     GemShield: ['#########', '#.......#', '#...#...#', '#..###..#', '#...#...#', '.#.....#.', '.#.....#.', '..#...#..', '...###...'],
   };
   const P = (x, c, a, b) => { x.fillStyle = c; x.fillRect(a, b, 1, 1); };

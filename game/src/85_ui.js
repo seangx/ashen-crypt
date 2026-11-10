@@ -84,7 +84,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   return { c, h: cy };
 }
 const DASH_N = { step: '冲刺：纯位移', warp: '冲刺：瞬移到落点并炸开', trail: '冲刺：沿途留下火痕', burst: '冲刺结束：向四周炸开', storm: '冲刺结束：向附近敌人放连锁雷', vortex: '冲刺结束：留下吸住敌人的漩涡', nova: '冲刺：在起点爆炸' };
-const FORM_N = { orb: '缓慢飞行的法球，沿途向四周放出碎片', meteor: '从天而降砸向敌人', proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人', reflect: '受到攻击时伤害周围敌人' };
+const FORM_N = { cleave: '朝前方挥出一道弧光，扇形里的敌人都中', orb: '缓慢飞行的法球，沿途向四周放出碎片', meteor: '从天而降砸向敌人', proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人', reflect: '受到攻击时伤害周围敌人' };
 const r1 = v => Math.round(v * 10) / 10;
 // 底材行：按品质的固有数值
 function gemLines(g) { // 技能石：形态、倍率、标签、并进来的形态符文
@@ -94,7 +94,7 @@ function gemLines(g) { // 技能石：形态、倍率、标签、并进来的形
   else out.push([`伤害 = 盾的护甲 × 系数（需要装备盾牌）`, '#e9d9a8']);
   if (S.equip.gem === g && needShield()) out.push(['需要盾牌：没装盾，现在改用骨矢 1 级', COL.bad]);
   if (G.fr) { const fx = MOD_BY[G.fr].fx(clamp(g.lvl, 1, LOOT.runeDrop.levelCap)); out.push([MOD_BY[G.fr].d(fx), '#9fd8ff']); }
-  out.push(['标签：' + gemTags(g).filter(t => TAG_N[t] && t !== 'Weapon').map(t => TAG_N[t]).join(' '), COL.faint]);
+  out.push([gemTag3(g).join(' · '), ELEM_C[GEM_BY[g.b].el] || COL.faint]); out.push([EFX_D[GEM_BY[g.b].el], COL.dim]); // v3：元素 · 形态 · 机制，下面一行是这个系的主效果
   if (g.lvl < MOD_MAX) out.push([`经验 ${fmt(g.xp)} / ${fmt(MOD_XP[g.lvl - 1])}（装备时吃击杀经验）`, COL.faint]);
   return out;
 }

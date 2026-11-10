@@ -163,6 +163,11 @@
  "split": 0.7,
  "fit": 1.2,
  "fitCond": {
+  "GemFrostStab": "cast",
+  "GemThunderCleave": "cast",
+  "GemRotClaw": "cast",
+  "GemJudgement": "hit",
+  "GemThunderfall": "crit",
   "GemStab": "cast",
   "GemBolt": "cast",
   "GemSickle": "cast",
@@ -227,6 +232,11 @@
  "basicMul": 0.84,
  "basicProcK": 24,
  "skill": {
+  "GemFrostStab": {"proc": 25, "cost": [0.38, 0.63]},
+  "GemThunderCleave": {"proc": 20, "cost": [0.7, 1.05]},
+  "GemRotClaw": {"proc": 8, "cost": [0.3, 0.5]},
+  "GemJudgement": {"proc": 20, "cost": [0.8, 1.2]},
+  "GemThunderfall": {"proc": 20, "cost": [0.7, 1.05]},
   "GemStab": {
    "proc": 25,
    "cost": [0.38, 0.63]

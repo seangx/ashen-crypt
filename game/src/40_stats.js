@@ -224,6 +224,7 @@ function weaponStats(it, P, isEngine) {
   // 底材 + 附加 → 基础提高
   const [bmin, bmax] = it.throwDmg ? [it.throwDmg, it.throwDmg] : b.min ? weaponBase(b, q) : [0, 0];
   const ok = e => !pure || e === b.el;
+  { const mf = [0, 0]; let any = 0; for (const src of [flat, rflat]) for (const e in src) { mf[0] += src[e][0]; mf[1] += src[e][1]; delete src[e]; any = 1; } if (any) flat[b.el] = mf; } // v3：一个技能只有一种元素，附加伤害不分元素都并进来
   W.flat = {}; for (const e of ELEM) { let a = 0, z = 0; for (const f of [flat[e], rflat[e]]) if (f && ok(e)) { a += f[0]; z += f[1]; } if (a || z) W.flat[e] = [a, z]; } // 元素系统：附加伤害（判定附加元素 / 特效基数）
   const nonNat = (P.flag.pureColor ? 0.5 : 1) * (P.flag.echoFx ? 0.75 : 1); // 纯色 / 余波：附加伤害打折
   for (const e of ELEM) {
@@ -239,7 +240,7 @@ function weaponStats(it, P, isEngine) {
   if (P.flag.mutate) W.more *= 0.8; // 异变
   if (P.flag.dmgMore) W.more *= 1 + P.flag.dmgMore / 100; // 誓约：伤害总增
   if (has('Delayed') && P.flag.delayMore) W.more *= 1 + P.flag.delayMore / 100; // 誓约：延迟类伤害总增
-  if (b.form === 'meteor') { W.delayTot = (W.delay || MT.delay) + P.delayAdd; if (P.flag.delayCrown) W.more *= 1 + P.flag.delayCrown / 100 * W.delayTot / UQX.delayStep; } // 末日冠：每 0.1 秒延迟总增
+  if (b.form === 'meteor') { W.delayTot = (W.delay || b.delay || MT.delay) + P.delayAdd; if (P.flag.delayCrown) W.more *= 1 + P.flag.delayCrown / 100 * W.delayTot / UQX.delayStep; } // 末日冠：每 0.1 秒延迟总增
   if (b.form === 'nova' && P.flag.autoNova) { W.autoNova = 1; W.more *= P.flag.autoNova; } // 永冬法阵：自动脉冲 ×(0.5–0.65)
   if (P.flag.echoShield) { if (has('Shield')) W.more *= SHT.heartMore; } // 回响圣盾：【盾】
   if (P.flag.shardChain) { if (has('Spawn')) W.more *= OB.heartMore; } // 碎冰连锁：【派生】
