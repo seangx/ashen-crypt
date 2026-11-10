@@ -552,7 +552,8 @@ class MobileUI extends UI {
     const floors = lad ? `${r.L}` : r.descent.from === r.base ? `${r.base}` : `${r.descent.from}–${r.base}`;
     const cols = [['i_ladder', floors, '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.coins ? `骨币 +${r.salv.coins}` : r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
     const kept = g.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it));
-    const extra = [...g.mods.map(m => ['mod_' + m.mid, '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n])];
+    const mg = {}; for (const m of g.mods) mg[m.mid] = (mg[m.mid] || 0) + 1; // 同种宝石合并成一个图标 ×数量（原来一颗一个，打多了排出屏幕）
+    const extra = [...Object.entries(mg).map(([mid, n]) => ['mod_' + mid, n > 1 ? '×' + n : '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n])];
     const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
     let y = 20;
     if (note) { const t = TW(this, 12, y, note[0], w - 24, { size: 8, color: note[1], parent: c }); y += t.h + 8; }
@@ -562,16 +563,19 @@ class MobileUI extends UI {
       c.add(nine(this, 12 + (i % 3) * cw + 2, yy, cw - 4, 46, 'f_slot', 3));
       img(this, Math.round(cx - s2.width / 2), yy + 4, ic, c); T(this, cx, yy + 22, v, { align: 'center', color: i === 3 ? COL.xp : COL.text, parent: c }); T(this, cx, yy + 35, l, { size: 8, color: COL.dim, align: 'center', parent: c }); });
     y += Math.ceil(cols.length / 3) * 50 + 6;
+    if (this.sumFor !== r) { this.sumFor = r; (this.scrollPos ||= {}).summary = 0; }
+    const c0 = c, SA = this.scrollArea(c, 0, y, w, h - 80 - y, 'summary'); c = SA.lc; y = 0; // 装备、宝石、铸符整块上下滑，底部按钮固定
     T(this, 12, y, `带回的装备 ${kept.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
-    const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q).slice(0, MCOLS * 2), st = TOUCH;
+    const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q), st = TOUCH;
     best.forEach((it, i) => mkCell(this, c, 9 + (i % MCOLS) * st, y + (i / MCOLS | 0) * st, it, { size: st, upg: true, acts: v => this.itemActs(v) }));
     if (!best.length) T(this, 12, y, '没有留下装备', { size: 8, color: COL.faint, parent: c });
     y += Math.max(1, Math.ceil(best.length / MCOLS)) * st + 6;
-    if (extra.length) { T(this, 12, y, '符文 · 铸符 · 墓图', { size: 8, color: COL.dim, parent: c }); y += 12; let ex = 12;
+    if (extra.length) { T(this, 12, y, '辅助宝石 · 铸符', { size: 8, color: COL.dim, parent: c }); y += 12; let ex = 12;
       for (const [ic, t] of extra) { const s2 = this.textures.get(ic).getSourceImage(), ww = s2.width + 1 + (t ? textW(t, 8) : 0) + 6; if (ex + ww > w - 12) { ex = 12; y += 18; } img(this, ex, y, ic, c); if (t) T(this, ex + s2.width + 1, y + 3, t, { size: 8, parent: c }); ex += ww; }
       y += 22; }
     if (!lad && r.lost) { const t = TW(this, 12, y, `阵亡：捡到的东西每件 ${SOUL.deathKeep}% 几率保住，这次丢了装备 ${r.lost.items} 件、符文 ${r.lost.mods} 个、碎片 ${r.lost.shards} 个。`, w - 24, { size: 8, color: COL.bad, parent: c }); y += t.h; }
-    else if (!win) TW(this, 12, y, '失败不会丢掉已经捡起的东西。地上没捡的会消失。', w - 24, { size: 8, color: COL.faint, parent: c });
+    else if (!win) y += TW(this, 12, y, '失败不会丢掉已经捡起的东西。地上没捡的会消失。', w - 24, { size: 8, color: COL.faint, parent: c }).h;
+    SA.done(y + 6); c = c0;
     const hw = Math.floor((w - 28) / 2);
     mkBtn(this, c, 12, h - 74, hw, 28, '装备', () => { this.closeWin(); this.openWin('gear'); }, { size: 8, icon: 'i_w_crossbow', iconX: 8, labelX: 30 });
     mkBtn(this, c, 16 + hw, h - 74, hw, 28, '铁砧', () => { this.closeWin(); this.openWin('craft'); }, { size: 8, icon: 'i_anvil', iconX: 8, labelX: 30, disabled: !unlocked('craft') });
