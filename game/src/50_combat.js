@@ -112,7 +112,7 @@ function deathRules(m) {
   if (FL.emberHeir && m.burn > 0.5) for (const x of near(70, 1)) x.burn += m.burn * 0.5; // 烬主：剩余灼烧的一半传给最近的敌人
   if (FL.contagion && (m.rad.length || m.burn > 0.5)) for (const x of near(RL.contagion.r, RL.contagion.n)) { x.rad.push(...m.rad.map(r => ({ ...r }))); if (m.burn > 0.5) x.burn = Math.max(x.burn, m.burn * RL.contagion.burnPct / 100); } // tree-v3 §3.4 传染：任何持续伤害（疫病、灼烧）
   elemDeath(m, near);
-  if (FL.deathBoom && !m.boss) { const R = RL.deathBoom, el = STATS.addEl || 'exp'; fx({ t: 'boom', x: m.x, y: m.y - 4, r: R.r, el }); for (const x of near(R.r, 99)) damage(x, mitigate(x, el, m.max * R.pct / 100), el, false, true); } // tree-v3 §3.2 殉爆：元素 = 主附加元素
+  if (FL.deathBoom && !m.boss) { const R = RL.deathBoom, el = STATS.addEl || 'exp'; fx({ t: 'boom', x: m.x, y: m.y - 4, r: R.r, el }); for (const x of near(R.r, 99)) { DSRC = '殉爆'; damage(x, mitigate(x, el, m.max * R.pct / 100), el, false, true); } } // tree-v3 §3.2 殉爆：元素 = 主附加元素
 }
 
 /* ---------- 命中与伤害 ---------- */
@@ -154,7 +154,7 @@ function hitMob(m, W, o = {}) {
     let d = rf(W.min[e], W.max[e]) * mul; if (e === 'ele') d = Math.max(1, d);
     d = mitigate(m, e, d); by[e] = d; total += d; if (d > topv) { topv = d; top = e; }
   }
-  damage(m, total, top, crit, W.cont);
+  DSRC = o.dsrc || dsrcOf(W); damage(m, total, top, crit, W.cont);
   if (!W.cont && !o.ground && !o.arc && !o.re) shieldOnHit(); /* 续航：持续伤害、地面效果不算命中 */
   if (W.cull && !m.dead && !m.boss && m.hp / m.max * 100 < W.cull) kill(m);
   if (STATS.flag.arc && !o.arc && rnd() < RL.arc.chance / 100 * (W.cont ? 1 / W.aps : 1)) { const hit = new Set([m]); for (let k = 0; k < RL.arc.n; k++) { const n = nearest(m.x, m.y - 4, RL.arc.r, hit); if (!n) break; hit.add(n); fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: n.x, y2: n.y - 5, el: 'ele' }); hitMob(n, W, { mul: RL.arc.dmg / 100, arc: 1, noDebris: o.noDebris }); } }
@@ -184,7 +184,7 @@ function aoePull(x, y, r) {
 // 寒霜：冰缓叠层（每层移速、攻速 -chillPer%），叠满冻结；冻结后 freezeImmune 秒免疫、层数清零（spec-bd-gear §1）
 const chillEff = () => ailEff('cold'); // 冰缓效果提高%
 const chillK = m => m.frzT > 0 ? 0 : 1 - Math.min(0.9, m.chill * MECH.chillPer / 100 * chillEff()); // 速度倍率：冻结时 0
-function shatter(m) { const wk = STATS.flag && STATS.flag.winterKing, d = (m.coldAcc || 0) * (wk ? 0.5 : EFX.shatterPct); m.coldAcc = 0; if (d > 0 && !m.dead) { fx({ t: 'shatter', x: m.x, y: m.y - m.size }); if (wk) for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < 40 * 40) damage(n, d * 0.5, 'cold', false, true); damage(m, d, 'cold', false, true); } } // 凛冬使：50%，波及周围 // 碎冰：这一轮累计寒霜伤害的一部分
+function shatter(m) { const wk = STATS.flag && STATS.flag.winterKing, d = (m.coldAcc || 0) * (wk ? 0.5 : EFX.shatterPct); m.coldAcc = 0; if (d > 0 && !m.dead) { fx({ t: 'shatter', x: m.x, y: m.y - m.size }); if (wk) for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < 40 * 40) { DSRC = '碎冰'; damage(n, d * 0.5, 'cold', false, true); } DSRC = '碎冰'; damage(m, d, 'cold', false, true); } } // 凛冬使：50%，波及周围 // 碎冰：这一轮累计寒霜伤害的一部分
 function chillOn(m, n, W) {
   if (m.dead || m.frzT > 0) return;
   if (m.frzImm > 0) { m.chill = Math.min(MECH.chillMax - 1, m.chill + n); m.chillT = MECH.chillDur; if (m.chill >= MECH.chillMax - 1 && m.coldAcc > 0) { shatter(m); m.chill = 0; } return; } // 免疫期：照常冰缓，但叠不到冻结
@@ -211,7 +211,7 @@ function mainFx(m, W, by, tick, o) {
       if (m.rad.length >= 30) { const x = m.rad[m.rad.length - 1]; x.dps += dps; x.t = dur; } else m.rad.push({ dps, t: dur }); break; }
     case 'cold': m.coldAcc = (m.coldAcc || 0) + d; m.chillF = (m.chillF || 0) + EFX.chillK * bonus * tick * (o.chill || 1); while (m.chillF >= 1 && !m.dead) { m.chillF--; chillOn(m, 1, W); } break; // 冰缓 → 碎冰
     case 'pla': { const line = (m.boss ? EFX.judgeBoss : m.elite ? EFX.judgeElite : EFX.judge) * clamp(0.4 + Math.sqrt(r), 0.4, 1) * Math.min(1.5, bonus * eff) * (F.arbiter ? 1.5 : 1); m.judgeT = 4; // 审判：斩杀（裁决者：线 ×1.5）；留一个 4 秒的审判印记给跨系大天赋认
-      if (m.hp / m.max < line) { fx({ t: 'judge', x: m.x, y: m.y - m.size }); kill(m); } break; }
+      if (m.hp / m.max < line) { fx({ t: 'judge', x: m.x, y: m.y - m.size }); dstatAdd('审判处决', Math.max(0, m.hp), false, false); kill(m); } break; }
   }
 }
 function ailment(m, e, d, W, o) {
@@ -219,7 +219,7 @@ function ailment(m, e, d, W, o) {
   switch (e) {
     case 'kin': { if (o.noDebris) break; // 碎骨：周围一圈，命中伤害的 20%
       const r = W.debrisR || MECH.debrisR * UNIT; if (mobs.length <= 15 || rnd() < 0.15) fx({ t: 'ring', x: m.x, y: m.y - 4, r, el: 'kin' }); // 怪海里碎骨圈只偶尔画
-      for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < r * r) { damage(n, mitigate(n, 'kin', d * MECH.debrisPct * W.debrisMore * ailEff('kin')), 'kin', false, true); if (n.dead && STATS.flag.debrisChain && (o.depth || 0) < RL.debrisChain.depth) ailment(n, 'kin', d, W, { ...o, depth: (o.depth || 0) + 1 }); }
+      for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < r * r) { DSRC = '碎骨'; damage(n, mitigate(n, 'kin', d * MECH.debrisPct * W.debrisMore * ailEff('kin')), 'kin', false, true); if (n.dead && STATS.flag.debrisChain && (o.depth || 0) < RL.debrisChain.depth) ailment(n, 'kin', d, W, { ...o, depth: (o.depth || 0) + 1 }); }
       break; }
     case 'exp': m.burn += d * MECH.burnFromFire * ailEff('exp') * (W.burnMore || 1); break; // 火焰本源异常：灼烧
     case 'ele': m.shock = Math.min(MECH.shockMax, m.shock + (o.spark && STATS.flag.sparkHeart ? SP.shockGain : 1)); // 织雷之心：游雷一次叠两层
@@ -229,7 +229,12 @@ function ailment(m, e, d, W, o) {
     case 'nuc': m.rad.push({ dps: d * MECH.radPct * W.radMore * W.dotMore * ailEff('nuc') / MECH.radDur, t: MECH.radDur }); break;
   }
 }
+/* 伤害统计（11-11 用户要求，结算页“伤害统计”）：每次结算前把 DSRC 设成来源名，damage() 里按实际扣掉的血记到 RUN.dstat */
+let DSRC = null;
+const dsrcOf = W => !W ? '其他' : W.trigSlot ? (W.b && W.b.n) || W.n || '技能' : W.atk ? '普攻' : (W.b && W.b.n) || '其他';
+function dstatAdd(k, amt, crit, small) { if (!RUN || !(amt > 0)) return; const D = RUN.dstat || (RUN.dstat = {}), e = D[k] || (D[k] = { d: 0, n: 0, c: 0 }); e.d += amt; if (!small) { e.n++; if (crit) e.c++; } }
 function damage(m, amt, el, crit, small) {
+  const src = DSRC; DSRC = null;
   if (m.dead || amt <= 0) return;
   if (m.sun > 0) amt *= 1 + Math.floor(m.sun) * EFX.sunPer / 100; // 破甲：受到的所有伤害提高
   { const F = STATS.flag; if (F) { const X = F._x || (F._x = Object.keys(F).filter(k => k.startsWith('x:')).map(k => [k.split(':')[1], k.split(':')[2], F[k]])); for (const [a, b, v] of X) if (hasDeb(m, a) && hasDeb(m, b)) amt *= 1 + v / 100; } } // 跨系高级职业：敌人同时带两种减益时，所有伤害（含持续伤害）总增
@@ -237,6 +242,7 @@ function damage(m, amt, el, crit, small) {
   if (m.ax) amt = eliteTaken(m, amt, small); // 精英词缀：坚壁、镜反
   if (!small) { if (STATS.flag.lightEater) lampGain('eat', 0.3, STATS.flag.lightEater); lampGain('hit', STATS.lampOnHit, 2); if (crit) lampGain('crit', STATS.lampOnCrit, 3); }
   const crowd = mobs.length > 15 && !m.boss && !m.elite; // 怪海里的普通怪：不白闪、不飘数字，只留刀痕和击退
+  dstatAdd(src || '其他', Math.min(amt, Math.max(0, m.hp)), crit, small); /* 只记实际扣掉的血，不算溢出 */
   m.hp -= amt; if (!small && !crowd && !(m.flCd > 0)) { m.fl = 0.06; m.flCd = 0.45; } // 受击白闪限频：连续挨打不会一直发白
   if ((!small || amt > m.max * 0.04) && !crowd) fx({ t: 'num', x: m.x, y: m.y - m.size * 2, v: amt, el, crit, small }); 
   if (G.fx && !small) { m.kbT = 0.12; m.kbA = Math.atan2(m.y - player.y, m.x - player.x); if ((crit && !crowd) || m.boss || m.elite) fx({ t: 'impact', x: m.x, y: m.y - m.size, el, crit, big: m.boss || m.elite }); } // 只影响画面：击退偏移、火花
@@ -409,7 +415,7 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
   eliteOnHurt(src); // 噬光
   if (d > 0) { player.life -= d; trigStruck(d); player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); hurtFeedback(d); }
   // 荆棘甲：受击时伤害周围
-  for (const W of STATS.weapons) if (W && W.thorns > 0) { const r = MECH.thornsR || 56; fx({ t: 'ring', x: player.x, y: player.y - 4, r, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (r + m.size) ** 2) hitMob(m, W, { mul: W.thorns / 100 }); } // 荆棘符文
+  for (const W of STATS.weapons) if (W && W.thorns > 0) { const r = MECH.thornsR || 56; fx({ t: 'ring', x: player.x, y: player.y - 4, r, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (r + m.size) ** 2) hitMob(m, W, { mul: W.thorns / 100, dsrc: '荆棘' }); } // 荆棘符文
   for (const W of STATS.weapons) if (W && W.form === 'reflect') { fx({ t: 'ring', x: player.x, y: player.y - 4, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); }
   if (player.life <= 0) { player.life = 0; RUN.result = 'dead'; RUN.ending = 1.6; S.stats.deaths++; sfx('out'); if (G.ui) G.ui.banner('灯火熄灭'); }
   return true;
@@ -435,7 +441,7 @@ function tryDash(to = mouse, byAuto = false) {
     if (RUN) engineBlast(E, player.x, player.y, Math.min(E.aoeR || 48, 70));
     return;
   }
-  trigEach('dash'); const T = PLAYER.dashTime; player.dashT = T; const DD = PLAYER.dashDist * (STATS.flag.whirlHeart ? WH.dashMul : 1) * (byAuto && RUN && dashBlocked(dx / dl, dy / dl) ? PROG.slam.stack.blockMul : 1); // §8.2 被堵住：AI 冲刺距离减半 player.dvx = dx / dl * DD / T; player.dvy = dy / dl * DD / T; // 旋风之心：短距离突进
+  trigEach('dash'); const T = PLAYER.dashTime; player.dashT = T; const DD = PLAYER.dashDist * (STATS.flag.whirlHeart ? WH.dashMul : 1) * (byAuto && RUN && dashBlocked(dx / dl, dy / dl) ? PROG.slam.stack.blockMul : 1); player.dvx = dx / dl * DD / T; player.dvy = dy / dl * DD / T; // §8.2 被堵住：AI 冲刺距离减半 // 旋风之心：短距离突进
   if (!RUN || !E) return;
   if (kind === 'trail') player.trail = 1;
   if (kind === 'nova') engineBlast(E, player.x, player.y, E.aoeR || 80);
@@ -806,10 +812,10 @@ function logic(dt) {
     if (m.frzImm > 0) m.frzImm -= dt;
     if (m.shredT > 0) m.shredT -= dt;
     if (m.blindT > 0) m.blindT -= dt;
-    if (m.burn > 0.5) { m.burnT -= dt; if (m.burnT <= 0) { m.burnT = MECH.burnTick; const tk = m.burn * MECH.burnTickPct, keep = STATS.flag.burnKeep; m.burn -= tk * (1 - (m.burnSlow || 0)) * (keep ? RL.burnKeep.drainMul : 1) + (keep ? 0 : m.burn * MECH.burnDecay); damage(m, mitigate(m, 'exp', tk * (keep ? RL.burnKeep.dmgMul : 1)), 'exp', false, true); if (rnd() < 0.3) fx({ t: 'burn', x: m.x, y: m.y }); } }
+    if (m.burn > 0.5) { m.burnT -= dt; if (m.burnT <= 0) { m.burnT = MECH.burnTick; const tk = m.burn * MECH.burnTickPct, keep = STATS.flag.burnKeep; m.burn -= tk * (1 - (m.burnSlow || 0)) * (keep ? RL.burnKeep.drainMul : 1) + (keep ? 0 : m.burn * MECH.burnDecay); DSRC = '灼烧'; damage(m, mitigate(m, 'exp', tk * (keep ? RL.burnKeep.dmgMul : 1)), 'exp', false, true); if (rnd() < 0.3) fx({ t: 'burn', x: m.x, y: m.y }); } }
     else m.burn = 0;
-    if (m.rad.length) { let d = 0; for (const r of m.rad) { d += r.dps * Math.min(dt, r.t); r.t -= dt; } m.rad = m.rad.filter(r => r.t > 0); m.radAcc = (m.radAcc || 0) + d; m.radT = (m.radT || 0) + dt; if (m.radT > 0.25) { damage(m, mitigate(m, 'nuc', m.radAcc), 'nuc', false, true); m.radAcc = 0; m.radT = 0; } }
-    for (const a of m.after) { a.t -= dt; if (a.t <= 0 && a.n > 0) { a.n--; a.t = MECH.afterTick; damage(m, a.el ? a.d : mitigate(m, 'exp', a.d), a.el || 'exp', false, true); a.d *= a.k || MECH.afterPct; fx({ t: 'ring', x: m.x, y: m.y - 4, r: 10, el: 'exp' }); } }
+    if (m.rad.length) { let d = 0; for (const r of m.rad) { d += r.dps * Math.min(dt, r.t); r.t -= dt; } m.rad = m.rad.filter(r => r.t > 0); m.radAcc = (m.radAcc || 0) + d; m.radT = (m.radT || 0) + dt; if (m.radT > 0.25) { DSRC = '疫病'; damage(m, mitigate(m, 'nuc', m.radAcc), 'nuc', false, true); m.radAcc = 0; m.radT = 0; } }
+    for (const a of m.after) { a.t -= dt; if (a.t <= 0 && a.n > 0) { a.n--; a.t = MECH.afterTick; DSRC = '余震'; damage(m, a.el ? a.d : mitigate(m, 'exp', a.d), a.el || 'exp', false, true); a.d *= a.k || MECH.afterPct; fx({ t: 'ring', x: m.x, y: m.y - 4, r: 10, el: 'exp' }); } }
     m.after = m.after.filter(a => a.n > 0);
     if (m.dead) continue;
     if (m.stunT > 0) { m.stunT -= dt; m.vx = m.vy = 0; m.x += m.kx * dt; m.y += m.ky * dt; const kd = Math.pow(0.02, dt); m.kx *= kd; m.ky *= kd; continue; } // 陨石眩晕：同冻结，不能移动、攻击

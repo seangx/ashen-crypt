@@ -173,9 +173,9 @@ function trigStats(P, eq) {
       const mul = (1 + ((A.dmg || 0) + (fx.dmg || 0) + bl + (P.trigDmg || 0)) / 100) * (1 + (T.q || 0) / 100) * (skills.length > 1 && !fx.rotate ? trigSplit(T) : 1) * (TRG.fitCond[g.b] === T.c ? TRG.fit : 1) * (FT.heavyHit && cast ? 1.4 : 1) * (FT.focus ? (cast ? 1.5 : 0.7) : 1) * (FT.auraPower && T.c === 'always' ? 1.4 : 1); // tree-v3：重击、专精、常驻之力
       for (const o of [W.min, W.max]) if (o) for (const e in o) o[e] *= mul;
       if (W.auraDps) W.auraDps *= mul; W.dps *= mul;
-      const aoe = (A.aoe || 0) + (fx.aoe || 0) + (fx.emberAoe && TRIGS_RT.lampState === 'ember' ? fx.emberAoe : 0); // 永夜灯：残灯时范围再 +40% if (aoe) { W.aoeInc = (W.aoeInc || 0) + aoe; if (W.aoeR) W.aoeR *= 1 + aoe / 100; if (T.c === 'always' && W.rng) W.rng *= 1 + aoe / 100; }
+      const aoe = (A.aoe || 0) + (fx.aoe || 0) + (fx.emberAoe && TRIGS_RT.lampState === 'ember' ? fx.emberAoe : 0); if (aoe) { W.aoeInc = (W.aoeInc || 0) + aoe; if (W.aoeR) W.aoeR *= 1 + aoe / 100; if (T.c === 'always' && W.rng) W.rng *= 1 + aoe / 100; } // 永夜灯：残灯时范围再 +40%
       if (A.crit) W.crit += A.crit / 100; if (fx.alwaysCrit) W.crit = Math.max(W.crit, 1);
-      const Sk = TSK[g.b] || {}; W.proc = (Sk.proc ?? 5) * (W.procMul || 1); // 多重投射：每发触发系数 ×0.6 W.atk = cast ? 1 : 0;
+      const Sk = TSK[g.b] || {}; W.proc = (Sk.proc ?? 5) * (W.procMul || 1); W.atk = cast ? 1 : 0; // 多重投射：每发触发系数 ×0.6
       W.cost = (T.c === 'always' ? gemCost(g) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul * (TRG.skillCostMul || 1) * ((cast || T.c === 'hit' || T.c === 'crit') ? TRG.castCostMul || 1 : 1) * (W.orbCost || 1) + blT; // 冬之心：寒魄球消耗 +50%
       W.trigSlot = i + 1; W.trigMul = mul; W.ailEffT = A.ailEff || 0; W.wi = TRIG_BASE + i * TRIG_PER + j; ws.push(W);
     });
