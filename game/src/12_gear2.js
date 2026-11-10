@@ -26,6 +26,8 @@ const G2 = DATA.gear2, G2W = G2.weapons, G2D = G2.defense, STONES = G2.stones;
     const a = { k, f, stat, el, local: !!o.local || pair, grp: o.grp || (o.src ? o.src : k), type, on, pair, tiers, off: false, tag: o.tag };
     AFF.push(a); AFF_BY[k] = a;
   }
+  // 1b. 附加伤害合并（11-10）：一个技能只有一种元素，“附加某元素伤害”效果全一样——只留一族继续掉，文字不写元素；旧装备上的其余五族照常生效
+  for (const a of AFF) if (a.stat === 'flat' && a.pair) { const sfx = a.k.endsWith('Off') ? 'Off' : a.k.endsWith('Hub') ? 'Hub' : ''; a.grp = 'FlatDamage' + sfx; a.noRoll = !a.k.startsWith('FlatKineticDamage'); a.f = v => `附加 ${v[0]}–${v[1]} 伤害`; }
   // 2. 主手武器表
   GEMC.retired = Object.keys(WEAPONS).filter(k => !G2W[k]);
   for (const [k, w] of Object.entries(G2W)) {

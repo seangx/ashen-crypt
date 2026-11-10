@@ -62,6 +62,7 @@ function load(data) {
   if ((S.uqV || 0) < 2) migrateUniqueCosts();
   if ((S.uqV || 0) < 3) migrateRarityV2();
   if ((S.skV || 0) < 3) migrateSkillV3();
+  if (!S.flatV) { for (const k of Object.keys(S.shards || {})) { const m = k.match(/^Flat(Explosive|Electric|Cold|Plasma|Nuclear)Damage(Off|Hub)?$/); if (m && S.shards[k]) { const t = 'FlatKineticDamage' + (m[2] || ''); S.shards[t] = (S.shards[t] || 0) + S.shards[k]; delete S.shards[k]; } } S.flatV = 1; } // 附加伤害六族合一：碎片并到一起
   if ((S.clsV || 0) < 1) { const had = S.mst && ((S.mst.picks || []).length || Object.keys(S.mst.bar || {}).length); S.mst = mstFresh(); S.clsV = 1; // 职业改版：专精换成职业，点数全部退回
     if (had) { S.notice = { t: '职业改版', lines: [...((S.notice && S.notice.lines) || []), '专精换成了职业：骸骨武士、猎手、唤雷者、焚化者、守墓人、瘟医，选两个。每个职业有两种元素和自己的保命方式，原来的大天赋分到了各个职业里。', '两个职业的专精条都到 10 点，解锁它们合成的高级职业（一共 15 个）。', '你的天赋点已经全部退回，去“职业”页重新分配。'] }; const tell = () => G.ui ? G.ui.openWin('notice') : setTimeout(tell, 600); setTimeout(tell, 2500); } }
 }

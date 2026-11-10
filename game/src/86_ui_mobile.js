@@ -248,7 +248,7 @@ class MobileUI extends UI {
     { const cv = dollCanvas(S.equip, 0); if (this.textures.exists('doll_ui')) this.textures.remove('doll_ui'); this.textures.addCanvas('doll_ui', cv);
       rect(this, 42, 38, 30, 30, '#120c18', 1, c); const im = img(this, 42 + 15 - DOLL_W / 2, 38 + 30 - DOLL_H, 'doll_ui', c); im.setCrop(DOLL_W / 2 - 15, 0, 30, DOLL_H); }
     const P = STATS;
-    [['出手秒伤', fmt(P.castDps || P.dps), COL.emberHi], ['响应秒伤', fmt(P.respDps || 0), '#ffb36a'], ['坚韧 / 恢复', `${fmt(toughness(P))} / ${fmt(recovery(P))}每秒`, '#ffd0a0'], ['最缺', elemNeed(P), COL.cyan], ['生命 / 护盾', `${fmt(P.life)} / ${fmt(P.shield)}`, '#ff8a7a'], ['护甲', `${fmt(P.armor)} 减伤${Math.round(armorDrL(P.armor, monLv()) * 100)}%`], ['附加特效', elemFxName(P), P.addEl ? ELEM_C[P.addEl] : COL.faint]]
+    [['出手秒伤', fmt(P.castDps || P.dps), COL.emberHi], ['响应秒伤', fmt(P.respDps || 0), '#ffb36a'], ['坚韧 / 恢复', `${fmt(toughness(P))} / ${fmt(recovery(P))}每秒`, '#ffd0a0'], ['最缺', elemNeed(P), COL.cyan], ['生命 / 护盾', `${fmt(P.life)} / ${fmt(P.shield)}`, '#ff8a7a'], ['护甲', `${fmt(P.armor)} 减伤${Math.round(armorDrL(P.armor, monLv()) * 100)}%`], ['职业', mstS().picks.map(x => MST_BY[x].n).join(' + ') || '还没选', mstS().picks.length ? COL.text : COL.faint]]
       .forEach(([a, b, col], i) => { T(this, 112, 13 + i * 9, a, { size: 8, color: COL.dim, parent: c }); T(this, w - 10, 13 + i * 9, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); }); // 双行面板（system-v2 §5）
     zoneOn(this, c, 108, 13 + 2 * 9 - 2, w - 116, 10, () => { const D = toughParts(P), pc = v => Math.round(v * 100) + '%', top = Object.entries(D.X.el).sort((a, b) => b[1] - a[1]).map(([e, v]) => `${ELEM_N[e]} ${pc(v)}`).join('、'); // defense-v3 §4：点开看每一层减伤
       this.ask('坚韧怎么算', () => {}, '知道了', `按第 ${D.L} 级怪算\n生命 ${fmt(P.life)} + 护盾 ${fmt(P.shield)}\n护甲减伤 ${pc(D.armor)}\n平均抗性减伤 ${pc(D.res)}（这层的怪：${top}）\n条件减伤 ${pc(D.cond)}（远程怪占 ${pc(D.X.ranged)}）\n恢复：每秒回复 ${r1(P.lifeRegen || 0)}、护盾 ${r1(P.shieldRegen || 0)}、击杀回复 ${r1(P.lifeOnKill || 0)}`); });
@@ -256,6 +256,7 @@ class MobileUI extends UI {
     ELEM.forEach((e, i) => T(this, 134 + i * 20, 78, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
     T(this, 12, 100, `背包 ${gearCount()}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
     { const nNew = S.stash.filter(x => x.isNew && x.kind !== 'gem').length; if (nNew) mkBtn(this, c, w - 134, 91, 42, 28, `已读 ${nNew}`, () => { for (const x of S.stash) if (x.kind !== 'gem') x.isNew = false; save(); this.refresh(); }, { size: 8 }); } // 一键清掉“新”
+    mkBtn(this, c, 54, 91, 62, 28, '详细属性', () => this.showLines(this.charLines()), { size: 8, style: 'w' }); // 详细角色面板（89e_char_mobile.js）
     mkBtn(this, c, w - 90, 91, 38, 28, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
     mkBtn(this, c, w - 50, 91, 40, 28, '批量', () => this.openBulk(), { size: 8, style: 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
@@ -575,7 +576,7 @@ class MobileUI extends UI {
     T(this, 12, y, `收藏词条 ${fav.length} 个${R.fav ? '' : '（默认）'}`, { size: 8, color: COL.emberHi, parent: c });
     if (R.fav) mkBtn(this, c, w - 84, y - 9, 72, 28, '恢复默认', () => { R.fav = null; save(); this.refresh(); }, { size: 8 });
     y += 18;
-    const list = AFF.filter(a => !a.tk && !a.off).sort((a, b) => affName(a) < affName(b) ? -1 : 1); // 顺序固定（原来收藏的排前面，勾一下列表就跳）；全部列出来，上下滑
+    const list = AFF.filter(a => !a.tk && !a.off && !a.noRoll).sort((a, b) => affName(a) < affName(b) ? -1 : 1); // 顺序固定（原来收藏的排前面，勾一下列表就跳）；全部列出来，上下滑
     list.forEach((a, i) => {
       const on = fav.includes(a.k), b = mkBtn(this, c, 12 + (i % 2) * (hw + 4), y + (i / 2 | 0) * 24, hw, 22, affName(a), () => { R.fav = on ? fav.filter(k => k !== a.k) : [...fav, a.k]; save(); this.refresh(); }, { size: 8, labelX: 16, color: on ? COL.emberHi : COL.text });
       rect(this, 5, 7, 8, 8, '#120c18', 1, b); if (on) rect(this, 6, 8, 6, 6, COL.ember, 1, b);

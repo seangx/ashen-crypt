@@ -7,7 +7,7 @@ const baseOf = it => it.fb ? it.fb : it.kind === 'weapon' ? WEAPONS[it.b] : ARMO
 const iconOf = it => it.kind === 'map' ? 'a_map' : baseOf(it).ic;
 const slotsFor = it => it.kind === 'gem' ? ['gem'] : it.kind === 'weapon' ? ['wl'] : it.kind === 'off' ? ['wr'] : it.kind === 'chip' ? [] : [it.kind];
 const itemTags = it => it.fb ? it.fb.tags : it.kind === 'gem' ? gemTags(it) : it.kind === 'weapon' ? WEAPONS[it.b].tags : it.kind === 'engine' ? (ARMORS.engine[it.b].tags || ['Engine']) : (ARMORS[it.kind] && ARMORS[it.kind][it.b] && ARMORS[it.kind][it.b].tags) || [KIND_TAG[it.kind]]; // 圣徽盾带自己的标签
-const canRollOn = (a, it) => !a.off && a.on.includes(it.kind) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
+const canRollOn = (a, it) => !a.off && !a.noRoll && a.on.includes(it.kind) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
 const offTagOk = (it, tag) => { const t = (ARMORS.off[it.b] || {}).tags || []; return t.includes('any') || t.includes(tag); }; // 副手：箭袋只出投射物类，法源 / 图腾 / 提灯什么都能出 // tag 只限制武器
 const KIND_TAG = { shield: 'Shield', core: 'Core', engine: 'Engine', hub: 'Nexus', chip: 'Chip' };
 const baseName = it => { const g = it.kind !== 'gem' && it.gen, N = g && (DATA.items.genNames || {})[it.b]; return (N && N[g - 1]) || baseOf(it).n; }; // 高等级掉的同一种底材换个名字（内部是“代”，不给玩家看）
@@ -130,7 +130,7 @@ function makeLegendary(it, id) {
 // 词条碎片：在这个物品等级能出的词条里按权重抽一个词条族
 function rollShard(ilvl) {
   const opts = [];
-  for (const a of AFF) a.tiers.forEach((t, i) => { if (ilvl >= t[2] && ilvl < t[3] && !exTier(a, i)) opts.push({ k: a.k, w: t[1] }); });
+  for (const a of AFF) if (!a.off && !a.noRoll) a.tiers.forEach((t, i) => { if (ilvl >= t[2] && ilvl < t[3] && !exTier(a, i)) opts.push({ k: a.k, w: t[1] }); }); // 停掉的词条族不掉碎片
   return opts.length ? wpick(opts, o => o.w).k : AFF[0].k;
 }
 // 掉落的宝石按层数定等级：1 + floor(物品等级 / lvlPer) ± lvlSpread，经验取该等级的门槛（data/loot.json 的 runeDrop）
