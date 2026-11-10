@@ -43,9 +43,10 @@ Object.assign(MobileUI.prototype, {
   },
   /* 符文页 */
   winSupport(c, w, h, oy = 0) {
+    const Fr = this.F, B = c; c = Fr.head(10); // 头：部位页签、这件装备的符文槽、筛选；主体：库存（上下滑）；底：提示
     const host = S.equip[modWeapon], hosts = ['gem', 'core', 'engine', 'hub'].filter(s => s !== 'gem'), bw = Math.floor((w - 20) / hosts.length); this.sockR = [];
-    hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 6 + oy, bw - 2, 28, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; runePage = 0; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
-    let y = 40 + oy;
+    hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 4 + oy, bw - 2, 28, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; runePage = 0; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
+    let y = 36 + oy;
     if (!host) { T(this, 10, y + 4, '这个位置没有装备。', { size: 8, color: COL.faint, parent: c }); y += 20; }
     else {
       mkCell(this, c, 10, y, host, { size: TOUCH, direct: true, onClick: () => {} });
@@ -56,7 +57,7 @@ Object.assign(MobileUI.prototype, {
       for (let i = 0; i < host.sock; i++) {
         const m = host.mods[i], x = 10 + i * 34;
         if (host.kind === 'hub') rect(this, x - 2, y - 2, 34, 34, '#c08a1c', 1, c);
-        this.sockR[i] = { x, y, s: 30 };
+        this.sockR[i] = { x, y: y + 14, s: 30 }; // 拖符文进槽用：相对窗口左上角（头在彩带下 14）
         mkCell(this, c, x, y, m, { size: 30, host, direct: true, onHover: v => { if (v) showTip(modTip(v, host)); }, onOut: hideTip, onClick: v => { if (this.drag && this.drag.moved) return; if (v && feedOn && feedSrc && feedSrc !== v) return this.doFeed(v); v ? this.socketDetail(host, i) : this.openPicker(host, i); } });
         if (!m) T(this, x + 15, y + 15, '+', { color: COL.faint, align: 'center', valign: 'middle', parent: c });
       }
@@ -76,24 +77,22 @@ Object.assign(MobileUI.prototype, {
     this.chipRow(c, 10, y, w - 20, [['all', '全部'], ['fit', '适用'], ['new', '新'], ['field', '力场'], ['sort', runeSort === 'lvl' ? '等级↓' : '名称']], runeF, v => { if (v === 'sort') runeSort = runeSort === 'lvl' ? 'name' : 'lvl'; else runeF = v; runePage = 0; this.refresh(); }); y += 30;
     const F = { all: () => true, fit: m => host && modActive(m, host), new: m => m.isNew, field: m => MOD_BY[m.mid].field }[runeF] || (() => true);
     const stacks = stackBy(S.mods.filter(F), runeKey).sort(runeSort === 'lvl' ? (a, b) => b[0].lvl - a[0].lvl || MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) : (a, b) => MOD_BY[a[0].mid].n.localeCompare(MOD_BY[b[0].mid].n) || b[0].lvl - a[0].lvl);
-    const cols = MCOLS, st = TOUCH, x0 = Math.round((w - cols * st) / 2), rows = Math.max(1, Math.floor((h - y - 52) / st)), SA = this.scrollArea(c, 0, y, w, rows * st, 'rune:' + modWeapon); // 上下滑动（原来分页）
-    if (!stacks.length) TW(this, 12, y + 6, S.mods.length ? { fit: host ? `没有能在${SLOTS.find(s => s.id === modWeapon).n}上生效的符文。` : '先选一个有装备的部位。', new: '没有新符文。', field: '没有力场符文（力场符文只在法阵里生效）。' }[runeF] || '没有符合的符文。' : '还没有符文。打怪会掉落，Boss 宝箱里也有。', w - 24, { size: 8, color: COL.dim, parent: c });
-    if (!stacks.length && runeF !== 'all' && S.mods.length) mkBtn(this, c, 12, y + 34, 96, 28, '显示全部', () => { runeF = 'all'; this.refresh(); }, { size: 8 });
-    const cy = y, lc = SA.lc;
+    Fr.hh = y; c = B; y = 2;
+    const cols = MCOLS, st = TOUCH, x0 = Math.round((w - cols * st) / 2);
+    if (!stacks.length) { const t = TW(this, 12, y + 4, S.mods.length ? { fit: host ? `没有能在${SLOTS.find(s => s.id === modWeapon).n}上生效的符文。` : '先选一个有装备的部位。', new: '没有新符文。', field: '没有力场符文（力场符文只在法阵里生效）。' }[runeF] || '没有符合的符文。' : '还没有符文。打怪会掉落，Boss 宝箱里也有。', w - 24, { size: 8, color: COL.dim, parent: c });
+      if (runeF !== 'all' && S.mods.length) mkBtn(this, c, 12, y + t.h + 10, 96, 28, '显示全部', () => { runeF = 'all'; this.refresh(); }, { size: 8 }); }
     stacks.forEach((sk, i) => {
-      const x = x0 + (i % cols) * st, yy = (i / cols | 0) * st, rep = sk[0];
-      if (feedOn && sk.includes(feedSrc)) rect(this, x - 1, yy - 1, st, st, COL.ember, 1, lc);
-      mkCell(this, lc, x, yy, { ...rep, isNew: false }, { size: st, host, direct: true, onHover: v => showTip(modTip(v, host)), onOut: hideTip, onDown: (v, p) => { if (!feedOn) this.drag = { m: rep, x: p.worldX, y: p.worldY, moved: false }; }, onClick: () => {
+      const x = x0 + (i % cols) * st, yy = y + (i / cols | 0) * st, rep = sk[0];
+      if (feedOn && sk.includes(feedSrc)) rect(this, x - 1, yy - 1, st, st, COL.ember, 1, c);
+      mkCell(this, c, x, yy, { ...rep, isNew: false }, { size: st, host, direct: true, onHover: v => showTip(modTip(v, host)), onOut: hideTip, onDown: (v, p) => { if (!feedOn) this.drag = { m: rep, x: p.worldX, y: p.worldY, moved: false }; }, onClick: () => {
         if (this.drag && this.drag.moved) return;
         if (feedOn) { const v = sk.find(x => x !== feedSrc) || rep; if (!feedSrc) { feedSrc = v; return this.refresh(); } if (sk.includes(feedSrc) && sk.length === 1) { feedSrc = null; return this.refresh(); } return this.doFeed(v); }
         this.runeDetail(sk, host);
       } });
-      this.badge(lc, x, yy, st, sk.length, sk.some(m => m.isNew));
+      this.badge(c, x, yy, st, sk.length, sk.some(m => m.isNew));
     });
-    SA.done(Math.ceil(stacks.length / cols) * st);
-    const by = cy + rows * st + 2;
-    if (false) { mkBtn(this, c, 10, by - 1, 40, 28, '<', () => { runePage--; this.refresh(); }, { disabled: runePage <= 0 }); T(this, w / 2, by + 13, `${runePage + 1} / ${pages}`, { size: 8, color: COL.dim, align: 'center', valign: 'middle', parent: c }); mkBtn(this, c, w - 50, by - 1, 40, 28, '>', () => { runePage++; this.refresh(); }, { disabled: runePage >= pages - 1 }); }
-    else TW(this, 10, by + 4, feedOn ? (feedSrc ? `已选 ${MOD_BY[feedSrc.mid].n} 当饲料，再点要喂的符文。` : '先点一个符文当饲料。') : '同名同级的符文叠在一起。点空槽挑符文，点库存看详情和秒伤变化。', w - 20, { size: 8, color: feedOn ? COL.emberHi : COL.faint, parent: c });
+    Fr.end(stacks.length ? y + Math.ceil(stacks.length / cols) * st + 4 : 80);
+    TW(this, 10, 2, feedOn ? (feedSrc ? `已选 ${MOD_BY[feedSrc.mid].n} 当饲料，再点要喂的符文。` : '先点一个符文当饲料。') : '同名同级的符文叠在一起。点空槽挑符文，点库存看详情和秒伤变化。', w - 20, { size: 8, color: feedOn ? COL.emberHi : COL.faint, parent: Fr.foot(26) });
   },
   runeDetail(sk, host) {
     const m = sk[0], d = MOD_BY[m.mid], L = [...modTip(m, host)], A = [];
@@ -119,7 +118,7 @@ Object.assign(MobileUI.prototype, {
   },
   openPicker(host, k) { // 只列能在这里生效的符文，按预估增益排序
     const cands = runeCands(host).sort((a, b) => b.lvl - a.lvl).slice(0, 24), n = {}; S.mods.forEach(m => { n[runeKey(m)] = (n[runeKey(m)] || 0) + 1; });
-    const rows = cands.map(m => { if (host.kind === 'hub') return { m, v: m.lvl, t: '' }; const { before, after } = previewSwap(host, k, m); return { m, v: after - before, t: deltaTxt(before, after) }; }).sort((a, b) => b.v - a.v).slice(0, 10);
+    const rows = cands.map(m => { if (host.kind === 'hub') return { m, v: m.lvl, t: '' }; const { before, after } = previewSwap(host, k, m); return { m, v: after - before, t: deltaTxt(before, after) }; }).sort((a, b) => b.v - a.v); // 全部列出来，弹窗里能滑
     this.popup((p, pw) => {
       T(this, 0, 0, `第 ${k + 1} 格 · 能在${SLOTS.find(s => s.id === modWeapon).n}上生效的符文`, { size: 8, color: COL.emberHi, parent: p });
       if (!rows.length) { TW(this, 0, 16, '没有能在这里生效的符文。换个部位，或者去打怪攒符文。', pw, { size: 8, color: COL.faint, parent: p }); return 40; }
@@ -170,7 +169,7 @@ Object.assign(MobileUI.prototype, {
   /* 批量拆解：一次只拆一类（辅助宝石 'r' / 技能宝石 'g'），只动库存 / 背包里的 */
   openRBulk(mode = 'r') { this.rb = { mode, r: [true, false, false, false], g: [true, false, false, false] }; this.openWin('rbulk'); },
   win_rbulk(c, w, h) {
-    const rb = this.rb || (this.rb = { mode: 'r', r: [true, false, false, false], g: [true, false, false, false] }), isR = rb.mode !== 'g', key = isR ? 'r' : 'g'; let y = 14;
+    const rb = this.rb || (this.rb = { mode: 'r', r: [true, false, false, false], g: [true, false, false, false] }), isR = rb.mode !== 'g', key = isR ? 'r' : 'g'; let y = 6;
     const list = isR ? S.mods : S.stash.filter(g => g.kind === 'gem');
     T(this, 12, y, isR ? '辅助宝石（库存里未镶嵌的）' : '技能宝石（背包里的，不含身上那颗）', { size: 8, color: COL.emberHi, parent: c }); y += 14;
     const bw = Math.floor((w - 24 - 6) / 4);
@@ -179,6 +178,7 @@ Object.assign(MobileUI.prototype, {
     const sel = isR ? rbRunes(rb.r) : rbGems(rb.g), n = sel.reduce((a, x) => a + (isR ? coinOfRune(x) : coinOfGem(x)), 0);
     TW(this, 12, y, `将拆解：${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}\n预计得到 ${n} 骨币${!isR && sel.some(g => (g.mods || []).some(Boolean)) ? '\n技能宝石上插着的辅助宝石会退回库存' : ''}`, w - 24, { size: 8, color: COL.text, parent: c }); y += 44;
     TW(this, 12, y, '身上的技能宝石和槽里的辅助宝石永远不会被拆。', w - 24, { size: 8, color: COL.dim, parent: c });
-    mkBtn(this, c, 12, h - 44, w - 24, 30, '拆解', () => this.ask(`拆解 ${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}？`, () => { let k = 0; sel.forEach(x => { k += isR ? salvageRune(x) : salvageGem(x); }); save(); toast(`得到 ${k} 骨币`, '#d9cfb8'); sfx('craft'); this.refresh(); }, '拆解', '不能撤销。'), { style: 'r', disabled: !sel.length });
+    this.F.end(y + 30);
+    mkBtn(this, this.F.foot(38), 12, 4, w - 24, 30, '拆解', () => this.ask(`拆解 ${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}？`, () => { const g = {}; for (const x of sel) { const k = `${isR ? MOD_BY[x.mid].n : itemName(x)} ${x.lvl} 级`; g[k] = (g[k] || 0) + 1; } let k = 0; sel.forEach(x => { k += isR ? salvageRune(x) : salvageGem(x); }); save(); sfx('craft'); this.resultPop(`拆解 ${sel.length} ${isR ? '枚辅助宝石' : '颗技能宝石'}`, sel, [{ t: `骨币 +${k}`, c: COL.emberHi }, Object.entries(g).map(([n, c]) => n + (c > 1 ? ' ×' + c : '')).join('，')]); this.refresh(); }, '拆解', '不能撤销。'), { style: 'r', disabled: !sel.length });
   },
 });

@@ -193,16 +193,19 @@ class MobileUI extends UI {
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) { this.decoId = null; return; }
     if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
-    const id = this.winId, native = ['settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk', 'trig', 'tbag', 'tcraft', 'reels', 'stones', 'shop'].includes(id);
+    const id = this.winId, native = ['notice', 'settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk', 'trig', 'tbag', 'tcraft', 'reels', 'stones', 'shop'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
     const y = native ? MTOP + 8 : Math.round(clamp((H - NAV_H - h) / 2, MTOP + 12, H)), c = this.add.container(this.panMax ? 4 - this.pan : Math.round((W - w) / 2), y).setDepth(100); this.winC = c; c.w = w;
     const skin = { gear: 'f_leather', mods: 'f_leather', craft: 'f_stone', salvage: 'f_stone', depart: 'f_stone' }[id] || 'f_win';
     c.add(this.add.tileSprite(3, 3, w - 6, h - 6, 'n' + skin.slice(1)).setOrigin(0));
     const bg = nine(this, 0, 0, w, h, 'o_frame', 8); c.add(bg); bg.setInteractive();
-    this.scrollVPs = []; this['win_' + id](c, w, h); decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
-    const title = { stones: '属性石', trig: '魂龛', tbag: '换魂龛', tcraft: '魂龛打造', reels: '骸骨轮盘', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '段位', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', shop: '骨坊', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: '旧系统整理' }[id];
+    decoWin(this, c, w, h, this.decoId !== id); this.decoId = id;
+    const title = { stones: '属性石', trig: '魂龛', tbag: '换魂龛', tcraft: '魂龛打造', reels: '骸骨轮盘', gear: '装备', mods: '宝石', craft: '铁砧', tree: '天赋', ladder: '段位', help: '手册', summary: '', depart: '地窖入口', salvage: '分解祭坛', shop: '骨坊', settings: '设置', more: '菜单', bulk: '批量拆解', rbulk: '批量拆解', notice: (S.notice && S.notice.t) || '说明' }[id];
     if (title) { const pw = textW(title) + 44, tx = native ? (w - pw) / 2 : this.pan + (W - 8 - pw) / 2; c.add(this.add.nineslice(Math.round(tx), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, Math.round(tx + pw / 2), -5, title, { color: '#2a1306', shadow: false, align: 'center', parent: c }); }
+    // 窗口内容：rexUI 骨架（固定头 / 滚动主体 / 固定底，见 86a_frame_mobile.js）。主体坐标原点在标题彩带下面
+    if (id === 'reels') { if (this.F) { this.F.destroy(); this.F = null; } this['win_' + id](c, w, h); } // 轮盘是一整块动画，不走骨架
+    else { const top = title ? 14 : 6; if (this.F) this.F.destroy(); const F = this.mkFrame(c.x, c.y + top, w, h - top - 5, 'w:' + id, 101, F => { this.F = F; this['win_' + id](F.body, w, F.h); }); c.once('destroy', () => { F.destroy(); if (this.F === F) this.F = null; }); }
     if (this.panMax) { // 宽页：底下一条拖动提示 + 两个翻页按钮
       const hy = h + 4; T(this, this.pan + (W - 8) / 2, hy + 3, `竖屏版这一页还在做 · 左右拖动查看（${Math.round(this.pan / this.panMax * 100)}%）`, { size: 8, color: COL.dim, align: 'center', parent: c });
       mkBtn(this, c, this.pan, hy - 6, 26, 28, '<', () => { this.pan = Math.max(0, this.pan - 120); this.refresh(); }, { size: 8, disabled: this.pan <= 0 });
@@ -220,8 +223,8 @@ class MobileUI extends UI {
   /* 设置：竖屏原生 */
   win_settings(c, w, h) {
     const row = (y, name, sub, val, fn) => { c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, name, { parent: c }); T(this, 16, y + 21, sub, { size: 8, color: COL.dim, parent: c }); if (val != null) mkBtn(this, c, w - 70, y + 7, 54, 22, val, () => { fn(); save(); this.refresh(); }, { style: 'w' }); };
-    let y = 20;
-    row(y, '移动方式', '浮动摇杆：左下按哪出哪；松手几秒后交还自动', S.auto.ai ? '自动' : '手动', () => { S.auto.ai = !S.auto.ai; if (S.auto.ai) AUTO.manualT = -1e9; }); y += 42;
+    let y = 6;
+    row(y, '移动方式', '左下按住拖动；松手几秒后交还自动', S.auto.ai ? '自动' : '手动', () => { S.auto.ai = !S.auto.ai; if (S.auto.ai) AUTO.manualT = -1e9; }); y += 42;
     row(y, '音效', '攻击、拾取、界面音效', S.settings.sound ? '开' : '关', () => { S.settings.sound = !S.settings.sound; ac(); }); y += 42;
     row(y, '特效', '飘字、拾取记录、横幅和震屏', G.fx ? '开' : '关', () => { G.fx = !G.fx; }); y += 42;
     row(y, '推层', S.auto.lock ? `锁定在难度 ${S.depth}` : '打赢就去最深层，连输退一层', S.auto.lock ? '锁层' : '推层', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; }); y += 42;
@@ -231,6 +234,7 @@ class MobileUI extends UI {
     TW(this, 12, y, '只有一个操作：移动。武器自动攻击最近的敌人，没有冲刺和主动技能。', w - 24, { size: 8, color: COL.faint, parent: c }); y += 30;
     c.add(nine(this, 8, y, w - 16, 36, 'f_slot', 3)); T(this, 16, y + 5, '清除存档', { parent: c, color: '#ff6b5a' }); T(this, 16, y + 21, '删除全部进度，从第 1 层重新开始', { size: 8, color: COL.dim, parent: c });
     mkBtn(this, c, w - 94, y + 4, 78, 28, '清除存档', () => this.ask('确定清除全部存档？', () => this.ask('最后确认：真的要清除吗？', () => wipeSave(), '确认清除', '进度、装备、宝石、设置全部删除，无法找回'), '确认清除', '此操作不可撤销'), { size: 8, style: 'r' });
+    this.F.end(y + 42);
   }
   equipSlots(c, ox, oy, onClick, selFn) {
     const pos = { gem: [0, 0], core: [32, 0], wl: [0, 32], wr: [64, 32], hub: [0, 64], engine: [32, 64], shield: [64, 64] };
@@ -239,6 +243,7 @@ class MobileUI extends UI {
   }
   /* 装备：竖屏原生（身上 + 属性 → 背包 → 选中物品的详情抽屉） */
   win_gear(c, w, h) {
+    const F = this.F, B = c; c = F.head(122); // 头：身上的装备、属性、整理 / 批量；主体：储物箱格子（上下滑）；底：一行提示
     selId = null; this.equipSlots(c, 10, 6, null, () => false);
     { const cv = dollCanvas(S.equip, 0); if (this.textures.exists('doll_ui')) this.textures.remove('doll_ui'); this.textures.addCanvas('doll_ui', cv);
       rect(this, 42, 38, 30, 30, '#120c18', 1, c); const im = img(this, 42 + 15 - DOLL_W / 2, 38 + 30 - DOLL_H, 'doll_ui', c); im.setCrop(DOLL_W / 2 - 15, 0, 30, DOLL_H); }
@@ -256,15 +261,13 @@ class MobileUI extends UI {
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
     stashTab = 0; // 技能石都在魂龛页管理，装备页不再放入口（用户 10-29）
     if (stashTab === 1) return this.gemPane(c, w, h, 122); // 技能石页：堆叠 + 筛选（87_gemrune_mobile.js）
-    const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2), SA = this.scrollArea(c, 0, 122, w, h - 122 - 18, 'gear');
+    T(this, 12, 4, '点物品看详情，在弹窗里装备 / 拆解 / 进铁砧。绿箭头 = 更好。', { size: 8, color: COL.faint, parent: F.foot(16) });
+    c = B; const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2);
     for (let i = 0; i < STASH_CAP; i++) {
-      const it = (stashTab === 1 || unlocked('gems') || S.stash.some(x => x.kind === 'gem') ? view : S.stash)[i]; const x = x0 + (i % cols) * st, y = (i / cols | 0) * st;
-      mkCell(this, SA.lc, x, y, it, { size: cs, sel: it && it.id === selId, upg: true, acts: v => this.itemActs(v) });
+      const it = view[i]; const x = x0 + (i % cols) * st, y = 2 + (i / cols | 0) * st;
+      mkCell(this, c, x, y, it, { size: cs, sel: it && it.id === selId, upg: true, acts: v => this.itemActs(v) });
     }
-    SA.done(Math.ceil(STASH_CAP / cols) * st + 4);
-    this.gearY = h - 16;
-    T(this, 12, this.gearY, '点物品看详情，在弹窗里装备 / 拆解 / 进铁砧。绿箭头 = 更好。', { size: 8, color: COL.faint, parent: c });
-    this.paneC = this.add.container(0, this.gearY + 14); c.add(this.paneC); this.paneW = w; this.paneH = h - this.gearY - 14;
+    F.end(Math.ceil(STASH_CAP / cols) * st + 6); this.paneC = null;
     this.renderPane();
   }
   renderPane() {
@@ -284,157 +287,94 @@ class MobileUI extends UI {
     B(3, '铁砧', () => { craftId = it.id; craftAff = -1; craftTab = 0; this.openWin('craft'); }, { disabled: !unlocked('craft') });
     mkCard(this, p, 10, 34, it, w - 20, { compare: true });
   }
-  /* 符文：竖屏原生（部位页签 → 槽位和武器数据 → 符文库存） */
-  win_mods(c, w, h) {
-    const host = S.equip[modWeapon], hosts = ['gem', 'core', 'engine', 'hub'], bw = Math.floor((w - 20) / 4); this.sockR = [];
-    hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 6, bw - 2, 28, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
-    const isHub = modWeapon === 'hub'; let y = 40;
-    if (!host) { T(this, 10, y + 4, '这个位置没有装备。', { size: 8, color: COL.faint, parent: c }); y += 20; }
-    else {
-      mkCell(this, c, 10, y, host, { size: TOUCH });
-      T(this, 46, y, itemName(host), { color: icol(host), parent: c });
-      TW(this, 46, y + 14, '标签：' + itemTags(host).filter(t => TAG_N[t] && t !== 'Weapon').map(t => TAG_N[t]).join(' '), w - 56, { size: 8, color: COL.dim, parent: c });
-      y += 38; T(this, 10, y, isHub ? '升级槽：符文在这里随击杀成长' : `符文槽 ${host.sock}`, { size: 8, color: COL.faint, parent: c }); y += 12;
-      if (!host.sock) { T(this, 10, y, '这件装备没有符文槽。', { size: 8, color: COL.faint, parent: c }); y += 14; }
-      for (let i = 0; i < host.sock; i++) {
-        const m = host.mods[i], x = 10 + i * 34;
-        if (isHub) rect(this, x - 2, y - 2, 34, 34, '#c08a1c', 1, c);
-        (this.sockR ||= [])[i] = { x, y, s: 30 };
-        mkCell(this, c, x, y, m, { size: 30, host, direct: feedOn, actL: '取下', onHover: v => { if (v) showTip(modTip(v, host)); }, onOut: hideTip, onClick: v => { if (this.drag && this.drag.moved) return; if (v && feedOn && feedSrc && feedSrc !== v) return this.doFeed(v); if (v) { host.mods[i] = null; S.mods.unshift(v); refreshStats(); save(); this.refresh(); } } });
-      }
-      if (host.sock) y += 38;
-      const Wi = modWeapon === 'gem' ? STATS.shieldW || STATS.weapons[0] : modWeapon === 'engine' ? STATS.engine : null;
-      if (Wi) [Wi.form === 'engine' ? `冲刺伤害 ${fmt(Wi.avg)}` : `秒伤 ${fmt(Wi.dps)} · 每秒 ${r1(Wi.aps)} 次 · 暴击 ${pct(Math.min(1, Wi.crit))} ×${Wi.critMult.toFixed(2)}`,
-        ELEM.filter(e => Wi.max[e] > 0).map(e => `${ELEM_N[e]} ${fmt(Wi.min[e])}–${fmt(Wi.max[e])}`).join('  '),
-        [Wi.pierce && '无限穿透', Wi.chain && `${Wi.form === 'proj' ? '弹射' : '连锁'} ${Wi.chain}`, Wi.split && `分裂 ${Wi.split}`, Wi.ret && '回旋', Wi.extra && `额外攻击 ${Wi.extra}`].filter(Boolean).join('  ') || '没有弹道加成',
-        '异常：' + (ELEM.filter(e => Wi.ail[e] > 0).map(e => `${AIL[e].n} ${pct(Math.min(1, Wi.ail[e]))}`).join('  ') || '无')]
-        .forEach(s => { const r = TW(this, 10, y, s, w - 20, { size: 8, color: COL.text, parent: c }); y += r.h + 1; });
-    }
-    y += 4; rect(this, 10, y, w - 20, 1, '#33293f', 1, c); y += 6;
-    T(this, 10, y, `符文 ${S.mods.length}`, { size: 8, color: COL.dim, parent: c });
-    mkBtn(this, c, w - 90, y - 8, 80, 26, feedOn ? '喂养：开' : '喂养：关', () => { feedOn = !feedOn; feedSrc = null; this.refresh(); }, { size: 8, style: feedOn ? 's' : 'n', disabled: !unlocked('feed') });
-    y += 20; const cols = MCOLS, st = TOUCH, x0 = Math.round((w - cols * st) / 2), rows = Math.max(1, Math.floor((h - y - 40) / st));
-    S.mods.slice(0, cols * rows).forEach((m, i) => {
-      const x = x0 + (i % cols) * st, yy = y + (i / cols | 0) * st;
-      if (feedOn && feedSrc === m) rect(this, x - 1, yy - 1, st, st, COL.ember, 1, c);
-      mkCell(this, c, x, yy, m, { size: st, host, direct: feedOn, actL: '镶嵌', onHover: v => showTip(modTip(v, host)), onOut: hideTip, onDown: (v, p) => { if (!feedOn) this.drag = { m: v, x: p.worldX, y: p.worldY, moved: false }; }, onClick: v => {
-        if (this.drag && this.drag.moved) return; m.isNew = false;
-        if (feedOn) { if (!feedSrc || feedSrc === v) { feedSrc = feedSrc === v ? null : v; return this.refresh(); } return this.doFeed(v); }
-        if (!host) return toast('这个位置没有装备');
-        const k = host.mods.indexOf(null); if (k < 0) return toast(host.sock ? '槽满了，先点上面的符文取下' : '这件装备没有符文槽');
-        host.mods[k] = v; S.mods = S.mods.filter(x => x !== v); refreshStats(); save(); this.refresh();
-      } });
-    });
-    y += Math.max(1, Math.ceil(Math.min(S.mods.length, cols * rows) / cols)) * st + 4;
-    TW(this, 10, y, feedOn ? (feedSrc ? `已选 ${MOD_BY[feedSrc.mid].n} 当饲料，再点要喂的符文。` : `先点一个符文当饲料：被喂的获得它经验的 ${Math.round(DATA.runes.feed.mul * 100)}%。`) : '点符文看详情并镶嵌，也可以直接拖进槽；点槽里的符文可取下。红色等级表示在这里不生效。', w - 20, { size: 8, color: feedOn ? COL.emberHi : COL.faint, parent: c });
-  }
   /* 铁砧：竖屏原生（物品格 → 词条卡 → 操作 → 加词条） */
   win_craft(c, w, h) {
-    [['铁砧', true], ['熔铸', unlocked('fuse')]].forEach(([n, ok], i) => mkBtn(this, c, 10 + i * 52, 4, 48, 28, n, () => { craftTab = i; this.refresh(); }, { size: 8, style: craftTab === i ? 's' : 'n', disabled: !ok, locked: !ok, whyDisabled: `${n}：${unlockText('fuse')}` }));
+    // 头：页签 + 铸符数量 + 选装备（两行高，自己能滑）；主体：装备卡（点词条选中）+ 能加的词条列表；底：操作按钮
+    const F = this.F, hc = F.head(craftTab === 1 && unlocked('fuse') ? 36 : 36 + 2 * TOUCH + 4);
+    [['铁砧', true], ['熔铸', unlocked('fuse')]].forEach(([n, ok], i) => mkBtn(this, hc, 10 + i * 52, 4, 48, 28, n, () => { craftTab = i; this.refresh(); }, { size: 8, style: craftTab === i ? 's' : 'n', disabled: !ok, locked: !ok, whyDisabled: `${n}：${unlockText('fuse')}` }));
     if (craftTab === 1 && unlocked('fuse')) return this.fusePaneM(c, w, h);
-    const all = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash].filter(x => x.kind !== 'gem'); // 技能石不能上铁砧（原来混进来，点到会报错）
+    const all = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash].filter(x => x.kind !== 'gem'); // 技能石不能上铁砧
     let it = all.find(x => x.id === craftId); if (!it) { it = all.find(craftable) || all[0]; craftId = it && it.id; craftAff = -1; }
-    GLYPHS.forEach((g, i) => T(this, 118 + i * 23, 14, `${g.n.slice(0, 1)}${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: c }));
-    const cols = MCOLS, st = TOUCH, SA = this.scrollArea(c, 0, 36, w, 2 * st, 'craft'); // 选装备：两行高，上下滑动
-    if (this.cPageFor !== it && it) { this.scrollPos = this.scrollPos || {}; this.scrollPos.craft = Math.max(0, (Math.floor(all.indexOf(it) / cols) - 1) * st); } this.cPageFor = it; // 换了要锻的装备：滚到它那一行
-    all.forEach((x, i) => mkCell(this, SA.lc, 9 + (i % cols) * st, (i / cols | 0) * st, x, { size: st, sel: x === it, direct: true, onClick: v => { craftId = v.id; craftAff = -1; craftLog = []; addPage = 0; this.cPageFor = v; this.refresh(); } }));
+    const gst = Math.min(23, Math.floor((w - 122) / GLYPHS.length)); GLYPHS.forEach((g, i) => T(this, 118 + i * gst, 14, `${g.n.slice(0, 1)}${glyphN(g.id)}`, { size: 8, color: glyphN(g.id) ? g.c : COL.faint, parent: hc }));
+    const cols = MCOLS, st = TOUCH, SA = this.scrollArea(hc, 0, 36, w, 2 * st, 'craft');
+    if (this.cPageFor !== it && it) { this.scrollPos = this.scrollPos || {}; this.scrollPos.craft = Math.max(0, (Math.floor(all.indexOf(it) / cols) - 1) * st); this.scrollPos['w:craft'] = 0; } this.cPageFor = it; // 换了要锻的装备：选装备格滚到它那一行，主体回到顶
+    all.forEach((x, i) => mkCell(this, SA.lc, 9 + (i % cols) * st, (i / cols | 0) * st, x, { size: st, sel: x === it, direct: true, onClick: v => { craftId = v.id; craftAff = -1; craftLog = []; this.cPageFor = v; this.refresh(); } }));
     SA.done(Math.ceil(all.length / cols) * st);
-    let y = 36 + 2 * st + 6;
+    let y = 2;
     if (craftLog[0]) { const r = TW(this, 10, y, craftLog[0], w - 20, { size: 8, color: COL.good, parent: c }); y += r.h + 4; }
-    if (!it) return T(this, 10, y, '没有可锻造的装备。', { size: 8, color: COL.faint, parent: c });
+    if (!it) { T(this, 10, y, '没有可锻造的装备。', { size: 8, color: COL.faint, parent: c }); return F.end(y + 20); }
     if (craftAff >= it.affs.length) craftAff = -1;
     const card = mkCard(this, c, 10, y, it, w - 20, { pick: craftable(it) ? i => { craftAff = craftAff === i ? -1 : i; this.refresh(); } : null, selAff: craftAff });
-    y += card.h + 6;
+    y += card.h + 8;
     const done = msg => { craftLog.unshift(msg); sfx('craft'); refreshStats(); save(); this.refresh(); }, adv = unlocked('craftAdv');
     if (useHope && !glyphN('hope')) useHope = false; if (useChaos && !glyphN('chaos')) useChaos = false;
-    const bw = Math.floor((w - 24) / 3), B = (i, row, n, fn, o) => mkBtn(this, c, 10 + i * (bw + 2), y + row * 30, bw, 28, n, fn, Object.assign({ size: 8 }, o));
-    const sel = it.affs[craftAff], uw = upWhy(it, craftAff);
-    mkBtn(this, c, 10, y, w - 20, 28, sel ? `升一档 · 碎片 ${shardN(sel.k)}` : '升一档（先点一条词条）', () => done(craftUp(it, craftAff, useHope, useChaos)), { size: 8, style: 'w', disabled: !!uw });
-    y += 30;
-    const rw = adv ? refineWhy(it, craftAff) : unlockText('craftAdv'), sw = adv ? stripWhy(it) : unlockText('craftAdv'), ow = oathWhy(it);
-    B(0, 0, '洗数值', () => done(craftRefine(it, craftAff)), { disabled: !!rw });
-    B(1, 0, '移除', () => done(craftStrip(it)), { disabled: !!sw });
-    B(2, 0, `立誓 ×${glyphN('oath')}`, () => done(craftOath(it)), { disabled: !!ow });
-    B(0, 1, useHope ? '带希望符' : '不带希望', () => { useHope = !useHope; this.refresh(); }, { style: useHope ? 's' : 'n', disabled: !glyphN('hope') });
-    B(1, 1, useChaos ? '带混沌符' : '不带混沌', () => { useChaos = !useChaos; this.refresh(); }, { style: useChaos ? 's' : 'n', disabled: !glyphN('chaos') });
-    B(2, 1, '拆解', () => this.ask(`拆解 ${itemName(it)}？`, '拆解', '会变成词条碎片，不能撤销。', () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片${coinTxt(g)}`); }), { style: 'n' });
-    y += 62;
+    // 底：操作
+    { const fc = F.foot(96), bw = Math.floor((w - 24) / 3), Bt = (i, row, n, fn, o) => mkBtn(this, fc, 10 + i * (bw + 2), 34 + row * 30, bw, 28, n, fn, Object.assign({ size: 8 }, o));
+      const sel = it.affs[craftAff], uw = upWhy(it, craftAff);
+      mkBtn(this, fc, 10, 4, w - 20, 28, sel ? `升一档 · 碎片 ${shardN(sel.k)}` : '升一档（先点一条词条）', () => done(craftUp(it, craftAff, useHope, useChaos)), { size: 8, style: 'w', disabled: !!uw });
+      const rw = adv ? refineWhy(it, craftAff) : unlockText('craftAdv'), sw = adv ? stripWhy(it) : unlockText('craftAdv'), ow = oathWhy(it);
+      Bt(0, 0, '洗数值', () => done(craftRefine(it, craftAff)), { disabled: !!rw });
+      Bt(1, 0, '移除', () => done(craftStrip(it)), { disabled: !!sw });
+      Bt(2, 0, `立誓 ×${glyphN('oath')}`, () => done(craftOath(it)), { disabled: !!ow });
+      Bt(0, 1, useHope ? '带希望符' : '不带希望', () => { useHope = !useHope; this.refresh(); }, { style: useHope ? 's' : 'n', disabled: !glyphN('hope') });
+      Bt(1, 1, useChaos ? '带混沌符' : '不带混沌', () => { useChaos = !useChaos; this.refresh(); }, { style: useChaos ? 's' : 'n', disabled: !glyphN('chaos') });
+      Bt(2, 1, '拆解', () => this.ask(`拆解 ${itemName(it)}？`, '拆解', '会变成词条碎片，不能撤销。', () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片${coinTxt(g)}`); }), { style: 'n' }); }
+    // 主体下半：能加的词条，有多少列多少
     const opts = craftable(it) ? AFF.filter(a => shardN(a.k) > 0 && canAdd(it, a)) : [];
-    const per = Math.max(1, Math.floor((h - y - 16) / 30)), pages = Math.max(1, Math.ceil(opts.length / per)); addPage = Math.min(addPage, pages - 1);
-    T(this, 10, y + 2, `加词条（${opts.length} 种可加）`, { size: 8, color: COL.dim, parent: c });
-    if (pages > 1) { mkBtn(this, c, w - 70, y - 8, 28, 28, '<', () => { addPage = (addPage + pages - 1) % pages; this.refresh(); }, { size: 8 }); mkBtn(this, c, w - 38, y - 8, 28, 28, '>', () => { addPage = (addPage + 1) % pages; this.refresh(); }, { size: 8 }); }
-    y += 16; const aw = anvilWhy(it);
-    if (!opts.length) TW(this, 10, y, aw || (it.affs.length >= AFF_MAX ? `已经有 ${AFF_MAX} 条词条` : '没有能加到这件装备上的碎片。'), w - 20, { size: 8, color: COL.faint, parent: c });
-    opts.slice(addPage * per, addPage * per + per).forEach((a, i) => mkBtn(this, c, 10, y + i * 30, w - 20, 28, `${a.type === 'P' ? '前' : '后'} ${affName(a)} ×${shardN(a.k)}`, () => done(craftAdd(it, a.k, useHope)), { size: 8, labelX: 4, disabled: !!addWhy(it, a.k) }));
+    T(this, 10, y, `加词条（${opts.length} 种可加）`, { size: 8, color: COL.dim, parent: c }); y += 14;
+    const aw = anvilWhy(it);
+    if (!opts.length) { const r = TW(this, 10, y, aw || (it.affs.length >= AFF_MAX ? `已经有 ${AFF_MAX} 条词条` : '没有能加到这件装备上的碎片。'), w - 20, { size: 8, color: COL.faint, parent: c }); y += r.h + 4; }
+    opts.forEach((a, i) => mkBtn(this, c, 10, y + i * 30, w - 20, 28, `${a.type === 'P' ? '前' : '后'} ${affName(a)} ×${shardN(a.k)}`, () => done(craftAdd(it, a.k, useHope)), { size: 8, labelX: 4, disabled: !!addWhy(it, a.k) }));
+    F.end(y + opts.length * 30 + 6);
   }
+  // 熔铸：主体 = 选神话 → 选同部位的稀有 → 神话的卡；底 = 熔铸按钮和不能熔的原因
   fusePaneM(c, w, h) {
-    const items = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash], us = items.filter(x => x.u && !x.leg);
+    const F = this.F, items = [...SLOTS.map(s => S.equip[s.id]).filter(Boolean), ...S.stash], us = items.filter(x => x.u && !x.leg);
     let u = us.find(x => x.id === craftId) || us[0]; craftId = u && u.id;
-    const cols = MCOLS, st = TOUCH; let y = 38;
+    const cols = MCOLS, st = TOUCH; let y = 4;
+    const grid = (list, selIt, on) => { list.forEach((x, i) => mkCell(this, c, 9 + (i % cols) * st, y + (i / cols | 0) * st, x, { size: st, sel: x === selIt, direct: true, onClick: on })); y += Math.max(1, Math.ceil(list.length / cols)) * st + 6; };
     T(this, 10, y, `神话装备 ${us.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
-    us.slice(0, cols * 2).forEach((x, i) => mkCell(this, c, 9 + (i % cols) * st, y + (i / cols | 0) * st, x, { size: st, sel: x === u, direct: true, onClick: v => { craftId = v.id; fuseId = null; this.refresh(); } }));
-    y += Math.max(1, Math.ceil(Math.min(us.length, cols * 2) / cols)) * st + 6;
-    if (!u) return TW(this, 10, y, '没有可以熔铸的神话装备。神话装备保留规则和固定词条，再从同部位稀有装备转移词条。', w - 20, { size: 8, color: COL.faint, parent: c });
+    grid(us, u, v => { craftId = v.id; fuseId = null; this.refresh(); });
+    if (!u) { const t = TW(this, 10, y - st, '没有可以熔铸的神话装备。神话装备保留规则和固定词条，再从同部位稀有装备转移词条。', w - 20, { size: 8, color: COL.faint, parent: c }); return F.end(y + t.h); }
     const rs = items.filter(x => x.kind === u.kind && x.rar === 2 && !x.u), r = rs.find(x => x.id === fuseId) || null, why = fuseWhy(u, r);
-    mkBtn(this, c, 10, y, w - 20, 28, '熔铸', () => this.ask('熔铸这两件装备？', '熔铸', '材料装备会被消耗。', () => { craftLog.unshift(craftFuse(u, r)); fuseId = null; sfx('craft'); save(); this.refresh(); }), { style: 'w', size: 8, disabled: !!why });
-    y += 34; T(this, 10, y, `同部位的稀有装备 ${rs.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
-    rs.slice(0, cols * 2).forEach((x, i) => mkCell(this, c, 9 + (i % cols) * st, y + (i / cols | 0) * st, x, { size: st, sel: x === r, direct: true, onClick: v => { fuseId = v.id; this.refresh(); } }));
-    y += Math.max(1, Math.ceil(Math.min(rs.length, cols * 2) / cols)) * st + 6;
-    mkCard(this, c, 10, y, u, w - 20);
+    T(this, 10, y, `同部位的稀有装备 ${rs.length}（材料，会被消耗）`, { size: 8, color: COL.dim, parent: c }); y += 12;
+    grid(rs, r, v => { fuseId = v.id; this.refresh(); });
+    y += mkCard(this, c, 10, y, u, w - 20).h + 6;
+    if (r) { T(this, 10, y, '材料', { size: 8, color: COL.dim, parent: c }); y += 12; y += mkCard(this, c, 10, y, r, w - 20).h + 6; }
+    F.end(y);
+    const fc = F.foot(why ? 50 : 36); if (why) TW(this, 10, 0, why, w - 20, { size: 8, color: COL.bad, parent: fc });
+    mkBtn(this, fc, 10, why ? 18 : 4, w - 20, 28, '熔铸', () => this.ask('熔铸这两件装备？', '熔铸', '材料装备会被消耗。', () => { const msg = craftFuse(u, r); craftLog.unshift(msg); fuseId = null; sfx('craft'); save(); this.refresh(); if (u.leg) this.popup((p, pw) => { const t = TW(this, 0, 0, msg, pw, { size: 8, color: COL.good, parent: p }); return t.h + 6 + mkCard(this, p, 0, t.h + 6, u, pw).h; }); }), { style: 'w', size: 8, disabled: !!why });
   }
   /* 天赋：复用星图，窄屏默认收起两侧栏 */
   /* 通用上下滑动区域（所有背包，11-09）：内容画进返回的 lc，最后 done(内容高度)。可视区外的格子关掉点击（不然会挡住下面的按钮）；拖动超过 6 像素算滑动，这一下不触发点击；右边一条滚动条 */
-  scrollArea(c, x, top, w, vh, key) {
-    const lc = this.add.container(0, top), ui = this; c.add(lc);
-    const mg = this.make.graphics({ add: false }); mg.fillStyle(0xffffff).fillRect(c.x + x, c.y + top, w, vh); lc.setMask(mg.createGeometryMask()); c.once('destroy', () => mg.destroy());
-    return { lc, done(contentH) {
-      ui.scrollPos = ui.scrollPos || {}; const max = Math.max(0, Math.ceil(contentH - vh)), s = ui.scrollPos[key] = clamp(ui.scrollPos[key] || 0, 0, max); lc.y = top - s;
-      const hits = [], walk = (o, oy) => { for (const q of o.list || []) { const yy = oy + (q.y || 0); if (q.input) hits.push({ o: q, y0: yy - (q.displayOriginY || 0), h: q.displayHeight || q.height || 0 }); if (q.list) walk(q, yy); } }; walk(lc, 0);
-      const bar = max > 0 ? ui.add.graphics() : null; if (bar) c.add(bar);
-      const V = { key, x0: c.x + x, x1: c.x + x + w, y0: c.y + top, y1: c.y + top + vh, max, lc, base: top,
-        sync(off) { for (const H of hits) if (H.o.input) { const a = lc.y + H.y0, b = a + H.h; H.o.input.enabled = !off && a >= top - 2 && b <= top + vh + 2; } },
-        drawBar() { if (!bar) return; const th = Math.max(16, vh * vh / (vh + max)), ty = top + (vh - th) * (ui.scrollPos[key] || 0) / max; bar.clear(); bar.fillStyle(0x000000, 0.35).fillRect(x + w - 3, top, 3, vh); bar.fillStyle(0xb9c2ea, 0.7).fillRect(x + w - 3, Math.round(ty), 3, Math.round(th)); } };
-      V.sync(); V.drawBar(); ui.scrollVPs.push(V); ui.initScroll();
-    } };
-  }
-  initScroll() {
-    if (this._scrollInit) return; this._scrollInit = 1;
-    this.input.on('pointerdown', p => { const V = !this.popC && (this.scrollVPs || []).find(v => v.lc.scene && v.max > 0 && p.worldX >= v.x0 && p.worldX <= v.x1 && p.worldY >= v.y0 && p.worldY <= v.y1); this.scrollDrag = V ? { V, x: p.worldX, y: p.worldY, s: (this.scrollPos || {})[V.key] || 0, moved: false } : null; });
-    this.input.on('pointermove', p => { const D = this.scrollDrag; if (!D || !p.isDown || !D.V.lc.scene) return; const dy = p.worldY - D.y;
-      if (!D.moved) { if (Math.abs(dy) <= 6 || Math.abs(dy) < Math.abs(p.worldX - D.x)) return; D.moved = true; D.V.sync(true); hideTip(); if (this.drag) { if (this.drag.img) this.drag.img.destroy(); this.drag = null; } } // 竖着拖 = 滑动（取消拖符文）
-      this.scrollPos[D.V.key] = clamp(D.s - dy, 0, D.V.max); D.V.lc.y = D.V.base - this.scrollPos[D.V.key]; D.V.drawBar(); });
-    this.input.on('pointerup', () => { const D = this.scrollDrag; this.scrollDrag = null; if (D && D.moved) setTimeout(() => { if (D.V.lc.scene) D.V.sync(); }, 0); });
-  }
   /* 天赋：专精（mastery-v1；交互按 11-09 设计稿）。顶栏 洗点 / 汇总 → 可用点数 → 两个专精切换 → 可滚动的档位阶梯（专精条卡 + 1/5/10/15/20 档的被动、大天赋卡）→ 底部汇总条；点卡片出底部抽屉（现在 / 下一级 / −1 加满 +1） */
   win_tree(c, w, h) {
+    const Fr = this.F, B = c; c = Fr.head(92); if (this.mstScroll === 0) { (this.scrollPos ||= {})['w:tree'] = 0; this.mstScroll = 1; } // 头：点数、洗点 / 汇总、专精切换；主体：档位阶梯（上下滑）；底：加成汇总
     const m = mstS(), pts = treePoints(), slots = MST.picks[MST.picks.length - 1][1], R = () => { refreshStats(); save(); this.refresh(); };
-    T(this, 12, 6, '天赋', { size: 12, scale: 2, parent: c });
-    mkBtn(this, c, w - 112, 6, 52, 28, '洗点', () => this.ask('洗点：退回全部天赋点？', () => { const n = mstSpent(); mstReset(); sfx('craft'); toast(`退回 ${n} 点，可以重新分配`, COL.emberHi); R(); }, '退回', '专精保留，点数全部退回。免费。'), { size: 8, disabled: !mstSpent(), whyDisabled: '还没有点天赋' });
-    mkBtn(this, c, w - 56, 6, 44, 28, '汇总', () => this.showLines(this.mstSummary(), m.picks.map(mid => ({ l: `换掉${MST_BY[mid].n}`, fn: () => this.ask(`换掉专精：${MST_BY[mid].n}？`, () => { mstUnpick(mid); this.mstTab = null; this.mstPicking = true; R(); }, '换掉', '它上面的点数全部退回，之后可以选别的专精。') }))), { size: 8 });
+    T(this, 12, 0, '天赋', { size: 12, scale: 2, parent: c });
+    mkBtn(this, c, w - 112, 0, 52, 28, '洗点', () => this.ask('洗点：退回全部天赋点？', () => { const n = mstSpent(); mstReset(); sfx('craft'); toast(`退回 ${n} 点，可以重新分配`, COL.emberHi); R(); }, '退回', '专精保留，点数全部退回。免费。'), { size: 8, disabled: !mstSpent(), whyDisabled: '还没有点天赋' });
+    mkBtn(this, c, w - 56, 0, 44, 28, '汇总', () => this.showLines(this.mstSummary(), m.picks.map(mid => ({ l: `换掉${MST_BY[mid].n}`, fn: () => this.ask(`换掉专精：${MST_BY[mid].n}？`, () => { mstUnpick(mid); this.mstTab = null; this.mstPicking = true; R(); }, '换掉', '它上面的点数全部退回，之后可以选别的专精。') }))), { size: 8 });
     // 可用点数（黄底 = 还有点没花）+ 已点
-    const pw = textW(`可用 ${pts} 点`, 12) + 16; rect(this, 12, 40, pw, 18, pts ? '#ffd23a' : '#1b2042', 1, c); T(this, 12 + pw / 2, 49, `可用 ${pts} 点`, { size: 12, color: pts ? '#2a1d00' : COL.dim, align: 'center', valign: 'middle', shadow: false, parent: c });
-    T(this, 20 + pw, 44, `已点 ${mstSpent()} / ${Math.max(0, (S.level || 1) - 1)}`, { size: 8, color: COL.dim, parent: c });
+    const pw = textW(`可用 ${pts} 点`, 12) + 16; rect(this, 12, 34, pw, 18, pts ? '#ffd23a' : '#1b2042', 1, c); T(this, 12 + pw / 2, 43, `可用 ${pts} 点`, { size: 12, color: pts ? '#2a1d00' : COL.dim, align: 'center', valign: 'middle', shadow: false, parent: c });
+    T(this, 20 + pw, 38, `已点 ${mstSpent()} / ${Math.max(0, (S.level || 1) - 1)}`, { size: 8, color: COL.dim, parent: c });
     // 专精切换
     if (!m.picks.includes(this.mstTab)) this.mstTab = m.picks[0] || null;
     const picking = !m.picks.length || (this.mstPicking && m.picks.length < mstPickMax()); // 选专精列表单独一个开关：原来用 mstTab = null，刷新时又被切回第一个专精，第 2 个专精选不了
     const tw = Math.floor((w - 24 - 6) / slots);
     for (let i = 0; i < slots; i++) { const mid = m.picks[i], M = MST_BY[mid], x = 12 + i * (tw + 6);
       if (M) { const sp = mstBar(mid) + M.pass.reduce((a, q) => a + mstRank(q.id), 0) + M.keys.filter(k => mstHas(k.id)).length;
-        mkBtn(this, c, x, 64, tw, 30, `${M.n}  ${sp}点`, () => { this.mstTab = mid; this.mstPicking = false; this.mstScroll = 0; this.refresh(); }, { size: 12, style: !picking && this.mstTab === mid ? 's' : 'n', color: !picking && this.mstTab === mid ? COL.text : COL.dim }); }
-      else if (i >= mstPickMax()) { const lv = (MST.picks.find(([, k]) => k > i) || [99])[0]; mkBtn(this, c, x, 64, tw, 30, `Lv${lv} 开放`, () => {}, { size: 8, disabled: true, whyDisabled: `第 ${i + 1} 个专精 Lv${lv} 开放` }); }
-      else mkBtn(this, c, x, 64, tw, 30, '＋ 选专精', () => { this.mstPicking = true; this.refresh(); }, { size: 12, style: picking ? 'w' : 'n' }); }
-    const top = 100, M = picking ? null : MST_BY[this.mstTab];
-    if (!M) return this.mstPickList(c, w, h, top);
+        mkBtn(this, c, x, 58, tw, 30, `${M.n}  ${sp}点`, () => { this.mstTab = mid; this.mstPicking = false; this.mstScroll = 0; this.refresh(); }, { size: 12, style: !picking && this.mstTab === mid ? 's' : 'n', color: !picking && this.mstTab === mid ? COL.text : COL.dim }); }
+      else if (i >= mstPickMax()) { const lv = (MST.picks.find(([, k]) => k > i) || [99])[0]; mkBtn(this, c, x, 58, tw, 30, `Lv${lv} 开放`, () => {}, { size: 8, disabled: true, whyDisabled: `第 ${i + 1} 个专精 Lv${lv} 开放` }); }
+      else mkBtn(this, c, x, 58, tw, 30, '＋ 选专精', () => { this.mstPicking = true; this.refresh(); }, { size: 12, style: picking ? 'w' : 'n' }); }
+    const M = picking ? null : MST_BY[this.mstTab];
+    if (!M) return this.mstPickList(B, w, h, 4);
     // 底部汇总条
     const add = {}; for (const part of masteryParts()) for (const k in part.add || {}) add[k] = (add[k] || 0) + part.add[k];
-    const sb = h - 40; mkBtn(this, c, 12, sb, w - 24, 32, '', () => this.showLines(this.mstSummary()), { size: 8 });
+    c = Fr.foot(40); const sb = 4; mkBtn(this, c, 12, sb, w - 24, 32, '', () => this.showLines(this.mstSummary()), { size: 8 });
     T(this, 22, sb + 4, '加成汇总（点开看全部）', { size: 8, color: COL.dim, parent: c });
     T(this, 22, sb + 16, wrapText(mstLines(add).slice(0, 3).join(' · ') || '还没有加成', w - 56, 8)[0], { size: 8, parent: c });
     // 档位阶梯（可滚动）
-    const vh = sb - 6 - top, lc = this.add.container(0, top); c.add(lc);
-    const mg = this.make.graphics({ add: false }); mg.fillStyle(0xffffff).fillRect(c.x, c.y + top, w, vh); lc.setMask(mg.createGeometryMask()); c.once('destroy', () => mg.destroy());
-    const cw = w - 24, b = mstBar(M.id), tap = fn => () => { const p = this.input.activePointer; if (this.mstDrag && this.mstDrag.moved) return; if (p && (p.worldY < c.y + top || p.worldY > c.y + top + vh)) return; fn(); };
-    let y = 0;
+    const lc = B, cw = w - 24, b = mstBar(M.id), tap = fn => fn; let y = 4;
     // 专精条卡
     rect(this, 12, y, cw, 64, '#1b2042', 1, lc); const g0 = this.add.graphics(); lc.add(g0); g0.lineStyle(1, 0x2e3670).strokeRect(12.5, y + 0.5, cw - 1, 63);
     T(this, 20, y + 5, '专精条 · 到刻度解锁下一档', { size: 8, color: COL.dim, parent: lc });
@@ -473,28 +413,19 @@ class MobileUI extends UI {
         TW(this, x + 7, yy + 34, wrapText(eff, col2 - 14, 8).slice(0, 2).join('\n'), col2 - 14, { size: 8, color: locked ? COL.faint : COL.dim, parent: lc }); });
       y += Math.ceil(items.length / 2) * (ch + 6) + 6;
     }
-    // 滚动：在阶梯区域上下拖
-    const max = Math.max(0, y - vh); this.mstScroll = clamp(this.mstScroll || 0, 0, max); lc.y = top - this.mstScroll;
-    // 可视区外的卡片和按钮关掉点击：原来它们只是被遮住，压在底部导航上把点击吃掉（天赋页里点不了“装备”“宝石”）
-    const hits = [], walk = (o, oy) => { for (const x of o.list || []) { const yy = oy + (x.y || 0); if (x.input) hits.push({ o: x, y0: yy - (x.displayOriginY || 0), h: x.displayHeight || x.height || 0 }); if (x.list) walk(x, yy); } }; walk(lc, 0);
-    const sync = () => { for (const H of hits) if (H.o.input) { const a = lc.y + H.y0, b2 = a + H.h; H.o.input.enabled = a >= top - 2 && b2 <= top + vh + 2; } };
-    sync();
-    this.mstVP = { top: c.y + top, bot: c.y + top + vh, max, lc, base: top, sync };
-    if (!this._mstDragInit) { this._mstDragInit = 1;
-      this.input.on('pointerdown', p => { const V = this.mstVP; this.mstDrag = this.winId === 'tree' && V && p.worldY >= V.top && p.worldY <= V.bot ? { y: p.worldY, s: this.mstScroll || 0, moved: false } : null; });
-      this.input.on('pointermove', p => { const D = this.mstDrag, V = this.mstVP; if (!D || !p.isDown || this.winId !== 'tree' || !V || !V.lc.scene) return; const dy = p.worldY - D.y; if (Math.abs(dy) > 6) D.moved = true; if (!D.moved) return; this.mstScroll = clamp(D.s - dy, 0, V.max); V.lc.y = V.base - this.mstScroll; V.sync(); });
-      this.input.on('pointerup', () => { const D = this.mstDrag; if (D) setTimeout(() => { if (this.mstDrag === D) this.mstDrag = null; }, 0); }); }
+    Fr.end(y);
   }
   // 选专精：6 张卡，点开底部抽屉看详情再选
   mstPickList(c, w, h, top) {
     const m = mstS(); T(this, 12, top, m.picks.length ? '选第 2 个专精' : '选第 1 个专精（Lv10 再选第 2 个）', { size: 8, color: COL.dim, parent: c });
-    const cw = Math.floor((w - 24 - 6) / 2), ch = Math.min(84, Math.floor((h - top - 20) / 3) - 6);
+    const cw = Math.floor((w - 24 - 6) / 2), ch = 104;
     MASTERY.forEach((X, i) => { const x = 12 + (i % 2) * (cw + 6), y = top + 14 + Math.floor(i / 2) * (ch + 6), taken = m.picks.includes(X.id);
       const bg = rect(this, x, y, cw, ch, taken ? '#141834' : '#1b2042', 1, c).setInteractive(); bg.on('pointerup', () => { if (!taken) this.mstSheet('pick', X.id); });
       const g = this.add.graphics(); c.add(g); g.lineStyle(1, taken ? 0x2e3670 : hex(X.c)).strokeRect(x + 0.5, y + 0.5, cw - 1, ch - 1);
       T(this, x + 8, y + 6, X.n + (taken ? '（已选）' : ''), { size: 12, color: taken ? COL.faint : X.c, parent: c });
-      TW(this, x + 8, y + 24, wrapText(mstLines(X.bar, 1).slice(0, 2).join('，') + ' / 点', cw - 16, 8).slice(0, 2).join('\n'), cw - 16, { size: 8, color: COL.dim, parent: c });
-      TW(this, x + 8, y + ch - 24, wrapText('大天赋：' + X.keys.map(k => k.n).join('、'), cw - 16, 8).slice(0, 2).join('\n'), cw - 16, { size: 8, color: COL.faint, parent: c }); });
+      TW(this, x + 8, y + 24, wrapText(mstLines(X.bar, 1).slice(0, 2).join('，') + ' / 点', cw - 16, 8).slice(0, 3).join('\n'), cw - 16, { size: 8, color: COL.dim, parent: c });
+      TW(this, x + 8, y + ch - 44, wrapText('大天赋：' + X.keys.map(k => k.n).join('、'), cw - 16, 8).slice(0, 4).join('\n'), cw - 16, { size: 8, color: COL.faint, parent: c }); });
+    this.F.end(top + 14 + Math.ceil(MASTERY.length / 2) * (ch + 6));
   }
   // 底部抽屉：被动（现在 / 下一级 / −1 加满 +1）、大天赋（效果 / 条件 / 点亮或退回）、选专精
   mstSheet(kind, id) {
@@ -553,9 +484,11 @@ class MobileUI extends UI {
     const floors = lad ? `${r.L}` : r.descent.from === r.base ? `${r.base}` : `${r.descent.from}–${r.base}`;
     const cols = [['i_ladder', floors, '层'], ['skull', String(r.kills), '击杀'], ['torch', mmss(r.t), '用时'], ['i_star', '+' + fmt(g.xp), g.lv ? `升 ${g.lv} 级` : '经验'], ['shard', '+' + (g.shards + (r.salv ? r.salv.shards : 0)), r.salv && r.salv.coins ? `骨币 +${r.salv.coins}` : r.salv && r.salv.n ? `分解 ${r.salv.n} 件` : '碎片']];
     const kept = g.items.filter(it => S.stash.includes(it) || Object.values(S.equip).includes(it));
-    const extra = [...g.mods.map(m => ['mod_' + m.mid, '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n])];
-    const pw = textW(title) + 52; c.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: c });
-    let y = 20;
+    const mg = {}; for (const m of g.mods) mg[m.mid] = (mg[m.mid] || 0) + 1; // 同种宝石合并成一个图标 ×数量（原来一颗一个，打多了排出屏幕）
+    const extra = [...Object.entries(mg).map(([mid, n]) => ['mod_' + mid, n > 1 ? '×' + n : '']), ...Object.entries(g.glyphs).map(([k, n]) => ['glyph_' + k, '×' + n])];
+    const F = this.F, B = c; c = F.head(10); // 头：结果、说明、五格数据；主体：带回的装备和宝石（上下滑）；底：去装备 / 铁砧 / 再下行
+    const pw = textW(title) + 52; this.winC.add(this.add.nineslice(Math.round((w - pw) / 2), -10, 'ribbon', null, pw, 22, 14, 14, 0, 0).setOrigin(0)); T(this, w / 2, -5, title, { color: win ? COL.emberHi : COL.bad, align: 'center', parent: this.winC });
+    let y = 12;
     if (note) { const t = TW(this, 12, y, note[0], w - 24, { size: 8, color: note[1], parent: c }); y += t.h + 8; }
     { const ht = hurtTop(r); if (ht) { const t = TW(this, 12, y, '受伤：' + ht + '（点开看全部）', w - 24, { size: 8, color: '#ffb0a0', parent: c }); zoneOn(this, c, 8, y - 2, w - 16, t.h + 4, () => this.ask('这趟是怎么受伤的', () => {}, '知道了', hurtList(r).slice(0, 10).join('\n') + '\n\n' + ht)); y += t.h + 6; } } // defense-v3 §8.4
     const cw = Math.floor((w - 24) / 3);
@@ -563,38 +496,42 @@ class MobileUI extends UI {
       c.add(nine(this, 12 + (i % 3) * cw + 2, yy, cw - 4, 46, 'f_slot', 3));
       img(this, Math.round(cx - s2.width / 2), yy + 4, ic, c); T(this, cx, yy + 22, v, { align: 'center', color: i === 3 ? COL.xp : COL.text, parent: c }); T(this, cx, yy + 35, l, { size: 8, color: COL.dim, align: 'center', parent: c }); });
     y += Math.ceil(cols.length / 3) * 50 + 6;
+    if (this.sumFor !== r) { this.sumFor = r; (this.scrollPos ||= {})['w:summary'] = 0; }
+    F.hh = y; c = B; y = 2;
     T(this, 12, y, `带回的装备 ${kept.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
-    const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q).slice(0, MCOLS * 2), st = TOUCH;
+    const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q), st = TOUCH;
     best.forEach((it, i) => mkCell(this, c, 9 + (i % MCOLS) * st, y + (i / MCOLS | 0) * st, it, { size: st, upg: true, acts: v => this.itemActs(v) }));
     if (!best.length) T(this, 12, y, '没有留下装备', { size: 8, color: COL.faint, parent: c });
     y += Math.max(1, Math.ceil(best.length / MCOLS)) * st + 6;
-    if (extra.length) { T(this, 12, y, '符文 · 铸符 · 墓图', { size: 8, color: COL.dim, parent: c }); y += 12; let ex = 12;
+    if (extra.length) { T(this, 12, y, '辅助宝石 · 铸符', { size: 8, color: COL.dim, parent: c }); y += 12; let ex = 12;
       for (const [ic, t] of extra) { const s2 = this.textures.get(ic).getSourceImage(), ww = s2.width + 1 + (t ? textW(t, 8) : 0) + 6; if (ex + ww > w - 12) { ex = 12; y += 18; } img(this, ex, y, ic, c); if (t) T(this, ex + s2.width + 1, y + 3, t, { size: 8, parent: c }); ex += ww; }
       y += 22; }
     if (!lad && r.lost) { const t = TW(this, 12, y, `阵亡：捡到的东西每件 ${SOUL.deathKeep}% 几率保住，这次丢了装备 ${r.lost.items} 件、符文 ${r.lost.mods} 个、碎片 ${r.lost.shards} 个。`, w - 24, { size: 8, color: COL.bad, parent: c }); y += t.h; }
-    else if (!win) TW(this, 12, y, '失败不会丢掉已经捡起的东西。地上没捡的会消失。', w - 24, { size: 8, color: COL.faint, parent: c });
+    else if (!win) y += TW(this, 12, y, '失败不会丢掉已经捡起的东西。地上没捡的会消失。', w - 24, { size: 8, color: COL.faint, parent: c }).h;
+    F.end(y + 6); c = F.foot(70);
     const hw = Math.floor((w - 28) / 2);
-    mkBtn(this, c, 12, h - 74, hw, 28, '装备', () => { this.closeWin(); this.openWin('gear'); }, { size: 8, icon: 'i_w_crossbow', iconX: 8, labelX: 30 });
-    mkBtn(this, c, 16 + hw, h - 74, hw, 28, '铁砧', () => { this.closeWin(); this.openWin('craft'); }, { size: 8, icon: 'i_anvil', iconX: 8, labelX: 30, disabled: !unlocked('craft') });
-    mkBtn(this, c, 12, h - 42, w - 24, 30, lad ? '再打天梯' : `再下行 · ${descentStart()} 层`, () => { this.closeWin(); if (lad) ladderChallenge(S.ladder.unlocked); else startRun(); }, { style: 'w', icon: 'torch', iconX: 10, labelX: 30 });
+    mkBtn(this, c, 12, 4, hw, 28, '装备', () => { this.closeWin(); this.openWin('gear'); }, { size: 8, icon: 'i_w_crossbow', iconX: 8, labelX: 30 });
+    mkBtn(this, c, 16 + hw, 4, hw, 28, '铁砧', () => { this.closeWin(); this.openWin('craft'); }, { size: 8, icon: 'i_anvil', iconX: 8, labelX: 30, disabled: !unlocked('craft') });
+    mkBtn(this, c, 12, 36, w - 24, 30, lad ? '再打天梯' : `再下行 · ${descentStart()} 层`, () => { this.closeWin(); if (lad) ladderChallenge(S.ladder.unlocked); else startRun(); }, { style: 'w', icon: 'torch', iconX: 10, labelX: 30 });
   }
   /* 地窖入口：竖屏原生 */
   win_depart(c, w, h) {
-    let y = 18;
+    let y = 8;
     T(this, w / 2, y, `下一趟从第 ${descentStart()} 层出发`, { align: 'center', color: COL.emberHi, parent: c }); y += 18;
     TW(this, 12, y, `最深纪录：第 ${S.maxDepth - 1} 层通关 · ${S.auto.lock ? '锁层：从选定的层出发' : `从最深层往回退 ${SOUL.startBack} 层热身`}`, w - 24, { size: 8, color: COL.dim, parent: c }); y += 28;
     mkBtn(this, c, 12, y, 40, 30, '<', () => { if (canPick(-1)) pickFloor(-1); this.refresh(); }, { disabled: !canPick(-1) });
     T(this, w / 2, y + 15, `出发层 ${descentStart()}`, { align: 'center', valign: 'middle', parent: c });
     mkBtn(this, c, w - 52, y, 40, 30, '>', () => { if (canPick(1)) pickFloor(1); this.refresh(); }, { disabled: !canPick(1) }); y += 38;
     mkBtn(this, c, 12, y, w - 24, 30, S.auto.lock ? '锁层：开（点击改为推层）' : '推层：开（点击改为锁层）', () => { S.auto.lock = !S.auto.lock; if (!S.auto.lock) S.depth = S.maxDepth; save(); this.refresh(); }, { size: 8 }); y += 40;
-    mkBtn(this, c, 12, h - 76, w - 24, 30, '出发', () => { this.closeWin(); startRun(); }, { style: 'w', disabled: !!RUN });
-    mkBtn(this, c, 12, h - 42, w - 24, 30, S.auto.loop ? '停止自动刷' : '自动刷（一趟接一趟）', () => { this.closeWin(); this.toggleLoop(); }, { size: 8 });
+    this.F.end(y); c = this.F.foot(72);
+    mkBtn(this, c, 12, 4, w - 24, 30, '出发', () => { this.closeWin(); startRun(); }, { style: 'w', disabled: !!RUN });
+    mkBtn(this, c, 12, 38, w - 24, 30, S.auto.loop ? '停止自动刷' : '自动刷（一趟接一趟）', () => { this.closeWin(); this.toggleLoop(); }, { size: 8 });
   }
   /* 分解祭坛：竖屏原生 */
   win_salvage(c, w, h) {
     const R = salvRules(), fav = salvFav(), back = S.maxDepth - CAMP.salvageIlvlBack;
     const tog = (x, y, bw, on, label, fn) => { const b = mkBtn(this, c, x, y, bw, 28, label, () => { fn(); save(); this.refresh(); }, { size: 8, labelX: 20 }); rect(this, 6, 10, 9, 9, '#120c18', 1, b); if (on) rect(this, 7, 11, 7, 7, COL.ember, 1, b); };
-    let y = 14; T(this, 12, y, '回营地时自动分解带回的装备', { size: 8, color: COL.emberHi, parent: c }); y += 14;
+    let y = 6; T(this, 12, y, '回营地时自动分解带回的装备', { size: 8, color: COL.emberHi, parent: c }); y += 14;
     const hw = Math.floor((w - 28) / 2);
     tog(12, y, hw, R.on, '自动分解', () => { R.on = !R.on; }); tog(16 + hw, y, hw, R.old, `等级 <${salvLv()} 分解`, () => { R.old = !R.old; }); y += 32;
     // 等级阈值：−5 −1 +1 +5，跟随最深层（R.lvl = null）
@@ -604,25 +541,24 @@ class MobileUI extends UI {
       mkBtn(this, c, w - 82, y, 70, 28, '跟随最深层', () => { R.lvl = null; save(); this.refresh(); }, { size: 8, style: R.lvl == null ? 's' : 'n' }); } y += 34;
     const tw = Math.floor((w - 28) / 3); ['普通', '罕见', '稀有'].forEach((n, i) => tog(12 + i * (tw + 2), y, tw, R.rar[i], n, () => { R.rar[i] = !R.rar[i]; })); y += 34;
     const t = TW(this, 12, y, '神话、传奇、溢彩装备和印记、符文、墓图永远不会被自动分解；身上穿着的也不会。带收藏词条的装备不按稀有度分解。', w - 24, { size: 8, color: COL.faint, parent: c }); y += t.h + 6;
-    const n = S.stash.filter(salvWhy).length;
-    mkBtn(this, c, 12, y, w - 24, 30, `现在分解背包（${n} 件）`, () => this.ask(`分解背包里 ${n} 件？`, '分解', '会变成词条碎片和骨币，不能撤销。', () => { const g = autoSalvage([...S.stash]); toast(`分解 ${g.n} 件，得到碎片 ${g.shards} 个${coinTxt(g)}`, '#d9cfb8'); save(); this.refresh(); }), { size: 8, style: 'w', disabled: !n }); y += 38;
+    const n = S.stash.filter(salvWhy).length; // 底：现在分解背包（固定）
+    mkBtn(this, this.F.foot(38), 12, 4, w - 24, 30, `现在分解背包（${n} 件）`, () => this.ask(`分解背包里 ${n} 件？`, '分解', '会变成词条碎片和骨币，不能撤销。', () => { this.salvReport('分解完成', S.stash.filter(salvWhy), () => autoSalvage([...S.stash])); save(); this.refresh(); }), { size: 8, style: 'w', disabled: !n });
     T(this, 12, y, `收藏词条 ${fav.length} 个${R.fav ? '' : '（默认）'}`, { size: 8, color: COL.emberHi, parent: c });
     if (R.fav) mkBtn(this, c, w - 84, y - 9, 72, 28, '恢复默认', () => { R.fav = null; save(); this.refresh(); }, { size: 8 });
     y += 18;
-    const list = AFF.filter(a => !a.tk).sort((a, b) => (fav.includes(b.k) - fav.includes(a.k)) || (affName(a) < affName(b) ? -1 : 1));
-    const rows = Math.max(1, Math.floor((h - y - 40) / 24)), per = rows * 2, pages = Math.ceil(list.length / per); this.salvPage = Math.min(this.salvPage || 0, pages - 1);
-    list.slice(this.salvPage * per, this.salvPage * per + per).forEach((a, i) => {
+    const list = AFF.filter(a => !a.tk && !a.off).sort((a, b) => affName(a) < affName(b) ? -1 : 1); // 顺序固定（原来收藏的排前面，勾一下列表就跳）；全部列出来，上下滑
+    list.forEach((a, i) => {
       const on = fav.includes(a.k), b = mkBtn(this, c, 12 + (i % 2) * (hw + 4), y + (i / 2 | 0) * 24, hw, 22, affName(a), () => { R.fav = on ? fav.filter(k => k !== a.k) : [...fav, a.k]; save(); this.refresh(); }, { size: 8, labelX: 16, color: on ? COL.emberHi : COL.text });
       rect(this, 5, 7, 8, 8, '#120c18', 1, b); if (on) rect(this, 6, 8, 6, 6, COL.ember, 1, b);
     });
-    if (pages > 1) { mkBtn(this, c, 12, h - 36, 50, 28, '<', () => { this.salvPage = (this.salvPage + pages - 1) % pages; this.refresh(); }); T(this, w / 2, h - 22, `${this.salvPage + 1} / ${pages}`, { size: 8, color: COL.dim, align: 'center', valign: 'middle', parent: c }); mkBtn(this, c, w - 62, h - 36, 50, 28, '>', () => { this.salvPage = (this.salvPage + 1) % pages; this.refresh(); }); }
+    this.F.end(y + Math.ceil(list.length / 2) * 24 + 6);
   }
   /* 手册：竖屏原生 */
   win_help(c, w, h) {
     const pages = helpPages(); pages[0] = ['操作', '手机上只有一个操作：移动。在屏幕左下按住拖动出现浮动摇杆，松手几秒后交还自动。两只手上的武器会自动攻击射程内最近的敌人；没有冲刺按钮和主动技能。底部导航打开装备、天赋、铁砧、符文、段位、设置；中间「战斗」回到战场。长按物品或词条看详情。每升一级得 1 个天赋点。'];
-    const bw = Math.floor((w - 24) / 4);
-    pages.forEach(([n], i) => mkBtn(this, c, 12 + (i % 4) * bw, 8 + (i / 4 | 0) * 30, bw - 2, 28, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
-    let y = 8 + Math.ceil(pages.length / 4) * 30 + 6; const [n, txt] = pages[helpTopic];
+    const bw = Math.floor((w - 24) / 4), B = c; c = this.F.head(4 + Math.ceil(pages.length / 4) * 30 + 4);
+    pages.forEach(([n], i) => mkBtn(this, c, 12 + (i % 4) * bw, 4 + (i / 4 | 0) * 30, bw - 2, 28, n, () => { helpTopic = i; this.refresh(); }, { size: 8, style: helpTopic === i ? 's' : 'n' }));
+    c = B; let y = 4; const [n, txt] = pages[helpTopic];
     T(this, 12, y, n, { color: COL.emberHi, parent: c }); y += 18;
     const t = TW(this, 12, y, txt, w - 24, { size: 12, color: COL.text, parent: c }); y += t.h + 8;
     if (n === '存档') {
@@ -630,15 +566,15 @@ class MobileUI extends UI {
       D.forEach(([ck, id, nm], i) => mkBtn(this, c, 12 + (i % 2) * (hw + 4), y + (i / 2 | 0) * 32, hw, 28, `载入${nm}存档`, () => this.ask(`载入${nm}存档？`, '载入', '当前进度会先备份，之后可以恢复。', () => { loadDemo(id); toast(`已载入${nm}毕业存档`, COL.emberHi); }), { size: 8, style: 'w' }));
       y += 3 * 32; mkBtn(this, c, 12, y, w - 24, 28, '恢复之前的进度', () => this.ask('恢复之前的进度？', '恢复', '当前进度会被覆盖。', () => { restoreBackup(); toast('已恢复之前的进度', COL.emberHi); }), { size: 8, style: 'n', disabled: !hasBackup() });
     }
-    T(this, w / 2, h - 14, '系统与数值参考 Astroloot 复刻；画面、名字和文字为原创。', { size: 8, color: COL.faint, align: 'center', parent: c });
+    y += n === '存档' ? 34 : 0; T(this, w / 2, y + 6, '系统与数值参考 Astroloot 复刻；画面、名字和文字为原创。', { size: 8, color: COL.faint, align: 'center', parent: c }); this.F.end(y + 22);
   }
   /* 段位（天梯并进推层，11-09）：段位按推层最深层；Boss 宝箱的额外奖励；跳层规则；最近记录 */
   win_ladder(c, w, h) {
     const L = S.ladder, D = deepest(), ti = ladderTier(D), tier = LADDER_TIERS[ti], nx = LADDER_TIERS[ti + 1], R = LD.reward;
-    T(this, 12, 16, tier ? tier.n : '未定段位', { color: tier ? tier.c : COL.dim, scale: 2, parent: c });
-    T(this, w - 12, 18, nx ? `下一段位 ${nx.n}：第 ${nx.at} 层` : '已是最高段位', { size: 8, color: COL.dim, align: 'right', parent: c });
-    T(this, w - 12, 30, `推层最深 ${D} 层`, { size: 8, align: 'right', parent: c });
-    let y = 52; const ln = (t, col) => { const x = TW(this, 12, y, t, w - 24, { size: 8, color: col || COL.text, parent: c }); y += x.h + 6; };
+    T(this, 12, 6, tier ? tier.n : '未定段位', { color: tier ? tier.c : COL.dim, scale: 2, parent: c });
+    T(this, w - 12, 8, nx ? `下一段位 ${nx.n}：第 ${nx.at} 层` : '已是最高段位', { size: 8, color: COL.dim, align: 'right', parent: c });
+    T(this, w - 12, 20, `推层最深 ${D} 层`, { size: 8, align: 'right', parent: c });
+    let y = 42; const ln = (t, col) => { const x = TW(this, 12, y, t, w - 24, { size: 8, color: col || COL.text, parent: c }); y += x.h + 6; };
     rect(this, 12, y, w - 24, 1, '#33293f', 1, c); y += 8;
     T(this, 12, y, '推层规则', { size: 8, color: COL.emberHi, parent: c }); y += 14;
     ln(`段位按推层最深层晋升，第一次到达送每种铸符 ${LD.tiers.firstGlyphs} 张。`);
@@ -650,7 +586,8 @@ class MobileUI extends UI {
     T(this, 12, y, `新纪录（共 ${L.records.length} 条）`, { size: 8, color: COL.emberHi, parent: c }); y += 14;
     if (!L.records.length) T(this, 12, y, '推到新的最深层时记下用时和当时的配装', { size: 8, color: COL.faint, parent: c });
     const nm = q => q.u ? UNIQUE_BY[q.u].n : baseOf({ kind: q.slot === 'wl' || (q.slot === 'wr' && WEAPONS[q.b]) ? 'weapon' : q.slot === 'wr' ? 'off' : q.slot, b: q.b }).n;
-    L.records.slice(0, Math.max(0, Math.floor((h - y - 6) / 11))).forEach((r, i) => {
+    this.F.end(y + Math.max(1, L.records.length) * 11 + 6);
+    L.records.forEach((r, i) => {
       const wp = r.build.equip.find(q => q.slot === 'wl') || r.build.equip[0], tc = LADDER_TIERS[ladderTier(r.lvl)];
       T(this, 12, y + i * 11, `${r.lvl} 层${r.jump > 1 ? ` · 跳 ${r.jump}` : ''}`, { size: 8, color: tc ? tc.c : COL.text, parent: c });
       T(this, w - 12, y + i * 11, `${r.date.slice(5, 10)} ${ELEM_N[r.build.elem]} ${wp ? nm(wp) : ''}`, { size: 8, color: COL.faint, align: 'right', parent: c });
@@ -658,13 +595,13 @@ class MobileUI extends UI {
   }
   /* 骨坊：选部位，花骨币赌一件未鉴定装备（economy.shop） */
   win_shop(c, w, h) {
-    let y = 14; const price = shopPrice(), why = shopWhy();
+    let y = 6; const price = shopPrice(), why = shopWhy();
     img(this, 12, y - 1, 'coin', c).setScale(2); T(this, 30, y, `骨币 ${fmt(S.coins || 0)}`, { color: COL.emberHi, parent: c });
     T(this, w - 12, y + 2, `储物箱 ${gearCount()}/${STASH_CAP}`, { size: 8, color: COL.dim, align: 'right', parent: c }); y += 20;
     const t = TW(this, 12, y, `选一个部位，花 ${price} 骨币买一件未鉴定装备，买下才揭晓。物品等级 = 已到的最深层（${shopIlvl()}），只出罕见和稀有，${Math.round(ECO.shop.unique * 100)}% 是这个部位的神话装备。骨币来自分解装备和宝石。`, w - 24, { size: 8, color: COL.dim, parent: c }); y += t.h + 8;
     const hw = Math.floor((w - 28) / 2);
     SHOP_SLOTS.forEach((s, i) => mkBtn(this, c, 12 + (i % 2) * (hw + 4), y + (i / 2 | 0) * 34, hw, 30, `${SLOTS.find(x => x.id === s).n} · ${price}`, () => {
-      const it = gamble(s); if (!it) return; this.shopLast = it; sfx('craft'); toast(`揭晓：${itemName(it)}`, icol(it)); this.refresh();
+      const it = gamble(s); if (!it) return; this.shopLast = it; sfx('craft'); this.refresh(); this.showDetail(it, null, this.itemActs(it)); // 买到直接弹出这件装备的卡，能当场装备 / 拆解
     }, { size: 8, icon: 'coin', iconX: 6, labelX: 18, style: why ? 'n' : 'w', disabled: !!why, whyDisabled: why || '' }));
     y += 3 * 34 + 8;
     const it = this.shopLast;
@@ -673,17 +610,19 @@ class MobileUI extends UI {
       mkCell(this, c, 12, y, it, { size: TOUCH, acts: v => this.itemActs(v) });
       T(this, 48, y + 1, itemName(it), { color: icol(it), parent: c });
       T(this, 48, y + 16, `物品等级 ${it.ilvl} · 词条 ${(it.affs || []).length} 条 · 点图标操作`, { size: 8, color: COL.dim, parent: c });
-      mkBtn(this, c, 12, y + 40, w - 24, 28, '去储物箱看看', () => { this.closeWin(); this.openWin('gear'); }, { size: 8 });
+      mkBtn(this, c, 12, y + 40, w - 24, 28, '去储物箱看看', () => { this.closeWin(); this.openWin('gear'); }, { size: 8 }); y += 72;
     }
+    this.F.end(y);
   }
   /* 菜单：底部导航放不下的页面 */
   win_more(c, w, h) {
-    const items = [['ladder', '段位 · 记录', 'i_ladder'], ['settings', '设置', null], ['mods', '辅助宝石', 'mod_Chain'], ['stones', '属性石 · 镶嵌与合成', 'shard'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['shop', '骨坊 · 赌部件', 'coin'], ['depart', '地窖入口 · 选层', 'torch']];
+    const items = [['ladder', '段位 · 记录', 'i_ladder'], ['settings', '设置', 'i_star'], ['mods', '辅助宝石', 'mod_Chain'], ['stones', '属性石 · 镶嵌与合成', 'shard'], ['help', '手册', 'i_book'], ['salvage', '分解祭坛', 'shard'], ['shop', '骨坊 · 赌部件', 'coin'], ['depart', '地窖入口 · 选层', 'torch']];
     items.forEach(([id, n, ic], i) => {
-      const y = 20 + i * 40, open = (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'shop' || unlocked('shop'));
-      mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, iconX: 10, labelX: 34, disabled: !open || (RUN && id === 'depart'), locked: !open, whyDisabled: open ? '任务进行中' : `${n}：${unlockText(id)}` });
+      const y = 6 + i * 38, open = (!MENU.some(m => m.id === id) || unlocked(id)) && (id !== 'shop' || unlocked('shop'));
+      mkBtn(this, c, 12, y, w - 24, 32, n, () => { if (!open) { toast(`${n}：${unlockText(id)}`); return; } this.openWin(id); }, { icon: ic, iconX: 10 + Math.max(0, Math.round((16 - this.textures.get(ic).getSourceImage().width) / 2)), labelX: 34, disabled: !open || (RUN && id === 'depart'), locked: !open, whyDisabled: open ? '任务进行中' : `${n}：${unlockText(id)}` });
     });
-    T(this, w / 2, 20 + items.length * 40 + 6, RUN ? '任务进行中 · 装备、天赋等修改立即生效' : '营地', { size: 8, color: COL.dim, align: 'center', parent: c });
+    if (RUN) T(this, w / 2, 6 + items.length * 38 + 4, '任务进行中 · 装备、天赋等修改立即生效', { size: 8, color: COL.dim, align: 'center', parent: c });
+    this.F.end(6 + items.length * 38 + 20);
   }
   /* 营地：战场上方一块设施面板（营地的设施在 480 宽的场景里，竖屏看不全，入口集中放这里） */
   buildCamp() { this.campC = this.add.container(0, MTOP + 4).setDepth(20); this.facs = []; this.campKey = ''; }
@@ -720,17 +659,6 @@ class MobileUI extends UI {
     });
   }
   // 长按弹出的详情卡；点任意处关闭
-  popup(build, acts = [], closeL = '关闭') {
-    this.closePopup(); hideTip();
-    const c = this.add.container(0, 0).setDepth(250); this.popC = c;
-    const dim = rect(this, 0, 0, W, H, COL.ink, 0.6, c).setInteractive(); dim.on('pointerup', () => this.closePopup());
-    const pw = W - 24, in_ = this.add.container(12 + 8, 0); const hh = build(in_, pw - 16);
-    const ph = Math.min(H - 40, hh + 50), py = Math.round(Math.max(20, (H - NAV_H - ph) / 2));
-    const bg = nine(this, 12, py, pw, ph, 'o_frame', 8).setInteractive(); c.add(this.add.tileSprite(15, py + 3, pw - 6, ph - 6, 'n_win').setOrigin(0)); c.add(bg);
-    in_.y = py + 10; c.add(in_);
-    const all = [...acts, { l: closeL }], n = all.length, bw = Math.floor((pw - 16 - (n - 1) * 4) / n);
-    all.forEach((a, i) => mkBtn(this, c, 20 + i * (bw + 4), py + ph - 38, bw, 30, a.l, () => { this.closePopup(); if (a.fn) a.fn(); }, { size: 8, style: a.style || 'n', disabled: !!a.disabled, locked: !!a.why && !!a.disabled, whyDisabled: a.why }));
-  }
   // 手机确认弹窗：确认 / 取消（点外面也算取消）
   ask(title, fn, ok = '确认', body = '') { if (typeof fn === 'string' && typeof body === 'function') [fn, ok, body] = [body, fn, ok]; // 兼容 ask(标题, 按钮, 说明, 回调) 的写法（原来有 5 处这么写，点确认没反应）
     this.showLines([{ t: title, c: COL.emberHi }, body && { t: body, s: 8, c: COL.dim }], [{ l: ok, fn, style: 'r' }], '取消'); }
@@ -776,7 +704,6 @@ class MobileUI extends UI {
       c.destroy(); this.loadC = null;
     })();
   }
-  closePopup() { if (this.popC) { this.popC.destroy(); this.popC = null; } }
   showDetail(it, host, acts = []) {
     if (it.kind === 'mod') return this.showLines(modTip(it, host), acts);
     this.popup((p, w) => mkCard(this, p, 0, 0, it, w, { compare: !!slotsFor(it)[0] }).h, acts);

@@ -24,10 +24,11 @@ const STONE_SLOTS = () => SLOTS.filter(s => s.id !== 'gem' && S.equip[s.id] && s
 Object.assign(MobileUI.prototype, {
   /* 属性石（11-09 重做）：上 = 带孔的装备（孔里写石头名和阶、下面一行写这件的全部效果），下 = 背包（名字 + 阶 + 数量）。点石头出底部抽屉：两类部位各加多少、下一阶、能镶的孔（标秒伤 / 坚韧变化）、合成；点孔里的石头看详情再取下 */
   win_stones(c, w, h) {
+    const Fr = this.F, B = c; c = Fr.head(34); // 头：说明 + 一键合成；主体：带孔的装备 + 背包，一起上下滑
     const bag = S.stones || [], fz = stoneFuseN();
-    TW(this, 12, 8, '武器、副手加伤害，护甲部位加防御；同件装备同种石头只算最高阶一颗', w - 24 - (fz ? 76 : 0), { size: 8, color: COL.dim, parent: c });
-    if (fz) mkBtn(this, c, w - 84, 4, 72, 28, `一键合成 ${fz}`, () => { const n = stoneFuseAll(); sfx('craft'); toast(`合成 ${n} 次`, '#ffe066'); this.refresh(); }, { size: 8, style: 'w' });
-    let y = 38; const slots = STONE_SLOTS();
+    TW(this, 12, 4, '武器、副手加伤害，护甲部位加防御；同件装备同种石头只算最高阶一颗', w - 24 - (fz ? 76 : 0), { size: 8, color: COL.dim, parent: c });
+    if (fz) mkBtn(this, c, w - 84, 2, 72, 28, `一键合成 ${fz}`, () => { this.stoneReport(); this.refresh(); }, { size: 8, style: 'w' });
+    c = B; let y = 4; const slots = STONE_SLOTS();
     if (!slots.length) { T_(this, c, w / 2, y + 8, '没有带孔的装备：魔法装备 1–2 孔、稀有 2–3 孔', { size: 8, color: COL.dim }); y += 30; }
     slots.forEach(sl => { const it = S.equip[sl.id], n = stoneSockN(it); it.stones = it.stones || [];
       bub(this, c, 8, y, w - 16, 46, 0x2a2236, { flat: 1 });
@@ -44,14 +45,14 @@ Object.assign(MobileUI.prototype, {
     const G = {}; for (const x of bag) { const k = x.sid + '|' + x.t; (G[k] = G[k] || []).push(x); }
     const keys = Object.keys(G).sort((a, b) => { const [sa, ta] = a.split('|'), [sb, tb] = b.split('|'); return sa === sb ? tb - ta : sa < sb ? -1 : 1; });
     T(this, 12, y + 2, `背包 · ${bag.length} 颗`, { size: 12, color: COL.emberHi, parent: c }); T(this, w - 12, y + 6, '点石头看效果、镶嵌、合成', { size: 8, color: COL.faint, align: 'right', parent: c }); y += 22;
-    if (!keys.length) { T_(this, c, w / 2, y + 6, '打怪有几率掉属性石（直接进背包）', { size: 8, color: COL.dim }); this.paneH = y + 40; return; }
-    const TW2 = 44, TH = 38, per = Math.max(1, Math.floor((w - 16 + 4) / (TW2 + 4))), SA = this.scrollArea(c, 0, y, w, Math.max(TH + 8, h - y - 8), 'stones'), c0 = c; c = SA.lc; // 背包上下滑动
-    keys.forEach((k, i) => { const L = G[k], st = L[0], S0 = stoneOf(st.sid), x = 8 + (i % per) * (TW2 + 4), yy = 4 + (i / per | 0) * (TH + 4);
+    if (!keys.length) { T_(this, c, w / 2, y + 6, '打怪有几率掉属性石（直接进背包）', { size: 8, color: COL.dim }); return Fr.end(y + 30); }
+    const TW2 = 44, TH = 38, per = Math.max(1, Math.floor((w - 16 + 4) / (TW2 + 4)));
+    keys.forEach((k, i) => { const L = G[k], st = L[0], S0 = stoneOf(st.sid), x = 8 + (i % per) * (TW2 + 4), yy = y + 4 + (i / per | 0) * (TH + 4);
       bub(this, c, x, yy, TW2, TH, hx(S0.c));
       T_(this, c, x + TW2 / 2, yy + 5, stoneShort(S0), { size: 8, color: '#1a1426', shadowColor: null }); T_(this, c, x + TW2 / 2, yy + 19, `${st.t}阶`, { size: 8, color: '#1a1426', shadowColor: null });
       if (L.length > 1) { rect(this, x + TW2 - 15, yy - 3, 17, 11, '#1a1426', 1, c); T(this, x + TW2 + 1, yy - 2, '×' + L.length, { size: 8, color: L.length >= 3 && st.t < 5 ? '#ffe066' : COL.text, align: 'right', parent: c }); }
       zoneOn(this, c, x, yy, TW2, TH, () => this.stoneSheet({ s: st })); });
-    c = c0; SA.done(4 + Math.ceil(keys.length / per) * (TH + 4));
+    Fr.end(y + 8 + Math.ceil(keys.length / per) * (TH + 4));
   },
   // 底部抽屉：背包石头（效果 / 下一阶 / 能镶的孔 / 合成）或孔里的石头（效果 / 取下）
   stoneSheet(o) {
