@@ -121,6 +121,10 @@ function baseLines(it) {
   if (it.kind === 'weapon') { // 主手只给数值（spec-skill-gems）：类别、对口、暴击；伤害按技能石算
     const cat = GEMC.cats[b.cat], sk = skillItem({ ...S.equip, wl: it, gem: basicGem({ ...S.equip, wl: it }) }), sb = sk ? sk.fb : null; // 伤害在魂龛 / 宝石那边看，这里只给武器本身的数值
     out.push([`类别：${cat ? cat.n : '—'}${cat ? `（对口：${cat.tags.map(t => TAG_N[t] || t).join('、')}）` : ''}${b.retired ? ' · 已停止掉落' : ''}`, COL.dim]);
+    { // 武器伤害：底材 × 品质 × 武器威力（技能伤害按它乘）；有“基础伤害提高”时再写放大后的（用户 11-09：武器伤害必须显示）
+      const pw = GEMC.pow[it.b] ?? 1, [mn, mx] = weaponBase(b, q).map(v => v * pw), bi = (it.affs || []).reduce((s, x) => { const a = AFF_BY[x.k]; return s + (a && a.stat === 'baseInc' && (!a.el || a.el === 'all' || a.el === b.el || (a.el === 'thermal' && THERMAL_E.includes(b.el))) ? x.v : 0); }, 0);
+      out.push([`武器伤害 ${fmt(mn)}–${fmt(mx)}（${ELEM_N[b.el] || ''}，${QUAL[q] ? QUAL[q][0] : ''}品质）`, ELEM_C[b.el] || COL.text]);
+      if (bi) out.push([`加上基础伤害提高 ${bi}%：${fmt(mn * (1 + bi / 100))}–${fmt(mx * (1 + bi / 100))}`, COL.good]); }
     const p = []; if (b.crit) p.push(`暴击 ${b.crit}%`); if (sb && sb.aps) p.push(`每秒攻击 ${r1(sb.aps)}`); if (p.length) out.push([p.join(' · '), dim]);
     return out; }
   if (it.kind === 'off') { // 副手：不带技能，只强化主手技能
