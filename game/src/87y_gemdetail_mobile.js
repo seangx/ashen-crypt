@@ -10,7 +10,7 @@ Object.assign(MobileUI.prototype, {
       lines.push([`${it.lvl || 1} 级 · 品质 ${it.q || 0}% · ${FORM_N[G.form] || '技能石'}`, '#ffe066']);
       for (const [t, c] of gemLines(it)) if (t && !/主手 ×|现在的主手|需要盾牌|经验/.test(t)) lines.push([t, c]);
       lines.push([`施放耗灯：${gemCost(it).toFixed(1)} / 次`, '#ffb347']);
-      lines.push([`插在：任意魂龛的孔（每个魂龛最多 ${T0 ? trigMaxSkills(T0) : 1} 颗技能石）${G.form ? '' : ''}`, '#b9c2ea']);
+      lines.push([G.util ? '插在：响应类魂龛的孔（击杀、受击、格挡、冲刺、定时、明灯、低血、遇精英）' : `插在：出手类魂龛的孔（出手、命中、暴击、残灯；每个魂龛最多 ${T0 ? trigMaxSkills(T0) : 1} 颗技能石）`, '#b9c2ea']);
     } else {
       const host = T0 && T0.socks.find(isSkill);
       for (const l of modTip(it)) if (l && l.t && !/^插在|经验/.test(l.t)) lines.push([l.t, l.c || '#e0e4f0']);
@@ -39,7 +39,7 @@ Object.assign(MobileUI.prototype, {
     const empty = []; for (let k = 0; k < T0.sock; k++) if (!T0.socks[k] && trigCanSock(T0, k, it)) empty.push(k);
     if (empty.length) { socketInto(T0, empty[0], it); sfx('click'); toast(`已装进第 ${empty[0] + 1} 孔`); gemPick = null; this.refresh(); return; }
     const any = T0.socks.some((_, k) => trigCanSock(T0, k, it));
-    if (!any) { toast(isSkill(it) && T0.c === 'always' ? '常驻只能插瘟疫光环、游雷、旋风斩' : '这个魂龛放不下'); return; }
+    if (!any) { toast(isSkill(it) && GEM_BY[it.b].util && TCOND[T0.c].kind === 'cast' ? '功能技能只能插在响应类魂龛：换到击杀、受击、冲刺、定时这类魂龛' : isSkill(it) && !GEM_BY[it.b].util && TCOND[T0.c].kind !== 'cast' && T0.c !== 'always' ? '输出技能只能插在出手类魂龛（出手、命中、暴击、残灯）' : isSkill(it) && T0.c === 'always' ? '常驻只能插瘟疫光环、游雷、旋风斩' : '这个魂龛放不下'); return; }
     gemPick = it; toast('没有空孔：点一个亮起的孔替换'); this.refresh();
   },
 });

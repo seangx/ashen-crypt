@@ -143,7 +143,8 @@ function rollModDrop(ilvl) {
 /* 技能石（spec-skill-gems）：{ kind:'gem', b:技能石 id, var:来源底子, lvl, xp, q, sock, mods } */
 const gemVar = g => g.var || GEM_BY[g.b].src[0];
 const gemTags = g => { const G = GEM_BY[g.b], v = G.src.length ? gemVar(g) : null; return v && WEAPONS[v] ? WEAPONS[v].tags.filter(t => t !== 'Weapon') : G.tags; };
-const gemTag3 = g => { const G = GEM_BY[g.b] || g; return [ELEM_N[G.el], F3_N[G.f3], ...(G.mech || []).map(k => MECH_N[k])].filter(Boolean); }; // 显示用的三层标签
+const utilVal = g => { const G = GEM_BY[g.b], U = G.util; return Math.round((U.v[0] + (U.v[1] - U.v[0]) * (clamp(g.lvl || 1, 1, MOD_MAX) - 1) / Math.max(1, MOD_MAX - 1)) * (1 + (g.q || 0) / 100) * 10) / 10; }; // 功能技能的数值：按等级、品质
+const gemTag3 = g => { const G = GEM_BY[g.b] || g; return [G.kind3, ELEM_N[G.el], F3_N[G.f3], ...(G.mech || []).map(k => MECH_N[k])].filter(Boolean); }; // 显示用的三层标签
 const gemMul = (G, L) => G.mul[0] + (G.mul[1] - G.mul[0]) * (clamp(L, 1, MOD_MAX) - 1) / 19;
 function newGem(id, o = {}) {
   const G = GEM_BY[id], xp = o.xp || 0;

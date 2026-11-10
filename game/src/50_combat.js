@@ -141,7 +141,7 @@ function hitMob(m, W, o = {}) {
   if (W.perDashInc) mul *= 1 + W.perDashInc * Math.floor(player.dash);
   if (W.doubleChance && rnd() < W.doubleChance) mul *= 2;
   if (W.killInc && RUN) mul *= 1 + Math.min(RL.killInc.max, W.killInc * RUN.kills) / 100;
-  mul *= ruleMul(m) * elemMul(m);
+  mul *= ruleMul(m) * elemMul(m) * (1 + buffV('dmg') / 100); // 战吼
   if (STATS.flag.ctrlPrison && !isCtrl(m)) mul *= 1 - RL.ctrlPrison.less / 100; /* 寒狱：对未受控的敌人总降 */
   if (m.frzT > 0 && STATS.frozenTaken) mul *= 1 + STATS.frozenTaken; // 冻结的敌人受到的伤害提高
   if (m.frzT > 0 && STATS.flag.frozenMore) mul *= 1 + STATS.flag.frozenMore / 100; // 誓约：对冻结的敌人总增
@@ -344,7 +344,7 @@ function vortexState() {
   let full = false, any = false; whirlWs().forEach(([W, i]) => { if (!alwaysWhirl(W)) return; const n = player.spin[i].n; if (n >= W.stackMax) full = true; if (n > 0) any = true; });
   return full ? 1 : any ? 0.5 : 0;
 }
-const vortexMove = () => { const v = vortexState(); return v === 1 ? 1 + UQX.vortex.moveFull / 100 : 1; }; // 独特去代价（11-10）：没有层数时不再减速
+const vortexMove = () => { const v = vortexState(); return (v === 1 ? 1 + UQX.vortex.moveFull / 100 : 1) * (1 + buffV('haste') / 100); }; // 独特去代价（11-10）：没有层数时不再减速
 // 受击反馈：最多每 0.4 秒一次，强度按这一下占最大生命的比例（以前每一下都把生命球刷白、角色闪白，怪多时一直闪）
 function hurtFeedback(d) {
   if (G.time - (player.fbT0 || -9) < 0.4) return;
@@ -392,6 +392,7 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
   lampGain('struck', STATS.lampOnStruck, 2);
   if (STATS.flag.vortexTreads && vortexState() === 1) d *= 1 - UQX.vortex.takenFull / 100; // 旋涡之履
   if (player.guardT > 0) d *= 1 - MECH.meleeGuardLess;
+  d *= 1 - buffV('guard') / 100; // 石肤
   d *= 1 - Math.max(0, ...whirlWs().map(([W, i]) => Math.min(WH.drCap, WH.drPerStack * player.spin[i].n))) / 100; // 旋身：每层当前旋转减伤，有上限
   if (src && src.cap) d = Math.min(d, STATS.life * src.cap / 100); // 红圈重击单次最多打掉生命上限的 cap%：威胁是“这趟走不深”，不是一下秒掉
   hurtLog(d, el, src); // defense-v3 §8.4 受伤来源
@@ -478,7 +479,23 @@ const inRange = (W, r) => mobs.some(m => !m.dead && m.rise <= 0.2 && dist2(m, pl
 const AIM_HOLD = 0.6;
 function aimAt(a) { player.aimA = a; player.aimT = AIM_HOLD; player.face = Math.cos(a) >= 0 ? 1 : -1; return a; }
 const aiming = () => player.aimT > 0; // aimT 在 playerStep 里倒数（模拟器不走 G.time）
+// 功能技能（防御 / 增益 / 资源）：被触发时生效，不出手
+function castUtil(W) {
+  const U = W.util, v = W.uv, B = player.buffs || (player.buffs = {}), set = k => { B[k] = { t: U.dur, v: Math.max(v, B[k] && B[k].t > 0 ? B[k].v : 0) }; };
+  let c = '#ffe27a', s = '';
+  switch (U.k) {
+    case 'shield': if (STATS.shield > 0) { player.shield = Math.min(STATS.shield, player.shield + STATS.shield * v / 100); s = '骨盾'; c = '#9fe3ff'; } else { player.life = Math.min(STATS.life, player.life + STATS.life * v / 200); s = '骨盾'; c = '#9fe3ff'; } break;
+    case 'heal': player.life = Math.min(STATS.life, player.life + STATS.life * v / 100); s = '回春'; c = '#8fe05a'; break;
+    case 'lamp': player.soul = Math.min(STATS.soulMax, player.soul + v); s = '聚火'; c = '#ffb347'; break;
+    case 'guard': set('guard'); s = '石肤'; c = '#e9e0c9'; break;
+    case 'dmg': set('dmg'); s = '战吼'; c = '#ff8a3d'; break;
+    case 'haste': set('haste'); s = '疾步'; c = '#7fc8ff'; break;
+  }
+  fx({ t: 'buff', x: player.x, y: player.y - 6, c, s }); return true;
+}
+const buffV = k => { const b = player.buffs && player.buffs[k]; return b && b.t > 0 ? b.v : 0; };
 function fire(W, i) {
+  if (W.util) return castUtil(W);
   const px = player.x, py = player.y - 6;
   switch (W.form) {
     case 'aura': { // 瘟疫光环插在魂龛：常驻的由下面的光环循环每 auraTick 结算，这里不出手；其他魂龛触发一次 = 结算 1 秒的量
@@ -672,6 +689,7 @@ function logic(dt) {
   if (player.aimT > 0) player.aimT -= dt;
   if (RUN) { closeStep(); if (RUN.gd) { RUN.gd.t += dt - 1 / 60; if (player.closeN > 0) RUN.gd.closeT += dt - 1 / 60; } }
   if (player.guardT > 0) player.guardT -= dt;
+  if (player.buffs) for (const k in player.buffs) if (player.buffs[k].t > 0) player.buffs[k].t -= dt;
   player.shield = Math.min(P.shield, player.shield + P.shieldRegen * lampShieldRegen() * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
   player.swing = player.swing.map(v => Math.max(0, v - dt));
   player.orbitA += dt * 5 * (1 + 0.12 * Math.max(0, ...player.spin.map(s => s.n))); // 旋转层数越高转得越快
@@ -760,7 +778,7 @@ function logic(dt) {
       return;
     }
     player.wcd[i] -= dt * pChillK();
-    if (player.wcd[i] <= 0) { if (W.basic ? castAttack(W, i) : fire(W, i)) player.wcd[i] = W.aps ? 1 / W.aps : 0.5; else player.wcd[i] = 0.05; }
+    if (player.wcd[i] <= 0) { if (W.basic ? castAttack(W, i) : fire(W, i)) player.wcd[i] = (W.aps ? 1 / W.aps : 0.5) / (1 + buffV('haste') / 100); else player.wcd[i] = 0.05; } // 疾步：出手更快
   });
   // 魂龛【常驻】里的瘟疫光环：每 auraTick 结算一次（灯火见底就停）
   for (const [W, i] of combatWs()) if (i >= 2 && W.form === 'aura') { const t = STATS.trigs[W.trigSlot - 1]; if (!t || t.mode !== 'always' || !lampOk()) continue; if ((W._at = (W._at || 0) - dt) <= 0) { W._at = MECH.auraTick; auraHit(W); } }

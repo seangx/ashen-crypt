@@ -56,7 +56,7 @@ const SOCKET_KINDS = { core: 1, engine: 1 }; // 武器不再有符文槽（辅�
 // 标签（原作同名机制）
 // 技能 v3 三层标签（design/skill-v3.md）：元素 · 形态 · 机制
 const EFX_D = { kin: '破甲：每次命中叠一层，目标受到的所有伤害提高，最多 10 层', exp: '灼烧：火焰伤害的一部分转成持续燃烧，打得越重烧得越狠', ele: '感电：这一下越重层数越高，目标短时间内更脆', nuc: '疫病：每次命中叠一层持续伤害，层数不设上限', cold: '冰缓：叠层减速，叠满碎冰——结算这一轮寒霜伤害的一部分', pla: '审判：目标血量低于一条线直接处决，打得越重线越高' };
-const F3_N = { melee: '近战', proj: '投射物', area: '范围' }, MECH_N = { chain: '弹射', pierce: '穿透', split: '分裂', dot: '持续', delay: '延迟', spawn: '派生' };
+const F3_N = { melee: '近战', proj: '投射物', area: '范围', util: '功能' }, MECH_N = { chain: '弹射', pierce: '穿透', split: '分裂', dot: '持续', delay: '延迟', spawn: '派生' };
 const TAG_N = {
   Attack: '攻击', AttackSpeed: '攻速', Range: '射程', AoE: '范围', Projectile: '投射物', ProjectileCanReturn: '可返回', ProjectileCanPierce: '可穿透',
   ProjectileCanChain: '可弹射', ProjectileCanSplit: '可分裂', DoT: '持续伤害', Hit: '命中', Melee: '近战', Mine: '陷阱', Field: '力场', Reflect: '反伤',
