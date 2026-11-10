@@ -88,7 +88,7 @@ function migrateRarityV2() {
   }
   for (const p of S.reelsPending || []) p.opts = null; // 轮盘里还没选的重新掷（选项可能是已经拆掉的独特）
   S.uqV = 3;
-  const lines = ['底材改成三代：物品等级 1 级起一代，30 级起二代（精制），60 级起三代（远古）。原来的 11 档品质（朽坏…永恒）去掉了，已有装备按物品等级换算，数值和以前差不多。', '二代起隐性 ×1.5，三代多一条第二隐性。', '稀有度：普通 → 罕见 → 稀有 → 传奇（稀有 + 一条传奇词条），独特装备改叫神话。'];
+  const lines = ['原来的 11 档品质（朽坏…永恒）去掉了：装备的基础数值只看物品等级，同一种装备在 30 级、60 级以后掉落的会换一个名字，数值和隐性更强。已有装备按物品等级换算，数值和以前差不多。', '稀有度：普通 → 罕见 → 稀有 → 传奇（稀有 + 一条传奇词条），独特装备改叫神话。'];
   if (nLeg) lines.push(`${nLeg} 件独特装备（${[...new Set(names)].join('、')}）的效果改成了传奇词条，这些装备变成了同底材的传奇：效果和词条都保留。`);
   if (S.stash.length || Object.values(S.equip).some(Boolean)) { S.notice = { t: '装备改版', lines }; const tell = () => G.ui ? G.ui.openWin('notice') : setTimeout(tell, 600); setTimeout(tell, 2500); }
 }

@@ -40,13 +40,13 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   cy = 16;
   if (it.kind === 'gem') { T(sc, 0, cy, `技能石 · ${it.lvl} 级 · 品质 ${it.q || 0}%`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
   else {
-  T(sc, 0, cy, `${rarName(it)} · ${KIND_N[it.kind]}${it.rar === 2 ? ' · ' + b.n : ''} · 物品等级 ${it.ilvl}`, { size: 8, color: COL.dim, parent: c }); cy += 11;
-  { const g = it.gen || 0, L = GENS.list; for (let i = 0; i < 3; i++) rect(sc, i * 9, cy + 2, 8, 3, i <= g ? COL.ember : '#2f2740', 1, c); T(sc, 30, cy, `底材：${GEN_N[g]}${g + 1 < L.length ? ` · ${L[g + 1].from} 级起出${GEN_N[g + 1]}` : ''}`, { size: 8, color: COL.dim, parent: c }); cy += 11; } }
+  T(sc, 0, cy, `${rarName(it)} · ${KIND_N[it.kind]}${it.rar === 2 ? ' · ' + baseName(it) : ''} · 物品等级 ${it.ilvl}`, { size: 8, color: COL.dim, parent: c }); cy += 11;
+  }
   rect(sc, 0, cy + 1, w, 1, '#3a3049', 1, c); cy += 4;
   const ln = (t, col = '#b8afc4') => { const r = TW(sc, 0, cy, ulk(t), w, { size: 8, color: col, parent: c }); cy += r.h; };
   for (const [t, col] of baseLines(it)) ln(t, col);
   if (it.kind === 'weapon' && IMPL[it.b] && IMPL[it.b].g2) { const I = IMPL[it.b]; ln(`隐性：${I.knock ? '命中击退，' : ''}${impText(I.tt || I.t.replace(/\d+(\.\d+)?–\d+(\.\d+)?/, '#'), impV(I.g2, it))}`, '#c9b98a'); } // 底子的隐性（二代起 ×1.5）
-  { const g3 = gen3Imp(it); if (g3) ln(`三代隐性：${impText(g3[2], g3[1])}`, '#e6c86e'); }
+  { const g3 = gen3Imp(it); if (g3) ln(`隐性：${impText(g3[2], g3[1])}`, '#c9b98a'); }
   if (it.sock) {
     const hub = it.kind === 'hub';
     for (let i = 0; i < it.sock; i++) {
@@ -916,7 +916,7 @@ class UI extends Phaser.Scene {
       const z = this.add.zone(x - 2, y - 1, 94, 18).setOrigin(0).setInteractive(); c.add(z);
       z.on('pointerover', () => showTip([{ t: `天梯 ${r.lvl} 层 · 用时 ${mmss(r.time)} · 跳 ${r.jump} 层`, c: COL.emberHi }, { t: new Date(r.date).toLocaleString('zh-CN'), s: 8, c: COL.dim },
         { t: `秒伤 ${fmt(r.build.dps)} · 生命 ${fmt(r.build.life || 0)} · 护盾 ${fmt(r.build.shield ?? r.build.deflect ?? 0)} · 护甲 ${fmt(r.build.armor)} · ${ELEM_N[r.build.elem]}`, s: 8 },
-        ...r.build.equip.map(q => ({ t: `${SLOTS.find(s => s.id === q.slot).n}：${nm(q)} · ${q.la ? '传奇' : RAR[q.rar].n} · ${q.gen != null ? GEN_N[q.gen] : QN[q.q] || ''}`, s: 8, c: RCOL[q.rar] })),
+        ...r.build.equip.map(q => ({ t: `${SLOTS.find(s => s.id === q.slot).n}：${nm(q)} · ${q.la ? '传奇' : RAR[q.rar].n}`, s: 8, c: RCOL[q.rar] })),
         { t: r.build.keys.length ? '核心天赋：' + r.build.keys.map(k => TREE.nodes[k].n).join('、') : '没有核心天赋', s: 8, c: '#ff9a3c' }]));
       z.on('pointerout', hideTip);
     });

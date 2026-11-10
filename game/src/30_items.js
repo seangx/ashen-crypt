@@ -10,7 +10,8 @@ const itemTags = it => it.fb ? it.fb.tags : it.kind === 'gem' ? gemTags(it) : it
 const canRollOn = (a, it) => !a.off && a.on.includes(it.kind) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
 const offTagOk = (it, tag) => { const t = (ARMORS.off[it.b] || {}).tags || []; return t.includes('any') || t.includes(tag); }; // 副手：箭袋只出投射物类，法源 / 图腾 / 提灯什么都能出 // tag 只限制武器
 const KIND_TAG = { shield: 'Shield', core: 'Core', engine: 'Engine', hub: 'Nexus', chip: 'Chip' };
-function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : (it.kind !== 'gem' && it.gen ? GENS.list[it.gen].n : '') + baseOf(it).n; }
+const baseName = it => { const g = it.kind !== 'gem' && it.gen, N = g && (DATA.items.genNames || {})[it.b]; return (N && N[g - 1]) || baseOf(it).n; }; // 高等级掉的同一种底材换个名字（内部是“代”，不给玩家看）
+function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : baseName(it); }
 const qv = (v, q) => { if (!Array.isArray(v)) return v; const x = clamp(q || 0, 0, v.length - 1), i = Math.floor(x), f = x - i; return f && i + 1 < v.length ? v[i] + (v[i + 1] - v[i]) * f : v[i]; }; // 按底材档位取值（档位可以是小数：三代底材按物品等级插值）
 
 // 底材档位：只看物品等级（第几代 + 代内进度），不再随机抽品质
