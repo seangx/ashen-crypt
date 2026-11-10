@@ -122,10 +122,10 @@ function treeStats(ids = S.tree, eq = S.equip) {
     else if (k === 'areaEye') { flag.areaEye = 1; A('aoeInc', RULES.areaEye.aoeInc); }
     else if (k === 'projLess') M('dmg:proj', 1 - v / 100);
     else if (k === 'chainCrown') { flag.chainCrown = 1; A('chain', RULES.chainCrown.chain); A('chainStep', RULES.chainCrown.stepInc); }
-    else if (k === 'projCrown') { A('projAdd', RULES.projCrown.extra); M('dmg:proj', 1 - RULES.projCrown.less / 100); }
-    else if (k === 'velCrown') { A('projSpd', RULES.velCrown.projSpd); A('projDur', RULES.velCrown.projDur); M('dmg:proj', 1 - RULES.velCrown.less / 100); }
-    else if (k === 'durCrown') { A('durInc', RULES.durCrown.durInc); A('aoeInc', RULES.durCrown.aoeInc); }
-    else if (k === 'meleeCrown') { flag.meleeCrown = (flag.meleeCrown || 0) + RULES.meleeCrown.chance / 100; M('speed', 1 - RULES.meleeCrown.speedLess / 100); }
+    else if (k === 'projCrown') A('projAdd', RULES.projCrown.extra);
+    else if (k === 'velCrown') { A('projSpd', RULES.velCrown.projSpd); A('projDur', RULES.velCrown.projDur); }
+    else if (k === 'durCrown') A('durInc', RULES.durCrown.durInc);
+    else if (k === 'meleeCrown') { flag.meleeCrown = (flag.meleeCrown || 0) + RULES.meleeCrown.chance / 100; }
     else if (k === 'takenKin') flag.takenKin = Math.max(flag.takenKin || 0, v / 100);
     // 第 5 步的新独特（spec-bd-gear §5）
     else if (['delayCrown', 'groundStack', 'shardCrown', 'iceGround', 'coffin', 'vortexTreads', 'earlyWarn', 'martyrArmor'].includes(k)) flag[k] = Math.max(flag[k] || 0, v);
@@ -136,7 +136,7 @@ function treeStats(ids = S.tree, eq = S.equip) {
     else if (k === 'autoNova') flag.autoNova = Math.max(flag.autoNova || 0, v / 100); else if (k === 'moveLess') M('speed', 1 - v / 100);
     else if (k === 'freezeDur') A('freezeDur', v); else if (k === 'fireResLess') A('res:exp', -v);
     // system-v2 §6 元素 / lamp-v2 灯火 / tree-v3 新独特
-    else if (k === 'burnKeepU') flag.burnKeep = 1; else if (k === 'whirlHeart') { flag.whirlHeart = 1; flag.nonMeleeLess = 30; } else if (k === 'aegisBurst') flag.echoShield = 1;
+    else if (k === 'burnKeepU') flag.burnKeep = 1; else if (k === 'whirlHeart') flag.whirlHeart = 1; else if (k === 'aegisBurst') flag.echoShield = 1;
     else if (k === 'frostCoffin') { flag.frostCoffin = Math.max(flag.frostCoffin || 0, v); A('freezeDur', v); }
     else flag[k] = Math.max(flag[k] || 0, v || 1); }); }; // 其余规则：直接当旗标
   // 誓约：一正一负，“总增 / 总降”是独立乘区

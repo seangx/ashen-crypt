@@ -31,9 +31,9 @@ const RULE_TEXT = {
   emberGrip: () => '附加特效总是同时引燃（灼烧）', boneBreak: v => `碎裂特效 ${v}% 几率再碎一次（×0.5）`, wildfire: () => '灼烧中的敌人死亡时，把一半灼烧传给 40 码内的敌人',
   burnKeepU: () => '灼烧不再自然衰减', chainBlast: v => `雷爆特效额外跳向最近 2 个敌人（${v}% 伤害）`, frostCoffin: v => `冻结时间 +${v}%；冻结的敌人死亡时向 4 个敌人射出冰片`,
   judgeBlind: v => `对致盲的敌人伤害总增 ${v}%`, plagueTide: v => `疫染特效 +${v}%；死亡传染全部层数、范围 ×1.5`,
-  returnLight: v => `每局一次：灯火低于 10% 时回到 ${v}%`, lightEater: v => `命中额外回灯火（每秒最多 ${v}）；光照半径始终最小`, lampChain: v => `灯火状态始终为「暗」；灯火消耗 −${v}%`,
-  darkWalker: v => `对光照半径外的敌人伤害总增 ${v}%`, whirlHeart: () => '旋风之心：【近战·范围】技能总增；代价：非【近战】技能伤害总降 30%', aegisBurst: () => '回响圣盾：【盾】技能总增', otherLess: v => `代价：非【盾】技能伤害总降 ${v}%`,
-  vortexTreads: () => `旋风斩常驻且叠满层时移速 +${UQX.vortex.moveFull}%、受到的伤害 −${UQX.vortex.takenFull}%；代价：没有层数时移速 −${UQX.vortex.moveNone}%`,
+  returnLight: v => `每局一次：灯火低于 10% 时回到 ${v}%`, lightEater: v => `命中额外回灯火（每秒最多 ${v}）`, lampChain: v => `灯火状态始终为「暗」；灯火消耗 −${v}%`,
+  darkWalker: v => `对光照半径外的敌人伤害总增 ${v}%`, whirlHeart: () => '旋风之心：【近战·范围】技能总增', aegisBurst: () => '回响圣盾：【盾】技能总增', otherLess: v => `代价：非【盾】技能伤害总降 ${v}%`,
+  vortexTreads: () => `旋风斩常驻且叠满层时移速 +${UQX.vortex.moveFull}%、受到的伤害 −${UQX.vortex.takenFull}%`,
   chainCrown: () => ruleText('chainCrown'), projCrown: () => ruleText('projCrown'), durCrown: () => ruleText('durCrown'), velCrown: () => ruleText('velCrown'), meleeCrown: () => ruleText('meleeCrown'), multicrit: () => ruleText('multicrit'), dashMax: v => `冲刺槽 +${v}`, finale: () => ruleText('finale'), splitEnd: () => ruleText('splitEnd'),
 };
 for (const k of ELEM) RULE_TEXT['ail:' + k] = v => `${AIL[k].n}几率 +${v}%`;

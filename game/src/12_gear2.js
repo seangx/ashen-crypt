@@ -23,7 +23,7 @@ const G2 = DATA.gear2, G2W = G2.weapons, G2D = G2.defense, STONES = G2.stones;
     if (o.w) { const tot = tiers.reduce((s, t) => s + t[1], 0); tiers = tiers.map(t => [t[0], Math.max(1, Math.round(t[1] * o.w / tot)), t[2], t[3]]); }
     const pair = stat === 'flat', el = pair ? o.el : o.el || null;
     const f = pair ? v => text.replace('#', `${v[0]}–${v[1]}`) : v => text.replace('#', v);
-    const a = { k, f, stat, el, local: !!o.local || pair, grp: o.grp || (o.src ? o.src : k), type, on, pair, tiers, off: false };
+    const a = { k, f, stat, el, local: !!o.local || pair, grp: o.grp || (o.src ? o.src : k), type, on, pair, tiers, off: false, tag: o.tag };
     AFF.push(a); AFF_BY[k] = a;
   }
   // 2. 主手武器表
@@ -38,6 +38,8 @@ const G2 = DATA.gear2, G2W = G2.weapons, G2D = G2.defense, STONES = G2.stones;
   for (const [ck, c] of Object.entries(GEMC.cats)) c.bases = Object.keys(G2W).filter(k => G2W[k].cat === ck);
   // 3. 副手：隐性改成 §5，不再有“主手技能总增”；所有副手共用词条池
   for (const [k, o] of Object.entries(G2.off)) if (ARMORS.off[k]) { ARMORS.off[k].sup = {}; ARMORS.off[k].imp2 = o.imp; ARMORS.off[k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); ARMORS.off[k].tags = ['Offhand', 'any']; }
+  // 4. 防具隐性（盾、头冠）
+  for (const [k, o] of Object.entries(G2.armor || {})) for (const kind of ['shield', 'core', 'engine', 'hub']) if (ARMORS[kind][k]) { ARMORS[kind][k].imp2 = o.imp; ARMORS[kind][k].impT = o.t; ARMORS[kind][k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); }
 }
 // 隐性按品质 0 → 10 线性
 const g2v = (r, q) => r[1] + (r[2] - r[1]) * clamp(q || 0, 0, 10) / 10;

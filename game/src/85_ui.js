@@ -159,6 +159,7 @@ function baseLines(it) {
     if (b.res) p.push(`${ELEM_N[b.el]}抗性 +${qv(b.res, q)}%`);
     if (b.energy) p.push(`${ATTR_N.energy} +${qv(b.energy, q)}`); if (b.mass) p.push(`护甲提高 ${2 * qv(b.mass, q)}%`); if (b.time) p.push(`攻击速度提高 ${qv(b.time, q)}%`); // 体魄 / 时砂已下线，换算成护甲 / 攻速
     out.push([p.join('，'), '#e9d9a8']);
+    if (b.imp2) { const v = g2v(b.imp2, q); out.push([`隐性：${b.impT.replace('#', Math.round(v * 10) / 10)}`, '#c9b98a']); }
     if (it.kind === 'hub') out.push(['插在升级槽里的符文会随击杀成长；力场符文只在这里生效', COL.faint]);
   }
   return out;

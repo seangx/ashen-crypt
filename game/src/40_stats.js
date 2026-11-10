@@ -24,6 +24,7 @@ function computeStats(eq = S.equip) {
   const A = sumGlobal(items);
   { const ad = (k, v) => A[k] = (A[k] || 0) + v; stoneSum(items, ad); // gear-v2：属性石、副手隐性、“全部”类词条摊到每种元素
     const ob = eq.wr && eq.wr.kind === 'off' && ARMORS.off[eq.wr.b]; if (ob && ob.imp2) ad(ob.imp2[0], g2v(ob.imp2, eq.wr.q));
+    for (const k of ARMOR_KINDS) { const it = eq[k], ab = it && ARMORS[it.kind] && ARMORS[it.kind][it.b]; if (ab && ab.imp2) ad(ab.imp2[0], g2v(ab.imp2, it.q)); } // 防具隐性
     if (A.gainPct) ad('soulRegen', A.gainPct);
     for (const k of ['pen', 'ailEff', 'res']) if (A[k + ':all']) for (const e of [...ELEM, 'burn']) ad(k + ':' + e, A[k + ':all']); }
   const TS = treeStats(S.tree, eq), TA = TS.add, TM = TS.more, FL = TS.flag;

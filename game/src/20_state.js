@@ -58,6 +58,17 @@ function load(data) {
   if (!S.gemV) { migrateGems(); S.gemV = 1; }
   if ((S.gemV || 0) < 3) starterTrigs(); S.trigs ??= [null, null, null, null]; S.trigBag ??= []; castStarterFix();
   if (!S.legacyV) migrateLegacy(); delete S.chips;
+  if ((S.uqV || 0) < 2) migrateUniqueCosts();
+}
+// 11-10 独特去代价：删掉的规则让 uv 错位，按规则名重新对齐；风暴之眼从头冠挪到法阵，身上的放回背包
+const UQ_OLD_RULES = { StormCrown: ['chainCrown', 'shockMul', 'armorLess'], StormEye: ['areaEye', 'rangeInc', 'projLess'], RockCat: ['aspdLess', 'afterPct', 'afterRep'], BigBertha: ['flatPerArmor', 'debrisPerEnergy', 'aspdLess', 'ail:kin'], Goroboro: ['kinBaseInc', 'aspdLess'], GlassShield: ['rangeInc', 'resAll', 'blindAura'], StoneOfBalu: ['energyAdd', 'energyInc', 'aspdLessAll'], CritRipper: ['critLess', 'multicrit'], DoomCrown: ['delayCrown', 'delayAdd', 'aoeInc', 'earlyWarn'], ScorchedCircle: ['groundStack', 'durLess'], MartyrShield: ['martyrThrow', 'martyrArmor'], EchoCrown: ['echoCrown', 'chainLess'], WinterHeart: ['winterHeart', 'winterCost'], ShardCrown: ['shardCrown', 'frozenTaken', 'projSlowU'], EverwinterCircle: ['autoNova', 'iceGround', 'moveLess'], CoffinShield: ['coffin', 'freezeDur', 'fireResLess'], EchoAegis: ['aegisBurst', 'otherLess'] };
+function migrateUniqueCosts() {
+  for (const it of [...Object.values(S.equip), ...S.stash].filter(Boolean)) {
+    const old = UQ_OLD_RULES[it.u], u = UNIQUE_BY[it.u]; if (!old || !u) continue;
+    if (Array.isArray(it.uv) && it.uv.length === old.length) it.uv = u.rules.map(([k, lo, hi]) => { const i = old.indexOf(k); return i >= 0 ? it.uv[i] : lo === hi ? lo : rollRange(lo, hi); });
+    if (it.u === 'StormEye' && it.kind !== u.kind) { for (const k in S.equip) if (S.equip[k] === it) S.equip[k] = null; S.stash = S.stash.filter(x => x !== it); const n = newUnique('StormEye', it.ilvl || 1); n.uv = it.uv; n.lp = it.lp ?? n.lp; n.q = it.q; n.isNew = 1; S.stash.unshift(n); S.stones = S.stones || []; for (const st of it.stones || []) if (st) S.stones.unshift(st); } // 词条按法阵重掷，镶的属性石退回
+  }
+  S.uqV = 2;
 }
 // 遗留系统清理（spec-legacy-cleanup §4）：墓图、命盘、印记、体魄 / 时砂、铁骨 / 流沙力场。东西不凭空消失：退成碎片或换部位
 const RETUNED_U = ['GruvaksHorn', 'Arestum', 'StoneOfBalu']; // 规则条数 / 含义变了的独特：按新规则重掷数值
