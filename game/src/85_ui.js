@@ -123,7 +123,7 @@ function baseLines(it) {
     out.push([`类别：${cat ? cat.n : '—'}${cat ? `（对口：${cat.tags.map(t => TAG_N[t] || t).join('、')}）` : ''}${b.retired ? ' · 已停止掉落' : ''}`, COL.dim]);
     { // 武器伤害：底材（按物品等级的代）× 武器威力（技能伤害按它乘）；有“基础伤害提高”时再写放大后的（用户 11-09：武器伤害必须显示）
       const pw = GEMC.pow[it.b] ?? 1, [mn, mx] = weaponBase(b, q).map(v => v * pw), bi = (it.affs || []).reduce((s, x) => { const a = AFF_BY[x.k]; return s + (a && a.stat === 'baseInc' && (!a.el || a.el === 'all' || a.el === b.el || (a.el === 'thermal' && THERMAL_E.includes(b.el))) ? x.v : 0); }, 0);
-      out.push([`武器伤害 ${fmt(mn)}–${fmt(mx)}（${GEN_N[it.gen || 0]}底材；技能按自己的元素结算）`, '#e9d9a8']);
+      out.push([`武器伤害 ${fmt(mn)}–${fmt(mx)}`, '#e9d9a8']);
       if (bi) out.push([`加上基础伤害提高 ${bi}%：${fmt(mn * (1 + bi / 100))}–${fmt(mx * (1 + bi / 100))}`, COL.good]); }
     const p = []; if (b.crit) p.push(`暴击 ${b.crit}%`); if (sb && sb.aps) p.push(`每秒攻击 ${r1(sb.aps)}`); if (p.length) out.push([p.join(' · '), dim]);
     return out; }
