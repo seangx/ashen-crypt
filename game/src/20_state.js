@@ -22,6 +22,7 @@ function load(data) {
   if (!raw) try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { }
   S = freshState();
   if (raw) try { const o = JSON.parse(raw); if (o.v === 4 && (o.gemV || 0) >= 3) S = Object.assign(S, o); else if (o.v === 4) { S.wiped = 1; const tell = () => G.ui ? toast('地窖已重塑，旧的旅程已封存', COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); } } catch (e) { } // 魂龛改版不兼容老存档（system-v2 §11）：直接清档
+  migrateRetiredWeapons(S); // 11-11：停用的旧武器底子已删
   S.shards ??= {}; S.glyphs = { ...freshState().glyphs, ...(S.glyphs || {}) };
   if (!S.equip.wl && !S.stash.length && !S.uqV) { S.uqV = 3; S.skV = 3; } // 新档：不用跑装备改版 / 技能重做的迁移
   // 新做装系统之前的存档：丢掉骰子和魂萃词条，装备补上锻造潜力，独特装备补上传奇潜力
@@ -56,7 +57,6 @@ function load(data) {
       const tell = () => G.ui ? toast(`副手改版：右手的${itemName(o)}已放回背包，送你一件${itemName(it)}`, COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1500); }
     S.offV = 1; }
   S.equip.gem ??= null;
-  if (!S.gemV) { migrateGems(); S.gemV = 1; }
   if ((S.gemV || 0) < 3) starterTrigs(); S.trigs ??= [null, null, null, null]; S.trigBag ??= []; castStarterFix();
   if (!S.legacyV) migrateLegacy(); delete S.chips;
   if ((S.uqV || 0) < 2) migrateUniqueCosts();
@@ -135,41 +135,14 @@ function migrateLegacy() {
     const tell = () => G.ui ? G.ui.openWin('notice') : setTimeout(tell, 600); setTimeout(tell, 2500);
   }
 }
-// 技能石迁移（spec-skill-gems §5）：武器拆成 武器 + 技能石，形态符文并进技能石，辅助符文搬进技能石的槽
-function gemFromWeapon(w, pool) {
-  const id = GEM_OF_BASE[w.b] || 'GemBolt', G = GEM_BY[id], ms = (w.mods || []).filter(Boolean);
-  const fr = ms.find(m => FORM_GEM[m.mid] === id), sup = ms.filter(m => !FORM_GEM[m.mid]);
-  for (const m of ms) if (m !== fr && FORM_GEM[m.mid]) pool.push(m); // 对不上的形态符文：之后单独转成技能石
-  const g = newGem(id, { var: w.b === 'Thorns' ? 'Spikes' : G.src.includes(w.b) ? w.b : undefined, q: Math.floor((w.q || 0) / 2), sock: clamp(w.sock || 1, 1, GEMC.maxSock) });
-  if (fr) { g.xp = fr.xp; g.lvl = fr.lvl; }
-  sup.forEach((m, i) => { if (i < g.sock) g.mods[i] = m; else S.mods.push(m); });
-  w.sock = 0; w.mods = [];
-  return g;
-}
-function migrateGems() {
-  const pool = [], st = [];
-  const w = S.equip.wl, sh = S.equip.shield;
-  const thr = sh && (sh.mods || []).find(m => m && m.mid === 'ShieldThrow');
-  if (w && w.kind === 'weapon') { const g = gemFromWeapon(w, pool); if (thr) st.push(g); else S.equip.gem = g; }
-  if (sh && sh.mods && sh.mods.some(Boolean)) { // 圣徽盾上的圣盾掷 + 辅助：变成圣盾掷技能石
-    const sup = sh.mods.filter(m => m && m !== thr);
-    if (thr) { const g = newGem('GemShield', { q: Math.floor((sh.q || 0) / 2), sock: clamp(Math.max(1, sup.length), 1, GEMC.maxSock) }); g.xp = thr.xp; g.lvl = thr.lvl; sup.forEach((m, i) => { if (i < g.sock) g.mods[i] = m; else S.mods.push(m); }); S.equip.gem = g; }
-    else for (const m of sup) S.mods.push(m);
-    sh.sock = 0; sh.mods = [];
-  }
-  for (const it of [...S.stash]) if (it.kind === 'weapon') st.push(gemFromWeapon(it, pool));
-  for (const it of [...S.stash]) if (it.kind === 'shield' && it.mods && it.mods.some(Boolean)) { for (const m of it.mods) if (m) (FORM_GEM[m.mid] ? pool : S.mods).push(m); it.sock = 0; it.mods = []; }
-  for (const k of ['core', 'engine', 'hub']) { const it = S.equip[k]; if (it && it.mods) it.mods.forEach((m, i) => { if (m && FORM_GEM[m.mid]) { pool.push(m); it.mods[i] = null; } }); }
-  S.mods = S.mods.filter(m => { if (FORM_GEM[m.mid]) { pool.push(m); return false; } return true; });
-  for (const m of pool) { const g = newGem(FORM_GEM[m.mid], { sock: 1 }); g.xp = m.xp; g.lvl = m.lvl; st.push(g); }
-  S.stash.unshift(...st);
-  if (st.length || S.equip.gem) { const tell = () => G.ui ? toast(`技能石上线：武器的技能和符文搬进了技能石（背包多了 ${st.length} 颗）`, COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1800); }
-}
+// 11-11 清理旧武器底子：存档里停用底子的主手换成同类别的现役底子（余烬之握搬到爆裂铳）
+const RETIRED_W = { Thorns: 'Spikes', Taser: 'Cannon', Shuriken: 'Cannon', Zapper: 'Cannon', FrostBell: 'FrostOrb', PlutoniumBar: 'Laser', FlameThrower: 'Laser', BlastMine: 'StarfallRod', PlasmaMine: 'StarfallRod', StormMine: 'StarfallRod', ShrapnelMine: 'StarfallRod', WasteMine: 'StarfallRod', Rocket: 'Blastgun', FlameSlinger: 'Blastgun', Orbitron: 'SporeBlaster', PlasmaCutter: 'PlasmaBlaster' };
+function migrateRetiredWeapons(o, seen = new Set()) { if (!o || typeof o !== 'object' || seen.has(o)) return; seen.add(o); if (o.kind === 'weapon' && typeof o.b === 'string' && !WEAPONS[o.b]) o.b = RETIRED_W[o.b] || 'Cannon'; for (const k in o) migrateRetiredWeapons(o[k], seen); }
 // 新角色的装备：data/progression.json 的 starter
 function starterKit() {
   const K = PROG.starter;
   const w = newItem('weapon', K.weapon, 1, 0, 0); S.equip.wl = w;
-  const g = newGem(K.gem || 'GemBolt', { var: K.weapon, sock: K.gemSockets || 1 }); K.gemRunes.forEach((id, i) => { g.mods[i] = newMod(id); }); S.equip.gem = g; S.gemV = 1; S.legacyV = 1; S.seenUnlocks = {}; S.events = {}; S.treeSeen = []; // 技能石：骨矢 1 级
+  const g = newGem(K.gem || 'GemBolt', { sock: K.gemSockets || 1 }); K.gemRunes.forEach((id, i) => { g.mods[i] = newMod(id); }); S.equip.gem = g; S.gemV = 1; S.legacyV = 1; S.seenUnlocks = {}; S.events = {}; S.treeSeen = []; // 技能石：骨矢 1 级
   if (K.engine) S.equip.engine = newItem('engine', K.engine, 1, 0, 0);
   if (K.shield) S.equip.shield = newItem('shield', K.shield, 1, 0, 0);
   if (PROG.unlocks.wr && PROG.unlocks.wr.event && !UNLOCK_ALL) { /* 渐进式披露：副手由第一只 Boss 宝箱保底给 */ } else { const OH = DATA.mechanics.offhand, tg = itemTags(g), b = (OH.starterByTag.find(([t]) => tg.includes(t)) || [0, OH.fallback])[1]; S.equip.wr = newItem('off', b, 1, 0, 0); } // 新档：按主手标签送一件普通副手

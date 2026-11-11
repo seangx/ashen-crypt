@@ -414,9 +414,8 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
   if (d > 0 && FL.absorb) player.shield = Math.min(STATS.shield, player.shield + d * RL.absorb.pct / 100); // 圣盾：扣到生命的一部分转成护盾
   eliteOnHurt(src); // 噬光
   if (d > 0) { player.life -= d; trigStruck(d); player.hurtT = MECH.hurtInvuln; fx({ t: 'num', x: player.x, y: player.y - 18, v: d, el, hurt: true }); hurtFeedback(d); }
-  // 荆棘甲：受击时伤害周围
+  // 荆棘符文：受击时伤害周围
   for (const W of STATS.weapons) if (W && W.thorns > 0) { const r = MECH.thornsR || 56; fx({ t: 'ring', x: player.x, y: player.y - 4, r, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (r + m.size) ** 2) hitMob(m, W, { mul: W.thorns / 100, dsrc: '荆棘' }); } // 荆棘符文
-  for (const W of STATS.weapons) if (W && W.form === 'reflect') { fx({ t: 'ring', x: player.x, y: player.y - 4, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && dist2(m, player) < (W.aoeR + m.size) ** 2) hitMob(m, W); }
   if (player.life <= 0) { player.life = 0; RUN.result = 'dead'; RUN.ending = 1.6; S.stats.deaths++; sfx('out'); if (G.ui) G.ui.banner('灯火熄灭'); }
   return true;
 }
@@ -702,7 +701,7 @@ function logic(dt) {
   // 移动：朝鼠标加速（体魄越高越慢）
   if (player.dashT > 0) {
     player.x += player.dvx * dt; player.y += player.dvy * dt; player.dashT -= dt;
-    if (P.flag.fireTrail && RUN) { const W0 = P.weapons.find(w => w && w.form !== 'reflect'); if (W0) zones.push({ W: W0, mul: RL.fireTrail.pct / 100, x: player.x, y: player.y, r: RL.fireTrail.r, t: RL.fireTrail.dur * P.durMul, el: 'exp', trail: 1 }); }
+    if (P.flag.fireTrail && RUN) { const W0 = P.weapons.find(Boolean); if (W0) zones.push({ W: W0, mul: RL.fireTrail.pct / 100, x: player.x, y: player.y, r: RL.fireTrail.r, t: RL.fireTrail.dur * P.durMul, el: 'exp', trail: 1 }); }
     if (player.trail && RUN && P.engine) zones.push({ W: P.engine, x: player.x, y: player.y, r: 10, t: 2 * P.durMul, el: P.engine.el, trail: 1 });
     if (player.dashT <= 0 && player.dashEnd) { const k = player.dashEnd; player.dashEnd = null; dashEnd(k); }
   } else {
@@ -802,7 +801,7 @@ function logic(dt) {
   }
   // 武器
   P.weapons.forEach((W, i) => {
-    if (!W || W.form === 'reflect') return;
+    if (!W) return;
     if (W.form === 'aura') { // 瘟疫香炉：每 auraTick 秒结算一次
       const AT = MECH.auraTick; player.wcd[i] -= dt; if (player.wcd[i] > 0) return; player.wcd[i] = AT; auraHit(W); return;
     }

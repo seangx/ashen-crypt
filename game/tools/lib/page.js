@@ -18,7 +18,7 @@ const HELPERS = () => {
       P.stop(); if (A.G.ui.winId) A.G.ui.closeWin(true);
       if (o.weapon !== false) S.equip.wl = A.newItem('weapon', o.weapon || 'Cannon', o.ilvl ?? 40, 0, 0);
       if (o.shield) S.equip.shield = A.newItem('shield', o.shield === true ? 'SigilShield' : o.shield, o.ilvl ?? 40, 0, 0);
-      if (o.gems) { const T = newTrig(o.trig || 'cast', { rar: 2, sock: 4, ilvl: o.ilvl ?? 40 }); o.gems.forEach((g, k) => { T.socks[k] = typeof g === 'string' ? A.newGem(g, { lvl: 10 }) : A.newGem(g.id, { lvl: g.lvl ?? 10, var: g.var }); }); S.trigs = [T, null, null, null]; }
+      if (o.gems) { const T = newTrig(o.trig || 'cast', { rar: 2, sock: 4, ilvl: o.ilvl ?? 40 }); o.gems.forEach((g, k) => { T.socks[k] = typeof g === 'string' ? A.newGem(g, { lvl: 10 }) : A.newGem(g.id, { lvl: g.lvl ?? 10 }); }); S.trigs = [T, null, null, null]; }
       A.refreshStats(); return P.W();
     },
     W: (i = 0, j = 0) => { const t = A.STATS.trigs && A.STATS.trigs[i]; return t && t.ws && t.ws[j] || null; },

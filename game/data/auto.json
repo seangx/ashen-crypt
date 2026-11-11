@@ -33,7 +33,6 @@
   "_说明": "每种形态怎么打（11-11 通用 AI）。自动战斗按主技能（魂龛里面板秒伤最高的技能石；没有技能石就用主手普攻）的形态走位。stance：dive 冲进最密的怪堆来回穿过（用上面 melee 的参数），hold 站桩保持距离（上面 hold），kite 风筝（steer）。保持距离 = min(keepPx, 射程 × keep)。aim：出手时瞄哪里（手动操作时也一样）：near 最近的一只；dense 怪最密的地方（半径 = 技能范围，没有就 40）；line 一条线上怪最多的方向（穿透）；arc 扇形里怪最多的方向。proj 按投射物的机制再细分：能穿透用 pierce，会分裂 / 多弹丸用 split，命中爆炸用 aoe",
   "orbit": {"stance": "dive"},
   "ram": {"stance": "dive"},
-  "reflect": {"stance": "dive"},
   "aura": {"stance": "dive"},
   "nova": {"stance": "dive"},
   "mine": {"stance": "dive"},

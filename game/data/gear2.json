@@ -1,5 +1,5 @@
 {
-  "_说明": "装备 v2（design/gear-v2.md）。由 src/12_gear2.js 在启动时套到词条表上：keep 是保留的词条族和新部位 on（可改 text / w），add 是新词条族 [文字, stat, 前P/后S, 部位, T1 值, 顶档值, 顶档物品等级, 选项]；选项 w 总权重、n 档数、local 局部、rare 只在稀有、min 最低物品等级、el 元素、mul 数值倍数。没列在 keep / add 里的词条族全部停止掉落（老存档已清空）。weapons 是主手武器表 §1b：spd 攻速、pc 触发系数、pow 基础伤害、crit 暴击、el 底技能元素、imp 隐性 [stat, 品质 0, 品质 10]。off 是副手隐性 §5。stones 是属性石 §7。",
+  "_说明": "装备 v2（design/gear-v2.md）。由 src/12_gear2.js 在启动时套到词条表上：keep 是保留的词条族和新部位 on（可改 text / w），add 是新词条族 [文字, stat, 前P/后S, 部位, T1 值, 顶档值, 顶档物品等级, 选项]；选项 w 总权重、n 档数、local 局部、rare 只在稀有、min 最低物品等级、el 元素、mul 数值倍数。没列在 keep / add 里的词条族全部停止掉落（老存档已清空）。weapons 是主手武器表 §1b：aps 攻速（每秒出手次数，出手时魂龛跟着它放）、pc 触发系数、pow 基础伤害、crit 暴击、el 底技能元素、imp 隐性 [stat, 品质 0, 品质 10]。off 是副手隐性 §5。stones 是属性石 §7。",
   "keep": {
     "FlatKineticDamage": {"on": ["weapon"]}, "FlatExplosiveDamage": {"on": ["weapon"]}, "FlatElectricDamage": {"on": ["weapon"]}, "FlatColdDamage": {"on": ["weapon"]}, "FlatPlasmaDamage": {"on": ["weapon"]}, "FlatNuclearDamage": {"on": ["weapon"]},
     "IncreasedBaseAttackSpeed": {"on": ["weapon"]},
@@ -62,19 +62,19 @@
     "ProjAdd": ["投射物 +#", "extra", "S", ["weapon", "off"], 0, 0, 0, {"tag": "Projectile", "tiers": [[[1, 1], 150, 20, 999], [[2, 2], 30, 65, 999]]}]
   },
   "weapons": {
-    "Spikes": {"cat": "melee", "spd": 1.6, "pc": 15, "pow": 0.75, "crit": 8, "el": "kin", "imp": ["critDmg", 15, 25], "t": "暴击伤害 +#%"},
-    "TurbineBlades": {"cat": "melee", "spd": 1.2, "pc": 20, "pow": 1.0, "crit": 5, "el": "kin", "imp": ["aoeInc", 10, 20], "t": "范围提高 #%"},
-    "Hullbreaker": {"cat": "melee", "spd": 0.8, "pc": 30, "pow": 1.5, "crit": 5, "el": "kin", "imp": ["meleeLess", 10, 5], "knock": 1, "t": "命中击退，近战伤害降低 #%"},
-    "Railgun": {"cat": "bow", "spd": 1.8, "pc": 13, "pow": 0.67, "crit": 5, "el": "kin", "imp": ["projSpd", 15, 25], "t": "投射物速度提高 #%"},
-    "Cannon": {"cat": "bow", "spd": 1.2, "pc": 20, "pow": 1.0, "crit": 5, "el": "kin", "imp": ["baseCrit", 1, 2], "t": "基础暴击率 +#%"},
-    "Siegebow": {"cat": "bow", "spd": 0.8, "pc": 30, "pow": 1.5, "crit": 6, "el": "kin", "imp": ["projInc", 15, 25], "t": "投射物伤害提高 #%", "new": {"n": "碎城弩", "ic": "w_crossbow", "clone": "Cannon"}},
-    "SporeBlaster": {"cat": "gun", "spd": 1.4, "pc": 17, "pow": 0.86, "crit": 5, "el": "nuc", "imp": ["ail:nuc", 10, 20], "t": "疫病效果 +#%"},
-    "PlasmaBlaster": {"cat": "gun", "spd": 1.2, "pc": 20, "pow": 1.0, "crit": 8, "el": "pla", "imp": ["ail:pla", 10, 20], "t": "致盲几率 +#%"},
-    "Blastgun": {"cat": "gun", "spd": 1.0, "pc": 24, "pow": 1.2, "crit": 8, "el": "kin", "imp": ["critDmg", 15, 25], "t": "暴击伤害 +#%"},
-    "Laser": {"cat": "caster", "spd": 1.4, "pc": 17, "pow": 0.86, "crit": 5, "el": "pla", "imp": ["dotInc", 15, 25], "t": "持续伤害提高 #%"},
-    "FrostOrb": {"cat": "caster", "spd": 1.2, "pc": 20, "pow": 1.0, "crit": 6, "el": "cold", "imp": ["ail:cold", 10, 20], "t": "冰缓效果 +#%"},
-    "PlasmaNova": {"cat": "caster", "spd": 1.0, "pc": 24, "pow": 1.2, "crit": 5, "el": "pla", "imp": ["aoeInc", 10, 20], "t": "范围提高 #%"},
-    "StarfallRod": {"cat": "caster", "spd": 0.8, "pc": 30, "pow": 1.5, "crit": 6, "el": "exp", "imp": ["costLess", 5, 10], "t": "技能消耗降低 #%"}
+    "Spikes": {"cat": "melee", "aps": 1.733, "pc": 15, "pow": 0.75, "crit": 8, "el": "kin", "imp": ["critDmg", 15, 25], "t": "暴击伤害 +#%"},
+    "TurbineBlades": {"cat": "melee", "aps": 1.3, "pc": 20, "pow": 1.0, "crit": 5, "el": "kin", "imp": ["aoeInc", 10, 20], "t": "范围提高 #%"},
+    "Hullbreaker": {"cat": "melee", "aps": 0.867, "pc": 30, "pow": 1.5, "crit": 5, "el": "kin", "imp": ["meleeLess", 10, 5], "knock": 1, "t": "命中击退，近战伤害降低 #%"},
+    "Railgun": {"cat": "bow", "aps": 2.175, "pc": 13, "pow": 0.67, "crit": 5, "el": "kin", "imp": ["projSpd", 15, 25], "t": "投射物速度提高 #%"},
+    "Cannon": {"cat": "bow", "aps": 1.45, "pc": 20, "pow": 1.0, "crit": 5, "el": "kin", "imp": ["baseCrit", 1, 2], "t": "基础暴击率 +#%"},
+    "Siegebow": {"cat": "bow", "aps": 0.967, "pc": 30, "pow": 1.5, "crit": 6, "el": "kin", "imp": ["projInc", 15, 25], "t": "投射物伤害提高 #%", "new": {"n": "碎城弩", "ic": "w_crossbow", "clone": "Cannon"}},
+    "SporeBlaster": {"cat": "gun", "aps": 1.167, "pc": 17, "pow": 0.86, "crit": 5, "el": "nuc", "imp": ["ail:nuc", 10, 20], "t": "疫病效果 +#%"},
+    "PlasmaBlaster": {"cat": "gun", "aps": 1, "pc": 20, "pow": 1.0, "crit": 8, "el": "pla", "imp": ["ail:pla", 10, 20], "t": "致盲几率 +#%"},
+    "Blastgun": {"cat": "gun", "aps": 0.833, "pc": 24, "pow": 1.2, "crit": 8, "el": "kin", "imp": ["critDmg", 15, 25], "t": "暴击伤害 +#%"},
+    "Laser": {"cat": "caster", "aps": 0.7, "pc": 17, "pow": 0.86, "crit": 5, "el": "pla", "imp": ["dotInc", 15, 25], "t": "持续伤害提高 #%"},
+    "FrostOrb": {"cat": "caster", "aps": 0.6, "pc": 20, "pow": 1.0, "crit": 6, "el": "cold", "imp": ["ail:cold", 10, 20], "t": "冰缓效果 +#%"},
+    "PlasmaNova": {"cat": "caster", "aps": 0.5, "pc": 24, "pow": 1.2, "crit": 5, "el": "pla", "imp": ["aoeInc", 10, 20], "t": "范围提高 #%"},
+    "StarfallRod": {"cat": "caster", "aps": 0.4, "pc": 30, "pow": 1.5, "crit": 6, "el": "exp", "imp": ["costLess", 5, 10], "t": "技能消耗降低 #%"}
   },
   "off": {
     "BoneQuiver": {"imp": ["aspd", 8, 15], "t": "攻击速度提高 #%"},

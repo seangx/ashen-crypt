@@ -375,7 +375,7 @@ class World extends Phaser.Scene {
       for (let j = 0; j < 4; j++) g.fillStyle(j === 0 ? 0xbfe8ff : j === 1 ? 0x8cc8f0 : 0x4a8fd0, 0.85 - j * 0.18).fillRect(Math.round(p.x - ux * j), Math.round(p.y - uy * j), 1, 1);
       return; }
     if (p.shard) { g.fillStyle(0xe8fbff, 1).fillRect(p.x - 1, p.y - 1, 2, 2); g.fillStyle(c, 1).fillRect(p.x - p.vx / NV.shardSpeed * 2 - 0.5, p.y - p.vy / NV.shardSpeed * 2 - 0.5, 1, 1); return; } // 碎冰的冰片
-    const k = p.W.key;
+    const k = (p.W.b && p.W.b.vis) || p.W.key; // 投射物外观（gems.json base.vis）
     if (p.mine) { const on = p.arm <= 0 && (t * 4 | 0) % 2; g.fillStyle(0x120c18, 1).fillRect(p.x - 3, p.y - 1, 6, 3); g.fillStyle(c, 1).fillRect(p.x - 2, p.y, 4, 1); if (on) g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - 1, 1, 1); return; }
     if (k === 'Shuriken' || k === 'TurbineBlades' || k === 'FlameSlinger') { const a = t * 20; g.fillStyle(k === 'FlameSlinger' ? 0xff9a3d : 0xdfe6ee, 1); for (let i = 0; i < 3; i++) { const aa = a + i * 2.1; g.fillRect(p.x + Math.cos(aa) * 2 - .5, p.y + Math.sin(aa) * 2 - .5, 1, 1); } g.fillStyle(0xffffff, 1).fillRect(p.x - .5, p.y - .5, 1, 1); return; }
     if (p.spark) { // 游雷（照流放之路 2 闪电箭）：顺着速度拉长的亮白箭头 + 一条抖动的锯齿电尾

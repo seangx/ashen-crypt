@@ -145,7 +145,7 @@ function trigCraft(T, op, arg) {
 /* 底技能：主手类别 → 虚拟技能石（等级随角色等级），倍率 0.7 × 对口 1.2；触发系数 = 24 ÷ 主手基础攻速 */
 function basicGem(eq) {
   const wl = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : null, cat = wl ? WEAPONS[wl.b].cat : 'bow', B = TRG.basic[cat] || TRG.basic.bow;
-  return { kind: 'gem', b: B[0], var: B[1], lvl: clamp(1 + Math.floor((S.level || 1) / 4), 1, MOD_MAX), q: 0, mods: [], sock: 0, affs: [], fake: 1, basic: 1 };
+  return { kind: 'gem', b: B, lvl: clamp(1 + Math.floor((S.level || 1) / 4), 1, MOD_MAX), q: 0, mods: [], sock: 0, affs: [], fake: 1, basic: 1 };
 }
 function basicProc(eq) { const it = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : null, g = it && G2W[it.b]; // gear-v2 §1b：每把武器自带触发系数，“触发系数提高”是本地词条
   const pi = it ? it.affs.reduce((s, x) => s + (AFF_BY[x.k] && AFF_BY[x.k].stat === 'procInc' ? x.v : 0), 0) + uval(it, 'procInc') : 0;

@@ -89,7 +89,7 @@ const modWhere = m => { if (MOD_BY[m.mid].field) return '法阵'; const t = (RUN
 /* 掉落：底材按原作掉落权重在全部部位里抽（要求物品等级达到底材需求） */
 function allBases() {
   const out = [];
-  for (const k in WEAPONS) if (!WEAPONS[k].retired) out.push(['weapon', k, WEAPONS[k]]); // 停止掉落的底子只为老存档保留
+  for (const k in WEAPONS) out.push(['weapon', k, WEAPONS[k]]);
   for (const kind in ARMORS) if (kind !== 'gem' && kind !== 'chip') for (const k in ARMORS[kind]) out.push([kind, k, ARMORS[kind][k]]);
   return out;
 }
@@ -141,15 +141,14 @@ function rollModDrop(ilvl) {
   return newMod(d.id, dropXp(ilvl));
 }
 
-/* 技能石（spec-skill-gems）：{ kind:'gem', b:技能石 id, var:来源底子, lvl, xp, q, sock, mods } */
-const gemVar = g => { const L = GEM_BY[g.b].src; return g.var && (!L.length || L.includes(g.var)) ? g.var : L[0]; }; // 变体不在列表里（骨刺的荆棘甲变体已删）退回第一个
-const gemTags = g => { const G = GEM_BY[g.b], v = G.src.length ? gemVar(g) : null; return v && WEAPONS[v] ? WEAPONS[v].tags.filter(t => t !== 'Weapon') : G.tags; };
+/* 技能石（spec-skill-gems）：{ kind:'gem', b:技能石 id, lvl, xp, q, sock, mods }（老存档上的 var 变体已不用） */
+const gemTags = g => GEM_BY[g.b].tags;
 const utilVal = g => { const G = GEM_BY[g.b], U = G.util; return Math.round((U.v[0] + (U.v[1] - U.v[0]) * (clamp(g.lvl || 1, 1, MOD_MAX) - 1) / Math.max(1, MOD_MAX - 1)) * (1 + (g.q || 0) / 100) * 10) / 10; }; // 功能技能的数值：按等级、品质
 const gemTag3 = g => { const G = GEM_BY[g.b] || g; return [G.kind3, ELEM_N[G.el], F3_N[G.f3], ...(G.mech || []).map(k => MECH_N[k])].filter(Boolean); }; // 显示用的三层标签
 const gemMul = (G, L) => G.mul[0] + (G.mul[1] - G.mul[0]) * (clamp(L, 1, MOD_MAX) - 1) / 19;
 function newGem(id, o = {}) {
   const G = GEM_BY[id], xp = o.xp || 0;
-  const g = { id: S.nextId++, kind: 'gem', b: id, var: o.var || (G.src.length ? (G.dropVars ? pick(G.dropVars) : G.src[0]) : null), ilvl: 1, q: o.q ?? 0, rar: 0, affs: [], xp, lvl: o.lvl || modLevelOf(xp), sock: o.sock || 1, mods: [] };
+  const g = { id: S.nextId++, kind: 'gem', b: id, ilvl: 1, q: o.q ?? 0, rar: 0, affs: [], xp, lvl: o.lvl || modLevelOf(xp), sock: o.sock || 1, mods: [] };
   if (o.lvl && !o.xp) g.xp = g.lvl > 1 ? MOD_XP[g.lvl - 2] : 0;
   g.mods = Array(g.sock).fill(null); return g;
 }
@@ -161,20 +160,22 @@ function rollGemDrop(ilvl) {
 }
 // 技能石当前的形态符文（虚拟，等级 = 技能石等级）
 const gemFormRune = g => { const G = GEM_BY[g.b]; return G.fr ? { id: -1, kind: 'mod', mid: G.fr, lvl: g.lvl, xp: g.xp, virt: 1 } : null; };
-// 技能的虚拟武器：底子 = 来源旧武器（形态参数、标签、射程），伤害按主手品质 × mul × (1+品质%) × 对口，攻速 = 来源攻速 × 主手 spd
+// 技能的虚拟武器：参数全来自技能石（gems.json 的 base）。每次出手的伤害 = 主手这一下（mechanics.gems.hit 按主手品质 × 主手 pow）× 技能石 eff × 等级、品质、对口；
+// 出手频率 = 主手攻速（gear2.weapons 的 aps）。持续型 / 光环的 eff 是每秒伤害
 function gemBase(g, wl) {
-  const G = GEM_BY[g.b], src = WEAPONS[gemVar(g)], wb = WEAPONS[wl.b], q = wl.q;
-  const cat = GEMC.cats[wb.cat], tags = gemTags(g);
+  const G = GEM_BY[g.b], B = G.base, wb = WEAPONS[wl.b], H = GEMC.hit, tags = gemTags(g), cat = GEMC.cats[wb.cat];
   const aff = cat && cat.tags.some(t => tags.includes(t)) ? GEMC.affinity : 1;
-  const f = gemMul(G, g.lvl) * (1 + (g.q || 0) / 100) * aff / GEMC.affinity * (GEMC.pow[wl.b] ?? 1); // 对口时 ×1，不对口 ÷1.2（数据里的旧伤害已经是对口强度）
-  return { ...src, key: G.id, n: G.n, tags: [...tags, 'Weapon'], I: src.I * f, gI: f, aps: src.aps == null ? src.aps : qv(src.aps, q) * (GEMC.spd[wl.b] ?? 1), rngMul: (src.rngMul || 1) * (g.basic ? 1 : G.rngMul || 1), /* 骨刺、霜刺：技能射程 ×3.5（底技能不变） */ crit: wb.crit, aff: aff > 1, gem: G.id, el: G.el || src.el, ...(g.basic && wb.bel ? { el: wb.bel } : {}) }; // v3：技能石固定一种元素 // gear-v2：普攻用武器自带元素
+  const f = gemMul(G, g.lvl) * (1 + (g.q || 0) / 100) * aff / GEMC.affinity * wPow(wl.b); // 对口时 ×1，不对口 ÷1.2
+  const timed = !B.cont && !B.aura && B.form !== 'ram'; // 持续、光环、冲撞不按攻速出手
+  return { ...B, key: G.id, n: G.n, tags: [...tags, 'Weapon'], min: H.min, max: H.max, I: B.eff * f, gI: f, aura: B.aura ? H.min.map((v, i) => (v + H.max[i]) / 2 * B.eff) : 0,
+    aps: timed ? wAps(wl.b) : undefined, rngMul: g.basic ? 1 : G.rngMul || 1, /* 骨刺、霜刺：技能射程 ×3.5（普攻不变） */ crit: wb.crit, aff: aff > 1, gem: G.id, el: G.el || B.el, ...(g.basic && wb.bel ? { el: wb.bel } : {}) }; // v3：技能石固定一种元素 // gear-v2：普攻用武器自带元素
 }
 // 技能格“需要盾牌”：装着圣盾掷但没有盾（此时技能改成骨矢 1 级）
 const needShield = (eq = S.equip) => !!(eq.gem && eq.gem.kind === 'gem' && GEM_BY[eq.gem.b].form === 'shieldThrow' && !eq.shield);
 function skillItem(eq) { // 技能格里的技能石 → 虚拟武器；圣盾掷返回 null（走 shieldWeapon）
   let g = eq.gem && eq.gem.kind === 'gem' ? eq.gem : null;
   if (g && GEM_BY[g.b].form === 'shieldThrow' && eq.shield) return null;
-  if (!g || GEM_BY[g.b].form === 'shieldThrow') g = { kind: 'gem', b: 'GemBolt', var: 'Cannon', lvl: 1, q: 0, mods: [], sock: 0, affs: [], fake: 1 }; // 没装技能石 / 圣盾掷没盾：骨矢 1 级，无辅助
+  if (!g || GEM_BY[g.b].form === 'shieldThrow') g = { kind: 'gem', b: 'GemBolt', lvl: 1, q: 0, mods: [], sock: 0, affs: [], fake: 1 }; // 没装技能石 / 圣盾掷没盾：骨矢 1 级，无辅助
   const wl = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : { kind: 'weapon', b: GEMC.unarmed, q: 0, ilvl: 1, affs: [], rar: 0, id: -1 };
   return { ...wl, fb: gemBase(g, wl), src: g, gem: g };
 }

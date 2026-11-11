@@ -73,8 +73,6 @@ const WEAPON_SKIN = DATA.items.weapons;
     const old = w.aps, nu = Array.isArray(old) ? old.map(f) : f(old), r = i => { const o = Array.isArray(old) ? old[Math.min(i, old.length - 1)] : old, n = Array.isArray(nu) ? nu[Math.min(i, nu.length - 1)] : nu; return o / n; };
     for (const key of ['min', 'max']) if (Array.isArray(w[key])) w[key] = w[key].map((v, i) => Math.round(v * r(i))); else if (typeof w[key] === 'number') w[key] = Math.round(w[key] * r(0));
     w.aps = nu; } }
-// 技能 v3：新技能的虚拟底子（data/gems.json 的 bases）——照抄一把旧武器的数值曲线，再覆盖形态参数
-for (const [k, B] of Object.entries(DATA.gems.bases || {})) { if (!B.clone) continue; ASTRO.weapons[k] = { ...ASTRO.weapons[B.clone], w: 0, ...(B.astro || {}) }; for (const e of ['kin', 'exp', 'ele', 'cold', 'pla', 'nuc']) delete ASTRO.weapons[k]['ail_' + e]; WEAPON_SKIN[k] = { ...WEAPON_SKIN[B.clone], ...(B.skin || {}) }; }
 const WEAPONS = {};
 for (const k in WEAPON_SKIN) WEAPONS[k] = { key: k, ...ASTRO.weapons[k], ...WEAPON_SKIN[k], tags: ASTRO.weapons[k].tags.filter(t => t !== 'Weapon').concat('Weapon') };
 // 遁靴（原作：引擎，冲刺即技能；本身也带武器标签）
@@ -85,8 +83,7 @@ const GEMC = DATA.mechanics.gems;
 const GEMS = DATA.gems.list, GEM_BY = Object.fromEntries(GEMS.map(g => [g.id, g]));
 for (const g of GEMS) ARMORS.gem[g.id] = { key: g.id, n: g.n, ic: g.ic, tags: g.tags, w: 0, gem: g };
 const WEAPON_CAT = {}; for (const c in GEMC.cats) for (const k of GEMC.cats[c].bases) WEAPON_CAT[k] = c;
-for (const k in WEAPONS) { WEAPONS[k].cat = WEAPONS[k].cat || WEAPON_CAT[k]; if (GEMC.retired.includes(k)) WEAPONS[k].retired = 1; }
-const GEM_OF_BASE = {}; for (const g of GEMS) for (const k of g.src) GEM_OF_BASE[k] = g.id;
+for (const k in WEAPONS) WEAPONS[k].cat = WEAPONS[k].cat || WEAPON_CAT[k];
 const FORM_GEM = Object.fromEntries(GEMS.filter(g => g.fr).map(g => [g.fr, g.id])); // 形态符文 → 技能石
 for (const k in ENGINE_SKIN) ARMORS.engine[k] = { key: k, ...ASTRO.engines[k], ...ENGINE_SKIN[k] };
 const SHIELD_SKIN = DATA.items.shield, CORE_SKIN = DATA.items.core, HUB_SKIN = DATA.items.hub; // 头冠（原作：核心）

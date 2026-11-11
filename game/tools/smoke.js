@@ -22,23 +22,23 @@ const WINS = ['gear', 'trig', 'mods', 'tree', 'craft', 'salvage', 'shop', 'ladde
     for (const f of fs.readdirSync(src).filter(f => f.endsWith('.js'))) fs.readFileSync(path.join(src, f), 'utf8').split('\n').forEach((l, i) => { let k = l.indexOf('//'); while (k > 0 && l[k - 1] === ':') k = l.indexOf('//', k + 2); if (k >= 0 && pat.test(l.slice(k))) fail(`源码 ${f}:${i + 1}`, '行内注释后面还有代码，会被注释掉：' + l.slice(k, k + 60)); }); }
 
   if (only !== 'ui') {
-    const list = await page.evaluate(() => P.A.GEMS.flatMap(G => G.form === 'shieldThrow' ? [{ id: G.id, n: G.n, util: 0, shield: 1 }] : (G.src && G.src.length ? G.src : [undefined]).map(v => ({ id: G.id, n: G.n, v, util: G.util ? 1 : 0 }))));
+    const list = await page.evaluate(() => P.A.GEMS.flatMap(G => G.form === 'shieldThrow' ? [{ id: G.id, n: G.n, util: 0, shield: 1 }] : [{ id: G.id, n: G.n, util: G.util ? 1 : 0 }]));
     for (const g of list) {
       const r = await page.evaluate(async g => {
-        const W = P.setup({ gems: [{ id: g.id, var: g.v }], trig: g.util ? 'timer' : 'cast', shield: !!g.shield, weapon: 'Cannon' });
+        const W = P.setup({ gems: [g.id], trig: g.util ? 'timer' : 'cast', shield: !!g.shield, weapon: 'Cannon' });
         if (!W) return { err: '魂龛里没有生成技能（插不进去或被过滤）' };
         const info = { form: W.form, rng: Math.round(W.rng || 0), aoe: Math.round(W.aoeR || 0), dps: Math.round(W.dps || 0) };
         if (!(await P.start())) return { ...info, err: '开局失败' };
         let e = null; try { P.step(6, () => { P.tank(); P.A.player.life = P.A.STATS.life; P.A.player.soul = P.A.STATS.soulMax; }); } catch (x) { e = x.message; }
         const res = { ...info, fired: P.fired(), dealt: Math.round(P.dealt()), err: e }; P.stop(); return res;
       }, g).catch(e => ({ err: e.message.split('\n')[0] }));
-      const name = `技能 ${g.n}${g.v ? '（' + g.v + '）' : ''}`;
+      const name = `技能 ${g.n}`;
       if (r.err) { fail(name, r.err); continue; }
       if (!r.fired) fail(name, '6 秒内一次都没放出来');
       if (!g.util) { if (r.dps <= 0) fail(name, `面板秒伤 ${r.dps}`); if (r.fired && r.dealt <= 0) fail(name, '放了但没打出伤害'); if (!CLOSE_FORMS.includes(r.form) && (r.rng || 160) < MIN_RNG && r.aoe < 30) fail(name, `射程只有 ${r.rng}（形态 ${r.form}）`); }
       g.r = r;
     }
-    console.log(`技能石 ${list.length} 个变体：` + list.map(g => g.r ? `${g.n}${g.v ? '/' + g.v : ''} ${g.r.fired}次` : '').filter(Boolean).join('，'));
+    console.log(`技能石 ${list.length} 个：` + list.map(g => g.r ? `${g.n} ${g.r.fired}次` : '').filter(Boolean).join('，'));
   }
 
   if (only !== 'gems') {
