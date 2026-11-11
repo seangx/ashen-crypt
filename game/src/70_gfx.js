@@ -182,7 +182,7 @@ function devilFx(ground, glow, x, y, r, t, seed, a = 1) {
   }
 }
 /* ---------- 文字：平滑字体，按画布的实际分辨率渲染 ---------- */
-const FONT_FAM = '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", "WenQuanYi Zen Hei", sans-serif';
+const FONT_FAM = '"Noto Sans SC", "Noto Sans CJK SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", "WenQuanYi Zen Hei", sans-serif'; // 系统中文字体（不再加载网络字体）
 const FS = { 8: [8, 500, 10], 12: [10, 500, 13], num: [7, 700, 8] }; // 字号、字重、行高（逻辑像素）
 const fontCss = s => `${FS[s][1]} ${FS[s][0]}px ${FONT_FAM}`;
 const MC = document.createElement('canvas').getContext('2d');

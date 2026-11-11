@@ -7,7 +7,7 @@ function makeCursors() {
   g.fillStyle = '#120c18'; g.fillRect(2, 0, 3, 7); g.fillRect(0, 2, 7, 3); g.fillStyle = '#ffe6a0'; g.fillRect(3, 1, 1, 5); g.fillRect(1, 3, 5, 1); g.clearRect(3, 3, 1, 1);
   return { arrow: up(sprite(ART.cursor, '#0d0a12'), 1, 1) + ', default', cross: up(cross, 3, 3) + ', crosshair' };
 }
-// 先把用到的字形从网络字体里取回来再开游戏（最多等 4 秒，取不到就用系统字体）
+// 字体：11-11 起不再加载网络字体，用系统中文字体；这里如果装了 Noto Sans SC 就先把字形取齐（最多等 4 秒）
 async function waitFonts() {
   if (!document.fonts) return;
   const want = [`500 11px "Noto Sans SC"`, `700 11px "Noto Sans SC"`].map(f => document.fonts.load(f, FONT_DATA.chars + '0123456789'));

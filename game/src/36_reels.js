@@ -24,6 +24,10 @@ function reelRoll(p) {
   if (myT.size && !jack) for (let k = out.length - 1; k >= 0 && out.filter(hit).length < need; k--) { if (hit(out[k])) continue;
     const cand = pool.filter(x => hit(x) && !out.includes(x)); if (!cand.length) break; out[k] = wpick(cand, c => c.w); }
   p.opts = out.map(x => x.tu ? newUniqueTrig(x.tu, p.ilvl) : newUnique(x.id, p.ilvl)); p.jack = jack && out.length === REEL.choices;
+  // gear-v3 套装保底：每 3 次轮盘（按第一次掷算，重掷不重复计数）至少一个选项是主技能那套缺的件
+  if (p.setTurn === undefined) p.setTurn = (S.reelN = (S.reelN || 0) + 1) % 3 === 0;
+  if (p.setTurn && !p.jack && typeof mainSet === 'function' && p.ilvl >= SETD.drop.minIlvl) { const ms = mainSet(), miss = ms ? setMissing(ms.id) : [];
+    if (miss.length && !p.opts.some(it => it.set === ms.id && miss.includes(it.kind))) { const sp = newSetPiece(ms.id, pick(miss), p.ilvl); if (p.opts.length < REEL.choices) p.opts.push(sp); else p.opts[p.opts.length - 1] = sp; } } // 选项不满（同部位大奖只有一件）就追加，不顶掉神话
   return p;
 }
 const REEL_SKIPT = new Set(['Hit', 'Attack', 'AttackSpeed', 'Range']);

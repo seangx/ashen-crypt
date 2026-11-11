@@ -27,7 +27,7 @@ async function run(build, IL) {
     Math.random = next; window.__reseed = v => { s = v >>> 0; };
     try { localStorage.clear(); } catch (e) { }
   }, opt.seed);
-  await p.route('**/phaser.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(__dirname, 'vendor', 'phaser.min.js')), contentType: 'application/javascript' }));
+  await p.route('**/phaser.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(__dirname, '..', 'vendor', 'phaser.min.js')), contentType: 'application/javascript' }));
   await p.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
   const tmp = path.join(require('os').tmpdir(), `ash-bis-${process.pid}-${build}-${IL}.html`);
   fs.writeFileSync(tmp, `<!doctype html><html><head><meta charset="utf-8"></head><body>${HTML}</body></html>`);

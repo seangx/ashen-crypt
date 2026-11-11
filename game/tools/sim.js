@@ -11,7 +11,7 @@
      --build spark 游雷（电球）流派：天赋先走到织雷之心（mechanics.json 的 spark.treeKey），左手只拿雷灵，符文按 spark.runeOrder 插，做装按 spark.craftPref
      --build random 乱配对照：天赋随机点，做装随机挑词条族
      --ladder every:K  天梯开放后，每 K 局推层打一次天梯最高层（开着连打：赢了接着打新的最高层，输了回推层）
-   需要 playwright（容器里一般在 /opt/node22/lib/node_modules/playwright）。Phaser 用 tools/vendor/ 里的本地副本。 */
+   需要 playwright（容器里一般在 /opt/node22/lib/node_modules/playwright）。Phaser 用 vendor/ 里的本地副本。 */
 const path = require('path'), fs = require('fs');
 let pw; try { pw = require('playwright'); } catch (e) { pw = require('/opt/node22/lib/node_modules/playwright'); }
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
@@ -55,8 +55,8 @@ if (seedsArg) {
     Math.random = next; window.__reseed = v => { s = v >>> 0; };
     try { localStorage.clear(); } catch (e) { }
   }, opt.seed);
-  await p.route('**/phaser.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(__dirname, 'vendor', 'phaser.min.js')), contentType: 'application/javascript' }));
-  await p.route('**/rexuiplugin.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(__dirname, 'vendor', 'rexuiplugin.min.js')), contentType: 'application/javascript' }));
+  await p.route('**/phaser.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(__dirname, '..', 'vendor', 'phaser.min.js')), contentType: 'application/javascript' }));
+  await p.route('**/rexuiplugin.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(__dirname, '..', 'vendor', 'rexuiplugin.min.js')), contentType: 'application/javascript' }));
   await p.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
   const html = require('./override').applyOverrides(fs.readFileSync(opt.html, 'utf8'), require('./override').overridesFrom(process.argv));
   const tmp = path.join(require('os').tmpdir(), 'ash-sim-' + process.pid + '.html');

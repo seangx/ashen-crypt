@@ -24,8 +24,8 @@ dhash = hashlib.sha1(blob.encode('utf8')).hexdigest()[:10]  # 天梯记录里记
 # saves/*.json：可以一键载入的示范存档（不算进数值版本）
 saves = {os.path.splitext(os.path.basename(f))[0]: open(f, encoding='utf8').read() for f in sorted(glob.glob(os.path.join(root, 'saves', '*.json')))}
 datajs = '/* 数据表：由 tools/build.py 从 data/*.json 生成 */\nconst DATA = ' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\nconst DATA_HASH = ' + json.dumps(dhash) + ';\nconst DEMO_SAVES = ' + json.dumps(saves, ensure_ascii=False) + ';\n'
-PHASER_TAG = '<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>'
-REX_TAG = '<script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins@1.80.17/dist/rexuiplugin.min.js"></script>'
+PHASER_TAG = '<script src="vendor/phaser.min.js"></script>'
+REX_TAG = '<script src="vendor/rexuiplugin.min.js"></script>'
 assert PHASER_TAG in head
 MOBILE_HEAD = '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">\n<meta name="apple-mobile-web-app-capable" content="yes">\n'
 for plat, out in (('desktop', 'ashen-crypt.html'), ('mobile', 'ashen-crypt-mobile.html')):

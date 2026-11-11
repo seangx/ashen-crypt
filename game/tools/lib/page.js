@@ -43,7 +43,12 @@ const HELPERS = () => {
 
 async function openGame(html, o = {}) {
   const pw = loadPw(), b = await pw.chromium.launch(), pg = await b.newPage({ viewport: { width: o.w || 390, height: o.h || 844 }, deviceScaleFactor: o.dpr || 1 });
-  const errs = []; pg.on('pageerror', e => errs.push(e.message)); pg.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
+  const errs = []; pg.on('pageerror', e => errs.push(e.message)); pg.on('console', m => { if (m.type() === 'error' && !/Failed to load resource: net::ERR_FAILED/.test(m.text())) errs.push('console: ' + m.text()); }); // 字体请求是下面故意放弃的
+  // 不依赖外网：Phaser / rexUI 用 vendor/ 的本地副本，字体请求直接放弃（11-11：jsDelivr 慢到 10 秒，30 秒内加载不完）
+  const V = path.join(__dirname, '..', '..', 'vendor'), fs = require('fs');
+  await pg.route('**/phaser.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(V, 'phaser.min.js')), contentType: 'application/javascript' }));
+  await pg.route('**/rexuiplugin.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(V, 'rexuiplugin.min.js')), contentType: 'application/javascript' }));
+  await pg.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
   await pg.goto('file://' + path.resolve(html)); await pg.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 30000 }); await pg.waitForTimeout(800);
   await pg.evaluate(`(${HELPERS.toString()})()`);
   return { browser: b, page: pg, errs };

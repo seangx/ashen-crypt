@@ -65,6 +65,24 @@
     "4": {"t": "审判处决敌人时，在原地爆一圈圣光（这只怪最大生命的 30%，范围 30）；这套的技能伤害总增 60%", "more": 60, "flag": {"holyBurst": 0.3}},
     "6": {"t": "对精英和 Boss，圣光技能伤害总增 80%；这套的技能伤害总增 350%", "more": 350, "flag": {"holyBig": 80}}
    }
+  },
+  {
+   "id": "Ember", "n": "余烬", "c": "#ff7a3d", "tag": {"el": "exp"},
+   "pieces": {"core": ["余烬之冠", "NebulaCore"], "hands": ["余烬之握", "BoneGlove"], "chest": ["余烬胸甲", "BoneMail"], "shoulders": ["余烬肩甲", "AshPauldron"], "engine": ["余烬履", "Afterburner"], "amulet": ["余烬坠", "SoulAmulet"]},
+   "bonus": {
+    "2": {"t": "火焰伤害提高 30%，灼烧效果 +20%", "add": {"inc:exp": 30}, "raw": {"ailEff:exp": 20, "ailEff:burn": 20}},
+    "4": {"t": "火焰技能命中时，在敌人脚下留一小片火地（2 秒，每 0.5 秒 = 这一下的 10%，同一处只留一片）；这套的技能伤害总增 60%", "more": 60, "flag": {"emberGround": 0.1}},
+    "6": {"t": "对灼烧中的敌人，火焰技能伤害总增 80%；这套的技能伤害总增 250%", "more": 250, "flag": {"emberBurning": 80}}
+   }
+  },
+  {
+   "id": "Quake", "n": "震荡", "c": "#d6b38a", "tag": {"f3": "area"},
+   "pieces": {"core": ["震荡之冠", "NebulaCore"], "hands": ["震荡之握", "ClawGlove"], "chest": ["震荡胸甲", "BoneMail"], "shoulders": ["震荡肩甲", "BonePauldron"], "engine": ["震荡履", "FusionDrive"], "amulet": ["震荡坠", "BoneAmulet"]},
+   "bonus": {
+    "2": {"t": "范围提高 20%，范围伤害提高 30%", "add": {"aoeInc": 20, "areaInc": 30}},
+    "4": {"t": "范围技能打中精英或 Boss 时，周围 40 以内的普通敌人一起受到这一下的 30%；这套的技能伤害总增 60%", "more": 60, "flag": {"quakeSplash": 0.3}},
+    "6": {"t": "范围技能命中时，被打的敌人周围 50 以内每有 1 个敌人，这一下 +4%（最多 +60%）；这套的技能伤害总增 350%", "more": 350, "flag": {"quakeCrowd": 4}}
+   }
   }
  ]
 }
