@@ -241,6 +241,8 @@ function decoWin(sc, c, w, h, fresh) {
   for (const [x, y, fx, fy] of [[-3, -3, false, false], [w + 3, -3, true, false], [-3, h + 3, false, true], [w + 3, h + 3, true, true]]) c.add(sc.add.image(x, y, 'o_corner').setOrigin(fx ? 1 : 0, fy ? 1 : 0).setFlip(fx, fy));
   if (fresh && G.fx !== false) { const y0 = c.y; c.setAlpha(0).y = y0 + 6; sc.tweens.add({ targets: c, alpha: 1, y: y0, duration: 140, ease: 'Quad.out' }); }
 }
+// 手机短震动（安卓浏览器支持；苹果 Safari 没有这个接口，静默跳过）
+function haptic(ms = 8) { if (!MOBILE || !(S && S.settings ? S.settings.haptic !== false : true)) return; try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { } }
 function tapFlash(sc, c, w, h) { const f = sc.add.rectangle(0, 0, w, h, 0xfff0c0, 0.35).setOrigin(0); c.add(f); sc.tweens.add({ targets: f, alpha: 0, duration: 180, onComplete: () => f.destroy() }); }
 function mkBtn(sc, parent, x, y, w, h, label, onClick, o = {}) {
   const c = sc.add.container(x, y); if (parent) parent.add(c);
@@ -260,10 +262,13 @@ function mkBtn(sc, parent, x, y, w, h, label, onClick, o = {}) {
   c.lab = lab;
   c.setDisabled(c.disabled);
   zone.on('pointerover', () => { if (!c.disabled) bgh.setVisible(true); if (o.tip) showTip(typeof o.tip === 'function' ? o.tip() : o.tip); });
-  zone.on('pointerout', () => { bgh.setVisible(false); prs.setVisible(false); c.y = y; if (o.tip) hideTip(); });
+  // 手感（11-11）：按下缩到 93%（以中心为准），松开带回弹地恢复；手机上点中再轻震一下
+  const pressIn = () => { if (c.pressed) return; c.pressed = true; sc.tweens.killTweensOf(c); if (c.scale === 1) { c._bx = c.x; c._by = c.y; } c.setScale(0.93); c.x = c._bx + w * 0.035; c.y = c._by + h * 0.035; };
+  const release = () => { if (!c.pressed) return; c.pressed = false; sc.tweens.killTweensOf(c); sc.tweens.add({ targets: c, scale: 1, x: c._bx, y: c._by, duration: 160, ease: 'Back.easeOut' }); };
+  zone.on('pointerout', () => { bgh.setVisible(false); prs.setVisible(false); release(); if (o.tip) hideTip(); });
   const prs = sc.add.rectangle(1, 1, w - 2, h - 2, 0x000000, 0.28).setOrigin(0).setVisible(false); c.addAt(prs, 3);
-  zone.on('pointerdown', () => { if (!c.disabled) { c.y = y + 1; prs.setVisible(true); } });
-  zone.on('pointerup', () => { c.y = y; prs.setVisible(false); if (c.disabled) { if (o.whyDisabled) toast(o.whyDisabled); return; } tapFlash(sc, c, w, h); sfx('click'); onClick && onClick(); });
+  zone.on('pointerdown', () => { if (!c.disabled) { pressIn(); prs.setVisible(true); } });
+  zone.on('pointerup', () => { release(); prs.setVisible(false); if (c.disabled) { if (o.whyDisabled) toast(o.whyDisabled); return; } tapFlash(sc, c, w, h); sfx('click'); haptic(8); onClick && onClick(); });
   return c;
 }
 function mkCheck(sc, parent, x, y, label, on, onToggle, o = {}) {

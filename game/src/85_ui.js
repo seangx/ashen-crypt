@@ -35,10 +35,12 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   }
   if (it.kind === 'mod') { let cy = 0; for (const l of modTip(it)) { const t = TW(sc, 0, cy, l.t, w, { size: l.s || 12, color: l.c || COL.text, parent: c }); cy += t.h + 2; } return { c, h: cy }; } // 辅助石：没有底材，用符文说明（原来走 baseOf 会崩，滑动背包时手指划过就报错）
   const b = baseOf(it); let cy = 0;
+  if (o.noHead) cy = -4; else { // noHead：手机详情自己画了标题栏（ui-v2）
   img(sc, 0, 0, 'i_' + iconOf(it), c);
   T(sc, 17, 1, itemName(it), { color: icol(it), parent: c });
-  cy = 16;
-  if (it.kind === 'gem') { T(sc, 0, cy, `技能石 · ${it.lvl} 级 · 品质 ${it.q || 0}%`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
+  cy = 16; }
+  if (o.noHead) { }
+  else if (it.kind === 'gem') { T(sc, 0, cy, `技能石 · ${it.lvl} 级 · 品质 ${it.q || 0}%`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
   else {
   T(sc, 0, cy, `${rarName(it)} · ${KIND_N[it.kind]}${it.rar === 2 ? ' · ' + baseName(it) : ''} · 物品等级 ${it.ilvl}`, { size: 8, color: COL.dim, parent: c }); cy += 11;
   }
@@ -481,10 +483,12 @@ class UI extends Phaser.Scene {
     const best = [...live].sort((a, b) => b.rar - a.rar || b.q - a.q), cs = mob ? 30 : 20, gap = mob ? 3 : 1, cols = Math.max(1, Math.floor((w - 20) / (cs + gap)));
     T(this, 12, 18, `宝箱 ${live.length} 件 · ` + (mob ? '点物品看详情、装备或拆解' : '悬停看详情，点一下装备'), { size: 8, color: COL.dim, parent: c });
     const rows = mob ? 999 : 2, show = best.slice(0, cols * rows);
-    show.forEach((it, i) => mkCell(this, c, 12 + (i % cols) * (cs + gap), 32 + (i / cols | 0) * (cs + gap), it, mob ? { size: cs, upg: true, acts: v => this.itemActs(v) } : { size: cs, upg: true, onClick: v => { if (slotsFor(v)[0]) { equipItem(v); save(); refreshStats(); this.refresh(); } } }));
+    if (mob && this.rewardGrid) { show.length = 0; best.forEach(x => show.push(x)); } // 手机：大格子 + 逐个弹出（86_ui_mobile.js rewardGrid）
+    const gh = mob && this.rewardGrid ? this.rewardGrid(c, w, 32, show, R) : 0;
+    if (!gh) show.forEach((it, i) => mkCell(this, c, 12 + (i % cols) * (cs + gap), 32 + (i / cols | 0) * (cs + gap), it, mob ? { size: cs, upg: true, acts: v => this.itemActs(v) } : { size: cs, upg: true, onClick: v => { if (slotsFor(v)[0]) { equipItem(v); save(); refreshStats(); this.refresh(); } } }));
     if (!show.length) T(this, w / 2, 40, '没有留下装备', { size: 8, color: COL.faint, align: 'center', parent: c });
     if (best.length > show.length) T(this, w - 12, 18, `另 ${best.length - show.length} 件在背包`, { size: 8, color: COL.faint, align: 'right', parent: c });
-    let y = 32 + Math.max(1, Math.ceil(show.length / cols)) * (cs + gap) + 6;
+    let y = 32 + (gh || Math.max(1, Math.ceil(show.length / cols)) * (cs + gap)) + 6;
     const life = Math.round(player.life / STATS.life * 100);
     T(this, 12, y, `生命 ${life}% · 灯火 ${Math.round(player.soul / STATS.soulMax * 100)}% · 下一层 ${RUN.base + 1}`, { size: 8, color: COL.text, parent: c }); y += 14;
     const tabs = [['gear', '装备'], ['mods', '符文'], ['tree', '天赋'], ['craft', '铁砧'], ['bulk', '拆解']].filter(([id]) => unlocked(id === 'bulk' ? 'salvage' : id)), bh = mob ? 40 : 18, tw = Math.floor((w - 24 - (tabs.length - 1) * 4) / Math.max(1, tabs.length));
