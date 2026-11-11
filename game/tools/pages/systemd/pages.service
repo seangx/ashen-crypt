@@ -1,0 +1,18 @@
+[Unit]
+Description=pages: 自部署页面服务（游戏、图鉴、批注）
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/pages/server.py
+Environment=PAGES_ROOT=/opt/pages PAGES_DEFAULT=game PAGES_HOST=176.122.144.145 PAGES_HTTPS_PORT=8443
+Restart=always
+RestartSec=2
+ProtectSystem=strict
+ReadWritePaths=/opt/pages/data
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

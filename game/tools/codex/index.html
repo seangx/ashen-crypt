@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>灰烬地窖图鉴</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root { --bg: #14161f; --panel: #1d2030; --panel2: #262a3d; --line: #2f3450; --fg: #e8eaf2; --dim: #a9aec8; --faint: #8a90ad; --accent: #f0a868; --accent-ink: #14161f;
+  --kin: #d8d0b8; --exp: #ff7a3a; --cold: #9fe0ff; --ele: #c9b6ff; --pla: #ffe27a; --nuc: #9be05a;
+  --t-strong: #ff8b8b; --t-weak: #8fbaff; --t-change: #f2c66b; --t-del: #b3b8c8; --t-ask: #c9a8ff; --t-good: #7fdc98;
+  --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace; color-scheme: dark }
+* { box-sizing: border-box }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; -webkit-text-size-adjust: 100% }
+body { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px) }
+button, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.wrap { max-width: 640px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 40px; display: flex; flex-direction: column; gap: 14px }
+.top { display: flex; align-items: center; gap: 10px }
+.top h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: 1px; flex: 1; min-width: 0 }
+.back { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); display: flex; align-items: center; justify-content: center; flex: none }
+.count { font-family: var(--mono); color: var(--dim); font-size: 13px }
+.search { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); color: var(--dim) }
+.search input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; color: var(--fg); font-size: 15px }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px }
+.h2 { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px }
+.h2 h2 { margin: 0; font-size: 15px; font-weight: 900; flex: 1 }
+.hint { font-size: 11px; color: var(--dim) }
+.mx { display: grid; grid-template-columns: 50px repeat(6, minmax(0, 1fr)); gap: 4px; align-items: center }
+.mx .hd { font-size: 11px; color: var(--dim); text-align: center }
+.mx .rl { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700 }
+.dot { width: 8px; height: 8px; border-radius: 4px; flex: none }
+.cell { height: 36px; border-radius: 8px; border: 1px solid transparent; font-family: var(--mono); font-size: 14px; font-weight: 700 }
+.cell.zero { border-color: var(--line); background: transparent; color: var(--faint) }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+.tile { min-height: 64px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; text-align: left }
+.tile b { font-size: 15px } .tile .count { font-size: 12px } .tile .nb { color: var(--accent); font-size: 12px }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none }
+.chip { flex: none; height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid var(--line); background: var(--panel); color: #c9cde2; font-size: 13px; white-space: nowrap }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700 }
+.grp { display: flex; align-items: baseline; gap: 8px; padding-top: 6px }
+.grp h3 { margin: 0; font-size: 14px; font-weight: 900 }
+.grp .ln { flex: 1; height: 1px; background: var(--line) }
+.item { display: flex; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); text-align: left; width: 100% }
+.ic { flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--panel2); border: 2px solid var(--dim); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px }
+.body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px }
+.nm { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap }
+.nm b { font-size: 15px; color: var(--accent) } .nm small { font-size: 11px; color: var(--dim) }
+.fx { font-size: 13px; line-height: 1.45; color: #c9cde2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden }
+.tags { display: flex; gap: 4px; flex-wrap: wrap }
+.tg { font-size: 11px; padding: 1px 7px; border-radius: 9px; background: var(--panel2); color: #c9cde2 }
+.mk { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 9px; color: var(--accent-ink); margin-left: auto }
+.empty { color: var(--dim); text-align: center; padding: 24px 8px }
+/* 词条档位轴 */
+.axis { position: relative; height: 66px; margin: 4px 6px 0 6px }
+.axis .base { position: absolute; left: 0; right: 0; top: 40px; height: 2px; background: #3a4060 }
+.axis .tk { position: absolute; top: 31px; width: 2px; height: 20px; background: var(--dim) }
+.axis .v { position: absolute; font-family: var(--mono); font-size: 10px; white-space: nowrap }
+.axis .l { position: absolute; top: 53px; font-size: 10px; color: var(--faint); white-space: nowrap }
+/* 抽屉 */
+.scrim { position: fixed; inset: 0; background: rgba(5,6,12,.62); z-index: 20 }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 88%; z-index: 21; background: var(--panel); border-top: 1px solid var(--line); border-radius: 22px 22px 0 0;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-width: 640px; margin: 0 auto }
+.grab { align-self: center; width: 40px; height: 5px; border-radius: 3px; background: #3a4060; flex: none }
+.sh-title { display: flex; gap: 12px; align-items: center }
+.sh-title h2 { margin: 0; font-size: 21px; font-weight: 900; color: var(--accent) }
+.kv { display: grid; grid-template-columns: minmax(0, 6.5em) minmax(0, 1fr); gap: 6px 10px; font-size: 13px }
+.kv dt { color: var(--dim) } .kv dd { margin: 0; white-space: pre-line; word-break: break-word }
+.rel { display: flex; gap: 6px; flex-wrap: wrap }
+.rel button { font-size: 13px; padding: 6px 10px; border-radius: 10px; background: var(--panel2); border: 1px solid #3a4060; color: var(--accent) }
+.rel button.sup { color: #9fb3ff }
+.ttags { display: flex; gap: 6px; flex-wrap: wrap }
+.tt { height: 36px; padding: 0 12px; border-radius: 18px; font-size: 13px; background: transparent; border: 1px solid currentColor }
+.tt[aria-pressed="true"] { color: var(--accent-ink) !important; font-weight: 900 }
+textarea { width: 100%; min-height: 70px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); resize: vertical; font-size: 15px }
+.btn { height: 46px; border-radius: 12px; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 900; font-size: 15px }
+.btn2 { height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); font-size: 13px; padding: 0 12px }
+.note { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--bg); display: flex; flex-direction: column; gap: 4px }
+.note .row { display: flex; align-items: center; gap: 8px }
+.note .when { color: var(--faint); font-size: 11px; font-family: var(--mono); margin-left: auto }
+.note .del { border: 0; background: none; color: var(--faint); font-size: 12px }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 40 }
+</style>
+</head>
+<body>
+<main class="wrap" id="app"><div class="empty">载入中…</div></main>
+<div id="layer"></div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const EL = [['物理', 'kin'], ['火焰', 'exp'], ['寒霜', 'cold'], ['闪电', 'ele'], ['圣光', 'pla'], ['瘟疫', 'nuc']];
+  const ELC = Object.fromEntries(EL.map(([n, k]) => [n, `var(--${k})`]));
+  const TAGS = [['strong', '偏强'], ['weak', '偏弱'], ['change', '要改'], ['del', '删掉'], ['ask', '有疑问'], ['good', '很好']], TAG_N = Object.fromEntries(TAGS);
+  // 每张表怎么当卡片：名字列、小字列、正文列、标签列、分组列
+  const CFG = {
+    uniques: { n: '名称', meta: ['需求等级', '深层开放', '底材'], fx: '规则（最低 → 最高）', tags: [], group: '部位' },
+    weapons: { n: '名称', meta: ['攻速', '伤害系数', '元素', '暴击%'], fx: '隐性', tags: ['对口标签'], group: '类别' },
+    bases: { n: '名称', meta: ['需求等级'], fx: '隐性', tags: ['标签'], group: '部位' },
+    affixes: { n: '说明', meta: ['前后缀', '标签限制'], fx: null, tags: [], group: '部位', axis: true },
+    gems: { n: '名称', meta: ['形态', '伤害效用', '打中后', '自动战斗站位'], fx: '形态符文 20 级', tags: ['标签'], group: '定位' },
+    supports: { n: '名称', meta: ['需求等级', '生效条件'], fx: '20 级', tags: [], group: null },
+    stones: { n: '名称', meta: [], fx: '武器 / 副手（1 → 5 阶）', tags: [], group: null },
+    trigs: { n: '名称', meta: ['类型', '方式'], fx: '说明', tags: [], group: '类型' },
+    mastery: { n: '项目', meta: ['解锁', '前置'], fx: '效果', tags: [], group: '专精' },
+    oaths: { n: 'id', meta: ['部位'], fx: '正面', tags: [], group: null },
+    monsters: { n: '名称', meta: ['元素', '1 级血量', '出现层数'], fx: 'AI', tags: [], group: null },
+    bosses: { n: '名称', meta: ['元素'], fx: '招式', tags: [], group: null },
+    elites: { n: '名称', meta: ['开放层数', '权重'], fx: '参数', tags: [], group: null },
+    tags: { n: '中文', meta: ['标签'], fx: '出现在', tags: [], group: null },
+    rules: { n: 'id', meta: [], fx: '说明（模板）', tags: [], group: null },
+    quality: { n: '代', meta: ['名字前缀', '物品等级', '隐性'], fx: '第二隐性', tags: [], group: null },
+    legendary: { n: '名称', meta: ['需求等级', '只对标签生效'], fx: '规则（最低 → 最高）', tags: [], group: '部位' },
+    drops: { n: '项目', meta: ['数值'], fx: '说明', tags: [], group: null }
+  };
+  const TERMS = ['感电', '弹射', '投射物', '范围', '近战', '持续', '冻结', '冰缓', '灼烧', '疫病', '致盲', '碎骨', '暴击', '护盾', '护甲', '格挡', '灯火', '旋风', '游雷', '陷阱', '新星', '陨火', '召唤', '穿透', '分裂', ...EL.map(e => e[0])];
+  let D = null, st = { view: 'home', t: null, q: '', grp: null, el: null };
+  const NK = 'ash-codex-notes', notes = (() => { try { return JSON.parse(localStorage.getItem(NK) || '[]'); } catch (e) { return []; } })();
+  const saveNotes = () => { try { localStorage.setItem(NK, JSON.stringify(notes.map(({ _up, ...n }) => n))); } catch (e) {} };
+  // 批注同步到自己的服务器（/api/codex/notes，带口令）；本地留一份缓存，离线也能看
+  const TK = 'ash-pages-token', API = '/api/codex/notes';
+  let token = (() => { try { return localStorage.getItem(TK) || ''; } catch (e) { return ''; } })(), sync = { ok: false, err: '' };
+  const api = (m, path, body) => fetch(path, { method: m, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }).then(r => { if (r.status === 401) throw new Error('口令不对'); if (!r.ok) throw new Error('服务器 ' + r.status); return r.json(); });
+  const pushNote = n => { if (!token) return; const { _id, _up, ...d } = n; n._up = 1; api('POST', API, d).then(x => { n._id = x.id; delete n._up; saveNotes(); }).catch(e => { delete n._up; sync.err = e.message; }); }; // _up：正在上传，拉取时别再传一次
+  const dropNote = n => { if (token && n._id) api('DELETE', API + '/' + n._id).catch(e => { sync.err = e.message; }); };
+  async function pullNotes() { if (!token) return; try { const rows = await api('GET', API), have = new Set(rows.map(x => x.data.k + '|' + x.data.ts));
+      const up = notes.filter(n => n._up), local = notes.filter(n => !n._id && !n._up && !have.has(n.k + '|' + n.ts)); // 只在本机的（以前存的、离线时加的）：传上去
+      notes.splice(0, notes.length, ...rows.map(x => ({ ...x.data, _id: x.id })), ...up.filter(n => !have.has(n.k + '|' + n.ts))); for (const n of local) { notes.push(n); pushNote(n); }
+      saveNotes(); sync = { ok: true, err: '' }; } catch (e) { sync = { ok: false, err: e.message }; } render(); }
+  const ci = (t, name) => D.tables[t].cols.indexOf(name);
+  const val = (t, r, name) => { const i = ci(t, name); return i < 0 ? '' : r[i]; };
+  const keyOf = (t, r) => t + ':' + r[D.tables[t].key];
+  const nameOf = (t, r) => { const c = CFG[t] || {}; return String((c.n && val(t, r, c.n)) || r[D.tables[t].key]); };
+  const rowText = r => r.map(v => String(v ?? '')).join(' ');
+  const elOf = s => EL.filter(([n]) => s.includes(n)).map(e => e[0]);
+  const toast = s => { const d = document.createElement('div'); d.className = 'toast'; d.textContent = s; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); };
+
+  function matrix() {
+    const T = D.tables, cols = [['武器', 'weapons', r => [val('weapons', r, '元素')]], ['神话', 'uniques', r => elOf(rowText(r))], ['传奇', 'legendary', r => elOf(rowText(r))], ['辅助石', 'supports', r => elOf(val('supports', r, '1 级') + val('supports', r, '20 级'))], ['小怪', 'monsters', r => [val('monsters', r, '元素')]], ['Boss', 'bosses', r => [val('bosses', r, '元素')]]];
+    const M = EL.map(([n]) => cols.map(([, t, f]) => T[t].rows.filter(r => f(r).includes(n)).length)), mx = cols.map((_, j) => Math.max(1, ...M.map(r => r[j])));
+    return `<section class="card"><div class="h2"><h2>元素 × 内容</h2><span class="hint">点格子看那一组</span></div>
+      <div class="mx"><span></span>${cols.map(c => `<span class="hd">${c[0]}</span>`).join('')}
+      ${EL.map(([n, k], i) => `<span class="rl"><span class="dot" style="background:var(--${k})"></span>${n}</span>` + M[i].map((v, j) => { const a = v ? 0.18 + 0.62 * v / mx[j] : 0;
+        return `<button class="cell${v ? '' : ' zero'}" data-mx="${cols[j][1]}|${n}" aria-label="${n}${cols[j][0]} ${v}" style="${v ? `background:color-mix(in srgb, var(--${k}) ${Math.round(a * 100)}%, transparent);color:${a > 0.55 ? 'var(--accent-ink)' : 'var(--fg)'}` : ''}">${v || ''}</button>`; }).join('')).join('')}</div>
+      <div class="hint" style="margin-top:8px">“神话”“传奇”“辅助石”按说明里提到的元素计数，是近似值。空格 = 一个都没有。</div></section>`;
+  }
+  function home() {
+    const cnt = {}; for (const n of notes) cnt[n.t] = (cnt[n.t] || 0) + 1;
+    const total = Object.values(D.tables).reduce((s, t) => s + t.rows.length, 0);
+    return `<div class="top"><h1>灰烬地窖图鉴</h1><span class="count">${total} 条</span></div>
+      <label class="search"><span aria-hidden="true">⌕</span><input id="q" type="search" placeholder="搜名字、效果、标签…" value="${esc(st.q)}" autocomplete="off"></label>
+      ${st.q ? results() : matrix() + `<div class="tiles">${Object.entries(D.tables).map(([k, t]) => `<button class="tile" data-open="${k}"><b>${esc(t.name)}</b><span class="count">${t.rows.length} 条 ${cnt[k] ? `<span class="nb">· 批注 ${cnt[k]}</span>` : ''}</span></button>`).join('')}</div>`}
+      <section class="card"><div class="h2"><h2>我的批注 · ${notes.length}</h2></div>
+        <div class="hint" style="margin-bottom:8px">${TAGS.map(([k, n]) => `${n} ${notes.filter(x => x.tag === k).length}`).join(' · ')}<br>${token ? (sync.ok ? '批注已同步到服务器，Claude 能直接看到。' : sync.err ? '同步失败：' + sync.err + '（批注先存在这台手机上）' : '正在同步…') : '批注现在只存在这台手机上。填一次同步口令，之后会同步到服务器，Claude 直接就能看到。'}</div>
+        ${token ? '' : '<div style="display:flex;gap:8px;margin-bottom:8px"><input id="tokIn" type="password" placeholder="同步口令" style="flex:1;min-width:0;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:15px"><button class="btn2" id="tokSave">保存</button></div>'}
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn2" id="copyNotes">复制全部批注</button>${notes.length ? '<button class="btn2" id="listNotes">看全部批注</button>' : ''}</div></section>
+      <div class="hint">数据取自游戏 ${esc(D.generated.slice(0, 10))}</div>`;
+  }
+  function results() {
+    const s = st.q.toLowerCase(), out = [];
+    for (const [t, T] of Object.entries(D.tables)) for (const r of T.rows) if (rowText(r).toLowerCase().includes(s)) out.push([t, r]);
+    return `<div class="hint">“${esc(st.q)}”：${out.length} 条</div>` + (out.length ? out.slice(0, 120).map(([t, r]) => itemHtml(t, r, true)).join('') : '<div class="empty">没有找到。</div>');
+  }
+  function itemHtml(t, r, showTable) {
+    const c = CFG[t] || {}, k = keyOf(t, r), ns = notes.filter(n => n.k === k), name = nameOf(t, r), els = elOf(rowText(r)), col = els[0] ? ELC[els[0]] : 'var(--dim)';
+    const meta = (c.meta || []).map(m => val(t, r, m)).filter(v => v !== '' && v != null).join(' · ');
+    const fx = c.fx ? String(val(t, r, c.fx) || '') : '';
+    const tags = (c.tags || []).flatMap(m => String(val(t, r, m) || '').split('、')).filter(Boolean).slice(0, 5);
+    return `<button class="item" data-row="${esc(k)}"><span class="ic" style="border-color:${col};color:${col}">${esc(name.replace(/[【】#\s]/g, '').slice(0, 1))}</span><span class="body">
+      <span class="nm"><b>${esc(name)}</b><small>${esc(showTable ? D.tables[t].name + (meta ? ' · ' + meta : '') : meta)}</small>${ns.length ? `<span class="mk" style="background:var(--t-${ns[ns.length - 1].tag})">${esc(TAG_N[ns[ns.length - 1].tag])}${ns.length > 1 ? ' ' + ns.length : ''}</span>` : ''}</span>
+      ${fx ? `<span class="fx">${esc(fx.replace(/\n/g, '；'))}</span>` : ''}
+      ${c.axis ? axisHtml(t, r) : ''}
+      ${tags.length ? `<span class="tags">${tags.map(x => `<span class="tg">${esc(x)}</span>`).join('')}</span>` : ''}</span></button>`;
+  }
+  function axisHtml(t, r) {
+    const vs = String(val(t, r, '各档数值')).split(' | '), lvs = String(val(t, r, '各档最低物品等级')).split(' | ').map(Number); if (!vs.length || !lvs.length) return '';
+    const xs = lvs.map(l => Math.min(100, (l - 1) / 99 * 100)), show = xs.map(() => false); let lastX = -99, row = 0; // 太挤的档位不标数字（最后一档总标）
+    xs.forEach((x, i) => { if (i === xs.length - 1 || x - lastX >= 16) { show[i] = true; lastX = x; } });
+    if (show.length > 1 && xs[xs.length - 1] - xs[show.lastIndexOf(true, xs.length - 2)] < 16) show[show.lastIndexOf(true, xs.length - 2)] = false;
+    return `<span class="axis" aria-label="档位：${esc(vs.map((v, i) => `${lvs[i]}级 ${v}`).join('，'))}"><span class="base"></span>${vs.map((v, i) => { const x = xs[i], last = i === vs.length - 1, tr = x > 78 ? 'translateX(-100%)' : 'translateX(-2px)', r = show[i] ? (row++ % 2) : 0;
+      return `<span class="tk" style="left:${x}%;${last ? 'background:var(--accent)' : ''}"></span>${show[i] ? `<span class="v" style="left:${x}%;top:${r ? 15 : 0}px;transform:${tr};${last ? 'color:var(--accent)' : ''}">${esc(v)}</span><span class="l" style="left:${x}%;transform:${tr}">${lvs[i]}级</span>` : ''}`; }).join('')}</span>`;
+  }
+  function list() {
+    const t = st.t, T = D.tables[t], c = CFG[t] || {}; let rows = T.rows;
+    const groups = c.group ? [...new Set(rows.flatMap(r => String(val(t, r, c.group) || '其他').split('、')))] : [];
+    if (st.grp) rows = rows.filter(r => String(val(t, r, c.group) || '其他').split('、').includes(st.grp));
+    if (st.el) rows = rows.filter(r => elOf(rowText(r)).includes(st.el));
+    let body = '';
+    if (c.group && !st.grp) for (const g of groups) { const rs = rows.filter(r => String(val(t, r, c.group) || '其他').split('、')[0] === g); if (!rs.length) continue; body += `<div class="grp"><h3>${esc(g)}</h3><span class="count">${rs.length}</span><span class="ln"></span></div>` + rs.map(r => itemHtml(t, r)).join(''); }
+    else body = rows.map(r => itemHtml(t, r)).join('');
+    return `<div class="top"><button class="back" data-home aria-label="返回总览">‹</button><h1>${esc(T.name)}</h1><span class="count">${rows.length} / ${T.rows.length}</span></div>
+      ${groups.length > 1 ? `<div class="chips"><button class="chip" data-grp="" aria-pressed="${!st.grp}">全部</button>${groups.map(g => `<button class="chip" data-grp="${esc(g)}" aria-pressed="${st.grp === g}">${esc(g)}</button>`).join('')}</div>` : ''}
+      <div class="chips"><button class="chip" data-el="" aria-pressed="${!st.el}">全部元素</button>${EL.map(([n, k]) => `<button class="chip" data-el="${n}" aria-pressed="${st.el === n}" style="${st.el === n ? '' : `color:var(--${k})`}">${n}</button>`).join('')}</div>
+      ${body || '<div class="empty">这一组没有。</div>'}`;
+  }
+  function allNotes() {
+    const ns = notes.slice().sort((a, b) => b.ts - a.ts);
+    return `<div class="top"><button class="back" data-home aria-label="返回总览">‹</button><h1>全部批注</h1><span class="count">${ns.length}</span></div>
+      ${ns.map(n => `<button class="item" data-row="${esc(n.k)}"><span class="body"><span class="nm"><span class="mk" style="background:var(--t-${n.tag});margin-left:0">${esc(TAG_N[n.tag])}</span><b>${esc(n.label)}</b><small>${esc((D.tables[n.t] || {}).name || '')}</small></span>${n.text ? `<span class="fx">${esc(n.text)}</span>` : ''}</span></button>`).join('') || '<div class="empty">还没有批注。</div>'}`;
+  }
+  function render() {
+    $('app').innerHTML = st.view === 'list' ? list() : st.view === 'notes' ? allNotes() : home();
+    const q = $('q'); if (q) { q.oninput = e => { st.q = e.target.value.trim(); const pos = e.target.selectionStart; render(); const n = $('q'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (er) {} }; }
+  }
+  function related(t, r) {
+    const txt = rowText(r), terms = TERMS.filter(w => txt.includes(w)).slice(0, 4), out = [];
+    if (!terms.length) return [];
+    for (const tt of ['uniques', 'legendary', 'supports', 'gems']) for (const rr of D.tables[tt].rows) { if (tt === t && rr === r) continue; const x = rowText(rr); const hit = terms.filter(w => x.includes(w)).length; if (hit) out.push([hit, tt, rr]); }
+    return out.sort((a, b) => b[0] - a[0]).slice(0, 10).map(([, tt, rr]) => [tt, rr]).concat([]).map(x => x).filter(Boolean).map(([tt, rr]) => ({ tt, rr, terms }));
+  }
+  function openRow(k) {
+    const i = k.indexOf(':'), t = k.slice(0, i), T = D.tables[t], r = T.rows.find(x => keyOf(t, x) === k); if (!r) return;
+    const name = nameOf(t, r), rel = related(t, r), ns = notes.filter(n => n.k === k).sort((a, b) => b.ts - a.ts), els = elOf(rowText(r)), col = els[0] ? ELC[els[0]] : 'var(--dim)';
+    let pick = null;
+    const html = () => `<div class="scrim" data-close></div><section class="sheet" role="dialog" aria-label="${esc(name)}"><span class="grab"></span>
+      <div class="sh-title"><span class="ic" style="width:48px;height:48px;border-color:${col};color:${col}">${esc(name.replace(/[【】#\s]/g, '').slice(0, 1))}</span><div style="flex:1;min-width:0"><h2>${esc(name)}</h2><div class="hint">${esc(T.name)} · ${esc(r[T.key])}</div></div><button class="back" data-close aria-label="关闭">✕</button></div>
+      ${CFG[t] && CFG[t].axis ? axisHtml(t, r) : ''}
+      <dl class="kv">${T.cols.map((c, j) => r[j] === '' || r[j] == null ? '' : `<dt>${esc(c)}</dt><dd>${esc(r[j])}</dd>`).join('')}</dl>
+      ${rel.length ? `<div><div class="h2"><h2>相关</h2><span class="hint">都提到 ${esc(rel[0].terms.join('、'))}</span></div><div class="rel">${rel.map(x => `<button class="${x.tt === 'supports' ? 'sup' : ''}" data-row="${esc(keyOf(x.tt, x.rr))}">${esc(nameOf(x.tt, x.rr))} · ${esc(D.tables[x.tt].name.replace('（符文）', ''))}</button>`).join('')}</div></div>` : ''}
+      <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px">
+        <div class="ttags" role="group" aria-label="批注标签">${TAGS.map(([tk, tn]) => `<button class="tt" data-tag="${tk}" aria-pressed="${pick === tk}" style="color:var(--t-${tk});${pick === tk ? `background:var(--t-${tk})` : ''}">${tn}</button>`).join('')}</div>
+        <textarea id="nt" placeholder="说明（可选），比如：20 层就能拿到，太早了"></textarea>
+        <button class="btn" id="ns" ${pick ? '' : 'disabled style="opacity:.45"'}>保存批注</button>
+        ${ns.map(n => `<div class="note"><div class="row"><span class="mk" style="background:var(--t-${n.tag});margin-left:0">${esc(TAG_N[n.tag])}</span><span class="when">${new Date(n.ts).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span><button class="del" data-del="${n.ts}">删除</button></div>${n.text ? `<div>${esc(n.text)}</div>` : ''}</div>`).join('')}
+      </div></section>`;
+    const L = $('layer'); const draw = () => { const keep = $('nt') ? $('nt').value : ''; L.innerHTML = html(); if ($('nt')) $('nt').value = keep; };
+    draw();
+    L.onclick = e => {
+      if (e.target.closest('[data-close]')) { L.innerHTML = ''; render(); return; }
+      const tg = e.target.closest('[data-tag]'); if (tg) { pick = pick === tg.dataset.tag ? null : tg.dataset.tag; draw(); return; }
+      const dl = e.target.closest('[data-del]'); if (dl) { const ts = +dl.dataset.del, ix = notes.findIndex(n => n.k === k && n.ts === ts); if (ix >= 0) { dropNote(notes[ix]); notes.splice(ix, 1); saveNotes(); } ns.splice(0, ns.length, ...notes.filter(n => n.k === k).sort((a, b) => b.ts - a.ts)); draw(); return; }
+      if (e.target.id === 'ns' && pick) { { const n = { k, t, key: String(r[T.key]), label: name, tag: pick, text: $('nt').value.trim(), ts: Date.now() }; notes.push(n); saveNotes(); pushNote(n); } toast('已保存'); pick = null; ns.splice(0, ns.length, ...notes.filter(n => n.k === k).sort((a, b) => b.ts - a.ts)); $('nt').value = ''; draw(); return; }
+      const rw = e.target.closest('[data-row]'); if (rw) { openRow(rw.dataset.row); return; }
+    };
+  }
+  document.addEventListener('click', e => {
+    if (e.target.closest('#layer')) return;
+    const o = e.target.closest('[data-open]'); if (o) { st = { ...st, view: 'list', t: o.dataset.open, grp: null, el: null }; render(); scrollTo(0, 0); return; }
+    if (e.target.closest('[data-home]')) { st.view = 'home'; render(); scrollTo(0, 0); return; }
+    const g = e.target.closest('[data-grp]'); if (g) { st.grp = g.dataset.grp || null; render(); return; }
+    const el = e.target.closest('[data-el]'); if (el) { st.el = el.dataset.el || null; render(); return; }
+    const m = e.target.closest('[data-mx]'); if (m) { const [t, n] = m.dataset.mx.split('|'); st = { ...st, view: 'list', t, grp: null, el: n }; render(); scrollTo(0, 0); return; }
+    const rw = e.target.closest('[data-row]'); if (rw) { openRow(rw.dataset.row); return; }
+    if (e.target.id === 'tokSave') { const v = ($('tokIn').value || '').trim(); if (!v) return; token = v; try { localStorage.setItem(TK, v); } catch (er) {} sync = { ok: false, err: '' }; render(); pullNotes(); return; }
+    if (e.target.id === 'listNotes') { st.view = 'notes'; render(); scrollTo(0, 0); return; }
+    if (e.target.id === 'copyNotes') {
+      const txt = notes.length ? notes.map(n => `[${TAG_N[n.tag]}] ${(D.tables[n.t] || {}).name} · ${n.label}（${n.key}）${n.text ? '：' + n.text : ''}`).join('\n') : '（还没有批注）';
+      const done = () => toast(`已复制 ${notes.length} 条批注`);
+      if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, () => fallback(txt)); else fallback(txt);
+      function fallback(s) { const ta = document.createElement('textarea'); ta.value = s; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (er) { toast('复制失败，长按选择文字复制'); } ta.remove(); }
+    }
+  });
+  fetch('data.json').then(r => r.json()).then(d => { D = d; render(); pullNotes(); }).catch(() => { $('app').innerHTML = '<div class="empty">数据没有读到，刷新一下。</div>'; });
+})();
+</script>
+</body>
+</html>

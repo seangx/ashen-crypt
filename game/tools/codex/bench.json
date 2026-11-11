@@ -1,0 +1,232 @@
+[
+ {
+  "id": "GemWhirl",
+  "n": "旋风斩",
+  "form": "orbit",
+  "w": "TurbineBlades",
+  "eff": 0.445,
+  "kills": 168.5,
+  "pack": 3365.1345577924103,
+  "single": 567.5269805232929
+ },
+ {
+  "id": "GemStab",
+  "n": "骨刺",
+  "form": "stab",
+  "w": "TurbineBlades",
+  "eff": 0.586,
+  "kills": 56,
+  "pack": 4161.369361329962,
+  "single": 454.7391667232213
+ },
+ {
+  "id": "GemRam",
+  "n": "烈焰冲撞",
+  "form": "ram",
+  "w": "TurbineBlades",
+  "eff": 27.835,
+  "kills": 134.5,
+  "pack": 6915.576105445894,
+  "single": 595.5156903898115
+ },
+ {
+  "id": "GemBolt",
+  "n": "骨矢",
+  "form": "proj",
+  "w": "Cannon",
+  "eff": 1,
+  "kills": 45.5,
+  "pack": 2953.2494603602636,
+  "single": 668.6342139663655
+ },
+ {
+  "id": "GemTaser",
+  "n": "雷符",
+  "form": "proj",
+  "w": "Cannon",
+  "eff": 0.515,
+  "kills": 53.5,
+  "pack": 3228.977286714292,
+  "single": 609.9445827605716
+ },
+ {
+  "id": "GemSpark",
+  "n": "游雷",
+  "form": "proj",
+  "w": "Cannon",
+  "eff": 0.309,
+  "kills": 48,
+  "pack": 2411.386224773679,
+  "single": 570.4093547218788
+ },
+ {
+  "id": "GemSickle",
+  "n": "飞镰",
+  "form": "proj",
+  "w": "Cannon",
+  "eff": 0.382,
+  "kills": 118.5,
+  "pack": 7195.63090674408,
+  "single": 421.9654324881895
+ },
+ {
+  "id": "GemFirepot",
+  "n": "火油罐",
+  "form": "proj",
+  "w": "Cannon",
+  "eff": 1.075,
+  "kills": 114.5,
+  "pack": 3688.335737564072,
+  "single": 452.62020471743926
+ },
+ {
+  "id": "GemScatter",
+  "n": "散射",
+  "form": "proj",
+  "w": "Cannon",
+  "eff": 0.302,
+  "kills": 55.5,
+  "pack": 3209.5971343566725,
+  "single": 910.7668508996273
+ },
+ {
+  "id": "GemPlague",
+  "n": "疫星",
+  "form": "proj",
+  "w": "Cannon",
+  "eff": 1.299,
+  "kills": 188,
+  "pack": 9746.431846365253,
+  "single": 319.48878916960393
+ },
+ {
+  "id": "GemBeam",
+  "n": "圣光束",
+  "form": "beam",
+  "w": "Cannon",
+  "eff": 2.228,
+  "kills": 80.5,
+  "pack": 4825.280252683473,
+  "single": 1052.4811881180856
+ },
+ {
+  "id": "GemFlame",
+  "n": "喷火",
+  "form": "cone",
+  "w": "FrostOrb",
+  "eff": 1.802,
+  "kills": 179.5,
+  "pack": 3063.079179488133,
+  "single": 607.0889519026506
+ },
+ {
+  "id": "GemMiasma",
+  "n": "瘟疫光环",
+  "form": "aura",
+  "w": "FrostOrb",
+  "eff": 0.934,
+  "kills": 175,
+  "pack": 4950.371021216767,
+  "single": 661.5582359674524
+ },
+ {
+  "id": "GemNova",
+  "n": "新星",
+  "form": "nova",
+  "w": "FrostOrb",
+  "eff": 0.77,
+  "kills": 259,
+  "pack": 4932.814262439064,
+  "single": 546.0047698207209
+ },
+ {
+  "id": "GemFrostNova",
+  "n": "霜环",
+  "form": "nova",
+  "w": "FrostOrb",
+  "eff": 0.37,
+  "kills": 238.5,
+  "pack": 4848.348097070906,
+  "single": 514.1222933688884
+ },
+ {
+  "id": "GemMeteor",
+  "n": "陨火",
+  "form": "meteor",
+  "w": "FrostOrb",
+  "eff": 0.404,
+  "kills": 170,
+  "pack": 3634.557419380912,
+  "single": 638.3839406337363
+ },
+ {
+  "id": "GemFrostOrb",
+  "n": "寒魄球",
+  "form": "orb",
+  "w": "Cannon",
+  "eff": 0.196,
+  "kills": 143.5,
+  "pack": 3036.6181533138424,
+  "single": 982.1534383482749
+ },
+ {
+  "id": "GemTrap",
+  "n": "陷阱",
+  "form": "mine",
+  "w": "FrostOrb",
+  "eff": 1.458,
+  "kills": 261,
+  "pack": 8669.822734943627,
+  "single": 247.06091215519456
+ },
+ {
+  "id": "GemFrostStab",
+  "n": "霜刺",
+  "form": "stab",
+  "w": "TurbineBlades",
+  "eff": 0.761,
+  "kills": 74,
+  "pack": 4648.762350473125,
+  "single": 657.3845889597376
+ },
+ {
+  "id": "GemThunderCleave",
+  "n": "雷斩",
+  "form": "cleave",
+  "w": "TurbineBlades",
+  "eff": 0.863,
+  "kills": 109,
+  "pack": 3841.8708257302555,
+  "single": 885.5044523164996
+ },
+ {
+  "id": "GemJudgement",
+  "n": "圣裁",
+  "form": "meteor",
+  "w": "TurbineBlades",
+  "eff": 1.378,
+  "kills": 118,
+  "pack": 3620.892313221924,
+  "single": 1008.0988490899858
+ },
+ {
+  "id": "GemRotClaw",
+  "n": "腐爪",
+  "form": "cleave",
+  "w": "TurbineBlades",
+  "eff": 1.013,
+  "kills": 86.5,
+  "pack": 4583.302092207013,
+  "single": 916.7952260428824
+ },
+ {
+  "id": "GemThunderfall",
+  "n": "落雷",
+  "form": "meteor",
+  "w": "FrostOrb",
+  "eff": 0.953,
+  "kills": 148,
+  "pack": 3001.1970734747933,
+  "single": 876.8435889732971
+ }
+]

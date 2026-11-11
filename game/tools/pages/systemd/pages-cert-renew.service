@@ -1,0 +1,5 @@
+[Unit]
+Description=pages: 续期 IP 证书（Let's Encrypt 短期证书）（pages 自己热加载新证书）
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker run --rm -v /opt/pages/letsencrypt:/etc/letsencrypt:z -v /opt/pages/acme:/var/www/acme:z certbot/certbot@sha256:f70ad0adbb7e117f0fe42a63c553f28ea451edabc0148757b6efcd9735acaa20 renew --quiet --non-interactive
