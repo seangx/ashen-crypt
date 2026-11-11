@@ -1,5 +1,5 @@
 {
- "_说明": "套装（design/gear-v3.md §3）。每套 6 件：头冠、护手、胸甲、肩甲、遁靴、项链；2 / 4 / 6 件三档。pieces[部位] = [名字, 底材]；bonus[件数]：add 加到天赋同一个池子（TA，和天赋相加），raw 加到装备词条池子（冰缓效果这类只认装备的），flag 是机制开关（值是参数）。skills：这套服务哪些技能石（智能掉落按主技能挑）。套装件 = 稀有装备 + set 标记：固定是这件的底材，词条照稀有随机，能上铁砧，跟随底材代数。drop：normal / boss / chest 是每次掉装备时变成套装件的几率；main 是掉出主技能那套的几率；pity Boss 宝箱连续这么多件都不是套装件就必掉一件缺的（一个宝箱几件，约 3–5 个 Boss）；gift 第一次推到 giftDepth 层送主技能那套 giftN 件；minIlvl 物品等级到这里才开始掉。ring：骸王之戒（神话戒指，套装需求 −1）",
+ "_说明": "套装（design/gear-v3.md §3）。每套 6 件：头冠、护手、胸甲、肩甲、遁靴、项链；2 / 4 / 6 件三档。pieces[部位] = [名字, 底材]；bonus[件数]：more 是这套服务的技能伤害总增%（4 件 60、6 件 250，暗黑 3 式，11-11 用户：“套装强度得提升 1000%++”）；add 加到天赋同一个池子（TA，和天赋相加），raw 加到装备词条池子（冰缓效果这类只认装备的），flag 是机制开关（值是参数）。skills：这套服务哪些技能石（智能掉落按主技能挑）。套装件 = 稀有装备 + set 标记：固定是这件的底材，词条照稀有随机，能上铁砧，跟随底材代数。drop：normal / boss / chest 是每次掉装备时变成套装件的几率；main 是掉出主技能那套的几率；pity Boss 宝箱连续这么多件都不是套装件就必掉一件缺的（一个宝箱几件，约 3–5 个 Boss）；gift 第一次推到 giftDepth 层送主技能那套 giftN 件；minIlvl 物品等级到这里才开始掉。ring：骸王之戒（神话戒指，套装需求 −1）",
  "drop": {"normal": 0.004, "boss": 0.06, "chest": 0.1, "main": 0.7, "pity": 15, "giftDepth": 30, "giftN": 2, "minIlvl": 20},
  "ring": "BoneKingRing",
  "list": [
@@ -9,8 +9,8 @@
    "pieces": {"core": ["陨星冠", "CrystalCore"], "hands": ["陨星之握", "BoneGlove"], "chest": ["陨星胸甲", "BoneMail"], "shoulders": ["陨星肩甲", "AshPauldron"], "engine": ["陨星履", "Afterburner"], "amulet": ["陨星坠", "BoneAmulet"]},
    "bonus": {
     "2": {"t": "延迟伤害提高 30%，落地延迟 −20%", "add": {"delayInc": 30, "delayLess": 20}},
-    "4": {"t": "坠落技能每次落地，在附近怪最密处再落下一颗小星（伤害 ×20%，范围 ×0.6）", "flag": {"starMini": 0.2}},
-    "6": {"t": "落点留下星痕 4 秒；坠落技能砸中星痕里的敌人，这一下总增 60%", "flag": {"starMark": 0.6}}
+    "4": {"t": "坠落技能每次落地，在附近怪最密处再落下一颗小星（伤害 ×20%，范围 ×0.6）；这套的技能伤害总增 60%", "more": 60, "flag": {"starMini": 0.2}},
+    "6": {"t": "落点留下星痕 4 秒；坠落技能砸中星痕里的敌人，这一下总增 60%；这套的技能伤害总增 250%", "more": 250, "flag": {"starMark": 0.6}}
    }
   },
   {
@@ -19,8 +19,8 @@
    "pieces": {"core": ["凛冬之冠", "PhantomCore"], "hands": ["凛冬之握", "ClawGlove"], "chest": ["凛冬尸衣", "Shroud"], "shoulders": ["凛冬肩甲", "BonePauldron"], "engine": ["凛冬履", "Warp"], "amulet": ["凛冬坠", "SoulAmulet"]},
    "bonus": {
     "2": {"t": "寒霜技能每次命中多叠 3 层冰缓（叠满 10 层冻结），冰缓效果 +20%", "flag": {"chillAdd": 3}, "raw": {"ailEff:cold": 20}},
-    "4": {"t": "敌人碎冰时，向四周放 3 片冰片（每片 = 这次碎冰的 40%）", "flag": {"winterShards": 0.4}},
-    "6": {"t": "冻结的敌人受到的伤害提高 200%，冻结时间 +50%", "add": {"frozenTaken": 200, "freezeDur": 50}}
+    "4": {"t": "敌人碎冰时，向四周放 3 片冰片（每片 = 这次碎冰的 40%）；这套的技能伤害总增 60%", "more": 60, "flag": {"winterShards": 0.4}},
+    "6": {"t": "冻结的敌人受到的伤害提高 200%，冻结时间 +50%；这套的技能伤害总增 250%", "more": 250, "add": {"frozenTaken": 200, "freezeDur": 50}}
    }
   },
   {
@@ -29,8 +29,8 @@
    "pieces": {"core": ["旋刃盔", "TitaniumCore"], "hands": ["旋刃之握", "WrapGlove"], "chest": ["旋刃胸甲", "BoneMail"], "shoulders": ["旋刃肩甲", "SpikePauldron"], "engine": ["旋刃履", "Thruster"], "amulet": ["旋刃坠", "RuneAmulet"]},
    "bonus": {
     "2": {"t": "近战伤害提高 30%，受到的近战伤害降低 10%", "add": {"inc:melee": 30, "meleeDR": 10}},
-    "4": {"t": "近战技能每次出手叠 1 层刃势（上限 10 层，4 秒不命中清零），每层近战伤害总增 2.5%", "flag": {"bladeStack": 2.5}},
-    "6": {"t": "刃势满层时，近战技能每次命中再打一次（×30%）", "flag": {"bladeMax": 0.3}}
+    "4": {"t": "近战技能每次出手叠 1 层刃势（上限 10 层，4 秒不命中清零），每层近战伤害总增 2.5%；这套的技能伤害总增 60%", "more": 60, "flag": {"bladeStack": 2.5}},
+    "6": {"t": "刃势满层时，近战技能每次命中再打一次（×30%）；这套的技能伤害总增 250%", "more": 250, "flag": {"bladeMax": 0.3}}
    }
   }
  ]

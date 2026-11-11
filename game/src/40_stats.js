@@ -248,6 +248,7 @@ function weaponStats(it, P, isEngine) {
   if (P.flag.echoShield) { if (has('Shield')) W.more *= SHT.heartMore; } // 回响圣盾：【盾】
   if (P.flag.shardChain) { if (has('Spawn')) W.more *= OB.heartMore; } // 碎冰连锁：【派生】
   if (P.flag.starfall) { if (has('Delayed')) W.more *= MT.heartMore; } // 星坠雨：【延迟】
+  if (P.flag.setMore && b.gem) for (const id in P.flag.setMore) if (SET_BY[id] && SET_BY[id].skills.includes(b.gem)) W.more *= P.flag.setMore[id]; // gear-v3 套装 4 / 6 件：这套服务的技能伤害总增（倍数）
   if (P.flag.shatter) { if (has('Nova') || W.frostNova) W.more *= NV.heartMore; } // 碎冰：【新星】
   conv('kin', [...THERMAL_E, 'nuc'], U('convKinThermal') / 100); /* 三棱穿心弩：另外 5 种元素 */ conv('exp', ['nuc'], U('convExpNuc') / 100); conv('pla', ['nuc'], U('convPlaNuc') / 100);
   // 额外获得：按加成前总伤害的比例

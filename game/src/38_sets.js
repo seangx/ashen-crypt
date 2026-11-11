@@ -28,6 +28,7 @@ function applySets(eq, A, TA, FL) {
     for (const k in b.raw || {}) A[k] = (A[k] || 0) + b.raw[k];
     for (const k in b.flag || {}) FL[k] = (FL[k] || 0) + b.flag[k];
   }
+  for (const { set, b } of setTiers(eq)) if (b.more) { const M = FL.setMore || (FL.setMore = {}); M[set.id] = (M[set.id] || 1) * (1 + b.more / 100); } // 套装技能伤害总增（暗黑 3 式的大倍数，按套分开；各档相乘，存的是倍数）
 }
 // 生成一件套装件（kind 不给就随机一个部位）
 function newSetPiece(id, kind, ilvl) {
