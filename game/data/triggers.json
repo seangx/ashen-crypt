@@ -218,22 +218,10 @@
  "darkMobSpd": 15, "_darkMobSpd说明": "lamp-v2 §5.6：光圈外的普通怪移速 +15%",
  "gemGap": 0.25, "_gemGap说明": "防循环：每颗技能石最快 0.25 秒放一次（spec §6 第 4 条）",
  "basic": {
-  "melee": [
-   "GemStab",
-   "Spikes"
-  ],
-  "bow": [
-   "GemBolt",
-   "Cannon"
-  ],
-  "gun": [
-   "GemScatter",
-   "Blastgun"
-  ],
-  "caster": [
-   "GemNova",
-   "PlasmaNova"
-  ]
+  "melee": "GemStab",
+  "bow": "GemBolt",
+  "gun": "GemScatter",
+  "caster": "GemNova"
  },
  "basicMul": 0.84,
  "basicProcK": 24,

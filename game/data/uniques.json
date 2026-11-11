@@ -1153,7 +1153,7 @@
    "id": "EmberGrip",
    "n": "余烬之握",
    "kind": "weapon",
-   "b": "FlameSlinger",
+   "b": "Blastgun",
    "req": 26,
    "w": 40,
    "fixed": [

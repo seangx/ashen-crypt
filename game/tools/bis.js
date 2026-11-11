@@ -79,7 +79,7 @@ async function run(build, IL) {
     for (let pass = 0; pass < 2; pass++) for (const s of ['wl', 'wr', 'shield', 'core', 'engine', 'hub']) {
       const [kind, pool] = pools[s];
       let bases = Object.keys(pool).filter(b => (pool[b].req || 1) <= IL);
-      const BS = BP.slot || 'wl'; if (ARCH && s === 'wl' && CATB) bases = bases.filter(b => CATB.includes(b) && !A.WEAPONS[b].retired); else if (ARCH && s === BS) bases = [BP.base || 'TurbineBlades'];
+      const BS = BP.slot || 'wl'; if (ARCH && s === 'wl' && CATB) bases = bases.filter(b => CATB.includes(b)); else if (ARCH && s === BS) bases = [BP.base || 'TurbineBlades'];
       let best = null;
       const UQ = CORE || (build === 'whirl' ? 'StormEye' : BP.uniqueId); if (ARCH && s === 'core' && IL >= 20 && CORE !== 'none' && UQ) { best = { it: A.newUnique(UQ, IL) }; }
       else if (build === 'random') { const it = fill(make(kind, pick(bases)), s); best = { it }; }

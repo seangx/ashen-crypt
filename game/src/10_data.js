@@ -73,8 +73,6 @@ const WEAPON_SKIN = DATA.items.weapons;
     const old = w.aps, nu = Array.isArray(old) ? old.map(f) : f(old), r = i => { const o = Array.isArray(old) ? old[Math.min(i, old.length - 1)] : old, n = Array.isArray(nu) ? nu[Math.min(i, nu.length - 1)] : nu; return o / n; };
     for (const key of ['min', 'max']) if (Array.isArray(w[key])) w[key] = w[key].map((v, i) => Math.round(v * r(i))); else if (typeof w[key] === 'number') w[key] = Math.round(w[key] * r(0));
     w.aps = nu; } }
-// 技能 v3：新技能的虚拟底子（data/gems.json 的 bases）——照抄一把旧武器的数值曲线，再覆盖形态参数
-for (const [k, B] of Object.entries(DATA.gems.bases || {})) { if (!B.clone) continue; ASTRO.weapons[k] = { ...ASTRO.weapons[B.clone], w: 0, ...(B.astro || {}) }; for (const e of ['kin', 'exp', 'ele', 'cold', 'pla', 'nuc']) delete ASTRO.weapons[k]['ail_' + e]; WEAPON_SKIN[k] = { ...WEAPON_SKIN[B.clone], ...(B.skin || {}) }; }
 const WEAPONS = {};
 for (const k in WEAPON_SKIN) WEAPONS[k] = { key: k, ...ASTRO.weapons[k], ...WEAPON_SKIN[k], tags: ASTRO.weapons[k].tags.filter(t => t !== 'Weapon').concat('Weapon') };
 // 遁靴（原作：引擎，冲刺即技能；本身也带武器标签）
@@ -85,8 +83,7 @@ const GEMC = DATA.mechanics.gems;
 const GEMS = DATA.gems.list, GEM_BY = Object.fromEntries(GEMS.map(g => [g.id, g]));
 for (const g of GEMS) ARMORS.gem[g.id] = { key: g.id, n: g.n, ic: g.ic, tags: g.tags, w: 0, gem: g };
 const WEAPON_CAT = {}; for (const c in GEMC.cats) for (const k of GEMC.cats[c].bases) WEAPON_CAT[k] = c;
-for (const k in WEAPONS) { WEAPONS[k].cat = WEAPONS[k].cat || WEAPON_CAT[k]; if (GEMC.retired.includes(k)) WEAPONS[k].retired = 1; }
-const GEM_OF_BASE = {}; for (const g of GEMS) for (const k of g.src) GEM_OF_BASE[k] = g.id;
+for (const k in WEAPONS) WEAPONS[k].cat = WEAPONS[k].cat || WEAPON_CAT[k];
 const FORM_GEM = Object.fromEntries(GEMS.filter(g => g.fr).map(g => [g.fr, g.id])); // 形态符文 → 技能石
 for (const k in ENGINE_SKIN) ARMORS.engine[k] = { key: k, ...ASTRO.engines[k], ...ENGINE_SKIN[k] };
 const SHIELD_SKIN = DATA.items.shield, CORE_SKIN = DATA.items.core, HUB_SKIN = DATA.items.hub; // 头冠（原作：核心）
@@ -192,13 +189,13 @@ const NV = DATA.mechanics.nova; // 霜环（冰霜新星）流派的数值
 const GEAR = DATA.mechanics.gear; // 词条改版（spec-bd-gear §2、§3）
 const SOUL = DATA.mechanics.soul; // 魂火（共用资源）
 const MOD_D = {
-  ShieldThrow: f => `只对圣徽盾生效：盾每 1/攻速 秒自动扔向最近的敌人，伤害 = 盾的护甲 × ${f.throwK}（吃盾牌伤害、圣光伤害），无限穿透；弹射 ${f.chain} 次（碰屏幕边反弹），每弹一次之后伤害 +${f.chainStepInc}%；弹完或寿命到了飞回手上。盾在飞时没有格挡。每次投掷消耗 ${SHT.soulPerThrow} 灯火，反弹过之后每次命中返还 ${SHT.soulPerChain}`,
+  ShieldThrow: f => `只对圣徽盾生效：盾每 1/攻速 秒自动扔向最近的敌人，伤害 = 盾的护甲 × ${f.throwK}（吃盾牌伤害、圣光伤害），打中后弹射到 ${SHT.chainR} 像素内下一个没打过的敌人，弹射 ${f.chain} 次，每弹一次之后伤害 +${f.chainStepInc}%；弹完、找不到下一个或寿命到了飞回手上。盾在飞时没有格挡。每次投掷消耗 ${SHT.soulPerThrow} 灯火，弹射过之后每次命中返还 ${SHT.soulPerChain}`,
   FrostOrbRune: f => `只对寒魄宝珠生效：冰球飞行中每 ${OB.emit} 秒向四周放 ${OB.shardDirs} 片冰片（+ 派生 +N），每片 ×${f.shardMul}，不穿透，算投射物。每次施放消耗 ${OB.soulPerCast} 灯火，冰片打中冻结的敌人每片返还 ${OB.refund}（每次最多 ${OB.refundCap}）`,
   Meteor: f => `只对坠星杖生效：陨石伤害 ×${f.meteorMul}，落地留 ${f.ground.dur} 秒火地（每 ${f.ground.tick} 秒造成这次命中的 ${Math.round(f.ground.pct * 100)}%，吃持续时间），火地里的敌人伤害降低 ${Math.round(MT.groundWeaken * 100)}%。每次施放消耗 ${MT.soulPerCast} 灯火，一次杀 ${MT.refundKills} 只以上返还 ${MT.soulRefund}`,
   FrostNova: f => `只对霜钟 / 圣钟生效：新星伤害 ×${f.novaMul}，每次命中叠 ${f.chillStacks} 层冰缓，击退 ${NV.knockPx} 像素；圣钟的元素改成寒霜。每次新星消耗 ${NV.soulPerCast} 灯火，每冻结一只返还 ${NV.refund}（每次最多 ${NV.refundCap}）`,
-  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），沿波浪线飞 ${SP.life} 秒（吃持续时间和投射物持续时间，弹速决定飞多远）；碰到屏幕边按弹射次数反弹（每弹一次伤害 ×${SP.chainMul}），弹射用完就飞出屏幕；有穿透时无限穿透，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次，没有穿透时打中就消失；弹射 +${f.chain}；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。投射物 +N 让每次多放 N 颗（相加）。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
-  Pierce: f => `投射物无限穿透（同一个敌人每 ${MECH.projRehit} 秒最多打一次），穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
-  Chain: f => `投射物弹射 +${f.chain}（碰到屏幕边反弹；闪电链类则在敌人之间多连锁 ${f.chain} 次），每剩一次弹射伤害提高 ${Math.round(f.chainInc * 100)}%`,
+  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），沿波浪线飞 ${SP.life} 秒（吃持续时间和投射物持续时间，弹速决定飞多远）；碰到屏幕边折返（每折返一次伤害 ×${SP.chainMul}），一直飞到寿命结束；有穿透时无限穿透，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次，没有穿透时打中就消失；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。投射物 +N 让每次多放 N 颗（相加）。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
+  Pierce: f => `穿透 +${f.pierce}（打中后继续往前飞，同一个敌人每 ${MECH.projRehit} 秒最多打一次；穿透次数用完才弹射），穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
+  Chain: f => `弹射 +${f.chain}（投射物打中敌人后转向附近另一个敌人；闪电链类多连锁 ${f.chain} 次），每剩一次弹射伤害提高 ${Math.round(f.chainInc * 100)}%`,
   Split: f => `投射物分裂 ${f.split} 次，初次命中每次分裂伤害提高 ${Math.round(f.splitInc * 100)}%`,
   Boomerang: f => `投射物飞到尽头后返回，投射物伤害${f.projInc >= 0 ? '提高' : '降低'} ${Math.abs(f.projInc)}%`,
   Persist: f => `投射物持续时间总增 ${f.projDurMore}%，投射物速度降低 ${-f.projSpd}%（游雷飞得慢但在屏幕里来回更久）`,

@@ -24,7 +24,7 @@ function elemA(W, e) { const f = W.flat && W.flat[e]; if (!f) return 0; const F 
   return (f[0] + f[1]) / 2 * (W.incMul && W.incMul[e] || 1) * (1 + ((STATS.addFx || 0) + (F.addFx || 0)) / 100); }
 function elemFx(m, W, e, A) {
   const F = STATS.flag; if (A <= 0 || m.dead && e !== 'kin') return;
-  const hurt = (n, d, el) => damage(n, mitigate(n, el, d), el, false, true);
+  const hurt = (n, d, el) => { DSRC = FX_N[e] || '命中效果'; damage(n, mitigate(n, el, d), el, false, true); };
   switch (e) {
     case 'kin': { const r = 40, sp = () => { for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < r * r) hurt(n, A * 0.6, 'kin'); };
       sp(); if (F.boneBreak && rnd() < F.boneBreak / 100) { A *= 0.5; sp(); } if (mobs.length <= 15 || rnd() < 0.15) fx({ t: 'ring', x: m.x, y: m.y - 4, r, el: 'kin' }); break; }
@@ -51,7 +51,7 @@ function elemStep(dt) {
   if (!ELQ.length) return;
   for (const q of ELQ) { q.t -= dt; if (q.t > 0) continue; q.done = 1; fx({ t: 'ring', x: q.x, y: q.y - 4, r: 50, el: 'ele' });
     const hit = mobs.filter(n => !n.dead && (n.x - q.x) ** 2 + (n.y - q.y) ** 2 < 2500);
-    for (const n of hit) damage(n, mitigate(n, 'ele', q.d), 'ele', false, true);
+    for (const n of hit) { DSRC = '雷爆'; damage(n, mitigate(n, 'ele', q.d), 'ele', false, true); }
     if (q.chain) mobs.filter(n => !n.dead && !hit.includes(n)).sort((a, b) => ((a.x - q.x) ** 2 + (a.y - q.y) ** 2) - ((b.x - q.x) ** 2 + (b.y - q.y) ** 2)).slice(0, 2).forEach(n => { fx({ t: 'bolt', x1: q.x, y1: q.y - 5, x2: n.x, y2: n.y - 5, el: 'ele' }); damage(n, mitigate(n, 'ele', q.d * 0.6), 'ele', false, true); }); }
   ELQ = ELQ.filter(q => !q.done);
 }
@@ -61,7 +61,7 @@ function elemDeath(m, near) {
   if (m.rad.length && !F.contagion && fxOn('nuc')) { const full = !!F.plagueTide, r = 60 * (full ? 1.5 : 1); // 死亡传染是瘟疫的副效果：要“疫染之力”或瘟潮靴
     for (const x of near(r, 2)) x.rad.push(...m.rad.slice(0, full ? 99 : Math.ceil(m.rad.length / 2)).map(q => ({ ...q }))); }
   if (F.wildfire && m.burn > 0) { const d = m.burn * 0.5; fx({ t: 'ring', x: m.x, y: m.y - 4, r: 40, el: 'exp' }); for (const x of near(40, 99)) x.burn += d; }
-  if (F.frostCoffin && m.frzT > 0) for (const x of near(70, 4)) { fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: x.x, y2: x.y - 5, el: 'cold' }); damage(x, mitigate(x, 'cold', m.max * 0.1), 'cold', false, true); chillOn(x, 2); }
+  if (F.frostCoffin && m.frzT > 0) for (const x of near(70, 4)) { fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: x.x, y2: x.y - 5, el: 'cold' }); DSRC = '霜棺'; damage(x, mitigate(x, 'cold', m.max * 0.1), 'cold', false, true); chillOn(x, 2); }
 }
 // 独特装备 / 灯火：伤害倍率（hitMob 里乘上）
 function elemMul(m) {

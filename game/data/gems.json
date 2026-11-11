@@ -1,14 +1,11 @@
 {
- "_说明": "技能石（spec-skill-gems）。src：来源旧武器底子（形态参数、标签、攻速、射程、范围、伤害曲线都读它；第一个是默认变体，dropVars 是掉落时随机的变体）。伤害 = 来源底子按主手品质的伤害 × mul(等级，1→20 线性) × (1 + 品质%) × 对口；出手频率 = 来源底子攻速 × spd。fr：并进来的形态符文（fx 按技能石等级）。mul 第一版：形态技能石 [1,1]（形态 fx 本身随等级成长），普通技能石 [1,1.25]。由 tools/gen_gems.js 生成。 v3（design/skill-v3.md）：el 技能元素（固定，一颗技能石只有一种元素）、f3 形态 melee/proj/area、mech 机制标签；tags 只当内部开关（辅助石适配、属性适用），不再显示。bases 是新技能的虚拟底子。 功能技能（form util，11-10 用户要求）：不造成伤害，被触发时给防御 / 增益 / 资源；util.k 效果种类，v [1 级, 20 级] 数值，dur 持续秒数；只能插在响应类魂龛（击杀、受击、格挡、冲刺、定时、明灯、低血、遇精英），不能插在出手类。",
+ "_说明": "技能石（spec-skill-gems；11-11 清理：不再从旧武器底子取数）。每颗技能石自带全部参数：base 里是形态 form、射程 range、范围 aoe、穿透 pierce / 弹射 chain / 分裂 split / 额外次数 extra、弹丸 pellets、持续 cont、光环 aura、元素效果几率 ail_*、形态细节（delay 落地延迟、arc 劈斩半角、wander / spiral / wide 投射物轨迹、smite / bolt 特效、vis 投射物外观）和伤害效用 eff；eff 的校准（11-11，tools/bench.js）：同一档主手（四类里 pow 1 的那把）在 57 层，测“怪群”（12 只木桩）和“单体”（1 只木桩）秒伤，综合价值 = √(怪群 × 4 × 单体) 拉到和骨矢一样，近战（f3 melee）+15% 风险补偿；所以覆盖面大的技能每一下轻、打 Boss 弱，覆盖面小的每一下重。role 定位按覆盖比（怪群 ÷ 单体）标：> 8 aoe 清怪，> 3.5 mix 均衡，其余 single 单体。每次出手的伤害 = 主手这一下（mechanics.gems.hit 按主手品质的曲线 × 主手 pow）× eff × mul(等级，1→20 线性) × (1 + 品质%) × 对口；出手频率 = 主手攻速（gear2.weapons 的 aps）。持续型（cont）的 eff 是每秒伤害、光环（aura）的 eff 是每秒伤害。fr：并进来的形态符文（fx 按技能石等级）。v3（design/skill-v3.md）：el 技能元素（固定，一颗技能石只有一种元素）、f3 形态 melee/proj/area、mech 机制标签；tags 只当内部开关（辅助石适配、属性适用），不再显示。功能技能（form util，11-10 用户要求）：不造成伤害，被触发时给防御 / 增益 / 资源；util.k 效果种类，v [1 级, 20 级] 数值，dur 持续秒数；只能插在响应类魂龛（击杀、受击、格挡、冲刺、定时、明灯、低血、遇精英），不能插在出手类。",
  "list": [
   {
    "id": "GemWhirl",
    "n": "旋风斩",
    "ic": "w_bladering",
    "form": "orbit",
-   "src": [
-    "TurbineBlades"
-   ],
    "tags": [
     "Hit",
     "Melee",
@@ -21,7 +18,6 @@
     0.95,
     0.95
    ],
-   "spd": 1,
    "req": 6,
    "w": 600,
    "ai": "melee",
@@ -46,17 +42,20 @@
    "f3": "melee",
    "mech": [
     "dot"
-   ]
+   ],
+   "base": {
+    "form": "orbit",
+    "range": 200,
+    "eff": 0.445,
+    "vis": "TurbineBlades",
+    "role": "mix"
+   }
   },
   {
    "id": "GemStab",
    "n": "骨刺",
    "ic": "w_spike",
    "form": "stab",
-   "rngMul": 3.5,
-   "src": [
-    "Spikes"
-   ],
    "tags": [
     "Hit",
     "Melee",
@@ -68,25 +67,27 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "melee",
-   "dropVars": [
-    "Spikes"
-   ],
    "el": "kin",
    "f3": "area",
-   "mech": []
+   "mech": [],
+   "base": {
+    "form": "stab",
+    "range": 175,
+    "extra": 9,
+    "eff": 0.586,
+    "vis": "Spikes",
+    "role": "aoe"
+   },
+   "rngMul": 3.5
   },
   {
    "id": "GemRam",
    "n": "烈焰冲撞",
    "ic": "w_maul",
    "form": "ram",
-   "src": [
-    "Hullbreaker"
-   ],
    "tags": [
     "Hit",
     "Melee"
@@ -95,23 +96,26 @@
     0.04,
     0.05
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "melee",
    "el": "exp",
    "f3": "melee",
-   "mech": []
+   "mech": [],
+   "base": {
+    "form": "ram",
+    "bossMore": 6,
+    "knock": 1,
+    "eff": 27.835,
+    "vis": "Hullbreaker",
+    "role": "aoe"
+   }
   },
   {
    "id": "GemBolt",
    "n": "骨矢",
    "ic": "w_crossbow",
    "form": "proj",
-   "src": [
-    "Cannon",
-    "Railgun"
-   ],
    "tags": [
     "Projectile",
     "ProjectileCanReturn",
@@ -127,7 +131,6 @@
     0.85,
     1.05
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "ranged",
@@ -135,16 +138,22 @@
    "f3": "proj",
    "mech": [
     "pierce"
-   ]
+   ],
+   "base": {
+    "form": "proj",
+    "range": 1000,
+    "pierce": 4,
+    "ail_kin": 0.1,
+    "eff": 1.0,
+    "vis": "Cannon",
+    "role": "mix"
+   }
   },
   {
    "id": "GemTaser",
    "n": "雷符",
    "ic": "w_stormseal",
    "form": "proj",
-   "src": [
-    "Taser"
-   ],
    "tags": [
     "Projectile",
     "ProjectileCanChain",
@@ -158,24 +167,29 @@
     2,
     2.5
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "ranged",
    "el": "ele",
    "f3": "proj",
    "mech": [
-    "split"
-   ]
+    "chain"
+   ],
+   "base": {
+    "form": "proj",
+    "range": 900,
+    "chain": 4,
+    "ail_ele": 0.2,
+    "eff": 0.515,
+    "vis": "Taser",
+    "role": "mix"
+   }
   },
   {
    "id": "GemSpark",
    "n": "游雷",
    "ic": "w_wisp",
    "form": "proj",
-   "src": [
-    "Zapper"
-   ],
    "tags": [
     "Projectile",
     "ProjectileCanReturn",
@@ -191,7 +205,6 @@
     2.4,
     2.4
    ],
-   "spd": 1,
    "req": 6,
    "w": 600,
    "ai": "ranged",
@@ -221,18 +234,23 @@
    "el": "ele",
    "f3": "proj",
    "mech": [
-    "chain"
-   ]
+    "pierce"
+   ],
+   "base": {
+    "form": "proj",
+    "range": 800,
+    "ail_ele": 0.5,
+    "wander": 1,
+    "eff": 0.309,
+    "vis": "Zapper",
+    "role": "single"
+   }
   },
   {
    "id": "GemSickle",
    "n": "飞镰",
    "ic": "w_sickle",
    "form": "proj",
-   "src": [
-    "Shuriken",
-    "PlasmaCutter"
-   ],
    "tags": [
     "Projectile",
     "ProjectileCanReturn",
@@ -248,25 +266,29 @@
     1.5,
     1.9
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "ranged",
    "el": "pla",
    "f3": "proj",
    "mech": [
-    "pierce"
-   ]
+    "chain"
+   ],
+   "base": {
+    "form": "proj",
+    "range": 900,
+    "extra": 2,
+    "chain": 5,
+    "eff": 0.382,
+    "vis": "Shuriken",
+    "role": "aoe"
+   }
   },
   {
    "id": "GemFirepot",
    "n": "火油罐",
    "ic": "w_firepot",
    "form": "proj",
-   "src": [
-    "Rocket",
-    "FlameSlinger"
-   ],
    "tags": [
     "Projectile",
     "ProjectileCanReturn",
@@ -283,23 +305,26 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "ranged",
    "el": "exp",
    "f3": "proj",
-   "mech": []
+   "mech": [],
+   "base": {
+    "form": "proj",
+    "range": 800,
+    "aoe": 200,
+    "eff": 1.075,
+    "vis": "Rocket",
+    "role": "aoe"
+   }
   },
   {
    "id": "GemScatter",
    "n": "散射",
    "ic": "w_scatter",
    "form": "proj",
-   "src": [
-    "Blastgun",
-    "PlasmaBlaster"
-   ],
    "tags": [
     "Projectile",
     "ProjectileCanReturn",
@@ -315,7 +340,6 @@
     0.8,
     1.0
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "ranged",
@@ -323,17 +347,22 @@
    "f3": "proj",
    "mech": [
     "split"
-   ]
+   ],
+   "base": {
+    "form": "proj",
+    "range": 600,
+    "pierce": 3,
+    "pellets": 5,
+    "eff": 0.302,
+    "vis": "Blastgun",
+    "role": "mix"
+   }
   },
   {
    "id": "GemPlague",
    "n": "疫星",
    "ic": "w_orrery",
    "form": "proj",
-   "src": [
-    "Orbitron",
-    "SporeBlaster"
-   ],
    "tags": [
     "Projectile",
     "ProjectileCanReturn",
@@ -349,7 +378,6 @@
     2,
     2.5
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "ranged",
@@ -357,16 +385,22 @@
    "f3": "proj",
    "mech": [
     "split"
-   ]
+   ],
+   "base": {
+    "form": "proj",
+    "pierce": 1000000,
+    "ail_nuc": 0.5,
+    "spiral": 1,
+    "eff": 1.299,
+    "vis": "Orbitron",
+    "role": "aoe"
+   }
   },
   {
    "id": "GemBeam",
    "n": "圣光束",
    "ic": "w_lightrod",
    "form": "beam",
-   "src": [
-    "Laser"
-   ],
    "tags": [
     "Attack",
     "Projectile",
@@ -378,7 +412,6 @@
     1.25,
     1.55
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "ranged",
@@ -386,16 +419,22 @@
    "f3": "proj",
    "mech": [
     "dot"
-   ]
+   ],
+   "base": {
+    "form": "beam",
+    "cont": 1,
+    "range": 1000,
+    "chain": 4,
+    "eff": 2.228,
+    "vis": "Laser",
+    "role": "mix"
+   }
   },
   {
    "id": "GemFlame",
    "n": "喷火",
    "ic": "w_flameskull",
    "form": "cone",
-   "src": [
-    "FlameThrower"
-   ],
    "tags": [
     "Attack",
     "AoE",
@@ -406,7 +445,6 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "melee",
@@ -414,16 +452,21 @@
    "f3": "area",
    "mech": [
     "dot"
-   ]
+   ],
+   "base": {
+    "form": "cone",
+    "cont": 1,
+    "range": 750,
+    "eff": 1.802,
+    "vis": "FlameThrower",
+    "role": "mix"
+   }
   },
   {
    "id": "GemMiasma",
    "n": "瘟疫光环",
    "ic": "w_censer",
    "form": "aura",
-   "src": [
-    "PlutoniumBar"
-   ],
    "tags": [
     "AoE",
     "DoT",
@@ -434,7 +477,6 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "melee",
@@ -442,16 +484,21 @@
    "f3": "area",
    "mech": [
     "dot"
-   ]
+   ],
+   "base": {
+    "form": "aura",
+    "range": 300,
+    "aura": 1,
+    "eff": 0.934,
+    "vis": "PlutoniumBar",
+    "role": "mix"
+   }
   },
   {
    "id": "GemNova",
    "n": "新星",
    "ic": "w_bell",
    "form": "nova",
-   "src": [
-    "PlasmaNova"
-   ],
    "tags": [
     "AoE",
     "Attack",
@@ -463,22 +510,27 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "melee",
    "el": "pla",
    "f3": "area",
-   "mech": []
+   "mech": [],
+   "base": {
+    "form": "nova",
+    "range": 500,
+    "aoe": 500,
+    "ail_pla": 0.2,
+    "eff": 0.77,
+    "vis": "PlasmaNova",
+    "role": "aoe"
+   }
   },
   {
    "id": "GemFrostNova",
    "n": "霜环",
    "ic": "w_frostbell",
    "form": "nova",
-   "src": [
-    "FrostBell"
-   ],
    "tags": [
     "AoE",
     "Attack",
@@ -491,7 +543,6 @@
     1.4,
     1.4
    ],
-   "spd": 1,
    "req": 6,
    "w": 600,
    "ai": "melee",
@@ -508,16 +559,22 @@
    },
    "el": "cold",
    "f3": "area",
-   "mech": []
+   "mech": [],
+   "base": {
+    "form": "nova",
+    "range": 500,
+    "aoe": 500,
+    "ail_cold": 0.5,
+    "eff": 0.37,
+    "vis": "FrostBell",
+    "role": "aoe"
+   }
   },
   {
    "id": "GemMeteor",
    "n": "陨火",
    "ic": "w_starrod",
    "form": "meteor",
-   "src": [
-    "StarfallRod"
-   ],
    "tags": [
     "Hit",
     "Attack",
@@ -530,7 +587,6 @@
     1.2,
     1.2
    ],
-   "spd": 1,
    "req": 6,
    "w": 600,
    "ai": "ranged",
@@ -554,16 +610,22 @@
    "f3": "area",
    "mech": [
     "delay"
-   ]
+   ],
+   "base": {
+    "form": "meteor",
+    "range": 1100,
+    "aoe": 260,
+    "ail_exp": 0.25,
+    "eff": 0.404,
+    "vis": "StarfallRod",
+    "role": "mix"
+   }
   },
   {
    "id": "GemFrostOrb",
    "n": "寒魄球",
    "ic": "w_frostorb",
    "form": "orb",
-   "src": [
-    "FrostOrb"
-   ],
    "tags": [
     "Hit",
     "Attack",
@@ -578,7 +640,6 @@
     2.5,
     2.5
    ],
-   "spd": 1,
    "req": 6,
    "w": 600,
    "ai": "ranged",
@@ -596,20 +657,21 @@
    "f3": "proj",
    "mech": [
     "spawn"
-   ]
+   ],
+   "base": {
+    "form": "orb",
+    "range": 800,
+    "ail_cold": 0.3,
+    "eff": 0.196,
+    "vis": "FrostOrb",
+    "role": "single"
+   }
   },
   {
    "id": "GemTrap",
    "n": "陷阱",
    "ic": "w_trap_exp",
    "form": "mine",
-   "src": [
-    "BlastMine",
-    "StormMine",
-    "WasteMine",
-    "PlasmaMine",
-    "ShrapnelMine"
-   ],
    "tags": [
     "AoE",
     "Attack",
@@ -622,27 +684,27 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "ranged",
-   "dropVars": [
-    "BlastMine",
-    "StormMine",
-    "WasteMine"
-   ],
    "el": "nuc",
    "f3": "area",
    "mech": [
     "delay"
-   ]
+   ],
+   "base": {
+    "form": "mine",
+    "aoe": 400,
+    "eff": 1.458,
+    "vis": "BlastMine",
+    "role": "aoe"
+   }
   },
   {
    "id": "GemShield",
    "n": "圣盾掷",
    "ic": "a_boneward",
    "form": "shieldThrow",
-   "src": [],
    "tags": [
     "Shield",
     "Projectile",
@@ -656,7 +718,6 @@
     1,
     1
    ],
-   "spd": 1,
    "req": 6,
    "w": 600,
    "ai": "ranged",
@@ -690,10 +751,6 @@
    "n": "霜刺",
    "ic": "w_spike",
    "form": "stab",
-   "rngMul": 3.5,
-   "src": [
-    "FrostStabBase"
-   ],
    "tags": [
     "Hit",
     "Melee",
@@ -705,22 +762,27 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "melee",
    "el": "cold",
    "f3": "melee",
-   "mech": []
+   "mech": [],
+   "base": {
+    "form": "stab",
+    "range": 175,
+    "extra": 9,
+    "eff": 0.761,
+    "vis": "FrostStabBase",
+    "role": "aoe"
+   },
+   "rngMul": 3.5
   },
   {
    "id": "GemThunderCleave",
    "n": "雷斩",
    "ic": "w_bladering",
    "form": "cleave",
-   "src": [
-    "ThunderCleaveBase"
-   ],
    "tags": [
     "Hit",
     "Melee",
@@ -733,7 +795,6 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "melee",
@@ -741,16 +802,22 @@
    "f3": "melee",
    "mech": [
     "pierce"
-   ]
+   ],
+   "base": {
+    "form": "cleave",
+    "range": 260,
+    "aoe": 500,
+    "arc": 1.1,
+    "eff": 0.863,
+    "vis": "ThunderCleaveBase",
+    "role": "mix"
+   }
   },
   {
    "id": "GemJudgement",
    "n": "圣裁",
    "ic": "w_starrod",
    "form": "meteor",
-   "src": [
-    "JudgementBase"
-   ],
    "tags": [
     "Hit",
     "Melee",
@@ -764,7 +831,6 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 6,
    "w": 600,
    "ai": "melee",
@@ -772,16 +838,23 @@
    "f3": "melee",
    "mech": [
     "delay"
-   ]
+   ],
+   "base": {
+    "form": "meteor",
+    "range": 230,
+    "aoe": 150,
+    "smite": 1,
+    "delay": 0.45,
+    "eff": 1.378,
+    "vis": "JudgementBase",
+    "role": "mix"
+   }
   },
   {
    "id": "GemRotClaw",
    "n": "腐爪",
    "ic": "w_bladering",
    "form": "cleave",
-   "src": [
-    "RotClawBase"
-   ],
    "tags": [
     "Hit",
     "Melee",
@@ -794,7 +867,6 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 1,
    "w": 600,
    "ai": "melee",
@@ -802,16 +874,21 @@
    "f3": "melee",
    "mech": [
     "dot"
-   ]
+   ],
+   "base": {
+    "form": "cleave",
+    "range": 230,
+    "arc": 0.75,
+    "eff": 1.013,
+    "vis": "RotClawBase",
+    "role": "mix"
+   }
   },
   {
    "id": "GemThunderfall",
    "n": "落雷",
    "ic": "w_starrod",
    "form": "meteor",
-   "src": [
-    "ThunderfallBase"
-   ],
    "tags": [
     "Hit",
     "Attack",
@@ -824,7 +901,6 @@
     1,
     1.25
    ],
-   "spd": 1,
    "req": 6,
    "w": 600,
    "ai": "ranged",
@@ -832,14 +908,23 @@
    "f3": "area",
    "mech": [
     "delay"
-   ]
+   ],
+   "base": {
+    "form": "meteor",
+    "range": 1100,
+    "aoe": 170,
+    "bolt": 1,
+    "delay": 0.55,
+    "eff": 0.953,
+    "vis": "ThunderfallBase",
+    "role": "single"
+   }
   },
   {
    "id": "GemBoneWard",
    "n": "骨盾",
    "ic": "w_starrod",
    "form": "util",
-   "src": [],
    "tags": [
     "Util"
    ],
@@ -847,7 +932,6 @@
     1,
     1
    ],
-   "spd": 1,
    "req": 1,
    "w": 400,
    "ai": "ranged",
@@ -869,7 +953,6 @@
    "n": "回春",
    "ic": "w_starrod",
    "form": "util",
-   "src": [],
    "tags": [
     "Util"
    ],
@@ -877,7 +960,6 @@
     1,
     1
    ],
-   "spd": 1,
    "req": 1,
    "w": 400,
    "ai": "ranged",
@@ -899,7 +981,6 @@
    "n": "石肤",
    "ic": "w_starrod",
    "form": "util",
-   "src": [],
    "tags": [
     "Util"
    ],
@@ -907,7 +988,6 @@
     1,
     1
    ],
-   "spd": 1,
    "req": 1,
    "w": 400,
    "ai": "ranged",
@@ -930,7 +1010,6 @@
    "n": "战吼",
    "ic": "w_starrod",
    "form": "util",
-   "src": [],
    "tags": [
     "Util"
    ],
@@ -938,7 +1017,6 @@
     1,
     1
    ],
-   "spd": 1,
    "req": 1,
    "w": 400,
    "ai": "ranged",
@@ -961,7 +1039,6 @@
    "n": "疾步",
    "ic": "w_starrod",
    "form": "util",
-   "src": [],
    "tags": [
     "Util"
    ],
@@ -969,7 +1046,6 @@
     1,
     1
    ],
-   "spd": 1,
    "req": 1,
    "w": 400,
    "ai": "ranged",
@@ -992,7 +1068,6 @@
    "n": "聚火",
    "ic": "w_starrod",
    "form": "util",
-   "src": [],
    "tags": [
     "Util"
    ],
@@ -1000,7 +1075,6 @@
     1,
     1
    ],
-   "spd": 1,
    "req": 1,
    "w": 400,
    "ai": "ranged",
@@ -1017,79 +1091,5 @@
    },
    "d": "立刻回复 # 点灯火"
   }
- ],
- "bases": {
-  "_说明": "v3 新技能的虚拟底子（design/skill-v3.md）：clone 照抄哪把旧武器的数值曲线；astro 覆盖数值（aps 攻速、I 伤害效率、range 射程、aoe 范围）；skin 覆盖形态参数（form、arc 劈斩半角弧度、delay 落地延迟、smite / bolt 换特效）",
-  "FrostStabBase": {
-   "clone": "Spikes",
-   "astro": {
-    "el": "cold"
-   },
-   "skin": {
-    "n": "霜刺"
-   }
-  },
-  "ThunderCleaveBase": {
-   "clone": "PlasmaNova",
-   "astro": {
-    "el": "ele",
-    "aps": 1.0,
-    "I": 1.8,
-    "range": 260
-   },
-   "skin": {
-    "n": "雷斩",
-    "form": "cleave",
-    "arc": 1.1,
-    "cat": "melee"
-   }
-  },
-  "RotClawBase": {
-   "clone": "TurbineBlades",
-   "astro": {
-    "el": "nuc",
-    "range": 230
-   },
-   "skin": {
-    "n": "腐爪",
-    "form": "cleave",
-    "arc": 0.75,
-    "cat": "melee",
-    "rngMul": 1
-   }
-  },
-  "JudgementBase": {
-   "clone": "StarfallRod",
-   "astro": {
-    "el": "pla",
-    "range": 230,
-    "aoe": 150,
-    "aps": 0.9,
-    "I": 1.7
-   },
-   "skin": {
-    "n": "圣裁",
-    "form": "meteor",
-    "smite": 1,
-    "delay": 0.45,
-    "cat": "melee"
-   }
-  },
-  "ThunderfallBase": {
-   "clone": "StarfallRod",
-   "astro": {
-    "el": "ele",
-    "aps": 1.0,
-    "I": 1.5,
-    "aoe": 170
-   },
-   "skin": {
-    "n": "落雷",
-    "form": "meteor",
-    "bolt": 1,
-    "delay": 0.55,
-    "cat": "caster"
-   }
-  }
- }
+ ]
 }

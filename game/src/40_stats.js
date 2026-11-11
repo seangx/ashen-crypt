@@ -117,7 +117,7 @@ function computeStats(eq = S.equip) {
   return P;
 }
 
-const THROW_B = { key: 'ShieldThrow', form: 'shieldThrow', el: 'pla', aps: SHT.aps, crit: SHT.crit, range: SHT.range, tags: ['Shield', 'Projectile', 'ProjectileCanChain', 'ProjectileCanPierce', 'Attack', 'AttackSpeed', 'Hit'] };
+const THROW_B = { key: 'ShieldThrow', n: '圣盾掷', form: 'shieldThrow', el: 'pla', aps: SHT.aps, crit: SHT.crit, range: SHT.range, tags: ['Shield', 'Projectile', 'ProjectileCanChain', 'ProjectileCanPierce', 'Attack', 'AttackSpeed', 'Hit'] };
 function shieldWeapon(sh, P, g) { // 圣盾掷技能石：单次伤害 = 盾的护甲（底子 × (1 + 护甲提高%)）× throwK × (1 + 技能石品质%)
   if (!sh || !g) return null;
   const r = activeRunes(g, P, uval(S.equip.wl, 'runeLvl')).find(x => x.fx.shieldThrow); if (!r) return null;
@@ -237,6 +237,7 @@ function weaponStats(it, P, isEngine) {
   const conv = (from, to, pct) => { if (!pct) return; const mn = W.min[from] * pct, mx = W.max[from] * pct; W.min[from] -= mn; W.max[from] -= mx; for (const e of to) { W.min[e] += mn / to.length; W.max[e] += mx / to.length; } };
   if (W.frostNova && b.el !== 'cold') { conv(b.el, ['cold'], 1); W.ail.cold += W.ail[b.el]; W.ail[b.el] = 0; W.el = 'cold'; } // 圣钟插霜环符文：元素改成寒霜
   if (W.convTo && W.convTo !== W.el) { const fr = W.el || b.el; conv(fr, [W.convTo], 1); W.ail[W.convTo] += W.ail[fr]; W.ail[fr] = 0; W.el = W.convTo; } // 转换符文：本源元素和本源异常一起换
+  W.ailCh = { kin: Math.max(0, W.ail.kin - (b.ail_kin || 0)), pla: Math.max(0, W.ail.pla - (b.ail_pla || 0)) }; // 碎骨 / 致盲的触发几率：只算装备明写的（攻城骨弩、等离子枪固有），技能底子数据里旧版的几率不算（11-11 用户：清掉）
   if (P.flag.mutate) W.more *= 0.8; // 异变
   if (P.flag.dmgMore) W.more *= 1 + P.flag.dmgMore / 100; // 誓约：伤害总增
   if (has('Delayed') && P.flag.delayMore) W.more *= 1 + P.flag.delayMore / 100; // 誓约：延迟类伤害总增
@@ -272,7 +273,7 @@ function weaponStats(it, P, isEngine) {
   W.auraDps = b.aura ? qv(b.aura, q) * (b.gI || 1) * (1 + inc / 100) * W.more * W.dotMore : 0;
   W.spd = (b.fast ? MECH.projSpeedFast : MECH.projSpeed) * (1 + projSpd / 100) * (has('Projectile') ? TM.projSpd ?? 1 : 1) * (has('Projectile') ? Math.max(GEAR.projSlowMin, 1 - ((P.raw.projSlow || 0) + (TA.projSlow || 0) + (IM.projSlow || 0)) / 100) : 1); // 投射物速度降低（寒魄球的收益）
   if (b.form === 'shieldThrow' && P.flag.martyrThrow) W.chain *= UQX.martyrChainMul; // 殉道者之盾：弹射 ×2
-  if (b.form === 'shieldThrow') { W.pierce = 1; W.thSpd = SHT.speed * W.spd / (b.fast ? MECH.projSpeedFast : MECH.projSpeed); W.thLife = SHT.life * W.sparkLifeMul; } // 圣盾掷：无限穿透
+  if (b.form === 'shieldThrow') { W.pierce = 0; W.thSpd = SHT.speed * W.spd / (b.fast ? MECH.projSpeedFast : MECH.projSpeed); W.thLife = SHT.life * W.sparkLifeMul; } // 圣盾掷：弹射，不穿透
   if (b.form === 'orb') { const sk = W.spd / (b.fast ? MECH.projSpeedFast : MECH.projSpeed); W.orbSpd = OB.orbSpeed * Math.max(GEAR.projSlowMin, sk); W.orbLife = OB.orbLife * W.sparkLifeMul; W.orbEmit = OB.emit; W.orbCost = 1;
     if (U('winterHeart')) { W.winter = 1; W.orbSpd *= UQX.winterSpeed; W.orbLife *= 1 + U('winterHeart') / 100; W.orbEmit = OB.emit / UQX.winterEmit; W.orbCost = 1 + U('winterCost') / 100; } // 冬之心 // 寒魄球：速度跟投射物速度（含 projSlow），寿命同游雷
     const sh = W.frostOrb ? W.orbLife / W.orbEmit * (OB.shardDirs + P.spawnAdd) * W.shardMul * OB.estHit * (P.flag.shardChain ? 1 + OB.scN * OB.scMul * OB.estHit : 1) : 0; W.orbEst = OB.contactMul * (1 + W.orbLife / OB.contactTick * 0.3) + OB.endMul + sh; }
@@ -286,15 +287,15 @@ function weaponStats(it, P, isEngine) {
   const n = W.spark ? W.sparkN + W.extra + W.extraChance : 1 + W.extra + W.extraChance; // 游雷：颗数 = sparkN + 投射物（相加）
   W.dps = b.aura ? W.auraDps : W.avg * critE * W.aps * (b.form === 'stab' ? 1 : n) * (b.pellets || 1);
   W.dps *= 1 + W.meleeRe;
-  if (b.form === 'reflect') W.dps = 0;
   if (b.form === 'ram') W.dps = W.avg * critE * (1 + W.meleeRe) / MECH.ramCd * 0.6; // 撞击没有攻速：按每 ramCd 秒撞一只、平均速度倍率约 0.6 估算（以前面板是 0）
   W.spinMax = W.whirl ? Math.pow(W.morePer, W.stackMax) : b.form === 'shieldThrow' ? SHT.estHits * (1 + W.chain * 0.5) * (1 + W.chainStep * W.chain / 2) * (P.flag.echoShield ? 1 + SHT.echoMul * 2 : 1) : b.form === 'orb' ? W.orbEst : b.form === 'meteor' ? (W.meteor ? W.meteorMul * (1 + MT.estGround) : 1) * (P.flag.starfall ? MT.sfN * MT.sfMul : 1) : W.frostNova ? W.novaMul * (P.flag.shatter ? 1 + NV.estShatter : 1) : 1; // 霜环：符文倍数 × 碎冰估算 // 旋转满层时的伤害倍数（dps 不含）
-  if (W.spark) { // 游雷：每颗的倍数（颗数 sparkN + 投射物 已在 dps 里）。穿透是无限的（有就穿过所有敌人），弹射 = 碰屏幕边反弹的次数
+  if (W.spark) { // 游雷：每颗的倍数（颗数 sparkN + 投射物 已在 dps 里）。穿透是无限的（有就穿过所有敌人），碰屏幕边折返是游雷自己的飞行方式，一直到寿命结束（没有次数）
     W.pierce += SP.basePierce; const L = SP.life * W.sparkLifeMul, v = W.spd * SP.speedMul, pr = W.pierce > 0;
-    const legs = Math.min(W.chain, Math.floor(L * v / SP.estLeg)); // 寿命内飞得到几次屏幕边（约 estLeg 像素一趟），再受弹射次数限制
+    const legs = Math.floor(L * v / SP.estLeg); // 寿命内飞得到几次屏幕边（约 estLeg 像素一趟），再受弹射次数限制
     let ch = 1; for (let i = 1; i <= legs; i++) ch += SP.chainMul ** i * (1 + W.chainStep * i) * (pr ? SP.estLegHit : SP.estLegHit * 0.5); // 每反弹一趟再扫一遍敌人；不穿透时打中一个就没了，回头趟只补打漏的
     const reh = pr ? 1 + SP.estRehit * Math.max(0, Math.min(L, (1 + legs) * SP.estLeg / v) - 1) : 1; // 穿透：飞在屏幕里的时间越长，隔 rehit 秒重复打中越多
     W.spinMax = W.sparkMul * ch * reh * (pr ? Math.sqrt(W.pierceMore) : 1); W.sparkLegs = legs; }
+  for (const k of ['pierce', 'chain', 'split']) W[k] = W[k] >= 99 ? 1e6 : Math.round(W[k]); // 穿透 / 弹射 / 分裂按整数次（品质会算出小数）；99 以上 = 穿透所有敌人
   return W;
 }
 let STATS = null;

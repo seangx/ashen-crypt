@@ -8,9 +8,9 @@ const LEGA = DATA.uniques.list.filter(u => u.leg); // 传奇词条模板：稀�
 const ruleSrc = it => it ? UNIQUE_BY[it.u] || UNIQUE_BY[it.la] || null : null; // 神话的规则，或传奇装备的传奇词条
 const RULE_TEXT = {
   knock: () => '命中击退敌人', knockMore: v => `伤害总增 ${v}%`, aspdLess: v => `攻击速度总降 ${v}%`,
-  afterPct: v => `余震每次保留 ${v}% 伤害`, afterRep: v => `余震多重复 ${v} 次`, convKinThermal: v => `${v}% 的物理伤害平均转换为火焰、圣光、闪电、寒霜、瘟疫`, pierceInf: () => '投射物无限穿透',
-  pierce: () => '投射物无限穿透', convExpNuc: v => `${v}% 的火焰伤害转换为瘟疫伤害`, pull: () => '命中把敌人拉近',
-  dotMore: v => `持续伤害总增 ${v}%`, 'shred:nuc': v => `命中使敌人瘟疫抗性 -${v}%（3 秒）`, chain: v => `弹射 +${v}（投射物碰到屏幕边反弹的次数，用完就飞出屏幕；闪电链类的瞬发电弧则是在敌人之间连锁）`,
+  afterPct: v => `余震每次保留 ${v}% 伤害`, afterRep: v => `余震多重复 ${v} 次`, convKinThermal: v => `${v}% 的物理伤害平均转换为火焰、圣光、闪电、寒霜、瘟疫`, pierceInf: () => '投射物穿透所有敌人（因此不会弹射）',
+  pierce: v => `穿透 +${v}`, convExpNuc: v => `${v}% 的火焰伤害转换为瘟疫伤害`, pull: () => '命中把敌人拉近',
+  dotMore: v => `持续伤害总增 ${v}%`, 'shred:nuc': v => `命中使敌人瘟疫抗性 -${v}%（3 秒）`, chain: v => `弹射 +${v}（投射物打中敌人后转向附近另一个没打过的敌人，射程重新算；穿透次数用完才弹射）`,
   flatPerArmor: v => `每 100 护甲附加 ${v}–${v * 2} 物理伤害`, armorInc: v => `护甲提高 ${v}%`, shieldRegenPct: v => `护盾每秒回复 +${v}%`, energyAdd: v => `${ATTR_N.energy} +${v}`, aspdLessAll: v => `代价：攻击速度总降 ${v}%`, debrisPerEnergy: v => `每点${ATTR_N.energy}使碎骨范围提高 ${v}%`,
   killInc: v => `本趟下行每击杀一个敌人，伤害提高 ${v}%（最多 ${RULES.killInc.max}%）`, cull: v => `敌人生命低于 ${v}% 时直接击杀`,
   twinNuc: v => `装着副手时，瘟疫伤害提高 ${v}%`, convPlaNuc: v => `${v}% 的圣光伤害转换为瘟疫伤害`, massAdd: v => `${ATTR_N.mass} +${v}`,
@@ -23,8 +23,8 @@ const RULE_TEXT = {
   areaEye: () => ruleText('areaEye'), projLess: v => `代价：投射物伤害总降 ${v}%`, armorLess: v => `代价：护盾总降 ${v}%`,
   delayCrown: v => `每多 0.1 秒延迟，延迟伤害总增 ${v}%`, delayAdd: v => `延迟 +${v} 秒`, aoeInc: v => `范围提高 ${v}%`, earlyWarn: () => '代价：预警圈更早出现（圈里的怪会往外躲）',
   groundStack: v => `你的地面效果在同一位置可以叠 ${v} 层（各自计时）`, durLess: v => `代价：持续时间降低 ${v}%`,
-  martyrThrow: v => `圣盾掷的弹射（碰屏幕边反弹）次数 ×2；每次命中回 ${v / 10}% 护盾`, martyrArmor: () => '代价：盾在飞时不算盾的护甲',
-  echoCrown: v => `弹射（碰屏幕边反弹）过的投射物，命中时在命中点小爆（半径 ${UQX.echoR} 像素，×${v}%，算范围）`, chainLess: v => `代价：弹射 −${v}`,
+  martyrThrow: v => `圣盾掷的弹射次数 ×2；每次命中回 ${v / 10}% 护盾`, martyrArmor: () => '代价：盾在飞时不算盾的护甲',
+  echoCrown: v => `弹射过的投射物，命中时在命中点小爆（半径 ${UQX.echoR} 像素，×${v}%，算范围）`, chainLess: v => `代价：弹射 −${v}`,
   winterHeart: v => `冰球速度 −70%；持续时间 +${v}%；冰片频率 ×1.5`, winterCost: v => `代价：每次施放的灯火消耗 +${v}%`,
   shardCrown: () => '派生物再派生一层（每层 ×0.5）', frozenTaken: v => `冻结的敌人受到的伤害提高 ${v}%`, projSlowU: v => `代价：投射物速度降低 ${v}%（寒魄球用起来是好处）`,
   autoNova: v => `新星每 ${UQX.autoNovaEvery} 秒自动脉冲一次（×${v}%），不再按攻速出手`, iceGround: () => `脚下留 ${UQX.iceGround.dur} 秒冰地，每秒叠 ${UQX.iceGround.chillPerSec} 层冰缓`, moveLess: v => `代价：移速 −${v}%`,

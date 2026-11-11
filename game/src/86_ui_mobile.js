@@ -528,6 +528,7 @@ class MobileUI extends UI {
     y += Math.ceil(cols.length / 3) * 50 + 6;
     if (this.sumFor !== r) { this.sumFor = r; (this.scrollPos ||= {})['w:summary'] = 0; }
     F.hh = y; c = B; y = 2;
+    y = this.dmgStat(c, w, y, r);
     T(this, 12, y, `带回的装备 ${kept.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
     const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q), st = TOUCH;
     best.forEach((it, i) => mkCell(this, c, 9 + (i % MCOLS) * st, y + (i / MCOLS | 0) * st, it, { size: st, upg: true, acts: v => this.itemActs(v) }));

@@ -84,14 +84,18 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   return { c, h: cy };
 }
 const DASH_N = { step: '冲刺：纯位移', warp: '冲刺：瞬移到落点并炸开', trail: '冲刺：沿途留下火痕', burst: '冲刺结束：向四周炸开', storm: '冲刺结束：向附近敌人放连锁雷', vortex: '冲刺结束：留下吸住敌人的漩涡', nova: '冲刺：在起点爆炸' };
-const FORM_N = { util: '功能技能', cleave: '朝前方挥出一道弧光，扇形里的敌人都中', orb: '缓慢飞行的法球，沿途向四周放出碎片', meteor: '从天而降砸向敌人', proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人', reflect: '受到攻击时伤害周围敌人' };
+const FORM_N = { util: '功能技能', cleave: '朝前方挥出一道弧光，扇形里的敌人都中', orb: '缓慢飞行的法球，沿途向四周放出碎片', meteor: '从天而降砸向敌人', proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人' };
 const r1 = v => Math.round(v * 10) / 10;
 // 底材行：按品质的固有数值
+const ROLE_N = { aoe: '定位：清怪（范围大，每一下轻）', mix: '定位：均衡', single: '定位：单体（打得准、每一下重，适合精英和 Boss）' };
 function gemLines(g) { // 技能石：形态、倍率、标签、并进来的形态符文
-  const G = GEM_BY[g.b], out = [], src = G.src.length ? WEAPONS[gemVar(g)] : null;
+  const G = GEM_BY[g.b], out = [], B = G.base;
   if (G.util) { out.push([G.d.replace('#', utilVal(g)), '#e9d9a8']); out.push([gemTag3(g).join(' · '), '#c98cff']); out.push(['功能技能：不造成伤害。只能插在响应类魂龛里（击杀、受击、格挡、冲刺、定时、明灯、低血、遇精英）', COL.dim]); if (g.lvl < MOD_MAX) out.push([`经验 ${fmt(g.xp)} / ${fmt(MOD_XP[g.lvl - 1])}（装备时吃击杀经验）`, COL.faint]); return out; }
   out.push([FORM_N[G.form] || '', COL.dim]);
-  if (src) { const sk = skillItem({ ...S.equip, gem: g }), [mn, mx] = sk ? weaponBase(sk.fb, sk.q) : [0, 0]; out.push([`伤害 = 主手 × ${r2(gemMul(G, g.lvl) * (1 + (g.q || 0) / 100))}（等级、品质）`, '#e9d9a8']); if (sk) out.push([`用现在的主手：${ELEM_N[src.el]}伤害 ${fmt(mn)}–${fmt(mx)}${src.cont ? ' / 秒' : ''}${sk.fb.aff ? '（对口 ×' + GEMC.affinity + '）' : '（不对口）'}`, ELEM_C[src.el]]); if (G.src.length > 1) out.push([`变体：${src.n}`, COL.dim]); }
+  if (B && B.role) out.push([ROLE_N[B.role], '#c9b8ff']);
+  if (B) { const sk = skillItem({ ...S.equip, gem: g }), [mn, mx] = sk ? weaponBase(sk.fb, sk.q) : [0, 0], per = B.cont || B.aura ? '每秒' : '每次出手';
+    out.push([`${per}伤害 = 主手这一下 × 伤害效用 ${Math.round(B.eff * 100)}% × ${r2(gemMul(G, g.lvl) * (1 + (g.q || 0) / 100))}（等级、品质）`, '#e9d9a8']);
+    if (sk) out.push([`用现在的主手：${ELEM_N[G.el]}伤害 ${fmt(mn)}–${fmt(mx)}${per === '每秒' ? ' / 秒' : ''}${sk.fb.aff ? '（对口 ×' + GEMC.affinity + '）' : '（不对口）'}`, ELEM_C[G.el]]); }
   else out.push([`伤害 = 盾的护甲 × 系数（需要装备盾牌）`, '#e9d9a8']);
   if (S.equip.gem === g && needShield()) out.push(['需要盾牌：没装盾，现在改用骨矢 1 级', COL.bad]);
   if (G.fr) { const fx = MOD_BY[G.fr].fx(clamp(g.lvl, 1, LOOT.runeDrop.levelCap)); out.push([MOD_BY[G.fr].d(fx), '#9fd8ff']); }
@@ -120,10 +124,10 @@ function baseLines(it) {
   if (it.kind === 'gem') return gemLines(it);
   if (it.kind === 'weapon') { // 主手只给数值（spec-skill-gems）：类别、对口、暴击；伤害按技能石算
     const cat = GEMC.cats[b.cat], sk = skillItem({ ...S.equip, wl: it, gem: basicGem({ ...S.equip, wl: it }) }), sb = sk ? sk.fb : null; // 伤害在魂龛 / 宝石那边看，这里只给武器本身的数值
-    out.push([`类别：${cat ? cat.n : '—'}${cat ? `（对口：${cat.tags.map(t => TAG_N[t] || t).join('、')}）` : ''}${b.retired ? ' · 已停止掉落' : ''}`, COL.dim]);
+    out.push([`类别：${cat ? cat.n : '—'}${cat ? `（对口：${cat.tags.map(t => TAG_N[t] || t).join('、')}）` : ''}`, COL.dim]);
     { // 武器伤害：底材（按物品等级的代）× 武器威力（技能伤害按它乘）；有“基础伤害提高”时再写放大后的（用户 11-09：武器伤害必须显示）
-      const pw = GEMC.pow[it.b] ?? 1, [mn, mx] = weaponBase(b, q).map(v => v * pw), bi = (it.affs || []).reduce((s, x) => { const a = AFF_BY[x.k]; return s + (a && a.stat === 'baseInc' && (!a.el || a.el === 'all' || a.el === b.el || (a.el === 'thermal' && THERMAL_E.includes(b.el))) ? x.v : 0); }, 0);
-      out.push([`武器伤害 ${fmt(mn)}–${fmt(mx)}`, '#e9d9a8']);
+      const pw = wPow(it.b), [mn, mx] = [qv(GEMC.hit.min, q), qv(GEMC.hit.max, q)].map(v => Math.round(v * pw)), bi = (it.affs || []).reduce((s, x) => { const a = AFF_BY[x.k]; return s + (a && a.stat === 'baseInc' && (!a.el || a.el === 'all' || a.el === b.el || (a.el === 'thermal' && THERMAL_E.includes(b.el))) ? x.v : 0); }, 0);
+      out.push([`武器伤害 ${fmt(mn)}–${fmt(mx)}（技能每次出手 = 这一下 × 伤害效用）`, '#e9d9a8']);
       if (bi) out.push([`加上基础伤害提高 ${bi}%：${fmt(mn * (1 + bi / 100))}–${fmt(mx * (1 + bi / 100))}`, COL.good]); }
     const p = []; if (b.crit) p.push(`暴击 ${b.crit}%`); if (sb && sb.aps) p.push(`每秒攻击 ${r1(sb.aps)}`); if (p.length) out.push([p.join(' · '), dim]);
     return out; }
@@ -145,8 +149,8 @@ function baseLines(it) {
     if (p.length) out.push([p.join(' · '), dim]);
     const im = [];
     const big = v => v >= 1000000 ? '无限' : v;
-    if (b.pierce) im.push('无限穿透');
-    if (b.chain) im.push(`${b.form === 'proj' ? '弹射' : '连锁'} ${qv(b.chain, q)}`);
+    if (b.pierce) { const pv = qv(b.pierce, q); im.push(pv >= 99 ? '穿透所有敌人' : `穿透 ${Math.round(pv)}`); }
+    if (b.chain) im.push(`弹射 ${qv(b.chain, q)}`);
     if (b.split) im.push(`分裂 ${qv(b.split, q)}`);
     if (b.extra) im.push(b.form === 'stab' ? `同时刺 ${1 + qv(b.extra, q)} 个目标` : `额外攻击 ${qv(b.extra, q)}`);
     if (b.ret) im.push('投射物会返回');
@@ -602,7 +606,7 @@ class UI extends Phaser.Scene {
       if (Wi) {
         const lines = [Wi.form === 'engine' ? `冲刺伤害 ${fmt(Wi.avg)}` : `秒伤 ${fmt(Wi.dps)} · 每秒攻击 ${r1(Wi.aps)} · 暴击 ${pct(Math.min(1, Wi.crit))} ×${Wi.critMult.toFixed(2)}`,
           ELEM.filter(e => Wi.max[e] > 0).map(e => `${ELEM_N[e]} ${fmt(Wi.min[e])}–${fmt(Wi.max[e])}`).join('  '),
-          [Wi.pierce && '无限穿透', Wi.chain && `${Wi.form === 'proj' ? '弹射（碰屏幕边）' : '连锁'} ${Wi.chain}`, Wi.split && `分裂 ${Wi.split}`, Wi.ret && '回旋', Wi.extra && `额外攻击 ${Wi.extra}`].filter(Boolean).join('  ') || '没有弹道加成',
+          [Wi.pierce && (Wi.pierce >= 99 ? '穿透所有敌人' : `穿透 ${Wi.pierce}`), Wi.chain && `弹射 ${Wi.chain}`, Wi.split && `分裂 ${Wi.split}`, Wi.ret && '回旋', Wi.extra && `额外攻击 ${Wi.extra}`].filter(Boolean).join('  ') || '没有弹道加成',
           '异常几率：' + (ELEM.filter(e => Wi.ail[e] > 0).map(e => `${AIL[e].n} ${pct(Math.min(1, Wi.ail[e]))}`).join('  ') || '无')];
         lines.forEach((s, i) => TW(this, 10, 116 + i * 11, s, 220, { size: 8, color: i === 0 ? COL.emberHi : COL.text, parent: c }));
       }

@@ -29,20 +29,19 @@ const G2 = DATA.gear2, G2W = G2.weapons, G2D = G2.defense, STONES = G2.stones;
   // 1b. 附加伤害合并（11-10）：一个技能只有一种元素，“附加某元素伤害”效果全一样——只留一族继续掉，文字不写元素；旧装备上的其余五族照常生效
   for (const a of AFF) if (a.stat === 'flat' && a.pair) { const sfx = a.k.endsWith('Off') ? 'Off' : a.k.endsWith('Hub') ? 'Hub' : ''; a.grp = 'FlatDamage' + sfx; a.noRoll = !a.k.startsWith('FlatKineticDamage'); a.f = v => `附加 ${v[0]}–${v[1]} 伤害`; }
   // 2. 主手武器表
-  GEMC.retired = Object.keys(WEAPONS).filter(k => !G2W[k]);
   for (const [k, w] of Object.entries(G2W)) {
     if (w.new && !WEAPONS[k]) { const c = WEAPONS[w.new.clone]; WEAPONS[k] = { ...c, key: k, n: w.new.n, ic: w.new.ic, cat: w.cat }; if (ASTRO.weapons) ASTRO.weapons[k] = { ...ASTRO.weapons[w.new.clone] }; if (DATA.items.weapons) DATA.items.weapons[k] = { ...DATA.items.weapons[w.new.clone], n: w.new.n }; }
     const W = WEAPONS[k]; W.crit = w.crit; W.bel = w.el; W.cat = w.cat; W.w = W.w || 1000; W.pc = w.pc;
-    GEMC.pow[k] = w.pow; GEMC.spd[k] = w.spd / 1.2;
     IMPL[k] = { g2: w.imp, knock: w.knock, t: w.t.replace('#', `${w.imp[1]}–${w.imp[2]}`), tt: w.t.replace(/^命中击退，/, ''), fx: {} };
   }
-  for (const k of GEMC.retired) { WEAPONS[k].w = 0; delete IMPL[k]; }
   for (const [ck, c] of Object.entries(GEMC.cats)) c.bases = Object.keys(G2W).filter(k => G2W[k].cat === ck);
   // 3. 副手：隐性改成 §5，不再有“主手技能总增”；所有副手共用词条池
   for (const [k, o] of Object.entries(G2.off)) if (ARMORS.off[k]) { ARMORS.off[k].sup = {}; ARMORS.off[k].imp2 = o.imp; ARMORS.off[k].impT = o.t; ARMORS.off[k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); ARMORS.off[k].tags = ['Offhand', 'any']; }
   // 4. 防具隐性（盾、头冠）
   for (const [k, o] of Object.entries(G2.armor || {})) for (const kind of ['shield', 'core', 'engine', 'hub']) if (ARMORS[kind][k]) { ARMORS[kind][k].imp2 = o.imp; ARMORS[kind][k].impT = o.t; ARMORS[kind][k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); }
 }
+// 主手的伤害系数、攻速（gear2.weapons）；停用的旧底子按 1
+const wPow = k => (G2W[k] && G2W[k].pow) || 1, wAps = k => (G2W[k] && G2W[k].aps) || 1;
 // 隐性按品质 0 → 10 线性
 const g2v = (r, q) => r[1] + (r[2] - r[1]) * clamp(q || 0, 0, 10) / 10;
 // 二代起隐性 ×impMul（往小走的隐性，比如碎骨锤的近战伤害降低，就除）

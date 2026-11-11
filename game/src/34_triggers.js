@@ -145,7 +145,7 @@ function trigCraft(T, op, arg) {
 /* 底技能：主手类别 → 虚拟技能石（等级随角色等级），倍率 0.7 × 对口 1.2；触发系数 = 24 ÷ 主手基础攻速 */
 function basicGem(eq) {
   const wl = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : null, cat = wl ? WEAPONS[wl.b].cat : 'bow', B = TRG.basic[cat] || TRG.basic.bow;
-  return { kind: 'gem', b: B[0], var: B[1], lvl: clamp(1 + Math.floor((S.level || 1) / 4), 1, MOD_MAX), q: 0, mods: [], sock: 0, affs: [], fake: 1, basic: 1 };
+  return { kind: 'gem', b: B, lvl: clamp(1 + Math.floor((S.level || 1) / 4), 1, MOD_MAX), q: 0, mods: [], sock: 0, affs: [], fake: 1, basic: 1 };
 }
 function basicProc(eq) { const it = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : null, g = it && G2W[it.b]; // gear-v2 §1b：每把武器自带触发系数，“触发系数提高”是本地词条
   const pi = it ? it.affs.reduce((s, x) => s + (AFF_BY[x.k] && AFF_BY[x.k].stat === 'procInc' ? x.v : 0), 0) + uval(it, 'procInc') : 0;
@@ -173,9 +173,9 @@ function trigStats(P, eq) {
       const mul = (1 + ((A.dmg || 0) + (fx.dmg || 0) + bl + (P.trigDmg || 0)) / 100) * (1 + (T.q || 0) / 100) * (skills.length > 1 && !fx.rotate ? trigSplit(T) : 1) * (TRG.fitCond[g.b] === T.c ? TRG.fit : 1) * (FT.heavyHit && cast ? 1.4 : 1) * (FT.focus ? (cast ? 1.5 : 0.7) : 1) * (FT.auraPower && T.c === 'always' ? 1.4 : 1); // tree-v3：重击、专精、常驻之力
       for (const o of [W.min, W.max]) if (o) for (const e in o) o[e] *= mul;
       if (W.auraDps) W.auraDps *= mul; W.dps *= mul;
-      const aoe = (A.aoe || 0) + (fx.aoe || 0) + (fx.emberAoe && TRIGS_RT.lampState === 'ember' ? fx.emberAoe : 0); // 永夜灯：残灯时范围再 +40% if (aoe) { W.aoeInc = (W.aoeInc || 0) + aoe; if (W.aoeR) W.aoeR *= 1 + aoe / 100; if (T.c === 'always' && W.rng) W.rng *= 1 + aoe / 100; }
+      const aoe = (A.aoe || 0) + (fx.aoe || 0) + (fx.emberAoe && TRIGS_RT.lampState === 'ember' ? fx.emberAoe : 0); if (aoe) { W.aoeInc = (W.aoeInc || 0) + aoe; if (W.aoeR) W.aoeR *= 1 + aoe / 100; if (T.c === 'always' && W.rng) W.rng *= 1 + aoe / 100; } // 永夜灯：残灯时范围再 +40%
       if (A.crit) W.crit += A.crit / 100; if (fx.alwaysCrit) W.crit = Math.max(W.crit, 1);
-      const Sk = TSK[g.b] || {}; W.proc = (Sk.proc ?? 5) * (W.procMul || 1); // 多重投射：每发触发系数 ×0.6 W.atk = cast ? 1 : 0;
+      const Sk = TSK[g.b] || {}; W.proc = (Sk.proc ?? 5) * (W.procMul || 1); W.atk = cast ? 1 : 0; // 多重投射：每发触发系数 ×0.6
       W.cost = (T.c === 'always' ? gemCost(g) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul * (TRG.skillCostMul || 1) * ((cast || T.c === 'hit' || T.c === 'crit') ? TRG.castCostMul || 1 : 1) * (W.orbCost || 1) + blT; // 冬之心：寒魄球消耗 +50%
       W.trigSlot = i + 1; W.trigMul = mul; W.ailEffT = A.ailEff || 0; W.wi = TRIG_BASE + i * TRIG_PER + j; ws.push(W);
     });
