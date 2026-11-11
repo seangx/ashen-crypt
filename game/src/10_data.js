@@ -87,6 +87,17 @@ const ARMORS = { shield: {}, core: {}, engine: {}, hub: {}, off: {}, hands: {}, 
 const GEMC = DATA.mechanics.gems;
 const GEMS = DATA.gems.list, GEM_BY = Object.fromEntries(GEMS.map(g => [g.id, g]));
 for (const g of GEMS) ARMORS.gem[g.id] = { key: g.id, n: g.n, ic: g.ic, tags: g.tags, w: 0, gem: g };
+/* 技能变体（design/variants-v1.md）：每个变体合成一份完整的技能石定义，以“原 id#变体 id”登记进 GEM_BY（不进 GEMS，不掉落）；按 id 查定义的地方（套装、范围判定）自动认得 */
+const VARD = DATA.variants || { list: {}, unlock: [] }, VARS = {};
+for (const g of GEMS) VARS[g.id] = ((VARD.list || {})[g.id] || []).map((v, i) => {
+  const id = g.id + '#' + v.id, base = { ...(g.base || {}), ...(v.base || {}) };
+  if (v.el && v.el !== g.el) { const a = base['ail_' + g.el]; delete base['ail_' + g.el]; base['ail_' + v.el] = Math.max(a || 0, 0.25); } // 换元素：本源异常几率跟着换
+  const d = { ...g, id, vb: g.id, v, vn: v.n, lv: (VARD.unlock || [])[i] || 1, el: v.el || g.el, f3: v.f3 || g.f3, mech: v.mech || g.mech, tags: [...new Set([...(g.tags || []), ...(v.tagsAdd || [])])], base };
+  GEM_BY[id] = d; return d;
+});
+const gid = g => (g && g.v && GEM_BY[g.b + '#' + g.v]) ? g.b + '#' + g.v : g && g.b; // 技能石物品 → 定义 id（带变体）
+const gdef = g => GEM_BY[gid(g)];
+const varUnlocked = (g, d) => (g.lvl || 1) >= d.lv;
 const WEAPON_CAT = {}; for (const c in GEMC.cats) for (const k of GEMC.cats[c].bases) WEAPON_CAT[k] = c;
 for (const k in WEAPONS) WEAPONS[k].cat = WEAPONS[k].cat || WEAPON_CAT[k];
 const FORM_GEM = Object.fromEntries(GEMS.filter(g => g.fr).map(g => [g.fr, g.id])); // 形态符文 → 技能石

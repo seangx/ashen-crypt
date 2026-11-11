@@ -11,7 +11,7 @@ const canRollOn = (a, it) => !a.off && !a.noRoll && a.on.includes(it.kind) && (!
 const offTagOk = (it, tag) => { const t = (ARMORS.off[it.b] || {}).tags || []; return t.includes('any') || t.includes(tag); }; // 副手：箭袋只出投射物类，法源 / 图腾 / 提灯什么都能出 // tag 只限制武器
 const KIND_TAG = { shield: 'Shield', core: 'Core', engine: 'Engine', hub: 'Nexus', chip: 'Chip' };
 const baseName = it => { const g = it.kind !== 'gem' && it.gen, N = g && (DATA.items.genNames || {})[it.b]; return (N && N[g - 1]) || baseOf(it).n; }; // 高等级掉的同一种底材换个名字（内部是“代”，不给玩家看）
-function itemName(it) { return it.rar >= 2 && it.rn ? it.rn : baseName(it); }
+function itemName(it) { if (it.kind === 'gem' && it.v && gdef(it).vn) return gdef(it).n + '·' + gdef(it).vn; return it.rar >= 2 && it.rn ? it.rn : baseName(it); } // 技能变体：旋风斩·霜旋
 const qv = (v, q) => { if (!Array.isArray(v)) return v; const x = clamp(q || 0, 0, v.length - 1), i = Math.floor(x), f = x - i; return f && i + 1 < v.length ? v[i] + (v[i + 1] - v[i]) * f : v[i]; }; // 按底材档位取值（档位可以是小数：三代底材按物品等级插值）
 
 // 底材档位：只看物品等级（第几代 + 代内进度），不再随机抽品质
@@ -143,7 +143,7 @@ function rollModDrop(ilvl) {
 }
 
 /* 技能石（spec-skill-gems）：{ kind:'gem', b:技能石 id, lvl, xp, q, sock, mods }（老存档上的 var 变体已不用） */
-const gemTags = g => GEM_BY[g.b].tags;
+const gemTags = g => gdef(g).tags; // 变体可能加标签
 const utilVal = g => { const G = GEM_BY[g.b], U = G.util; return Math.round((U.v[0] + (U.v[1] - U.v[0]) * (clamp(g.lvl || 1, 1, MOD_MAX) - 1) / Math.max(1, MOD_MAX - 1)) * (1 + (g.q || 0) / 100) * 10) / 10; }; // 功能技能的数值：按等级、品质
 const gemTag3 = g => { const G = GEM_BY[g.b] || g; return [G.kind3, ELEM_N[G.el], F3_N[G.f3], ...(G.mech || []).map(k => MECH_N[k])].filter(Boolean); }; // 显示用的三层标签
 const gemMul = (G, L) => G.mul[0] + (G.mul[1] - G.mul[0]) * (clamp(L, 1, MOD_MAX) - 1) / 19;
@@ -161,10 +161,13 @@ function rollGemDrop(ilvl) {
 }
 // 技能石当前的形态符文（虚拟，等级 = 技能石等级）
 const gemFormRune = g => { const G = GEM_BY[g.b]; return G.fr ? { id: -1, kind: 'mod', mid: G.fr, lvl: g.lvl, xp: g.xp, virt: 1 } : null; };
+// 变体：内置符文（按技能石等级）+ 变体自己的效果（登记成虚拟符文 V:定义 id，排在形态符文后面，同名开关会覆盖形态符文的）
+const gemVarRunes = g => { const d = gdef(g); if (!d || !d.v) return []; const v = d.v, out = (v.runes || []).filter(m => MOD_BY[m]).map(m => ({ id: -1, kind: 'mod', mid: m, lvl: g.lvl, xp: g.xp, virt: 1 }));
+  if (v.fx) { const k = 'V:' + d.id; if (!MOD_BY[k]) MOD_BY[k] = { id: k, n: d.vn, fx: L => specAt(v.fx, L), virt: 1 }; out.push({ id: -1, kind: 'mod', mid: k, lvl: g.lvl, xp: g.xp, virt: 1 }); } return out; };
 // 技能的虚拟武器：参数全来自技能石（gems.json 的 base）。每次出手的伤害 = 主手这一下（mechanics.gems.hit 按主手品质 × 主手 pow）× 技能石 eff × 等级、品质、对口；
 // 出手频率 = 主手攻速（gear2.weapons 的 aps）。持续型 / 光环的 eff 是每秒伤害
 function gemBase(g, wl) {
-  const G = GEM_BY[g.b], B = G.base, wb = WEAPONS[wl.b], H = GEMC.hit, tags = gemTags(g), cat = GEMC.cats[wb.cat];
+  const G = gdef(g), B = G.base, wb = WEAPONS[wl.b], H = GEMC.hit, tags = gemTags(g), cat = GEMC.cats[wb.cat];
   const aff = cat && cat.tags.some(t => tags.includes(t)) ? GEMC.affinity : 1;
   const f = gemMul(G, g.lvl) * (1 + (g.q || 0) / 100) * aff / GEMC.affinity * wPow(wl.b); // 对口时 ×1，不对口 ÷1.2
   const timed = !B.cont && !B.aura && B.form !== 'ram'; // 持续、光环、冲撞不按攻速出手

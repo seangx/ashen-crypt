@@ -11,8 +11,8 @@ const setsOfGem = id => SETS.filter(s => setFits(s, id));
 const setSkills = s => GEMS.filter(G => setFits(s, G.id));
 const setOwned = id => [...Object.values(S.equip), ...S.stash].filter(it => it && it.set === id).length;
 // 主技能能用的套装里，已经有最多件的那套（出手类魂龛里的技能石优先）
-function mainSet() { const g = typeof mainSkillGem === 'function' ? mainSkillGem() : null; if (!g) return null; const c = setsOfGem(g.b); if (!c.length) return null; return c.reduce((a, b) => setOwned(b.id) > setOwned(a.id) ? b : a); }
-const mainSets = () => { const g = typeof mainSkillGem === 'function' ? mainSkillGem() : null; return g ? setsOfGem(g.b) : []; };
+function mainSet() { const g = typeof mainSkillGem === 'function' ? mainSkillGem() : null; if (!g) return null; const c = setsOfGem(gid(g)); if (!c.length) return null; return c.reduce((a, b) => setOwned(b.id) > setOwned(a.id) ? b : a); }
+const mainSets = () => { const g = typeof mainSkillGem === 'function' ? mainSkillGem() : null; return g ? setsOfGem(gid(g)) : []; };
 // 身上每套几件（骸王之戒：≥ 2 件的 +1）
 function setCounts(eq = S.equip) {
   const n = {}; for (const it of Object.values(eq)) if (it && it.set && SET_BY[it.set]) n[it.set] = (n[it.set] || 0) + 1;

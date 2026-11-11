@@ -341,7 +341,8 @@ function trigProgress(i) {
 }
 function trigGemXp(x) {
   let up = false; x *= TRG.gemXpMul ?? 1; // 技能石 / 辅助石吃击杀经验的倍率（数据开关，控制构筑成型的快慢）
-  for (const T of S.trigs || []) if (T) for (const g of T.socks) if ((isSkill(g) || isSupport(g)) && g.lvl < MOD_MAX) { g.xp = (g.xp || 0) + x; const L = modLevelOf(g.xp); if (L > g.lvl) { g.lvl = L; up = true; if (G.ui) G.ui.feed(`${isSkill(g) ? GEM_BY[g.b].n : MOD_BY[g.mid].n} ${g.lvl} 级`, COL.cyan, isSkill(g) ? 'i_' + iconOf(g) : 'mod_' + g.mid); } }
+  for (const T of S.trigs || []) if (T) for (const g of T.socks) if ((isSkill(g) || isSupport(g)) && g.lvl < MOD_MAX) { g.xp = (g.xp || 0) + x; const L = modLevelOf(g.xp); if (L > g.lvl) { const L0 = g.lvl; g.lvl = L; up = true; if (G.ui) G.ui.feed(`${isSkill(g) ? GEM_BY[g.b].n : MOD_BY[g.mid].n} ${g.lvl} 级`, COL.cyan, isSkill(g) ? 'i_' + iconOf(g) : 'mod_' + g.mid);
+    if (isSkill(g) && G.ui) for (const d of VARS[g.b] || []) if (L0 < d.lv && L >= d.lv) { G.ui.feed(`解锁变体 ${GEM_BY[g.b].n}·${d.vn}（魂龛里点技能石 → 变体）`, '#7fe08a', 'i_' + iconOf(g)); } } } // 技能变体解锁提示
   return up;
 }
 /* 新存档（system-v2 §9 #0）：送一个普通【出手】“命中时”魂龛 2 孔 + 一颗按主手类别的技能石 */

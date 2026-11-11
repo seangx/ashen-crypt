@@ -173,6 +173,7 @@ function hitMob(m, W, o = {}) {
   if (aoh) player.life = Math.min(STATS.life, player.life + leech(W, aoh));
   if (W.dashOnHit) player.dash = Math.min(STATS.dashMax, player.dash + W.dashOnHit);
   if (W.meleeGuard) player.guardT = MECH.meleeGuardTime;
+  if (W.vGround && !o.ground && !o.re && !o.splash && !(W.vgT > RUN.t)) { const V = W.vGround; W.vgT = RUN.t + (V.cd || 0.3); pushGround({ W, x: m.x, y: m.y, r: V.r || 20, t: V.dur * (STATS.durMul || 1), tickT: V.tick, tick: V.tick, mul: (o.mul || 1) * V.pct, el: W.el, fire: W.el === 'exp' ? 1 : 0, gk: 'v' + W.el }); } // 技能变体：命中留地面（同一技能有冷却，不然多段命中铺满屏）
   if (W.pull && !m.boss) { const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * MECH.pull; m.ky += dy / d * MECH.pull; }
   else if (W.knock && !m.boss) { const dx = m.x - player.x, dy = m.y - player.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * MECH.knockback; m.ky += dy / d * MECH.knockback; }
   const tick = W.cont ? 1 / W.aps : 1;
@@ -587,7 +588,7 @@ function fire(W, i) {
       for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < R2) c++; if (c > bn) { bn = c; best = a; } }
       let cx = 0, cy = 0, vx = 0, vy = 0, k0 = 0; for (const b2 of live) if (dist2(best, b2) < R2) { cx += b2.x; cy += b2.y; vx += b2.vx || 0; vy += b2.vy || 0; k0++; }
       cx = cx / k0 + vx / k0 * delay; cy = cy / k0 + vy / k0 * delay; aimAt(Math.atan2(cy - py, cx - px)); // 预判：那群怪的平均速度 × 延迟
-      const sf = STATS.flag.starfall, n = attacks(W) * (sf ? MT.sfN : 1);
+      const sf = STATS.flag.starfall || W.starfall, n = attacks(W) * (sf ? MT.sfN : 1);
       let off = 0; // 多颗陨石错落落下：每多一颗随机晚 0.1–0.35 秒，位置再抖几像素
       for (let k = 0; k < n; k++) {
         if (k) off += rf(0.1, 0.35);
@@ -1005,7 +1006,7 @@ function stepMeteors(dt) { // 陨石落地：圈内一次命中，击退 + 眩�
       if (!m.boss) { const dx = m.x - M.x, dy = m.y - M.y, l = Math.hypot(dx, dy) || 1; m.kx += dx / l * kb; m.ky += dy / l * kb; }
     }
     if (RUN && kills >= MT.refundKills && M.ground) player.soul = Math.min(STATS.soulMax, player.soul + MT.soulRefund); // 一下杀 ≥3 只返还灯火
-    if (M.ground) pushGround({ W: M.W, x: M.x, y: M.y, r: M.r, t: M.ground.dur * (STATS.durMul || 1), tickT: M.ground.tick, tick: M.ground.tick, mul: M.mul * M.ground.pct, el: M.W.el, fire: 1, gk: 'fire' }); // 火地：每 tick = 这次命中的 pct
+    if (M.ground) pushGround({ W: M.W, x: M.x, y: M.y, r: M.r, t: M.ground.dur * (STATS.durMul || 1), tickT: M.ground.tick, tick: M.ground.tick, mul: M.mul * M.ground.pct, el: M.W.el, fire: M.W.el === 'exp' ? 1 : 0, gk: M.W.el === 'exp' ? 'fire' : 'g' + M.W.el }); // 火地：每 tick = 这次命中的 pct
   }
   meteors = meteors.filter(M => M.t > 0);
 }

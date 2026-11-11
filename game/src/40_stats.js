@@ -17,7 +17,7 @@ function sumGlobal(items) {
 }
 // 符文效果：等级 = 自身等级 + 「所有符文等级」
 const runeLvl = (m, P, extra = 0) => clamp(m.lvl + (P.modLvl || 0) + extra, 1, LOOT.runeDrop.levelCap);
-function activeRunes(it, P, ex0 = 0) { const ex = ex0 + uval(it, 'runeLvl'); const ms = (it.mods || []).filter(m => m && MOD_BY[m.mid] && modActive(m, it)); if (it.kind === 'gem') { const f = gemFormRune(it); if (f) ms.unshift(f); } return ms.map(m => ({ m, fx: MOD_BY[m.mid].fx(runeLvl(m, P, ex)) })); } // 技能石：并进来的形态符文按技能石等级算
+function activeRunes(it, P, ex0 = 0) { const ex = ex0 + uval(it, 'runeLvl'); const ms = (it.mods || []).filter(m => m && MOD_BY[m.mid] && modActive(m, it)); if (it.kind === 'gem') { const f = gemFormRune(it); ms.unshift(...(f ? [f] : []), ...gemVarRunes(it)); } return ms.map(m => ({ m, fx: MOD_BY[m.mid].fx(runeLvl(m, P, ex)) })); } // 技能石：并进来的形态符文按技能石等级算
 
 function computeStats(eq = S.equip) {
   const items = Object.values(eq).filter(Boolean);
@@ -124,7 +124,7 @@ function shieldWeapon(sh, P, g) { // 圣盾掷技能石：单次伤害 = 盾的�
   if (!sh || !g) return null;
   const r = activeRunes(g, P, uval(S.equip.wl, 'runeLvl')).find(x => x.fx.shieldThrow); if (!r) return null;
   const ab = qv(baseOf(sh).armor || 0, sh.q) * (1 + ((P.raw.armorInc || 0) + (P.tree.add.armorInc || 0)) / 100);
-  return weaponStats({ ...sh, kind: 'weapon', fb: THROW_B, src: g, gem: g, th: 1, u: null, affs: [], throwDmg: ab * r.fx.throwK * (1 + (g.q || 0) / 100) }, P);
+  return weaponStats({ ...sh, kind: 'weapon', fb: { ...THROW_B, el: gdef(g).el, gem: gid(g) }, src: g, gem: g, th: 1, u: null, affs: [], throwDmg: ab * r.fx.throwK * (1 + (g.q || 0) / 100) }, P);
 }
 /* 副手的隐性支援效果：sup 每项 [品质 0, 品质 10]，按品质线性 */
 const OFF_SUP = ['extra', 'inc', 'projInc', 'aoeInc', 'areaInc', 'aspdMore', 'critInc', 'critDmg', 'ail', 'gain', 'more', 'chain'];
@@ -199,6 +199,7 @@ function weaponStats(it, P, isEngine) {
     for (const k of ['pierce', 'chain', 'split', 'extra', 'extraChance', 'chainInc', 'splitInc', 'armorOnHit', 'dashOnHit', 'cull', 'perDashInc', 'doubleChance']) if (fx[k]) W[k] += fx[k];
     if (fx.ret) W.ret = 1;
     if (fx.knock) W.knock = 1;
+    if (fx.pull) W.pull = 1; if (fx.starfall) W.starfall = 1; if (fx.vGround) W.vGround = fx.vGround; if (fx.delayAdd) W.vDelayAdd = (W.vDelayAdd || 0) + fx.delayAdd; // 技能变体的开关（variants.json）
     for (const k of ['pierceMore', 'debrisMore', 'blindMore', 'radMore', 'procMul', 'burnMore', 'emberMore', 'brightLess']) if (fx[k]) W[k] *= fx[k]; // 多重投射、灼烧、残焰
     if (fx.freezeInc) W.freezeInc += fx.freezeInc; // 霜咬
     if (fx.chargeMore) W.chargeMore = (W.chargeMore || 0) + fx.chargeMore; if (fx.extraCast) W.extraCast = (W.extraCast || 0) + fx.extraCast; // 急蓄、连发（魂龛里生效）
@@ -243,7 +244,7 @@ function weaponStats(it, P, isEngine) {
   if (P.flag.mutate) W.more *= 0.8; // 异变
   if (P.flag.dmgMore) W.more *= 1 + P.flag.dmgMore / 100; // 誓约：伤害总增
   if (has('Delayed') && P.flag.delayMore) W.more *= 1 + P.flag.delayMore / 100; // 誓约：延迟类伤害总增
-  if (b.form === 'meteor') { W.delayTot = (W.delay || b.delay || MT.delay) + P.delayAdd; if (P.flag.delayCrown) W.more *= 1 + P.flag.delayCrown / 100 * W.delayTot / UQX.delayStep; } // 末日冠：每 0.1 秒延迟总增
+  if (b.form === 'meteor') { W.delayTot = (W.delay || b.delay || MT.delay) + P.delayAdd + (W.vDelayAdd || 0); if (P.flag.delayCrown) W.more *= 1 + P.flag.delayCrown / 100 * W.delayTot / UQX.delayStep; } // 末日冠：每 0.1 秒延迟总增
   if (b.form === 'nova' && P.flag.autoNova) { W.autoNova = 1; W.more *= P.flag.autoNova; } // 永冬法阵：自动脉冲 ×(0.5–0.65)
   if (P.flag.echoShield) { if (has('Shield')) W.more *= SHT.heartMore; } // 回响圣盾：【盾】
   if (P.flag.shardChain) { if (has('Spawn')) W.more *= OB.heartMore; } // 碎冰连锁：【派生】

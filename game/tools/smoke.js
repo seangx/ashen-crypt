@@ -38,6 +38,17 @@ const WINS = ['gear', 'trig', 'mods', 'tree', 'craft', 'salvage', 'shop', 'ladde
       if (!g.util) { if (r.dps <= 0) fail(name, `面板秒伤 ${r.dps}`); if (r.fired && r.dealt <= 0) fail(name, '放了但没打出伤害'); if (!CLOSE_FORMS.includes(r.form) && (r.rng || 160) < MIN_RNG && r.aoe < 30) fail(name, `射程只有 ${r.rng}（形态 ${r.form}）`); }
       g.r = r;
     }
+    // 技能变体（variants.json）：每个变体实战 6 秒（3 秒不够：怪还没走到跟前），要放得出来、打得出伤害、元素和定义一致
+    const vr = await page.evaluate(async () => { const bad = [], A = P.A; let n = 0;
+      for (const G of A.GEMS) for (const d of (VARS[G.id] || [])) { n++;
+        const W0 = P.setup({ gems: [{ id: G.id, lvl: 15 }], trig: 'cast', shield: G.form === 'shieldThrow', weapon: 'Cannon' }); const g = A.S.trigs[0].socks[0]; g.v = d.v.id; A.refreshStats(); const W = P.W();
+        if (!W) { bad.push(`${d.n}·${d.vn}：魂龛里没有技能`); continue; } if (W.el !== d.el) bad.push(`${d.n}·${d.vn}：元素 ${W.el}，应为 ${d.el}`);
+        if (!(await P.start())) { bad.push(`${d.n}·${d.vn}：开局失败`); continue; }
+        try { P.step(6, () => { P.tank(); A.player.life = A.STATS.life; A.player.soul = A.STATS.soulMax; }); } catch (e) { bad.push(`${d.n}·${d.vn}：${e.message}`); }
+        if (!P.fired()) bad.push(`${d.n}·${d.vn}：6 秒内没放出来`); else if (P.dealt() <= 0) bad.push(`${d.n}·${d.vn}：放了但没打出伤害`); P.stop(); }
+      return { n, bad }; }).catch(e => ({ n: 0, bad: [e.message.split('\n')[0]] }));
+    for (const b of vr.bad) fail('技能变体', b); if (!vr.n) fail('技能变体', '一个变体都没有');
+    console.log(`技能变体 ${vr.n} 个`);
     console.log(`技能石 ${list.length} 个：` + list.map(g => g.r ? `${g.n} ${g.r.fired}次` : '').filter(Boolean).join('，'));
   }
 
