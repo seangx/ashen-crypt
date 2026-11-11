@@ -122,6 +122,7 @@ function helpPages() {
 function baseLines(it) {
   const b = baseOf(it), q = it.q, out = [], dim = '#b8afc4';
   if (it.kind === 'gem') return gemLines(it);
+  if (it.set) out.push(...setLines(it)); // gear-v3 套装
   if (it.kind === 'weapon') { // 主手只给数值（spec-skill-gems）：类别、对口、暴击；伤害按技能石算
     const cat = GEMC.cats[b.cat], sk = skillItem({ ...S.equip, wl: it, gem: basicGem({ ...S.equip, wl: it }) }), sb = sk ? sk.fb : null; // 伤害在魂龛 / 宝石那边看，这里只给武器本身的数值
     out.push([`类别：${cat ? cat.n : '—'}${cat ? `（对口：${cat.tags.map(t => TAG_N[t] || t).join('、')}）` : ''}`, COL.dim]);

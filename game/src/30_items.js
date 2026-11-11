@@ -42,7 +42,7 @@ const craftTop = a => hasEx(a) ? a.tiers.length - EXA.topTiers - 1 : a.tiers.len
 function setRarity(it, rar) {
   it.rar = rar; it.affs = []; it.rn = null;
   if (rar === 1) { const c = LOOT.affixCount.magic, n = ri(c[0], c[1]); for (let i = 0; i < n; i++) rollAffix(it); }
-  if (rar === 2) { const c = LOOT.affixCount.rare, n = ri(c[0], c[1]); for (let i = 0; i < n; i++) rollAffix(it); it.rn = pick(RARE_A) + pick(RARE_B[it.kind]); }
+  if (rar === 2) { const c = LOOT.affixCount.rare, n = ri(c[0], c[1]); for (let i = 0; i < n; i++) rollAffix(it); it.rn = it.set && SET_BY[it.set] ? SET_BY[it.set].pieces[it.kind][0] : pick(RARE_A) + pick(RARE_B[it.kind]); } // 套装件重洗也保留名字
 }
 // 可以出现的（词条族, 档位）组合：部位对得上、同组没有、前后缀没满、物品等级落在档位窗口里
 function affOptions(it) {
@@ -113,6 +113,7 @@ function rollUnique(ilvl, boss, ladder) {
   return newUnique(wpick(pool, u => u.w || LOOT.uniqueBossOnlyWeight.w).id, ilvl, boss ? G2.uniques.randChest : 0);
 }
 function rollItem(ilvl, rarBonus = 0, boss = false, rarity = null, ladder = false, only = null) { // rarity：指定稀有度（不出独特）；ladder：天梯宝箱；only：只出这个部位（骨坊）
+  if (rarity === null && !only) { const sp = rollSetDrop(ilvl, ladder ? 'chest' : boss ? 'boss' : 'normal'); if (sp) return sp; } // gear-v3 套装件
   if (rarity === null && !only && rnd() < (boss ? DROP.uniqueBoss : DROP.unique) * (1 + (LX.unique || 0) / 100)) { const u = rollUnique(ilvl, boss, ladder); if (u) return u; }
   const [kind, b] = wpick(allBases().filter(x => (x[2].req || 1) <= ilvl && (!only || x[0] === only)), x => (x[2].w || 1000) * (1 + ((LX.call || {})[x[0]] || 0) / 100));
   const rar = rarity ?? wpick([0, 1, 2], r => RARITY_W[r] * (r === 2 ? 1 + rarBonus / 100 : 1));

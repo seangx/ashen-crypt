@@ -5,6 +5,13 @@ Object.assign(MobileUI.prototype, {
     const P = STATS, TA = (P.tree && P.tree.add) || {}, R = P.raw || {}, F = P.flag || {}, L = [], pc = v => Math.round(v * 100) + '%', n1 = v => Math.round(v * 10) / 10;
     const H = t => L.push({ t, c: COL.emberHi }), row = (a, b, c) => L.push({ t: `${a}：${b}`, s: 8, c: c || COL.text }), note = t => L.push({ t, s: 8, c: COL.dim });
     const lv = monLv();
+    // ---- 套装（gear-v3）----
+    { const ms = mainSet(), n = setCounts();
+      if (ms || Object.keys(n).length) { H('套装');
+        if (ms) { const miss = setMissing(ms.id); row(`主技能对应 · ${ms.n}`, `身上 ${Math.min(6, n[ms.id] || 0)} / 6${miss.length ? ' · 还缺 ' + miss.map(k => KIND_N[k]).join('、') : ' · 已集齐'}`, ms.c); }
+        for (const id in n) if (!ms || id !== ms.id) row(SET_BY[id].n, `身上 ${Math.min(6, n[id])} / 6`, SET_BY[id].c);
+        for (const t of setTiers()) note(`　${t.set.n} ${t.k} 件：${t.b.t}`);
+        note(`　套装件在 ${SETD.drop.minIlvl} 级以上的怪、Boss 宝箱里掉，七成是主技能那套；Boss 宝箱连续 ${SETD.drop.pity} 件不是套装件就必掉一件缺的；第一次推到 ${SETD.drop.giftDepth} 层送 ${SETD.drop.giftN} 件`); } }
     // ---- 输出 ----
     H('输出');
     row('总秒伤', `${fmt(P.dps)}（出手 ${fmt(P.castDps || 0)} · 响应 ${fmt(P.respDps || 0)}）`, COL.emberHi);

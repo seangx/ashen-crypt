@@ -145,6 +145,8 @@ function hitMob(m, W, o = {}) {
   mul *= ruleMul(m) * elemMul(m) * (1 + buffV('dmg') / 100); // 战吼
   if (STATS.flag.ctrlPrison && !isCtrl(m)) mul *= 1 - RL.ctrlPrison.less / 100; /* 寒狱：对未受控的敌人总降 */
   if (m.frzT > 0 && STATS.frozenTaken) mul *= 1 + STATS.frozenTaken; // 冻结的敌人受到的伤害提高
+  const bladeOn = STATS.flag.bladeStack && !o.ground && !o.re && (W.tags || []).includes('Melee'); // 旋刃套 4 件：刃势
+  if (bladeOn) { const now = RUN ? RUN.t : 0; if (!o.blade2 && now - (player.bladeLast ?? -9) >= 0.25) { player.blade = Math.min(10, (player.blade || 0) + 1); player.bladeLast = now; } if (!o.blade2) player.bladeT = 4; mul *= 1 + STATS.flag.bladeStack * (player.blade || 0) / 100; } // 每次出手最多叠 1 层（0.25 秒内只算一次），上限 10
   if (m.frzT > 0 && STATS.flag.frozenMore) mul *= 1 + STATS.flag.frozenMore / 100; // 誓约：对冻结的敌人总增
   if (STATS.flag.fullShieldMore && player.shield >= STATS.shield - 0.5) mul *= 1 + STATS.flag.fullShieldMore / 100; // 誓约：护盾全满时总增
   if (W.shred) { m.shred = W.shred; m.shredT = MECH.shredTime; }
@@ -155,6 +157,7 @@ function hitMob(m, W, o = {}) {
     d = mitigate(m, e, d); by[e] = d; total += d; if (d > topv) { topv = d; top = e; }
   }
   DSRC = o.dsrc || dsrcOf(W); damage(m, total, top, crit, W.cont);
+  if (bladeOn && STATS.flag.bladeMax && player.blade >= 10 && !o.blade2 && !m.dead) hitMob(m, W, { ...o, blade2: 1, procK: 0, mul: (o.mul || 1) * STATS.flag.bladeMax }); // 旋刃套 6 件：满层再打一次
   if (!W.cont && !o.ground && !o.arc && !o.re) shieldOnHit(); /* 续航：持续伤害、地面效果不算命中 */
   if (W.cull && !m.dead && !m.boss && m.hp / m.max * 100 < W.cull) kill(m);
   if (STATS.flag.arc && !o.arc && rnd() < RL.arc.chance / 100 * (W.cont ? 1 / W.aps : 1)) { const hit = new Set([m]); for (let k = 0; k < RL.arc.n; k++) { const n = nearest(m.x, m.y - 4, RL.arc.r, hit); if (!n) break; hit.add(n); fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: n.x, y2: n.y - 5, el: 'ele' }); hitMob(n, W, { mul: RL.arc.dmg / 100, arc: 1, noDebris: o.noDebris }); } }
@@ -184,7 +187,7 @@ function aoePull(x, y, r) {
 // 寒霜：冰缓叠层（每层移速、攻速 -chillPer%），叠满冻结；冻结后 freezeImmune 秒免疫、层数清零（spec-bd-gear §1）
 const chillEff = () => ailEff('cold'); // 冰缓效果提高%
 const chillK = m => m.frzT > 0 ? 0 : 1 - Math.min(0.9, m.chill * MECH.chillPer / 100 * chillEff()); // 速度倍率：冻结时 0
-function shatter(m) { const wk = STATS.flag && STATS.flag.winterKing, d = (m.coldAcc || 0) * (wk ? 0.5 : EFX.shatterPct); m.coldAcc = 0; if (d > 0 && !m.dead) { fx({ t: 'shatter', x: m.x, y: m.y - m.size }); if (wk) for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < 40 * 40) { DSRC = '碎冰'; damage(n, d * 0.5, 'cold', false, true); } DSRC = '碎冰'; damage(m, d, 'cold', false, true); } } // 凛冬使：50%，波及周围 // 碎冰：这一轮累计寒霜伤害的一部分
+function shatter(m) { const wk = STATS.flag && STATS.flag.winterKing, d = (m.coldAcc || 0) * (wk ? 0.5 : EFX.shatterPct); m.coldAcc = 0; if (d > 0 && STATS.flag && STATS.flag.winterShards) winterShards(m, d * STATS.flag.winterShards); if (d > 0 && !m.dead) { fx({ t: 'shatter', x: m.x, y: m.y - m.size }); if (wk) for (const n of mobs) if (n !== m && !n.dead && dist2(n, m) < 40 * 40) { DSRC = '碎冰'; damage(n, d * 0.5, 'cold', false, true); } DSRC = '碎冰'; damage(m, d, 'cold', false, true); } } // 凛冬使：50%，波及周围 // 碎冰：这一轮累计寒霜伤害的一部分
 function chillOn(m, n, W) {
   if (m.dead || m.frzT > 0) return;
   if (m.frzImm > 0) { m.chill = Math.min(MECH.chillMax - 1, m.chill + n); m.chillT = MECH.chillDur; if (m.chill >= MECH.chillMax - 1 && m.coldAcc > 0) { shatter(m); m.chill = 0; } return; } // 免疫期：照常冰缓，但叠不到冻结
@@ -209,7 +212,7 @@ function mainFx(m, W, by, tick, o) {
       m.shock = Math.min(MECH.shockMax, Math.max(m.shock, n)); m.shockT = shockDur(); break; } // 雷霆使者：持续翻倍、小伤害上限翻倍
     case 'nuc': { const pr = W.cont ? 0.25 : 1; if (rnd() >= pr) break; const dur = MECH.radDur * (F.plagueDoc ? 1.5 : 1), dps = d * MECH.radPct * EFX.radK * bonus * W.radMore * W.dotMore * eff / MECH.radDur / pr; // 疫病：一次一层（疫医：持续 +50%）
       if (m.rad.length >= 30) { const x = m.rad[m.rad.length - 1]; x.dps += dps; x.t = dur; } else m.rad.push({ dps, t: dur }); break; }
-    case 'cold': m.coldAcc = (m.coldAcc || 0) + d; m.chillF = (m.chillF || 0) + EFX.chillK * bonus * tick * (o.chill || 1); while (m.chillF >= 1 && !m.dead) { m.chillF--; chillOn(m, 1, W); } break; // 冰缓 → 碎冰
+    case 'cold': m.coldAcc = (m.coldAcc || 0) + d; m.chillF = (m.chillF || 0) + EFX.chillK * bonus * tick * (o.chill || 1) + (F.chillAdd || 0) * tick; /* 凛冬套 2 件：每次命中多叠冰缓 */ while (m.chillF >= 1 && !m.dead) { m.chillF--; chillOn(m, 1, W); } break; // 冰缓 → 碎冰
     case 'pla': { const line = (m.boss ? EFX.judgeBoss : m.elite ? EFX.judgeElite : EFX.judge) * clamp(0.4 + Math.sqrt(r), 0.4, 1) * Math.min(1.5, bonus * eff) * (F.arbiter ? 1.5 : 1); m.judgeT = 4; // 审判：斩杀（裁决者：线 ×1.5）；留一个 4 秒的审判印记给跨系大天赋认
       if (m.hp / m.max < line) { fx({ t: 'judge', x: m.x, y: m.y - m.size }); dstatAdd('审判处决', Math.max(0, m.hp), false, false); kill(m); } break; }
   }
@@ -249,7 +252,12 @@ function damage(m, amt, el, crit, small) {
   if (m.hp <= 0) kill(m);
 }
 // 碎冰（大天赋 shatter）：尸体向四周放 shardN (+ 派生 +N) 片冰片，每片 = 新星武器单次 × shardMul；冰片算派生和投射物，不穿透
-function shatter(m) {
+// 凛冬套 4 件：碎冰时向四周放 3 片冰片，每片 = 这次碎冰伤害 × 25%（冰片算寒霜、投射物，不穿透）
+function winterShards(m, each) {
+  const W = combatWs().map(e => e[0]).find(w => w.el === 'cold' && !w.util); if (!W) return; const a0 = rf(0, Math.PI * 2);
+  for (let i = 0; i < 3; i++) { const a = a0 + i * Math.PI * 2 / 3, p = shoot(W, m.x, m.y - 5, a, { pierce: 0, chain: 0, split: 0, ret: 0, hit: new Set([m]), mul: each / Math.max(1, W.avg || 1), life: NV.shardLife, shard: 1 }); p.vx = Math.cos(a) * NV.shardSpeed; p.vy = Math.sin(a) * NV.shardSpeed; p.r = 2; }
+}
+function novaShatter(m) { // 以前也叫 shatter，把寒霜主效果“碎冰”（第 187 行）覆盖掉了，主效果一直没生效（11-11 修）
   const W = combatWs().map(e => e[0]).find(w => w.frostNova || (w.tags || []).includes('Nova')); if (!W) return;
   const n = NV.shardN + (STATS.spawnAdd || 0), a0 = rf(0, Math.PI * 2);
   const old = projs.filter(p => p.shard && !p.dead), over = old.length + n - NV.maxShards; for (let k = 0; k < over && k < old.length; k++) old[k].dead = true;
@@ -269,7 +277,7 @@ function kill(m) {
   player.soul = Math.min(STATS.soulMax, player.soul + SOUL.onKill[m.boss ? 'boss' : m.elite ? 'elite' : 'normal'] * hk * STATS.soulGainMul * lampGainMul(RUN.base) * (RUN.mode !== 'ladder' && RUN.base < RUN.descent.prevMax ? SOUL.revisitKillMul : 1)); // 灯火：击杀回
   deathRules(m);
   if (STATS.lifeOnKill && !healBlocked()) player.life = Math.min(STATS.life, player.life + STATS.lifeOnKill * hk); // gear-v2：击杀回生命
-  if (STATS.flag.shatter && m.frzT > 0) shatter(m); // 碎冰：冻结的敌人死了碎成冰片（冰片打死的冻结敌人也照样碎）
+  if (STATS.flag.shatter && m.frzT > 0) novaShatter(m); // 碎冰：冻结的敌人死了碎成冰片（冰片打死的冻结敌人也照样碎）
   const mm = manualMul();
   const xp = m.d.xp * (m.elite ? ELITE.xp : 1) * monXp(RUN.L) * (1 + LX.xp / 100) * mm * hk;
   const lad = RUN.mode === 'ladder';
@@ -301,7 +309,7 @@ function kill(m) {
     for (let i = 0; i < BL.runes; i++) dropRune(m, L + BL.runeIlvlBonus);
     for (const T of bossTrigs(RUN.bossD && RUN.bossD.id, L + BL.ilvlBonus)) dropThing(m, { kind: 'trig', trig: T }, 1); // 首领必掉魂龛，偏好 2 种底子
     S.stats.bosses++; RUN.descent.floors++; (RUN.descent.mins = RUN.descent.mins || []).push([RUN.base, Math.round(RUN.descent.minHp * 100), RUN.base >= RUN.descent.prevMax - 1]); // 每层最低血量（模拟用）
-    if (RUN.base >= S.maxDepth && RUN.base < PROG.run.maxDepth) S.maxDepth = RUN.base + 1;
+    if (RUN.base >= S.maxDepth && RUN.base < PROG.run.maxDepth) { S.maxDepth = RUN.base + 1; const gf = setGift(); if (gf && G.ui) { toast(`套装礼物：${gf.set.n}套 ${gf.items.length} 件放进了背包`, '#7fe08a'); } } // 第一次推到 30 层：送主技能那套 2 件
     const ft = RUN.t - (RUN.floorT0 || 0); RUN.jumpN = Math.min(pushJump(ft, RUN.base), PROG.run.maxDepth - RUN.base); RUN.lastFloorT = ft; // 跳层（天梯并进推层）
     const tierUp = pushMilestone(m, RUN.base, RUN.jumpN); // 段位、记录
     if (RUN.mode !== 'ladder' && RUN.base >= (S.maxDepth || 1) - 1) reelMilestone(RUN.base); // 骸骨轮盘：新纪录的 5 的倍数层
@@ -566,7 +574,7 @@ function fire(W, i) {
     case 'meteor': { // 坠星杖：选射程内敌人最多的点（按速度 × 延迟预判），预警后落地
       const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
       const cost = W.trigSlot ? 0 : MT.soulPerCast * (1 - STATS.soulLess), rune = W.meteor && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost; // 灯火不够时放不带符文的陨石
-      const delay = W.delayTot || (W.delay || MT.delay), R2 = W.aoeR * W.aoeR; let best = live[0], bn = -1;
+      const delay = (W.delayTot || (W.delay || MT.delay)) * (1 - (((STATS.tree && STATS.tree.add.delayLess) || 0)) / 100), R2 = W.aoeR * W.aoeR; let best = live[0], bn = -1; // 陨星套 2 件：落地延迟 −20%
       for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < R2) c++; if (c > bn) { bn = c; best = a; } }
       let cx = 0, cy = 0, vx = 0, vy = 0, k0 = 0; for (const b2 of live) if (dist2(best, b2) < R2) { cx += b2.x; cy += b2.y; vx += b2.vx || 0; vy += b2.vy || 0; k0++; }
       cx = cx / k0 + vx / k0 * delay; cy = cy / k0 + vy / k0 * delay; aimAt(Math.atan2(cy - py, cx - px)); // 预判：那群怪的平均速度 × 延迟
@@ -720,6 +728,7 @@ function logic(dt) {
   if (player.hurtT > 0) player.hurtT -= dt;
   if (player.fbT > 0) player.fbT -= dt;
   if (player.aimT > 0) player.aimT -= dt;
+  if (player.bladeT > 0 && (player.bladeT -= dt) <= 0) player.blade = 0; // 旋刃套：4 秒没命中，刃势清零
   if (RUN) { closeStep(); if (RUN.gd) { RUN.gd.t += dt - 1 / 60; if (player.closeN > 0) RUN.gd.closeT += dt - 1 / 60; } }
   if (player.guardT > 0) player.guardT -= dt;
   if (player.buffs) for (const k in player.buffs) if (player.buffs[k].t > 0) player.buffs[k].t -= dt;
@@ -967,9 +976,14 @@ function stepMeteors(dt) { // 陨石落地：圈内一次命中，击退 + 眩�
   for (const M of meteors) {
     M.t -= dt; if (M.t > 0) { if (STATS.flag.earlyWarn) for (const m of mobs) if (!m.dead && !m.boss && m.frzT <= 0 && !(m.stunT > 0) && dist2(m, M) < (M.r + m.size) ** 2) { const dx = m.x - M.x, dy = m.y - M.y, l = Math.hypot(dx, dy) || 1; m.x += dx / l * UQX.doomDodge * dt; m.y += dy / l * UQX.doomDodge * dt; } continue; } // 末日冠代价：圈里的怪往外躲
     fx({ t: M.W.b.bolt ? 'boltHit' : M.W.b.smite ? 'smiteHit' : 'meteorHit', x: M.x, y: M.y, r: M.r }); sfx('boom');
+    const F = STATS.flag || {}; let markMul = 1;
+    if (F.starMark && RUN) { const mk = RUN.starMarks || (RUN.starMarks = []); if (mk.some(k => k.t > 0 && dist2(k, M) < k.r * k.r)) { markMul = 1 + F.starMark; fx({ t: 'ring', x: M.x, y: M.y - 2, r: M.r + 4, el: 'pla' }); } // 陨星套 6 件：砸中星痕
+      if (!M.mini) mk.push({ x: M.x, y: M.y, r: M.r, t: 4 }); }
+    if (F.starMini && !M.mini) { let best = null, bn = 0; for (const a of mobs) { if (a.dead || dist2(a, M) > 70 * 70) continue; let c = 0; for (const b of mobs) if (!b.dead && dist2(a, b) < (M.r * 0.6) ** 2) c++; if (c > bn) { bn = c; best = a; } } // 陨星套 4 件：附近最密处再落一颗小星
+      if (best) meteors.push({ W: M.W, x: best.x, y: best.y, r: M.r * 0.6, t: 0.3, T: 0.3, mul: M.mul * F.starMini, mini: 1, ground: null }); }
     const kb = MT.knockPx * Math.log(50); let kills = 0, hd = 0, hn = 0;
     for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, M) < (M.r + m.size) ** 2) {
-      const d = hitMob(m, M.W, { mul: M.mul }); hd += d; hn++;
+      const d = hitMob(m, M.W, { mul: M.mul * markMul }); hd += d; hn++;
       if (m.dead) { kills++; continue; }
       const big = m.boss || m.elite; m.stunT = Math.max(m.stunT || 0, MT.stun * (big ? MT.stunBossMul : 1));
       if (!m.boss) { const dx = m.x - M.x, dy = m.y - M.y, l = Math.hypot(dx, dy) || 1; m.kx += dx / l * kb; m.ky += dy / l * kb; }

@@ -58,11 +58,12 @@ function stageGoals() {
   const twoGems = trigs.some(T => T.socks.filter(isSkill).length >= 2), maxTier = Math.max(0, ...[...trigs, ...(S.trigBag || [])].map(T => trigTier(T.ilvl)));
   const st3 = (S.stones || []).some(x => x.t >= 3) || Object.values(S.equip).some(it => it && (it.stones || []).some(x => x && x.t >= 3));
   const uTrig = trigs.some(T => T.u), slot4 = trigSlots() >= 4;
+  const ms = typeof mainSet === 'function' ? mainSet() : null, sn = ms ? Math.min(6, setCounts()[ms.id] || 0) : 0, setN = ms ? `${ms.n}套` : '主技能对应的套装'; // gear-v3：毕业目标里加套装
   const S4 = [
     { n: '开荒', goals: [[`推到第 10 层（现在 ${D}）`, D >= 10], [`角色 15 级，开第 2 个魂龛位（现在 ${S.level}）`, S.level >= 15], ['一个魂龛里放 2 颗技能石', twoGems]] },
     { n: '成型', goals: [[`推到第 30 层（现在 ${D}）`, D >= 30], [`晋升白银段位（推到第 20 层，现在 ${Lb}）`, Lb >= 20], [`角色 35 级，开第 3 个魂龛位（现在 ${S.level}）`, S.level >= 35]] },
-    { n: '精修', goals: [[`推到第 40 层（现在 ${Lb}）`, Lb >= 40], [`魂龛升到 T4（现在 T${maxTier}）`, maxTier >= 4], ['属性石合成到 3 阶', st3]] },
-    { n: '毕业', goals: [['戴上独特魂龛', uTrig], ['开第 4 个魂龛位（稀有主手或法阵的“魂龛位 +1”）', slot4], [`推到第 ${PROG.run.maxDepth} 层通关（现在 ${Lb}）`, Lb >= PROG.run.maxDepth]] },
+    { n: '精修', goals: [[`推到第 40 层（现在 ${Lb}）`, Lb >= 40], [`魂龛升到 T4（现在 T${maxTier}）`, maxTier >= 4], ['属性石合成到 3 阶', st3], [`穿上 4 件${setN}（现在 ${sn}）`, sn >= 4]] },
+    { n: '毕业', goals: [[`集齐 6 件${setN}（现在 ${sn}）`, sn >= 6], ['戴上独特魂龛', uTrig], ['开第 4 个魂龛位（稀有主手或项链的“魂龛位 +1”）', slot4], [`推到第 ${PROG.run.maxDepth} 层通关（现在 ${Lb}）`, Lb >= PROG.run.maxDepth]] },
   ];
   const i = D < 10 ? 0 : D < 30 || Lb < 20 ? 1 : Lb < 40 ? 2 : 3, cur = S4[i], next = cur.goals.find(g => !g[1]) || cur.goals[cur.goals.length - 1];
   const need = typeof elemNeed === 'function' && typeof STATS !== 'undefined' && STATS.dps ? elemNeed(STATS) : '';

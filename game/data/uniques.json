@@ -894,6 +894,28 @@
    ]
   },
   {
+   "id": "BoneKingRing",
+   "n": "骸王之戒",
+   "kind": "ring",
+   "b": "CrystalRing",
+   "req": 30,
+   "w": 30,
+   "fixed": [
+    [
+     "IncreasedLife",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "setLess",
+     1,
+     1
+    ]
+   ],
+   "_说明": "gear-v3 §3.4：套装需求 −1（每套 ≥ 2 件的 +1）。5 件拿 6 件效果，或两套混搭"
+  },
+  {
    "id": "ScorchedCircle",
    "n": "焦土之戒",
    "kind": "ring",

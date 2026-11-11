@@ -36,8 +36,8 @@ const genQ = ilvl => { const L = GENS.list, g = genOf(ilvl), x = L[g], end = g +
 const RAR = [{ n: '普通', max: 0 }, { n: '罕见', max: 2 }, { n: '稀有', max: 4 }, { n: '神话', max: 0 }];
 const RCOL = ['#c9c2b4', '#78a9ff', '#ffd84a', '#ff8a3d'];
 const LEG_C = '#ff5fa2', EX_C = '#7dffcf'; // 传奇（稀有 + 传奇词条）、溢彩（带只能掉落的顶档词条）
-const icol = it => it.la ? LEG_C : it.ex ? EX_C : RCOL[it.rar];
-const rarName = it => it.leg ? '神话 · 已熔铸' : it.la ? (it.ex ? '溢彩传奇' : '传奇') : it.ex ? '溢彩' + RAR[it.rar].n : RAR[it.rar].n;
+const icol = it => it.set ? '#7fe08a' : it.la ? LEG_C : it.ex ? EX_C : RCOL[it.rar]; // 套装件：绿色
+const rarName = it => it.set ? '套装' : it.leg ? '神话 · 已熔铸' : it.la ? (it.ex ? '溢彩传奇' : '传奇') : it.ex ? '溢彩' + RAR[it.rar].n : RAR[it.rar].n;
 
 // 装备槽
 // gear-v3（design/gear-v3.md）：全身 10 格。副手格三选一（副手类 / 盾 / 法阵，物品 kind 不变），新增护手、胸甲、肩甲、戒指 ×2、项链

@@ -29,6 +29,7 @@ function computeStats(eq = S.equip) {
     if (A.gainPct) ad('soulRegen', A.gainPct);
     for (const k of ['pen', 'ailEff', 'res']) if (A[k + ':all']) for (const e of [...ELEM, 'burn']) ad(k + ':' + e, A[k + ':all']); }
   const TS = treeStats(S.tree, eq), TA = TS.add, TM = TS.more, FL = TS.flag;
+  applySets(eq, A, TA, FL); // gear-v3 套装：2 / 4 / 6 件效果（data/sets.json）
   const P = { eq, raw: A, modLvl: (A.modLvl || 0) + (TA.modLvl || 0), tree: TS, flag: FL, shockMul: TS.flag.shockMul || 1, afterRep: TS.flag.afterRep || 0 };
   // 法阵里的力场
   const F = {};
