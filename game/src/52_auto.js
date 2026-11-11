@@ -24,9 +24,17 @@ function autoAnchorStep(dt) {
   if (l > 1e-6) { const k = Math.min(l, d * dt) / l; AUTO.anchor.x += dx * k; AUTO.anchor.y += dy * k; }
 }
 // 走位：怪、敌方弹、毒池、墙都往外推，再加一点绕圈；附近没有怪就去捡东西
-function meteorTarget() { // 陨火 / 寒魄球（auto.json meteor / orb）：贴身的怪 ≥ retreatAt 只就交给风筝；否则离怪群比 keepDist 远就靠过去，停在 keepDist
-  const MW = combatWs().map(e => e[0]).find(w => w.form === 'meteor' || w.form === 'orb') || STATS.shieldW; if (!MW) return null;
-  const K = AU[MW.form === 'shieldThrow' ? 'shield' : MW.form], keep = K.keepDist, P = player, live = mobs.filter(m => !m.dead && m.rise <= 0.2); if (!live.length) return null;
+// 主技能：魂龛里面板秒伤最高的技能石；没有就用主手普攻（环绕普攻没有旋身时按风筝）；自动战斗按它的形态走位（auto.json form）
+function mainW() {
+  let best = null, bd = -1; for (const [W] of combatWs()) if (W && W.wi != null && !W.util && (W.dps || 0) > bd) { best = W; bd = W.dps || 0; }
+  if (best) return best;
+  for (const W of [...(STATS.weapons || []), STATS.shieldW]) if (W && (W.dps || 0) > bd) { best = W; bd = W.dps || 0; }
+  return best;
+}
+const formAI = W => (W && AU.form[W.form]) || AU.form.proj;
+function stanceOf(W) { const s = formAI(W).stance; return s === 'dive' && W.form === 'orbit' && W.wi == null && !W.whirl && !STATS.flag.whirlHeart ? 'kite' : s; }
+function holdTarget(MW) { // 站桩（auto.json form.*.stance = hold）：贴身的怪 ≥ retreatAt 只就交给风筝；否则离怪群比保持距离远就靠过去，停在保持距离
+  const F = formAI(MW), K = AU.hold, keep = Math.min(F.keepPx || 1e9, (MW.rng || 160) * (F.keep || 1)), P = player, live = mobs.filter(m => !m.dead && m.rise <= 0.2); if (!live.length) return null;
   let close = 0, near = 1e9; for (const m of live) { const d = Math.sqrt(dist2(m, P)) - m.size; near = Math.min(near, d); if (d < K.closeR) close++; }
   if (close >= K.retreatAt || near < keep * 0.6) return null;
   let best = live[0], bn = -1; for (const a of live) { let c = 0; for (const b of live) if (dist2(a, b) < K.denseR * K.denseR) c++; if (c > bn) { bn = c; best = a; } }
@@ -68,10 +76,7 @@ function autoTarget() {
   return { x: clamp(P.x + fx / l * K.lookAhead, B.x0, B.x1), y: clamp(P.y + fy / l * K.lookAhead, B.y0, B.y1), near };
 }
 // 近战模式：找怪最密的地方，从怪堆里来回穿过（穿到另一边 pass 像素再折返），这样风暴之眼能沿路留龙卷风；护甲低时后撤（风筝模式），回复后再冲
-const MELEE_FORMS = ['orbit', 'ram', 'reflect'];
-// 环绕武器要有旋身符文或旋风之心才按近战走，否则照常风筝；撞城、荆棘类一直近战
-const gemAi = w => w.b && w.b.gem && GEM_BY[w.b.gem] ? GEM_BY[w.b.gem].ai : null; // spec-skill-gems §4：近战 / 远程读技能石的 ai
-const meleeW = () => combatWs().map(e => e[0]).find(w => w && w.form !== 'nova' && gemAi(w) ? gemAi(w) === 'melee' : w && ((MELEE_FORMS.includes(w.form) && (w.form !== 'orbit' || w.whirl || STATS.flag.whirlHeart)) || (w.form === 'nova' && w.frostNova && AU.nova.melee))); // 霜环：近战打法（auto.json nova）
+const meleeW = () => { const W = mainW(); return W && stanceOf(W) === 'dive' ? W : null; };
 function meleeTarget(W) {
   const K = AU.melee, f = player.life / STATS.life;
   if (f < K.retreat) AUTO.retreat = true; else if (f >= K.back) AUTO.retreat = false;
@@ -97,7 +102,7 @@ function autoStep(dt) {
   AUTO.clock += dt; autoAnchorStep(dt);
   if (!RUN) { autoLoop(dt); return G.fx ? campTarget() : null; }
   if (!autoDriving() || RUN.ending) return null;
-  const MW = meleeW();
+  const W0 = mainW(), st = W0 ? stanceOf(W0) : 'kite', MW = st === 'dive' ? W0 : null;
   if (AU.slamDodge) { // 红圈：在圈里就冲刺出去，没冲刺槽就走出去（近战、远程都躲）
     let s = null; const LR2 = lampLightR() ** 2; for (const m of mobs) if (m.slam && dist2(player, m) <= LR2 && dist2(player, m.slam) < (m.slam.r + 2) ** 2 && (!s || m.slam.t < s.t)) s = m.slam; // §8.2：AI 只看得见光圈里的怪砸下来的预警
     if (s) { const dx = player.x - s.x, dy = player.y - s.y, dl = Math.hypot(dx, dy) || 1, ux = dl > 0.5 ? dx / dl : 1, uy = dl > 0.5 ? dy / dl : 0, out = { x: s.x + ux * (s.r + 14), y: s.y + uy * (s.r + 14), near: 0 };
@@ -106,7 +111,7 @@ function autoStep(dt) {
   }
   const mt = MW ? meleeTarget(MW) : null;
   if (mt) return mt; // 近战贴身时不靠冲刺躲
-  const mtg = MW ? null : meteorTarget(); if (mtg) return mtg; // 陨火：保持距离，往怪最密的地方靠
+  const mtg = st === 'hold' ? holdTarget(W0) : null; if (mtg) return mtg; // 站桩：保持距离，往怪最密的地方靠
   const t = autoTarget();
   const K = AU.steer;
   // 近战流派不因为怪靠近就冲刺躲开，只在护甲低、后撤时冲

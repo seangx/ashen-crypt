@@ -19,7 +19,7 @@
   "dashLowNear": 40
  },
  "melee": {
-  "_说明": "近战模式（装着环绕 / 撞城 / 荆棘类武器时）：目标是怪最密的地方（denseR 半径内怪最多的那只附近的怪堆中心）。从自己的位置穿过怪堆中心，走到另一边 pass 像素再折返；离穿越点不到 passReach 像素、走了 passTime 秒、或怪堆移动超过 denseR 时换下一个穿越点。不会因为怪靠近就冲刺躲开。护甲低于 retreat 时后撤（按风筝模式走，护甲低时可以冲刺），回到 back 以上再冲；推关里灯火低于 lightRetreat 而且守关 Boss 还活着时也后撤（宁可灯灭也别阵亡）",
+  "_说明": "近战模式（主技能的形态是 dive 时，见 form）：目标是怪最密的地方（denseR 半径内怪最多的那只附近的怪堆中心）。从自己的位置穿过怪堆中心，走到另一边 pass 像素再折返；离穿越点不到 passReach 像素、走了 passTime 秒、或怪堆移动超过 denseR 时换下一个穿越点。不会因为怪靠近就冲刺躲开。护甲低于 retreat 时后撤（按风筝模式走，护甲低时可以冲刺），回到 back 以上再冲；推关里灯火低于 lightRetreat 而且守关 Boss 还活着时也后撤（宁可灯灭也别阵亡）",
   "denseR": 40,
   "pass": 45,
   "passReach": 8,
@@ -28,10 +28,24 @@
   "back": 0.7,
   "lightRetreat": 0.15
  },
- "shield": {"_说明": "圣盾掷：保持 keepDist，站在怪群边上让盾有得弹；贴身 retreatAt 只就风筝（spec-bd-gear §4.2）", "keepDist": 70, "retreatAt": 3, "closeR": 16, "denseR": 40},
- "orb": {"_说明": "寒魄球：保持 keepDist，朝怪最密的方向放；贴身 retreatAt 只就风筝（spec-bd-gear §4.3；冬之心的 keepDist 60 等第 5 步）", "keepDist": 100, "retreatAt": 3, "closeR": 16, "denseR": 40},
- "meteor": {"_说明": "陨火（坠星杖）：保持距离。最近的怪群离得比 keepDist 远就往怪最密的地方靠到 keepDist；closeR 像素内贴身的怪达到 retreatAt 只就按风筝模式后撤再砸（spec-bd-gear §4.1）", "keepDist": 110, "retreatAt": 3, "closeR": 16, "denseR": 40},
- "nova": {"_说明": "霜环（插了霜环符文的霜钟 / 圣钟）：近战打法，和旋风斩一样用上面 melee 的参数，冲进最密的怪堆放环（spec-bd-gear §4.4）", "melee": 1},
+ "hold": {"_说明": "站桩打法的共用参数：最近的怪群离得比保持距离远就往怪最密的地方（denseR 半径内怪最多）靠到保持距离；closeR 像素内贴身的怪达到 retreatAt 只、或最近的怪比保持距离的 0.6 还近，就按风筝模式后撤", "retreatAt": 3, "closeR": 16, "denseR": 40},
+ "form": {
+  "_说明": "每种形态怎么打（11-11 通用 AI）。自动战斗按主技能（魂龛里面板秒伤最高的技能石；没有技能石就用主手普攻）的形态走位。stance：dive 冲进最密的怪堆来回穿过（用上面 melee 的参数），hold 站桩保持距离（上面 hold），kite 风筝（steer）。保持距离 = min(keepPx, 射程 × keep)。aim：出手时瞄哪里（手动操作时也一样）：near 最近的一只；dense 怪最密的地方（半径 = 技能范围，没有就 40）；line 一条线上怪最多的方向（穿透）；arc 扇形里怪最多的方向。proj 按投射物的机制再细分：能穿透用 pierce，会分裂 / 多弹丸用 split，命中爆炸用 aoe",
+  "orbit": {"stance": "dive"},
+  "ram": {"stance": "dive"},
+  "reflect": {"stance": "dive"},
+  "aura": {"stance": "dive"},
+  "nova": {"stance": "dive"},
+  "mine": {"stance": "dive"},
+  "cleave": {"stance": "hold", "keep": 0.6, "aim": "arc"},
+  "stab": {"stance": "hold", "keep": 0.6},
+  "cone": {"stance": "hold", "keep": 0.55, "aim": "arc"},
+  "meteor": {"stance": "hold", "keep": 0.75, "keepPx": 110, "aim": "dense"},
+  "orb": {"stance": "hold", "keep": 1, "keepPx": 100, "aim": "dense"},
+  "shieldThrow": {"stance": "hold", "keep": 1, "keepPx": 70},
+  "beam": {"stance": "kite"},
+  "proj": {"stance": "kite", "aim": "near", "pierce": "line", "split": "dense", "aoe": "dense"}
+ },
  "takeover": {
   "_说明": "在场地上移动鼠标（累计超过 moveThreshold 像素）或触摸就切到手动，idleResume 秒没有操作后回到自动。manualLootXpMul：手动操作期间击杀的经验和掉落几率倍数（1 = 不变）",
   "moveThreshold": 3,

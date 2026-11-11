@@ -468,6 +468,22 @@ function dashEnd(kind) {
 
 /* ---------- 开火 ---------- */
 function nearest(x, y, r, skip) { let best = null, bd = r * r; for (const m of mobs) { if (m.dead || m.rise > 0.2 || (skip && skip.has(m))) continue; const d = (m.x - x) ** 2 + (m.y - 4 - y) ** 2; if (d < bd) { bd = d; best = m; } } return best; }
+// 瞄准（auto.json form.*.aim）：near 最近的一只；dense 怪最密的地方；line 一条线上怪最多（穿透）；arc 扇形（半角 half）里怪最多。同分取近的
+function aimMode(W) { const F = AU.form[W.form] || {}; if (W.form !== 'proj') return F.aim || 'near'; return W.pierce > 0 ? F.pierce : W.split > 0 || (W.b && W.b.pellets > 1) ? F.split : W.aoeR ? F.aoe : F.aim || 'near'; }
+function aimPick(W, px, py, r, mode, half = 0.5) {
+  if (mode === 'near' || !mode) return nearest(px, py, r);
+  const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && (m.x - px) ** 2 + (m.y - 4 - py) ** 2 < (r + m.size) ** 2); if (live.length < 2) return live[0] || null;
+  const R2 = (W.aoeR || AU.hold.denseR) ** 2, ch = Math.cos(half); let best = null, bs = -1, bd = 1e9;
+  for (const a of live) {
+    const ax = a.x - px, ay = a.y - 4 - py, al = Math.hypot(ax, ay) || 1, ux = ax / al, uy = ay / al; let s = 0;
+    for (const b of live) { const bx = b.x - px, by = b.y - 4 - py;
+      if (mode === 'dense') { if (dist2(a, b) < R2) s++; }
+      else if (mode === 'line') { if (bx * ux + by * uy > 0 && Math.abs(bx * uy - by * ux) < b.size + 4) s++; }
+      else { const bl = Math.hypot(bx, by); if (bl < 1 || (bx * ux + by * uy) / bl > ch) s++; } }
+    if (s > bs || (s === bs && al < bd)) { best = a; bs = s; bd = al; }
+  }
+  return best;
+}
 function attacks(W) { return 1 + W.extra + (W.extraChance && rnd() < W.extraChance ? 1 : 0); }
 function chainHit(W, first, from, chains) {
   const hit = new Set(); let cur = first, f = { x: from.x, y: from.y - 6 };
@@ -543,7 +559,7 @@ function fire(W, i) {
     case 'orb': { // 寒魄宝珠：朝怪最密的方向放慢速冰球（无限穿透），插符文的沿途放冰片
       const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
       const cost = W.trigSlot ? 0 : OB.soulPerCast * (W.orbCost || 1) * (1 - STATS.soulLess), rune = W.frostOrb && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost;
-      const dR = AU.orb.denseR ** 2; let best = live[0], bn = -1; for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < dR) c++; if (c > bn) { bn = c; best = a; } }
+      const dR = AU.hold.denseR ** 2; let best = live[0], bn = -1; for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < dR) c++; if (c > bn) { bn = c; best = a; } }
       const a0 = aimAt(Math.atan2(best.y - 5 - py, best.x - px)), n = attacks(W), fan = OB.fan * Math.PI / 180, cast = { ref: 0, rune };
       for (let k = 0; k < n; k++) { const a = a0 + (k - (n - 1) / 2) * fan; projs.push({ W, orb: 1, x: px, y: py, a, vx: Math.cos(a) * W.orbSpd, vy: Math.sin(a) * W.orbSpd, life: W.orbLife, age: 0, el: W.el, r: 5, sch: W.chain, rune, cast, emitT: OB.emit, rot: rf(0, Math.PI * 2), touch: new Map(), hit: new Set(), mul: 1 }); }
       sfx('shoot'); return true;
@@ -572,8 +588,8 @@ function fire(W, i) {
       return true;
     }
     case 'cleave': { // 劈斩（v3）：朝最近的敌人挥一下，前方扇形里的都中
-      const tg = nearest(px, py, W.rng); if (!tg) return false;
-      const a = aimAt(Math.atan2(tg.y - 4 - py, tg.x - px)), half = W.b.arc || 0.9; let hits = 0;
+      const half = W.b.arc || 0.9, tg = aimPick(W, px, py, W.rng, aimMode(W), half); if (!tg) return false;
+      const a = aimAt(Math.atan2(tg.y - 4 - py, tg.x - px)); let hits = 0;
       for (const m of mobs) { if (m.dead || m.rise > 0.2) continue; const dx = m.x - px, dy = m.y - 4 - py; if (Math.hypot(dx, dy) > W.rng + m.size) continue; let da = Math.abs(Math.atan2(dy, dx) - a); if (da > Math.PI) da = Math.PI * 2 - da; if (da < half) { hitMob(m, W); hits++; } }
       fx({ t: 'cleave', x: px, y: py, a, r: W.rng, arc: half, el: W.el }); sfx('slash'); player.swing[i] = 0.18; return true;
     }
@@ -585,7 +601,7 @@ function fire(W, i) {
       sfx('slash'); return true;
     }
   }
-  const tg = nearest(px, py, W.rng || 160); if (!tg) return false;
+  const tg = aimPick(W, px, py, W.rng || 160, aimMode(W), 0.5); if (!tg) return false; // 喷火扇形半角 0.5
   const a = Math.atan2(tg.y - 4 - py, tg.x - px);
   aimAt(a);
   if (W.form === 'cone') {
