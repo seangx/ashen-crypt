@@ -132,6 +132,7 @@ function rollCrit(W) {
   return mult;
 }
 // o: { mul, noDebris, after }
+const isAreaW = W => { const G = W.b && GEM_BY[W.b.gem]; return G ? G.f3 === 'area' : (W.tags || []).includes('AoE'); }; // 范围形态的技能（震荡套）
 function hitMob(m, W, o = {}) {
   if (m.dead) return 0;
   const cm = W.cont ? 1 : rollCrit(W); const crit = cm > 1; m.lastSlot = W.trigSlot || 0;
@@ -145,7 +146,9 @@ function hitMob(m, W, o = {}) {
   mul *= ruleMul(m) * elemMul(m) * (1 + buffV('dmg') / 100); // 战吼
   if (STATS.flag.ctrlPrison && !isCtrl(m)) mul *= 1 - RL.ctrlPrison.less / 100; /* 寒狱：对未受控的敌人总降 */
   if (m.frzT > 0 && STATS.frozenTaken) mul *= 1 + STATS.frozenTaken; // 冻结的敌人受到的伤害提高
-  { const F = STATS.flag; if (F.shockTaken && m.shock > 0) mul *= 1 + F.shockTaken / 100; /* 风暴套 6 件 */ if (F.plagueStack && W.el === 'nuc' && m.rad && m.rad.length) mul *= 1 + F.plagueStack * Math.min(30, m.rad.length) / 100; /* 疫病套 6 件 */ if (F.holyBig && W.el === 'pla' && (m.elite || m.boss)) mul *= 1 + F.holyBig / 100; /* 圣光套 6 件 */ }
+  { const F = STATS.flag; if (F.shockTaken && m.shock > 0) mul *= 1 + F.shockTaken / 100; /* 风暴套 6 件 */ if (F.plagueStack && W.el === 'nuc' && m.rad && m.rad.length) mul *= 1 + F.plagueStack * Math.min(30, m.rad.length) / 100; /* 疫病套 6 件 */ if (F.holyBig && W.el === 'pla' && (m.elite || m.boss)) mul *= 1 + F.holyBig / 100; /* 圣光套 6 件 */
+    if (F.emberBurning && W.el === 'exp' && m.burn > 0) mul *= 1 + F.emberBurning / 100; /* 余烬套 6 件 */
+    if (F.quakeCrowd && isAreaW(W)) { let n = 0; for (const x of mobs) if (x !== m && !x.dead && dist2(x, m) < 50 * 50) n++; mul *= 1 + Math.min(60, F.quakeCrowd * n) / 100; } /* 震荡套 6 件 */ }
   const bladeOn = STATS.flag.bladeStack && !o.ground && !o.re && (W.tags || []).includes('Melee'); // 旋刃套 4 件：刃势
   if (bladeOn) { const now = RUN ? RUN.t : 0; if (!o.blade2 && now - (player.bladeLast ?? -9) >= 0.25) { player.blade = Math.min(10, (player.blade || 0) + 1); player.bladeLast = now; } if (!o.blade2) player.bladeT = 4; mul *= 1 + STATS.flag.bladeStack * (player.blade || 0) / 100; } // 每次出手最多叠 1 层（0.25 秒内只算一次），上限 10
   if (m.frzT > 0 && STATS.flag.frozenMore) mul *= 1 + STATS.flag.frozenMore / 100; // 誓约：对冻结的敌人总增
@@ -159,6 +162,8 @@ function hitMob(m, W, o = {}) {
   }
   const shockedBefore = m.shock > 0;
   DSRC = o.dsrc || dsrcOf(W); damage(m, total, top, crit, W.cont);
+  if (STATS.flag.emberGround && W.el === 'exp' && !o.ground && !o.re && !o.splash) pushGround({ W, x: m.x, y: m.y, r: 12, t: 2, tickT: 0.5, tick: 0.5, mul: (o.mul || 1) * STATS.flag.emberGround, el: 'exp', fire: 1, gk: 'ember' }); // 余烬套 4 件：火地（同一处只留一片）
+  if (STATS.flag.quakeSplash && (m.elite || m.boss) && isAreaW(W) && !o.splash && !o.ground) for (const x of mobs) if (x !== m && !x.dead && !x.elite && !x.boss && dist2(x, m) < 40 * 40) hitMob(x, W, { mul: (o.mul || 1) * STATS.flag.quakeSplash, splash: 1, procK: 0 }); // 震荡套 4 件：溅射
   if (STATS.flag.stormArc && W.el === 'ele' && shockedBefore && !o.arc2 && !o.re && !o.ground) { const n = nearest(m.x, m.y - 4, 60, new Set([m])); if (n) { fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: n.x, y2: n.y - 5, el: 'ele' }); hitMob(n, W, { mul: (o.mul || 1) * STATS.flag.stormArc, arc2: 1, procK: 0 }); } } // 风暴套 4 件：电弧
   if (bladeOn && STATS.flag.bladeMax && player.blade >= 10 && !o.blade2 && !m.dead) hitMob(m, W, { ...o, blade2: 1, procK: 0, mul: (o.mul || 1) * STATS.flag.bladeMax }); // 旋刃套 6 件：满层再打一次
   if (!W.cont && !o.ground && !o.arc && !o.re) shieldOnHit(); /* 续航：持续伤害、地面效果不算命中 */
