@@ -304,7 +304,9 @@ function weaponStats(it, P, isEngine) {
 let STATS = null;
 // 任务中换装 / 点天赋立即生效：当前护甲、灵障、冲刺槽不超过新的上限
 function refreshStats() {
+  const prev = typeof STATS !== 'undefined' ? STATS : null;
   STATS = computeStats();
+  if (prev && prev.dps != null && G.ui && G.ui.statDelta && !(typeof RUN !== 'undefined' && RUN && !RUN.prep)) G.ui.statDelta(prev, STATS); // 手感：换装后浮出秒伤 / 坚韧的变化（战斗中不弹）
   if (typeof RUN !== 'undefined' && RUN) { player.life = Math.min(player.life, STATS.life); player.shield = Math.min(player.shield, STATS.shield); player.dash = Math.min(player.dash, STATS.dashMax); player.soul = Math.min(player.soul, STATS.soulMax); }
 }
 // 换装比较用：秒伤 + 有效生命的粗略估值

@@ -182,8 +182,22 @@ class MobileUI extends UI {
     while (this.toastC.list.length >= 3) this.toastC.list[0].destroy();
     const c = this.add.container(W / 2, MTOP + 4); c.msg = msg; this.toastC.add(c);
     const w = Math.min(W - 8, textW(msg) + 14); c.add(nine(this, -w / 2, 0, w, 19, 'f_tip', 2)); T(this, 0, 4, msg, { color, align: 'center', parent: c });
-    this.toastC.list.forEach(o => { if (o !== c) o.y += 22; });
+    this.toastC.list.forEach(o => { if (o !== c) this.tweens.add({ targets: o, y: o.y + 22, duration: 160, ease: 'Quad.easeOut' }); });
+    c.y -= 18; c.setAlpha(0); this.tweens.add({ targets: c, y: c.y + 18, alpha: 1, duration: 220, ease: 'Back.easeOut' }); // 手感：从上方滑入
     this.tweens.add({ targets: c, alpha: 0, delay: 1800, duration: 400, onComplete: () => c.destroy() });
+  }
+  // 手感（11-11）：属性变化浮字。秒伤、坚韧变化超过 1% 才弹，绿色 ↑ / 红色 ↓，在屏幕上方浮起淡出
+  statDelta(a, b) {
+    if (!G.fx) return; const tg = P => (typeof toughness === 'function' ? toughness(P) : P.life);
+    const parts = [['秒伤', a.dps, b.dps], ['坚韧', tg(a), tg(b)]].map(([n, x, y]) => [n, x > 0 ? (y - x) / x : 0]).filter(([, d]) => Math.abs(d) >= 0.01);
+    if (!parts.length) return;
+    const c = this.add.container(W / 2, MTOP + 28).setDepth(320); let x = 0; const items = [];
+    for (const [n, d] of parts) { const up = d > 0, s = `${n} ${up ? '↑' : '↓'} ${Math.abs(Math.round(d * 100))}%`; items.push([s, up, textW(s) + 14]); }
+    const tw = items.reduce((s, [, , w]) => s + w, 0); c.add(nine(this, -tw / 2 - 4, 0, tw + 8, 19, 'f_tip', 2)); // 底板：和提示条一样，压在窗口上也看得清
+    for (const [s, up, w0] of items) { T(this, -tw / 2 + x + w0 / 2, 4, s, { color: up ? '#7fe08a' : '#ff8a7a', align: 'center', parent: c }); x += w0; }
+    c.setScale(0.6).setAlpha(0); this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 200, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: c, y: c.y - 16, alpha: 0, delay: 1100, duration: 500, onComplete: () => c.destroy() });
+    if (parts.some(([, d]) => d > 0)) sfx('craft');
   }
   renderFeed() { this.feedC.removeAll(true); this.feeds.forEach((f, i) => { const y = MBOT - 28 - i * 15, c = this.add.container(0, 0); this.feedC.add(c); c.feed = f; if (f.icon && this.textures.exists(f.icon)) { const s = this.textures.get(f.icon).getSourceImage(); img(this, W - 18 + Math.round((14 - s.width) / 2), y + Math.round((14 - s.height) / 2), f.icon, c); } T(this, W - 22, y + 2, f.msg, { size: 8, color: f.color, align: 'right', parent: c }); }); }
   placeTip() { const c = this.tipC; if (!c) return; let x = mouse.x - c.tw / 2, y = mouse.y - c.th - 12; if (y < 2) y = mouse.y + 16; c.setPosition(Math.round(clamp(x, 2, W - 2 - c.tw)), Math.round(clamp(y, 2, H - 2 - c.th))); }
@@ -192,7 +206,7 @@ class MobileUI extends UI {
     hideTip();
     if (this.winC) { this.winC.destroy(); this.winC = null; }
     if (!this.winId) { this.decoId = null; return; }
-    if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); }
+    if (!this.dimR) { this.dimR = rect(this, 0, 0, W, H - NAV_H, COL.ink, 0.88).setDepth(90).setInteractive(); this.dimFresh = true; }
     const id = this.winId, native = ['notice', 'settings', 'more', 'ladder', 'gear', 'mods', 'craft', 'tree', 'summary', 'depart', 'salvage', 'help', 'prep', 'bulk', 'rbulk', 'trig', 'tbag', 'tcraft', 'reels', 'stones', 'shop'].includes(id);
     const [w, h] = native ? [W - 12, H - NAV_H - MTOP - 24] : ({ summary: [372, 176], depart: [300, 134] }[id] || [470, 210]);
     this.panMax = Math.max(0, w - (W - 8)); this.pan = clamp(this.pan, 0, this.panMax);
@@ -216,7 +230,12 @@ class MobileUI extends UI {
       this.input.on('pointermove', p => { if (!p.isDown || !this.winC || !this.panMax || p.id === this.stickP) return; const dx = (p.x - p.prevPosition.x) / Z; if (!dx) return; this.pan = clamp(this.pan - dx, 0, this.panMax); this.winC.x = 4 - this.pan; this.panDirty = true; });
       this.input.on('pointerup', () => { if (this.panDirty) { this.panDirty = false; this.refresh(); } });
     }
-    if (anim) { c.setAlpha(0.6); this.tweens.add({ targets: c, alpha: 1, duration: 90 }); }
+    if (anim) { // 手感（11-11）：打开窗口时遮罩淡入，窗框和内容一起淡入，标题彩带从上面落下来（内容在 rexUI 遮罩里，不做整体位移）
+      const F = this.F, tg = [c, F && F.panel, F && F.headBox, F && F.footBox].filter(Boolean);
+      for (const o of tg) { this.tweens.killTweensOf(o); o.setAlpha(0); } this.tweens.add({ targets: tg, alpha: 1, duration: 170, ease: 'Quad.easeOut' });
+      if (this.dimFresh) { this.dimR.setAlpha(0); this.tweens.add({ targets: this.dimR, alpha: 1, duration: 200 }); this.dimFresh = false; }
+      const rib = c.list.find(o => o.type === 'NineSlice' && o.y === -10); if (rib) { const t = title && c.list.find(o => (o.type === 'Text' || o.type === 'BitmapText') && o.text === title); const parts = [rib, t].filter(Boolean); for (const o of parts) o.y -= 14; this.tweens.add({ targets: parts, y: '+=14', duration: 260, ease: 'Back.easeOut' }); }
+    }
   }
   openWin(id, arg) { if (this.winId !== id) this.pan = 0; super.openWin(id, arg); }
   closeWin(force) { STICK.on = false; this.closePopup(); super.closeWin(force); }
