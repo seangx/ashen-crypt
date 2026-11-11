@@ -5,7 +5,7 @@ const AFF_LIMIT = [LOOT.affixCount.limit.normal, LOOT.affixCount.limit.magic, LO
 
 const baseOf = it => it.fb ? it.fb : it.kind === 'weapon' ? WEAPONS[it.b] : ARMORS[it.kind][it.b];
 const iconOf = it => it.kind === 'map' ? 'a_map' : baseOf(it).ic;
-const slotsFor = it => it.kind === 'gem' ? ['gem'] : it.kind === 'weapon' ? ['wl'] : it.kind === 'off' ? ['wr'] : it.kind === 'chip' ? [] : [it.kind];
+const slotsFor = it => { if (it.kind === 'gem') return ['gem']; const f = slotFor(it); return f ? [f, ...SLOTS.filter(s => s.id !== f && slotKinds(s).includes(it.kind)).map(s => s.id)] : []; }; // gear-v3：按格子能放的种类找（盾、法阵进副手格，戒指两个格先给空的）；原来盾 / 法阵还指向已删掉的旧格，详情一点就崩
 const itemTags = it => it.fb ? it.fb.tags : it.kind === 'gem' ? gemTags(it) : it.kind === 'weapon' ? WEAPONS[it.b].tags : it.kind === 'engine' ? (ARMORS.engine[it.b].tags || ['Engine']) : (ARMORS[it.kind] && ARMORS[it.kind][it.b] && ARMORS[it.kind][it.b].tags) || [KIND_TAG[it.kind]]; // 圣徽盾带自己的标签
 const canRollOn = (a, it) => !a.off && !a.noRoll && a.on.includes(it.kind) && (!a.tag || (it.kind === 'off' ? offTagOk(it, a.tag) : it.kind !== 'weapon' || WEAPONS[it.b].tags.includes(a.tag)));
 const offTagOk = (it, tag) => { const t = (ARMORS.off[it.b] || {}).tags || []; return t.includes('any') || t.includes(tag); }; // 副手：箭袋只出投射物类，法源 / 图腾 / 提灯什么都能出 // tag 只限制武器

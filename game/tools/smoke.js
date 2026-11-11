@@ -52,6 +52,13 @@ const WINS = ['gear', 'trig', 'mods', 'tree', 'craft', 'salvage', 'shop', 'ladde
       await page.screenshot({ path: path.join(out, `win_${id}.png`) });
     }
     await page.evaluate(() => P.A.G.ui.closeWin(true));
+    // 每种装备 × 每档稀有度点开详情（11-11：盾、法阵的详情一点就崩，因为还指向 gear-v3 删掉的旧格子）
+    const det = await page.evaluate(() => { const A = P.A, ui = A.G.ui, seen = {}, bad = []; ui.openWin('gear');
+      for (let i = 0; i < 3000; i++) { const it = A.rollItem(40 + (i % 60), 50, i % 3 === 0); if (!it || seen[it.kind + it.rar]) continue; seen[it.kind + it.rar] = 1; A.S.stash.push(it);
+        try { ui.showDetail(it, null, ui.itemActs(it)); A.itemValue(it); } catch (e) { bad.push(`${it.kind}/${it.rar}：${e.message}`); } ui.closePopup(); A.S.stash.splice(A.S.stash.indexOf(it), 1); }
+      ui.closeWin(true); return { n: Object.keys(seen).length, bad }; }).catch(e => ({ n: 0, bad: [e.message.split('\n')[0]] }));
+    for (const b of det.bad) fail('物品详情', b);
+    if (det.n < 20) fail('物品详情', `只试到 ${det.n} 种装备 × 稀有度`);
   }
 
   for (const e of [...new Set(errs)].slice(0, 10)) fail('页面报错', e);
