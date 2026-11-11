@@ -6,7 +6,7 @@ const coinOfGem = g => ECO.coin.gem + (g.lvl || 1);
 const coinOfRune = m => ECO.coin.rune + Math.floor((m.lvl || 1) / 2);
 
 /* 骨坊：选一个部位，花骨币买一件未鉴定装备（买下才揭晓） */
-const SHOP_SLOTS = ['wl', 'wr', 'shield', 'core', 'engine', 'hub'];
+const SHOP_SLOTS = ['weapon', 'off', 'shield', 'hub', 'core', 'hands', 'chest', 'shoulders', 'engine', 'ring', 'amulet']; // gear-v3：按物品种类赌（副手格的三类分开）
 const slotKind = s => (SLOTS.find(x => x.id === s) || {}).kind || s;
 const shopIlvl = () => Math.max(1, S.maxDepth || 1);
 const shopPrice = () => Math.round(ECO.shop.base + ECO.shop.perIlvl * shopIlvl());

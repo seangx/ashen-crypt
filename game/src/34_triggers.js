@@ -53,7 +53,7 @@ function bossTrigPref(bid) { // 每个首领固定偏好 2 种底子（按名字
 const mobTrigChance = m => m.elite ? TRG.drop.elite : TRG.drop.normal;
 function bossTrigs(bid, L) { const D = TRG.drop, pref = bossTrigPref(bid), out = []; for (let i = 0; i < D.bossN; i++) out.push(rollTrigDrop(L, { pref })); if (rnd() < D.bossExtra) out.push(rollTrigDrop(L, { pref })); return out; }
 function ladderTrigs(N) { const D = TRG.drop; return N > 0 && N % D.ladderEvery === 0 ? [rollTrigDrop(N, { minRar: N % D.ladderRareEvery === 0 ? 2 : 0 })] : []; }
-// 栏位：开局 1，Lv15 / Lv35 各 +1；装备最多再 +1（主手 / 法阵的 trigSlot 词条，或独特自带）
+// 栏位：开局 1，Lv15 / Lv35 各 +1；装备最多再 +1（主手 / 项链的 trigSlot 词条，或独特自带）
 const gearTrigSlot = () => Object.values(S.equip).some(it => it && (it.trigSlot || (it.affs || []).some(a => a && a.k === 'trigSlot'))) ? 1 : 0;
 const lvTrigSlots = () => 1 + TRG.slotLv.filter(l => S.level >= l).length;
 const trigSlots = () => Math.min(TRG.maxSlots, lvTrigSlots() + gearTrigSlot());
@@ -157,18 +157,19 @@ const gemCost = g => { const C = TSK[g.b] || { cost: [1, 1] }, t = clamp((g.lvl 
 // 武器基础回灯：每击回多少灯火（按攻速反比，各类武器每秒回灯大致相同）
 function weaponLamp(b) { const w = WEAPONS[b], H = SOUL.hitLamp; if (!w || !H) return 0; return Math.round(H.perSec * (H.cat[w.cat] ?? 1) / Math.max(0.3, w.aps || 1.2) * 1000) / 1000; }
 function trigStats(P, eq) {
-  P.trigs = []; const n = trigSlots(), W0 = P.weapons[0]; P.lampHit = 0;
+  P.trigs = []; const n = trigSlots(), W0 = P.weapons[0]; P.lampHit = 0; P.dupGems = new Set(); const seenGem = new Set(); // gear-v3 §5：同一种技能石同时只生效一颗（以前出手 + 常驻各插一颗旋风斩会同时转两个）
   if (W0) { for (const o of [W0.min, W0.max]) if (o) for (const e in o) o[e] *= TRG.basicMul; W0.dps *= TRG.basicMul; W0.proc = basicProc(eq); W0.atk = 1; const b = eq.wl && eq.wl.kind === 'weapon' ? eq.wl.b : null, w = b && WEAPONS[b]; P.lampHit = W0.lampHit = b ? weaponLamp(b) : 0; P.lampGap = W0.lampGap = SOUL.hitLamp ? SOUL.hitLamp.gap / Math.max(0.3, (w && w.aps) || 1.2) : 1; }
   let castDps = W0 ? W0.dps : 0, respDps = 0;
   (S.trigs || []).forEach((T, i) => {
     if (!T) return; const C = TCOND[T.c], fx = trigFx(T), A = T.affs || {}, on = i < n, cast = C.kind === 'cast';
     const skills = T.socks.filter(isSkill), sups = T.socks.filter(isSupport), FT = P.flag || {}, costMul = (FT.rapid ? 1.25 : 1) * (FT.chainCharge && !cast ? 1.3 : 1) * (FT.auraPower && T.c === 'always' ? 1.5 : 1) * sups.reduce((m, s) => { const c = TRG.supCost[s.mid] || TRG.defCost; return m * (eq.wl && eq.wl.u === 'Slotfather' && c > 1 ? 1 + (c - 1) / 2 : c); }, 1) /* 符文教父：辅助石消耗倍率超过 1 的部分减半 */ * (1 - ((A.costLess || 0) + (P.raw.costLess || 0) + ((IMPL[eq.wl && eq.wl.b] && implFx(eq.wl).costLess) || 0)) / 100);
     const ws = []; if (on) skills.forEach((g, j) => {
+      if (seenGem.has(g.b)) { P.dupGems.add(g.id); return; } seenGem.add(g.b);
       if (T.c === 'always' && !TRG.alwaysOnly.includes(g.b) && !(AUTO_NOVA.includes(g.b) && P.flag && P.flag.autoNova)) return; // 永冬法阵摘了：常驻里的新星不放
       if (GEM_BY[g.b].util) { if (cast || T.c === 'always') return; ws.push({ util: GEM_BY[g.b].util, uv: utilVal(g), key: g.b, n: GEM_BY[g.b].n, form: 'util', b: {}, min: {}, max: {}, dps: 0, aps: 1, crit: 0, ail: {}, more: 1, rng: 0, aoeR: 0, extra: 0, chain: 0, proc: 0, tags: [], cost: gemCost(g) * (TRG.skillCostMul || 1), trigSlot: i + 1, wi: TRIG_BASE + i * TRIG_PER + j }); return; } // 功能技能：不算伤害
       const sl = A.supLv ? sups.map(m => ({ ...m, lvl: Math.min(MOD_MAX, (m.lvl || 1) + 1) })) : sups;
-      const g2 = { ...g, mods: sl.filter(m => supportFits(m, g)), sock: sups.length }, sh = GEM_BY[g.b].form === 'shieldThrow'; // 圣盾掷：盾变成虚拟武器，没拿盾就不放
-      const sk = sh ? null : skillItem({ ...eq, gem: g2 }), W = sh ? shieldWeapon(eq.shield, P, g2) : sk && weaponStats(sk, P); if (!W) return;
+      const g2 = { ...g, lvl: Math.min(MOD_MAX, (g.lvl || 1) + (P.raw.gemLvl || 0)), mods: sl.filter(m => supportFits(m, g)), sock: sups.length } /* 项链：所有技能石等级 +N */, sh = GEM_BY[g.b].form === 'shieldThrow'; // 圣盾掷：盾变成虚拟武器，没拿盾就不放
+      const sk = sh ? null : skillItem({ ...eq, gem: g2 }), W = sh ? shieldWeapon(eqK(eq, 'shield'), P, g2) : sk && weaponStats(sk, P); if (!W) return;
       const blT = A.burnLamp || (FT.burnSoul ? 1 : 0), bl = blT ? TAF.burnLamp.w[0] + (TAF.burnLamp.w[1] - TAF.burnLamp.w[0]) * (blT - 1) / 2 : 0; // tree-v3 燃魂：所有魂龛带 T1 燃灯
       const mul = (1 + ((A.dmg || 0) + (fx.dmg || 0) + bl + (P.trigDmg || 0)) / 100) * (1 + (T.q || 0) / 100) * (skills.length > 1 && !fx.rotate ? trigSplit(T) : 1) * (TRG.fitCond[g.b] === T.c ? TRG.fit : 1) * (FT.heavyHit && cast ? 1.4 : 1) * (FT.focus ? (cast ? 1.5 : 0.7) : 1) * (FT.auraPower && T.c === 'always' ? 1.4 : 1); // tree-v3：重击、专精、常驻之力
       for (const o of [W.min, W.max]) if (o) for (const e in o) o[e] *= mul;
@@ -176,7 +177,7 @@ function trigStats(P, eq) {
       const aoe = (A.aoe || 0) + (fx.aoe || 0) + (fx.emberAoe && TRIGS_RT.lampState === 'ember' ? fx.emberAoe : 0); if (aoe) { W.aoeInc = (W.aoeInc || 0) + aoe; if (W.aoeR) W.aoeR *= 1 + aoe / 100; if (T.c === 'always' && W.rng) W.rng *= 1 + aoe / 100; } // 永夜灯：残灯时范围再 +40%
       if (A.crit) W.crit += A.crit / 100; if (fx.alwaysCrit) W.crit = Math.max(W.crit, 1);
       const Sk = TSK[g.b] || {}; W.proc = (Sk.proc ?? 5) * (W.procMul || 1); W.atk = cast ? 1 : 0; // 多重投射：每发触发系数 ×0.6
-      W.cost = (T.c === 'always' ? gemCost(g) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul * (TRG.skillCostMul || 1) * ((cast || T.c === 'hit' || T.c === 'crit') ? TRG.castCostMul || 1 : 1) * (W.orbCost || 1) + blT; // 冬之心：寒魄球消耗 +50%
+      W.cost = (T.c === 'always' ? (Sk.castCost || gemCost(g)) * (TRG.castCostMul || 1) * (W0 ? W0.aps || 1 : 1) : cast && Sk.castCost ? Sk.castCost : C.mode !== 'always' && Sk.trigCost ? Sk.trigCost : gemCost(g)) * costMul * (TRG.skillCostMul || 1) * ((cast || T.c === 'hit' || T.c === 'crit') ? TRG.castCostMul || 1 : 1) * (W.orbCost || 1) + blT; // 冬之心：寒魄球消耗 +50%
       W.trigSlot = i + 1; W.trigMul = mul; W.ailEffT = A.ailEff || 0; W.wi = TRIG_BASE + i * TRIG_PER + j; ws.push(W);
     });
     const tier = trigTier(T.ilvl), cap = Math.max(C.cap * (1 - (TRG.affCap.cap ? Math.min(100 - TRG.affCap.cap, A.cap || 0) : 0) / 100), (C.cap || 100) * TRG.affCap.cap / 100) * (fx.capMul || 1) * (P.flag && P.flag.overflow ? 1.25 : 1); // tree-v3 蓄满：容量 +25%
@@ -194,7 +195,7 @@ function trigStats(P, eq) {
   P.castShare = castShare; P.castDps = castDps; P.respDps = respDps; P.trigCost = P.trigs.reduce((s, t) => s + (t && t.on ? t.cost * (t.mode === 'always' ? 1 : t.per) : 0), 0);
   P.dps = P.dps - (W0 ? W0.dps * castShare : 0) + P.trigs.reduce((s, t) => s + (t && t.on ? t.dps : 0), 0);
   // 格挡（defense-v3 §3.6 简化版）：只在盾上；基础 10% + 盾“格挡”词条 ÷ 4
-  const blk = P.blk || 0; P.blockCh = eq.shield ? blk / 100 : 0; // defense-v3：P.blk 已含盾牌基础格挡
+  const blk = P.blk || 0; P.blockCh = eqK(eq, 'shield') ? blk / 100 : 0; // defense-v3：P.blk 已含盾牌基础格挡
 }
 // 面板用的每秒期望放出次数
 function trigRate(T, C, P, cap, N, fx, A) {

@@ -338,7 +338,7 @@ function gainXp(x) {
 function modXp(x) {
   let up = false;
   up = trigGemXp(x); // 触发器里的技能石吃击杀经验
-  const hub = S.equip.hub; if (!hub) { if (up) refreshStats(); return; }
+  const hub = eqK(S.equip, 'hub'); if (!hub) { if (up) refreshStats(); return; }
   for (const m of hub.mods) {
     if (!m || m.lvl >= MOD_MAX) continue;
     m.xp += x; const L = modLevelOf(m.xp);

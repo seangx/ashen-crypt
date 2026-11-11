@@ -117,6 +117,7 @@ Object.assign(MobileUI.prototype, {
           const key = isSkill(it) ? 'i_' + iconOf(it) : 'mod_' + it.mid, im = this.textures.get(key).getSourceImage();
           const ic = img(this, x + ss / 2 - im.width / 2, sy + ss / 2 - im.height / 2, key, c); if (isSupport(it) && !fits) ic.setAlpha(0.45);
           T(this, x + ss - 1, sy + ss - 8, String(it.lvl || 1), { size: 'num', align: 'right', parent: c, color: '#ffe066' });
+          if (isSkill(it) && STATS.dupGems && STATS.dupGems.has(it.id)) { ic.setAlpha(0.35); T(this, x + ss / 2, sy - 9, '重复', { size: 8, align: 'center', parent: c, color: COL.bad }); } // 同种技能石只生效一颗
         }
         zoneOn(this, c, x - 3, sy - 3, ss + 6, ss + 6, () => {
           if (gemPick) { if (trigCanSock(T0, k, gemPick)) { socketInto(T0, k, gemPick); gemPick = null; } else toast(isSkill(gemPick) && GEM_BY[gemPick.b].util && TCOND[T0.c].kind === 'cast' ? '功能技能只能插在响应类魂龛（击杀、受击、格挡、冲刺、定时、明灯、低血、遇精英）' : isSkill(gemPick) && !GEM_BY[gemPick.b].util && TCOND[T0.c].kind !== 'cast' && T0.c !== 'always' ? '输出技能只能插在出手类魂龛（出手、命中、暴击、残灯）' : isSkill(gemPick) && skills.length >= trigMaxSkills(T0) ? `最多 ${trigMaxSkills(T0)} 颗技能石` : isSkill(gemPick) && T0.c === 'always' ? '常驻只能插瘟疫光环、游雷、旋风斩（戴永冬法阵时还有新星、霜环）' : '这里放不下'); }

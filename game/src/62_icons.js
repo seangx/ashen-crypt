@@ -91,6 +91,17 @@ const ICON_SVG = (() => {
   I.a_sigil_e = glow(32, 32, 24, '#ffe680', 0.5) + f('gold', 'M32 6L54 19V45L32 58L10 45V19Z') + f('dark', 'M32 16L45 24V40L32 48L19 40V24Z') + star(32, 32, 9, 'holy') + hl('M14 22V40');
   I.a_map = f('paper', 'M8 12L24 8L40 12L56 8V52L40 56L24 52L8 56Z') + ln('M24 8V52M40 12V56', 1.6) + ln('M14 40C20 30 30 44 36 30S48 24 50 18', 2.2, '#c0392b') + ln('M46 14L52 20M52 14L46 20', 2.6, '#c0392b');
   for (const k in I) I[k] = S(I[k]);
+  // gear-v3 新部位：护手、胸甲、肩甲、戒指、项链
+  const glove = (c, deco = '') => f(c, 'M18 58V30C18 24 22 22 26 24V14C26 10 32 10 32 14V22V10C32 6 38 6 38 10V22V12C38 8 44 8 44 12V26C46 22 52 24 50 30L44 44V58Z') + f('dark', 'M16 50H46V60H16Z') + hl('M22 30V46') + deco;
+  const mail = (c, deco = '') => f(c, 'M14 16L24 10C28 14 36 14 40 10L50 16L56 30L48 34V56H16V34L8 30Z') + ln('M32 16V54', 2.2, '#1a142666') + hl('M20 22V48') + deco;
+  const pauldron = (c, deco = '') => f(c, 'M6 40C6 22 18 12 32 12S58 22 58 40C50 34 42 32 32 32S14 34 6 40Z') + f(c, 'M14 40H50V50H14Z') + hl('M14 30C18 22 24 18 30 17') + deco;
+  const ring = (c, gem) => `<circle cx="32" cy="38" r="17" fill="none" stroke="#1a1426" stroke-width="12"/><circle cx="32" cy="38" r="17" fill="none" stroke="url(#${c})" stroke-width="7"/>` + ci(gem, 32, 18, 8) + hl('M20 30C22 26 26 24 28 24', 2);
+  const amulet = (c, gem) => ln('M14 8C16 28 22 34 32 36C42 34 48 28 50 8', 3.2) + ln('M14 8C16 28 22 34 32 36C42 34 48 28 50 8', 1.4, '#e6c27a') + f(c, 'M32 34L44 44L32 60L20 44Z') + ci(gem, 32, 46, 5);
+  I.a_glove_bone = glove('bone'); I.a_glove_claw = glove('iron', f('steel', 'M26 14L22 4L30 10ZM32 10L30 0L38 6ZM38 12L38 2L44 10Z')); I.a_glove_wrap = glove('paper', ln('M18 36H44M18 44H44', 2, '#8e3e22'));
+  I.a_chest_bone = mail('bone', ln('M20 28H44M20 38H44M20 48H44', 2.2)); I.a_chest_shroud = mail('dark', ln('M24 20L32 30L40 20', 2.2, '#a77bff')); I.a_chest_robe = mail('purp', ci('cyan', 32, 32, 5));
+  I.a_shoulder_bone = pauldron('bone'); I.a_shoulder_spike = pauldron('iron', f('steel', 'M16 26L12 6L24 20ZM32 18L32 0L38 16ZM48 26L52 6L40 20Z')); I.a_shoulder_ash = pauldron('clay', glow(32, 30, 10, '#ffb14a', 0.4));
+  I.a_ring_bone = ring('bone', 'red'); I.a_ring_crystal = ring('iron', 'cyan'); I.a_ring_blood = ring('clay', 'red'); I.a_ring_lamp = ring('gold', 'ember');
+  I.a_amulet_bone = amulet('bone', 'red'); I.a_amulet_soul = amulet('void', 'purp'); I.a_amulet_rune = amulet('gold', 'ele');
   return I;
 })();
 // 手机包：启动前把每个 SVG 画到 128×128 的画布上（Phaser 里注册成贴图，见 89b_extras_mobile.js）

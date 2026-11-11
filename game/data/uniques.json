@@ -32,8 +32,8 @@
   {
    "id": "StormEye",
    "n": "风暴之眼",
-   "kind": "hub",
-   "b": "IridiumNexus",
+   "kind": "amulet",
+   "b": "SoulAmulet",
    "req": 20,
    "w": 40,
    "ladderOnly": 20,
@@ -895,9 +895,9 @@
   },
   {
    "id": "ScorchedCircle",
-   "n": "焦土法阵",
-   "kind": "hub",
-   "b": "AmberNexus",
+   "n": "焦土之戒",
+   "kind": "ring",
+   "b": "BoneRing",
    "req": 24,
    "w": 40,
    "fixed": [
@@ -1106,9 +1106,9 @@
   },
   {
    "id": "PrismCircle",
-   "n": "棱镜法阵",
-   "kind": "hub",
-   "b": "IridiumNexus",
+   "n": "棱镜项链",
+   "kind": "amulet",
+   "b": "BoneAmulet",
    "req": 36,
    "w": 40,
    "fixed": [
@@ -1205,9 +1205,9 @@
   },
   {
    "id": "WildfireCircle",
-   "n": "焚野法阵",
-   "kind": "hub",
-   "b": "AmberNexus",
+   "n": "焚野之戒",
+   "kind": "ring",
+   "b": "BloodRing",
    "req": 30,
    "w": 40,
    "fixed": [

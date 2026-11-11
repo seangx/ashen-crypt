@@ -130,7 +130,7 @@
    "kind": "resp",
    "mode": "always",
    "c": "#5ae0a0",
-   "d": "一直在：光环、游雷、旋风斩"
+   "d": "一直在：光环、旋风斩"
   }
  },
  "condW": {
@@ -196,7 +196,6 @@
  },
  "alwaysOnly": [
   "GemMiasma",
-  "GemSpark",
   "GemWhirl"
  ],
  "slotLv": [

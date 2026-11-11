@@ -41,7 +41,7 @@ function mainElem() {
 }
 // 记录格式固定（以后上传排行只加 season 和 name）
 function ladderRecord(N, jump) {
-  const equip = ['wl', 'wr', 'shield', 'core', 'engine', 'hub'].filter(s => S.equip[s]).map(s => { const it = S.equip[s]; return { slot: s, b: it.b, q: it.q, gen: it.gen || 0, rar: it.rar, u: it.u || null, la: it.la || null, affs: it.affs.map(x => [x.k, x.t]) }; });
+  const equip = SLOTS.map(s => s.id).filter(s => S.equip[s]).map(s => { const it = S.equip[s]; return { slot: s, b: it.b, q: it.q, gen: it.gen || 0, rar: it.rar, u: it.u || null, la: it.la || null, affs: it.affs.map(x => [x.k, x.t]) }; });
   const keys = Object.keys((S.mst || {}).key || {}); // 专精的大天赋
   const rec = { v: 1, data: DATA_HASH, lvl: N, mods: (RUN.mods || []).map(x => x.k), time: Math.round(RUN.t * 10) / 10, date: new Date().toISOString(), jump,
     build: { equip, keys, dps: Math.round(STATS.dps), armor: Math.round(STATS.armor), life: Math.round(STATS.life), shield: Math.round(STATS.shield), elem: mainElem() } };

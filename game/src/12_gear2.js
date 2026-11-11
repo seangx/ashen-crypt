@@ -38,7 +38,7 @@ const G2 = DATA.gear2, G2W = G2.weapons, G2D = G2.defense, STONES = G2.stones;
   // 3. 副手：隐性改成 §5，不再有“主手技能总增”；所有副手共用词条池
   for (const [k, o] of Object.entries(G2.off)) if (ARMORS.off[k]) { ARMORS.off[k].sup = {}; ARMORS.off[k].imp2 = o.imp; ARMORS.off[k].impT = o.t; ARMORS.off[k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); ARMORS.off[k].tags = ['Offhand', 'any']; }
   // 4. 防具隐性（盾、头冠）
-  for (const [k, o] of Object.entries(G2.armor || {})) for (const kind of ['shield', 'core', 'engine', 'hub']) if (ARMORS[kind][k]) { ARMORS[kind][k].imp2 = o.imp; ARMORS[kind][k].impT = o.t; ARMORS[kind][k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); }
+  for (const [k, o] of Object.entries(G2.armor || {})) for (const kind of ['shield', 'core', 'engine', 'hub', 'hands', 'chest', 'shoulders', 'ring', 'amulet']) if (ARMORS[kind][k]) { ARMORS[kind][k].imp2 = o.imp; ARMORS[kind][k].impT = o.t; ARMORS[kind][k].d = o.t.replace('#', `${o.imp[1]}–${o.imp[2]}`); }
 }
 // 主手的伤害系数、攻速（gear2.weapons）；停用的旧底子按 1
 const wPow = k => (G2W[k] && G2W[k].pow) || 1, wAps = k => (G2W[k] && G2W[k].aps) || 1;

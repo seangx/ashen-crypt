@@ -241,6 +241,9 @@ const HELD = {
 const SHIELD_DOLL = ['.xxx.', 'xXXXx', 'xXyXx', 'xXXXx', '.xXx.', '..x..'];
 const SHIELD_COL = { SigilShield: ['y', 'Y'], TitaniumShield: ['b', 'w'], PhantomShield: ['p', 'v'], NebulaShield: ['C', 'c'], CrystalShield: ['B', 'l'], EtherealShield: ['P', 'p'], PolymerShield: ['q', 'e'] };
 const BOOT_COL = { Thruster: 'P', Warp: 'Y', Afterburner: 'e', FusionDrive: 'm', EMP: 'B', BlackHoleWarp: 'k', Annihilator: 'o' };
+// gear-v3 新部位（像素版，战场掉落用；界面用 62_icons 的矢量图）：复用旧的戒指 / 项链 / 甲胄图
+Object.assign(ART, { a_ring_bone: ART.ring, a_ring_crystal: ART.ringb, a_ring_blood: ART.ringm, a_ring_lamp: ART.ringd, a_amulet_bone: ART.amulet, a_amulet_soul: recolor(ART.amulet, { y: 'v', Y: 'V' }), a_amulet_rune: recolor(ART.amulet, { y: 'c', Y: 'C' }),
+  a_chest_bone: ART.armor, a_chest_shroud: ART.robe, a_chest_robe: recolor(ART.robe, { p: 'v', P: 'V' }), a_glove_bone: ART.armorg, a_glove_claw: ART.armorg, a_glove_wrap: ART.armorg, a_shoulder_bone: ART.mail, a_shoulder_spike: ART.mail, a_shoulder_ash: ART.mail });
 // 头冠图标（复用旧的兜帽 / 头盔 / 王冠图）
 Object.assign(ART, {
   a_helm: ART.helm, a_phantomhood: recolor(ART.hood, { p: 'v', P: 'V' }), a_veilcrown: recolor(ART.crown, { w: 'c', b: 'C', r: 'l' }),
@@ -300,7 +303,7 @@ const HEAD_DOLL = {
   },
 };
 const DOLL_W = 26, DOLL_H = 18, DOLL_OX = 7, DOLL_OY = 4;
-const dollSig = eq => ['wl', 'wr', 'shield', 'core', 'engine'].map(k => eq[k] ? eq[k].b : '-').join('|');
+const dollSig = eq => ['wl', 'wr', 'core', 'engine'].map(k => eq[k] ? eq[k].b : '-').join('|');
 // 画出一帧纸娃娃（outline 后的画布）
 // view：0 正面，1 侧面，2 背面（旋风斩转身用）。侧面把身子压窄、脸只露一只眼在边上；背面盖住脸、两手的武器前后对调
 const DOLL_SIDE = r => (r.slice(2, 10) + '').padEnd(8, '.');
@@ -308,7 +311,7 @@ function dollCanvas(eq, fr, view = 0, noMain = false) { // noMain：正面不画
   const c = document.createElement('canvas'); c.width = DOLL_W; c.height = DOLL_H; const x = c.getContext('2d');
   const put = (img, dx, dy, alpha = 1) => { x.globalAlpha = alpha; x.drawImage(img, dx, dy); x.globalAlpha = 1; };
   // 盾：背在身后
-  if (eq.shield) { const [a, b] = SHIELD_COL[eq.shield.b] || ['b', 'w']; put(sprite(recolor(SHIELD_DOLL, { x: a, X: b, y: 'y' })), DOLL_OX - 2, DOLL_OY + 4); }
+  const shIt = eqK(eq, 'shield'); if (shIt) { const [a, b] = SHIELD_COL[shIt.b] || ['b', 'w']; put(sprite(recolor(SHIELD_DOLL, { x: a, X: b, y: 'y' })), DOLL_OX - 2, DOLL_OY + 4); }
   // 副手武器（右手槽）在身后
   const held = (it, hand, alpha) => { if (!it) return; const h = HELD[it.b]; if (!h) return; const [rows, ax, ay] = h; const [hx, hy] = DOLL_HAND[hand]; put(sprite(rows), DOLL_OX + hx - ax - 1, DOLL_OY + hy - ay - 1, alpha); };
   if (view === 2) held(eq.wl, 'back', 0.85); else if (view === 0) held(eq.wr, 'back', 0.85);
