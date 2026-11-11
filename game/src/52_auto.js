@@ -31,7 +31,7 @@ function mainW() {
   for (const W of [...(STATS.weapons || []), STATS.shieldW]) if (W && (W.dps || 0) > bd) { best = W; bd = W.dps || 0; }
   return best;
 }
-const formAI = W => (W && AU.form[W.form]) || AU.form.proj;
+const formAI = W => (W && W.form === 'proj' && W.b && W.b.pellets > 1 && AU.form.shotgun) || (W && AU.form[W.form]) || AU.form.proj; // 散射这种多弹丸的按 shotgun
 function stanceOf(W) { const s = formAI(W).stance; return s === 'dive' && W.form === 'orbit' && W.wi == null && !W.whirl && !STATS.flag.whirlHeart ? 'kite' : s; }
 function holdTarget(MW) { // 站桩（auto.json form.*.stance = hold）：贴身的怪 ≥ retreatAt 只就交给风筝；否则离怪群比保持距离远就靠过去，停在保持距离
   const F = formAI(MW), K = AU.hold, keep = Math.min(F.keepPx || 1e9, (MW.rng || 160) * (F.keep || 1)), P = player, live = mobs.filter(m => !m.dead && m.rise <= 0.2); if (!live.length) return null;

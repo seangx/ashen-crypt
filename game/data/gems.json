@@ -1,5 +1,5 @@
 {
- "_说明": "技能石（spec-skill-gems；11-11 清理：不再从旧武器底子取数）。每颗技能石自带全部参数：base 里是形态 form、射程 range、范围 aoe、穿透 pierce / 弹射 chain / 分裂 split / 额外次数 extra、弹丸 pellets、持续 cont、光环 aura、元素效果几率 ail_*、形态细节（delay 落地延迟、arc 劈斩半角、wander / spiral / wide 投射物轨迹、smite / bolt 特效、vis 投射物外观）和伤害效用 eff。每次出手的伤害 = 主手这一下（mechanics.gems.hit 按主手品质的曲线 × 主手 pow）× eff × mul(等级，1→20 线性) × (1 + 品质%) × 对口；出手频率 = 主手攻速（gear2.weapons 的 aps）。持续型（cont）的 eff 是每秒伤害、光环（aura）的 eff 是每秒伤害。fr：并进来的形态符文（fx 按技能石等级）。v3（design/skill-v3.md）：el 技能元素（固定，一颗技能石只有一种元素）、f3 形态 melee/proj/area、mech 机制标签；tags 只当内部开关（辅助石适配、属性适用），不再显示。功能技能（form util，11-10 用户要求）：不造成伤害，被触发时给防御 / 增益 / 资源；util.k 效果种类，v [1 级, 20 级] 数值，dur 持续秒数；只能插在响应类魂龛（击杀、受击、格挡、冲刺、定时、明灯、低血、遇精英），不能插在出手类。",
+ "_说明": "技能石（spec-skill-gems；11-11 清理：不再从旧武器底子取数）。每颗技能石自带全部参数：base 里是形态 form、射程 range、范围 aoe、穿透 pierce / 弹射 chain / 分裂 split / 额外次数 extra、弹丸 pellets、持续 cont、光环 aura、元素效果几率 ail_*、形态细节（delay 落地延迟、arc 劈斩半角、wander / spiral / wide 投射物轨迹、smite / bolt 特效、vis 投射物外观）和伤害效用 eff；eff 的校准（11-11，tools/bench.js）：同一档主手（四类里 pow 1 的那把）在 57 层，测“怪群”（12 只木桩）和“单体”（1 只木桩）秒伤，综合价值 = √(怪群 × 4 × 单体) 拉到和骨矢一样，近战（f3 melee）+15% 风险补偿；所以覆盖面大的技能每一下轻、打 Boss 弱，覆盖面小的每一下重。role 定位按覆盖比（怪群 ÷ 单体）标：> 8 aoe 清怪，> 3.5 mix 均衡，其余 single 单体。每次出手的伤害 = 主手这一下（mechanics.gems.hit 按主手品质的曲线 × 主手 pow）× eff × mul(等级，1→20 线性) × (1 + 品质%) × 对口；出手频率 = 主手攻速（gear2.weapons 的 aps）。持续型（cont）的 eff 是每秒伤害、光环（aura）的 eff 是每秒伤害。fr：并进来的形态符文（fx 按技能石等级）。v3（design/skill-v3.md）：el 技能元素（固定，一颗技能石只有一种元素）、f3 形态 melee/proj/area、mech 机制标签；tags 只当内部开关（辅助石适配、属性适用），不再显示。功能技能（form util，11-10 用户要求）：不造成伤害，被触发时给防御 / 增益 / 资源；util.k 效果种类，v [1 级, 20 级] 数值，dur 持续秒数；只能插在响应类魂龛（击杀、受击、格挡、冲刺、定时、明灯、低血、遇精英），不能插在出手类。",
  "list": [
   {
    "id": "GemWhirl",
@@ -46,8 +46,9 @@
    "base": {
     "form": "orbit",
     "range": 200,
-    "eff": 0.275,
-    "vis": "TurbineBlades"
+    "eff": 0.445,
+    "vis": "TurbineBlades",
+    "role": "mix"
    }
   },
   {
@@ -76,8 +77,9 @@
     "form": "stab",
     "range": 175,
     "extra": 9,
-    "eff": 0.561,
-    "vis": "Spikes"
+    "eff": 0.586,
+    "vis": "Spikes",
+    "role": "aoe"
    },
    "rngMul": 3.5
   },
@@ -104,8 +106,9 @@
     "form": "ram",
     "bossMore": 6,
     "knock": 1,
-    "eff": 4.1,
-    "vis": "Hullbreaker"
+    "eff": 27.835,
+    "vis": "Hullbreaker",
+    "role": "aoe"
    }
   },
   {
@@ -141,8 +144,9 @@
     "range": 1000,
     "pierce": 4,
     "ail_kin": 0.1,
-    "eff": 1,
-    "vis": "Cannon"
+    "eff": 1.0,
+    "vis": "Cannon",
+    "role": "mix"
    }
   },
   {
@@ -176,8 +180,9 @@
     "range": 900,
     "chain": 4,
     "ail_ele": 0.2,
-    "eff": 0.773,
-    "vis": "Taser"
+    "eff": 0.515,
+    "vis": "Taser",
+    "role": "mix"
    }
   },
   {
@@ -236,8 +241,9 @@
     "range": 800,
     "ail_ele": 0.5,
     "wander": 1,
-    "eff": 0.217,
-    "vis": "Zapper"
+    "eff": 0.309,
+    "vis": "Zapper",
+    "role": "single"
    }
   },
   {
@@ -273,8 +279,9 @@
     "range": 900,
     "extra": 2,
     "chain": 5,
-    "eff": 0.182,
-    "vis": "Shuriken"
+    "eff": 0.382,
+    "vis": "Shuriken",
+    "role": "aoe"
    }
   },
   {
@@ -308,8 +315,9 @@
     "form": "proj",
     "range": 800,
     "aoe": 200,
-    "eff": 0.631,
-    "vis": "Rocket"
+    "eff": 1.075,
+    "vis": "Rocket",
+    "role": "aoe"
    }
   },
   {
@@ -345,8 +353,9 @@
     "range": 600,
     "pierce": 3,
     "pellets": 5,
-    "eff": 0.169,
-    "vis": "Blastgun"
+    "eff": 0.302,
+    "vis": "Blastgun",
+    "role": "mix"
    }
   },
   {
@@ -382,8 +391,9 @@
     "pierce": 1000000,
     "ail_nuc": 0.5,
     "spiral": 1,
-    "eff": 1.168,
-    "vis": "Orbitron"
+    "eff": 1.299,
+    "vis": "Orbitron",
+    "role": "aoe"
    }
   },
   {
@@ -415,8 +425,9 @@
     "cont": 1,
     "range": 1000,
     "chain": 4,
-    "eff": 0.696,
-    "vis": "Laser"
+    "eff": 2.228,
+    "vis": "Laser",
+    "role": "mix"
    }
   },
   {
@@ -446,8 +457,9 @@
     "form": "cone",
     "cont": 1,
     "range": 750,
-    "eff": 0.428,
-    "vis": "FlameThrower"
+    "eff": 1.802,
+    "vis": "FlameThrower",
+    "role": "mix"
    }
   },
   {
@@ -477,8 +489,9 @@
     "form": "aura",
     "range": 300,
     "aura": 1,
-    "eff": 0.253,
-    "vis": "PlutoniumBar"
+    "eff": 0.934,
+    "vis": "PlutoniumBar",
+    "role": "mix"
    }
   },
   {
@@ -508,8 +521,9 @@
     "range": 500,
     "aoe": 500,
     "ail_pla": 0.2,
-    "eff": 1.169,
-    "vis": "PlasmaNova"
+    "eff": 0.77,
+    "vis": "PlasmaNova",
+    "role": "aoe"
    }
   },
   {
@@ -551,8 +565,9 @@
     "range": 500,
     "aoe": 500,
     "ail_cold": 0.5,
-    "eff": 1.169,
-    "vis": "FrostBell"
+    "eff": 0.37,
+    "vis": "FrostBell",
+    "role": "aoe"
    }
   },
   {
@@ -601,8 +616,9 @@
     "range": 1100,
     "aoe": 260,
     "ail_exp": 0.25,
-    "eff": 1.754,
-    "vis": "StarfallRod"
+    "eff": 0.404,
+    "vis": "StarfallRod",
+    "role": "mix"
    }
   },
   {
@@ -646,8 +662,9 @@
     "form": "orb",
     "range": 800,
     "ail_cold": 0.3,
-    "eff": 0.149,
-    "vis": "FrostOrb"
+    "eff": 0.196,
+    "vis": "FrostOrb",
+    "role": "single"
    }
   },
   {
@@ -678,8 +695,9 @@
    "base": {
     "form": "mine",
     "aoe": 400,
-    "eff": 0.54,
-    "vis": "BlastMine"
+    "eff": 1.458,
+    "vis": "BlastMine",
+    "role": "aoe"
    }
   },
   {
@@ -754,8 +772,9 @@
     "form": "stab",
     "range": 175,
     "extra": 9,
-    "eff": 0.561,
-    "vis": "FrostStabBase"
+    "eff": 0.761,
+    "vis": "FrostStabBase",
+    "role": "aoe"
    },
    "rngMul": 3.5
   },
@@ -789,8 +808,9 @@
     "range": 260,
     "aoe": 500,
     "arc": 1.1,
-    "eff": 0.701,
-    "vis": "ThunderCleaveBase"
+    "eff": 0.863,
+    "vis": "ThunderCleaveBase",
+    "role": "mix"
    }
   },
   {
@@ -825,8 +845,9 @@
     "aoe": 150,
     "smite": 1,
     "delay": 0.45,
-    "eff": 0.994,
-    "vis": "JudgementBase"
+    "eff": 1.378,
+    "vis": "JudgementBase",
+    "role": "mix"
    }
   },
   {
@@ -858,8 +879,9 @@
     "form": "cleave",
     "range": 230,
     "arc": 0.75,
-    "eff": 0.275,
-    "vis": "RotClawBase"
+    "eff": 1.013,
+    "vis": "RotClawBase",
+    "role": "mix"
    }
   },
   {
@@ -893,8 +915,9 @@
     "aoe": 170,
     "bolt": 1,
     "delay": 0.55,
-    "eff": 0.877,
-    "vis": "ThunderfallBase"
+    "eff": 0.953,
+    "vis": "ThunderfallBase",
+    "role": "single"
    }
   },
   {

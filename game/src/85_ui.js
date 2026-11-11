@@ -87,10 +87,12 @@ const DASH_N = { step: '冲刺：纯位移', warp: '冲刺：瞬移到落点并�
 const FORM_N = { util: '功能技能', cleave: '朝前方挥出一道弧光，扇形里的敌人都中', orb: '缓慢飞行的法球，沿途向四周放出碎片', meteor: '从天而降砸向敌人', proj: '发射投射物', beam: '持续光束', orbit: '环绕身边的刃', nova: '以自身为中心爆发', cone: '前方喷射', mine: '在脚下布置陷阱', aura: '身边持续伤害的力场', ram: '撞上敌人造成伤害，越快越痛', stab: '从地下刺向附近敌人' };
 const r1 = v => Math.round(v * 10) / 10;
 // 底材行：按品质的固有数值
+const ROLE_N = { aoe: '定位：清怪（范围大，每一下轻）', mix: '定位：均衡', single: '定位：单体（打得准、每一下重，适合精英和 Boss）' };
 function gemLines(g) { // 技能石：形态、倍率、标签、并进来的形态符文
   const G = GEM_BY[g.b], out = [], B = G.base;
   if (G.util) { out.push([G.d.replace('#', utilVal(g)), '#e9d9a8']); out.push([gemTag3(g).join(' · '), '#c98cff']); out.push(['功能技能：不造成伤害。只能插在响应类魂龛里（击杀、受击、格挡、冲刺、定时、明灯、低血、遇精英）', COL.dim]); if (g.lvl < MOD_MAX) out.push([`经验 ${fmt(g.xp)} / ${fmt(MOD_XP[g.lvl - 1])}（装备时吃击杀经验）`, COL.faint]); return out; }
   out.push([FORM_N[G.form] || '', COL.dim]);
+  if (B && B.role) out.push([ROLE_N[B.role], '#c9b8ff']);
   if (B) { const sk = skillItem({ ...S.equip, gem: g }), [mn, mx] = sk ? weaponBase(sk.fb, sk.q) : [0, 0], per = B.cont || B.aura ? '每秒' : '每次出手';
     out.push([`${per}伤害 = 主手这一下 × 伤害效用 ${Math.round(B.eff * 100)}% × ${r2(gemMul(G, g.lvl) * (1 + (g.q || 0) / 100))}（等级、品质）`, '#e9d9a8']);
     if (sk) out.push([`用现在的主手：${ELEM_N[G.el]}伤害 ${fmt(mn)}–${fmt(mx)}${per === '每秒' ? ' / 秒' : ''}${sk.fb.aff ? '（对口 ×' + GEMC.affinity + '）' : '（不对口）'}`, ELEM_C[G.el]]); }

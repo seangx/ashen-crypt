@@ -43,7 +43,8 @@
   "orb": {"stance": "hold", "keep": 1, "keepPx": 100, "aim": "dense"},
   "shieldThrow": {"stance": "hold", "keep": 1, "keepPx": 70},
   "beam": {"stance": "kite"},
-  "proj": {"stance": "kite", "aim": "near", "pierce": "line", "split": "dense", "aoe": "dense"}
+  "proj": {"stance": "kite", "aim": "near", "pierce": "line", "split": "dense", "aoe": "dense"},
+  "shotgun": {"stance": "hold", "keep": 0.3, "aim": "dense", "_说明": "多弹丸的投射物（散射）：弹丸有散布角，离远了只中一两颗，所以贴近站桩（射程 × 0.3）"}
  },
  "takeover": {
   "_说明": "在场地上移动鼠标（累计超过 moveThreshold 像素）或触摸就切到手动，idleResume 秒没有操作后回到自动。manualLootXpMul：手动操作期间击杀的经验和掉落几率倍数（1 = 不变）",
