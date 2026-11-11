@@ -75,7 +75,7 @@ Object.assign(MobileUI.prototype, {
     const bg = nine(this, 12, py, pw, ph, 'o_frame', 8).setInteractive(); c.add(this.add.tileSprite(15, py + 3, pw - 6, ph - 6, 'n_win').setOrigin(0)); c.add(bg);
     const fc = F.foot(38), all = [...acts, { l: closeL }], n = all.length, rows = n > 3 ? 2 : 1, per = Math.ceil(n / rows), bw = Math.floor((iw - (per - 1) * 4) / per);
     if (rows > 1) { F.fh = 70; ph = Math.min(maxH, Math.ceil(hh) + 90); } // 按钮多于 3 个排两行
-    all.forEach((a, i) => mkBtn(this, fc, (i % per) * (bw + 4), 6 + (i / per | 0) * 32, bw, 30, a.l, () => { this.closePopup(); if (a.fn) a.fn(); }, { size: 8, style: a.style || 'n', disabled: !!a.disabled, locked: !!a.why && !!a.disabled, whyDisabled: a.why }));
+    all.forEach((a, i) => mkBtn(this, fc, (i % per) * (bw + 4), 6 + (i / per | 0) * 32, bw, 30, a.l, () => { this.closePopup(); if (a.fn) a.fn(); }, { size: textW(a.l) > bw - 10 ? 8 : 12, style: a.style || 'n', disabled: !!a.disabled, locked: !!a.why && !!a.disabled, whyDisabled: a.why }));
     F.y = py + 10; F.h = ph - 20; F.build(); for (const f of F.pending || []) f(); F.pending = null;
   },
   closePopup() { if (this.popF) { this.popF.destroy(); this.popF = null; } if (this.popC) { this.popC.destroy(); this.popC = null; } },

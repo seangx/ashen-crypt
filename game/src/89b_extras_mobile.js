@@ -25,6 +25,7 @@ const GEN_TINT = ['#c9cfdc', '#4fb8ff', '#ffd23a']; // 底材一代 / 二代 / �
     const icon = c.list.find(ch => ch.type === 'Image' && ch.texture && ch.texture.key === key);
     if (icon && sc.textures.exists(vk)) { icon.setTexture(vk).setOrigin(0.5).setPosition(s / 2, s / 2).setDisplaySize(s * 0.84, s * 0.84); if (t === 'r0') icon.setTint(0xd8d8d8); }
     const qt = c.list.find(ch => ch.type === 'Text' && it.gen && ch.text === String(it.gen + 1)); if (qt) qt.setTint(hex(GEN_TINT[it.gen] || COL.dim));
+    if (s >= 30 && (it.set || it.rar === 3)) { const tg = it.set ? ['套', '#2f8a45'] : ['神', '#b8402a'], tc = sc.add.container(s - 12, s - 11); c.add(tc); rect(sc, 0, 0, 12, 11, tg[1], 1, tc); T(sc, 6, 5.5, tg[0], { size: 8, color: '#ffffff', align: 'center', valign: 'middle', shadow: false, parent: tc }); c.tagC = tc; } // ui-v2：右下角标（套装 / 神话）
     if (G.fx === false || !t || t === 'r0') return c;
     const at = icon ? c.list.indexOf(icon) : c.list.length, layers = [], tw = [];
     const im = (k, a, sz) => { const i = sc.add.image(s / 2, s / 2, k).setDisplaySize(s * sz, s * sz).setAlpha(a); layers.push(i); return i; };

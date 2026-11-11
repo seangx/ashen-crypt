@@ -35,10 +35,12 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   }
   if (it.kind === 'mod') { let cy = 0; for (const l of modTip(it)) { const t = TW(sc, 0, cy, l.t, w, { size: l.s || 12, color: l.c || COL.text, parent: c }); cy += t.h + 2; } return { c, h: cy }; } // 辅助石：没有底材，用符文说明（原来走 baseOf 会崩，滑动背包时手指划过就报错）
   const b = baseOf(it); let cy = 0;
+  if (o.noHead) cy = -4; else { // noHead：手机详情自己画了标题栏（ui-v2）
   img(sc, 0, 0, 'i_' + iconOf(it), c);
   T(sc, 17, 1, itemName(it), { color: icol(it), parent: c });
-  cy = 16;
-  if (it.kind === 'gem') { T(sc, 0, cy, `技能石 · ${it.lvl} 级 · 品质 ${it.q || 0}%`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
+  cy = 16; }
+  if (o.noHead) { }
+  else if (it.kind === 'gem') { T(sc, 0, cy, `技能石 · ${it.lvl} 级 · 品质 ${it.q || 0}%`, { size: 8, color: COL.dim, parent: c }); cy += 11; }
   else {
   T(sc, 0, cy, `${rarName(it)} · ${KIND_N[it.kind]}${it.rar === 2 ? ' · ' + baseName(it) : ''} · 物品等级 ${it.ilvl}`, { size: 8, color: COL.dim, parent: c }); cy += 11;
   }

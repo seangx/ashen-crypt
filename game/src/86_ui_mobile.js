@@ -191,7 +191,8 @@ class MobileUI extends UI {
     if (!G.fx) return; const tg = P => (typeof toughness === 'function' ? toughness(P) : P.life);
     const parts = [['秒伤', a.dps, b.dps], ['坚韧', tg(a), tg(b)]].map(([n, x, y]) => [n, x > 0 ? (y - x) / x : 0]).filter(([, d]) => Math.abs(d) >= 0.01);
     if (!parts.length) return;
-    const c = this.add.container(W / 2, MTOP + 28).setDepth(320); let x = 0; const items = [];
+    if (this.deltaC && this.deltaC.active) { this.tweens.killTweensOf(this.deltaC); this.deltaC.destroy(); } // 连着换装只留最新一条
+    const c = this.deltaC = this.add.container(W / 2, MTOP + 28).setDepth(320); let x = 0; const items = [];
     for (const [n, d] of parts) { const up = d > 0, s = `${n} ${up ? '↑' : '↓'} ${Math.abs(Math.round(d * 100))}%`; items.push([s, up, textW(s) + 14]); }
     const tw = items.reduce((s, [, , w]) => s + w, 0); c.add(nine(this, -tw / 2 - 4, 0, tw + 8, 19, 'f_tip', 2)); // 底板：和提示条一样，压在窗口上也看得清
     for (const [s, up, w0] of items) { T(this, -tw / 2 + x + w0 / 2, 4, s, { color: up ? '#7fe08a' : '#ff8a7a', align: 'center', parent: c }); x += w0; }
@@ -255,36 +256,43 @@ class MobileUI extends UI {
     mkBtn(this, c, w - 94, y + 4, 78, 28, '清除存档', () => this.ask('确定清除全部存档？', () => this.ask('最后确认：真的要清除吗？', () => wipeSave(), '确认清除', '进度、装备、宝石、设置全部删除，无法找回'), '确认清除', '此操作不可撤销'), { size: 8, style: 'r' });
     this.F.end(y + 42);
   }
-  equipSlots(c, ox, oy, onClick, selFn) {
-    const pos = { shoulders: [0, 0], core: [32, 0], amulet: [64, 0], wl: [0, 32], wr: [64, 32], hands: [0, 64], chest: [32, 64], ring1: [64, 64], ring2: [0, 96], engine: [32, 96] }; // gear-v3：3 × 4，纸娃娃在 (32, 32)
+  equipSlots(c, ox, oy, onClick, selFn, E = TOUCH, w = 0) {
+    // ui-v2（11-11，参考迷雾大陆的背包页）：w 给了就是左右两列（左：头冠 / 肩甲 / 胸甲 / 护手 / 遁靴，右：主手 / 副手 / 项链 / 戒指 ×2），人物在中间；不给就是旧的 3 × 4
+    const g = E + 2, R = w ? w - ox - E : 0;
+    const pos = w ? { core: [0, 0], shoulders: [0, g], chest: [0, 2 * g], hands: [0, 3 * g], engine: [0, 4 * g], wl: [R - ox, 0], wr: [R - ox, g], amulet: [R - ox, 2 * g], ring1: [R - ox, 3 * g], ring2: [R - ox, 4 * g] }
+      : { shoulders: [0, 0], core: [32, 0], amulet: [64, 0], wl: [0, 32], wr: [64, 32], hands: [0, 64], chest: [32, 64], ring1: [64, 64], ring2: [0, 96], engine: [32, 96] };
     const ghost = { wl: 'i_w_crossbow', wr: 'i_o_source', core: 'i_a_helm', engine: 'i_a_shadowstep', hands: 'i_a_glove_bone', chest: 'i_a_chest_bone', shoulders: 'i_a_shoulder_bone', ring1: 'i_a_ring_bone', ring2: 'i_a_ring_bone', amulet: 'i_a_amulet_bone' };
-    for (const s of SLOTS) { if (!pos[s.id]) continue; if (s.id === 'wr' && !unlocked('wr')) { lockedCell(this, c, ox + pos.wr[0], oy + pos.wr[1], TOUCH, ghost.wr, `副手：${unlockText('wr')}`); continue; } const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: TOUCH, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); if (s.id === 'gem' && needShield()) { const r = this.add.rectangle(ox + x, oy + y, TOUCH, TOUCH).setOrigin(0).setStrokeStyle(2, 0xd04040); c.add(r); T(this, ox + x + 2, oy + y + 1, '需要盾牌', { size: 8, color: COL.bad, parent: c }); } } // 技能格：圣盾掷没装盾
+    for (const s of SLOTS) { if (!pos[s.id]) continue; if (s.id === 'wr' && !unlocked('wr')) { lockedCell(this, c, ox + pos.wr[0], oy + pos.wr[1], E, ghost.wr, `副手：${unlockText('wr')}`); continue; } const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: E, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); }
   }
-  /* 装备：竖屏原生（身上 + 属性 → 背包 → 选中物品的详情抽屉） */
+  /* 装备：竖屏原生。ui-v2（11-11，参考迷雾大陆）：头 = 两侧装备栏 + 中间人物和三个核心数 + 详细属性；背包栏一行；主体 = 6 列大格子 */
   win_gear(c, w, h) {
-    const F = this.F, B = c; c = F.head(154); // 头：身上的装备、属性、整理 / 批量；主体：储物箱格子（上下滑）；底：一行提示
-    selId = null; this.equipSlots(c, 10, 6, null, () => false);
+    const F = this.F, B = c, E = 34, HH = 5 * (E + 2) + 40; c = F.head(HH);
+    selId = null; this.equipSlots(c, 6, 4, null, () => false, E, w);
+    const P = STATS, cx = 6 + E + 6, cw = w - 2 * cx, mid = cx + cw / 2;
+    c.add(nine(this, cx, 4, cw, 5 * (E + 2) - 2, 'f_slot', 3)); // 中间面板
     { const cv = dollCanvas(S.equip, 0); if (this.textures.exists('doll_ui')) this.textures.remove('doll_ui'); this.textures.addCanvas('doll_ui', cv);
-      rect(this, 42, 38, 30, 30, '#120c18', 1, c); const im = img(this, 42 + 15 - DOLL_W / 2, 38 + 30 - DOLL_H, 'doll_ui', c); im.setCrop(DOLL_W / 2 - 15, 0, 30, DOLL_H); }
-    const P = STATS;
-    [['出手秒伤', fmt(P.castDps || P.dps), COL.emberHi], ['响应秒伤', fmt(P.respDps || 0), '#ffb36a'], ['坚韧 / 恢复', `${fmt(toughness(P))} / ${fmt(recovery(P))}每秒`, '#ffd0a0'], ['最缺', elemNeed(P), COL.cyan], ['生命 / 护盾', `${fmt(P.life)} / ${fmt(P.shield)}`, '#ff8a7a'], ['护甲', `${fmt(P.armor)} 减伤${Math.round(armorDrL(P.armor, monLv()) * 100)}%`], ['职业', mstS().picks.map(x => MST_BY[x].n).join(' + ') || '还没选', mstS().picks.length ? COL.text : COL.faint]]
-      .forEach(([a, b, col], i) => { T(this, 112, 13 + i * 9, a, { size: 8, color: COL.dim, parent: c }); T(this, w - 10, 13 + i * 9, b, { size: 8, color: col || COL.text, align: 'right', parent: c }); }); // 双行面板（system-v2 §5）
-    zoneOn(this, c, 108, 13 + 2 * 9 - 2, w - 116, 10, () => { const D = toughParts(P), pc = v => Math.round(v * 100) + '%', top = Object.entries(D.X.el).sort((a, b) => b[1] - a[1]).map(([e, v]) => `${ELEM_N[e]} ${pc(v)}`).join('、'); // defense-v3 §4：点开看每一层减伤
-      this.ask('坚韧怎么算', () => {}, '知道了', `按第 ${D.L} 级怪算\n生命 ${fmt(P.life)} + 护盾 ${fmt(P.shield)}\n护甲减伤 ${pc(D.armor)}\n平均抗性减伤 ${pc(D.res)}（这层的怪：${top}）\n条件减伤 ${pc(D.cond)}（远程怪占 ${pc(D.X.ranged)}）\n恢复：每秒回复 ${r1(P.lifeRegen || 0)}、护盾 ${r1(P.shieldRegen || 0)}、击杀回复 ${r1(P.lifeOnKill || 0)}`); });
-    T(this, 112, 78, '抗性', { size: 8, color: COL.dim, parent: c });
-    ELEM.forEach((e, i) => T(this, 134 + i * 20, 78, String(P.res[e]), { size: 8, color: ELEM_C[e], parent: c }));
-    T(this, 12, 132, `背包 ${gearCount()}/${STASH_CAP}`.replace('背包 ', ''), { size: 8, color: COL.dim, parent: c });
-    { const nNew = S.stash.filter(x => x.isNew && x.kind !== 'gem').length; if (nNew) mkBtn(this, c, w - 134, 123, 42, 28, `已读 ${nNew}`, () => { for (const x of S.stash) if (x.kind !== 'gem') x.isNew = false; save(); this.refresh(); }, { size: 8 }); } // 一键清掉“新”
-    mkBtn(this, c, 112, 123, 62, 28, '详细属性', () => this.showLines(this.charLines()), { size: 8, style: 'w' }); // 详细角色面板（89e_char_mobile.js）
-    mkBtn(this, c, w - 90, 123, 38, 28, '整理', () => { sortStash(); this.refresh(); }, { size: 8 });
-    mkBtn(this, c, w - 50, 123, 40, 28, '批量', () => this.openBulk(), { size: 8, style: 'n', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
+      const k = 2.4, gl = this.add.image(mid, 34, 'fx_glow').setDisplaySize(90, 60).setAlpha(0.18).setTint(hex(COL.ember)); c.add(gl);
+      const im = img(this, 0, 0, 'doll_ui', c); im.setScale(k); im.setPosition(Math.round(mid - DOLL_W * k / 2), 8); }
+    const lv = mstS().picks.map(x => MST_BY[x].n).join(' + '); T(this, mid, 58, lv || '还没选职业', { size: 8, color: lv ? COL.dim : COL.faint, align: 'center', parent: c });
+    const big = (y, label, val, col, fn) => { T(this, cx + 7, y + 4, label, { size: 8, color: COL.dim, parent: c }); T(this, cx + cw - 7, y, val, { size: 12, scale: 1.25, color: col, align: 'right', parent: c }); if (fn) zoneOn(this, c, cx, y - 2, cw, 18, fn); };
+    big(72, '秒伤', fmt(P.castDps || P.dps), COL.emberHi);
+    big(91, '坚韧', fmt(toughness(P)), '#ffd0a0', () => { const D = toughParts(P), pc = v => Math.round(v * 100) + '%', top = Object.entries(D.X.el).sort((a, b) => b[1] - a[1]).map(([e, v]) => `${ELEM_N[e]} ${pc(v)}`).join('、'); // defense-v3 §4：点开看每一层减伤
+      this.ask('坚韧怎么算', () => {}, '知道了', `按第 ${D.L} 级怪算\n生命 ${fmt(P.life)} + 护盾 ${fmt(P.shield)}\n护甲减伤 ${pc(D.armor)}\n平均抗性减伤 ${pc(D.res)}（这层的怪：${top}）\n条件减伤 ${pc(D.cond)}（远程怪占 ${pc(D.X.ranged)}）\n恢复：每秒 ${fmt(recovery(P))}`); });
+    big(110, '生命', P.shield ? `${fmt(P.life)}+${fmt(P.shield)}` : fmt(P.life), '#ff8a7a');
+    { const rw = (cw - 14) / ELEM.length; ELEM.forEach((e, i) => T(this, cx + 7 + rw * (i + 0.5), 131, String(P.res[e]), { size: 8, color: ELEM_C[e], align: 'center', parent: c })); }
+    mkBtn(this, c, cx + 4, 144, cw - 8, 30, '详细属性', () => this.showLines(this.charLines()), { style: 'w' }); // 详细角色面板（89e_char_mobile.js）
+    // 背包栏：容量 + 已读 / 整理 / 批量拆解
+    const by = 5 * (E + 2) + 6; rect(this, 6, by - 2, w - 12, 1, '#3a3049', 1, c);
+    T(this, 8, by + 9, `背包 ${gearCount()}/${STASH_CAP}`, { color: gearCount() >= STASH_CAP ? COL.bad : COL.text, parent: c });
+    { const nNew = S.stash.filter(x => x.isNew && x.kind !== 'gem').length; if (nNew) mkBtn(this, c, w - 186, by + 2, 50, 28, `已读 ${nNew}`, () => { for (const x of S.stash) if (x.kind !== 'gem') x.isNew = false; save(); this.refresh(); }, { size: 8 }); } // 一键清掉“新”
+    mkBtn(this, c, w - 132, by + 2, 50, 28, '整理', () => { sortStash(); this.refresh(); });
+    mkBtn(this, c, w - 78, by + 2, 72, 28, '批量拆解', () => this.openBulk(), { style: 'r', disabled: !unlocked('salvage'), whyDisabled: '第10层解锁' });
     const nGem = S.stash.filter(x => x.kind === 'gem').length, view = S.stash.filter(x => (x.kind === 'gem') === (stashTab === 1)); // 技能石单独一页
     stashTab = 0; // 技能石都在魂龛页管理，装备页不再放入口（用户 10-29）
     if (stashTab === 1) return this.gemPane(c, w, h, 122); // 技能石页：堆叠 + 筛选（87_gemrune_mobile.js）
-    T(this, 12, 4, '点物品看详情，在弹窗里装备 / 拆解 / 进铁砧。绿箭头 = 更好。', { size: 8, color: COL.faint, parent: F.foot(16) });
-    c = B; const cols = MCOLS, st = TOUCH, cs = st, x0 = Math.round((w - cols * st) / 2);
+    c = B; const cols = 6, st = Math.floor((w - 8) / cols), cs = st - 2, x0 = Math.round((w - cols * st) / 2) + 1; // ui-v2：6 列大格子
     for (let i = 0; i < STASH_CAP; i++) {
-      const it = view[i]; const x = x0 + (i % cols) * st, y = 2 + (i / cols | 0) * st;
+      const it = view[i]; const x = x0 + (i % cols) * st, y = 3 + (i / cols | 0) * st;
       mkCell(this, c, x, y, it, { size: cs, sel: it && it.id === selId, upg: true, acts: v => this.itemActs(v) });
     }
     F.end(Math.ceil(STASH_CAP / cols) * st + 6); this.paneC = null;
@@ -757,7 +765,19 @@ class MobileUI extends UI {
   }
   showDetail(it, host, acts = []) {
     if (it.kind === 'mod') return this.showLines(modTip(it, host), acts);
-    this.popup((p, w) => mkCard(this, p, 0, 0, it, w, { compare: !!slotsFor(it)[0] }).h, acts);
+    if (it.kind === 'gem' || it.kind === 'stone') return this.popup((p, w) => mkCard(this, p, 0, 0, it, w, { compare: !!slotsFor(it)[0] }).h, acts);
+    this.popup((p, w) => this.itemHead(p, w, it) + mkCard(this, p, 0, 52, it, w, { compare: !!slotsFor(it)[0], noHead: true }).h + 52, acts);
+  }
+  // ui-v2（11-11，参考迷雾大陆的装备详情）：稀有度色标题栏 + 大图标 + 名字 + 部位 / 等级 + 套装或神话标签
+  itemHead(p, w, it) {
+    const col = icol(it), band = rect(this, -4, -2, w + 8, 48, col, 0.16, p); rect(this, -4, -2, 3, 48, col, 1, p); rect(this, -4, 45, w + 8, 1, col, 0.5, p);
+    mkCell(this, p, 2, 2, { ...it, isNew: false }, { size: 40, direct: true, onClick: () => {} });
+    T(this, 50, 4, itemName(it), { size: 12, scale: 1.2, color: col, parent: p });
+    T(this, 50, 22, `${rarName(it)} · ${KIND_N[it.kind] || it.kind}${it.rar === 2 ? ' · ' + baseName(it) : ''}`, { size: 8, color: COL.dim, parent: p });
+    T(this, 50, 33, `物品等级 ${it.ilvl}`, { size: 8, color: COL.faint, parent: p });
+    const tag = it.set && SET_BY[it.set] ? [SET_BY[it.set].n, '#2f8a45'] : it.rar === 3 ? ['神话', '#b8402a'] : null;
+    if (tag) { const tw = textW(tag[0], 8) + 10; rect(this, w - tw, 2, tw, 13, tag[1], 1, p); T(this, w - tw / 2, 8.5, tag[0], { size: 8, color: '#ffffff', align: 'center', valign: 'middle', shadow: false, parent: p }); }
+    return 0;
   }
   showLines(lines, acts = [], closeL) {
     this.popup((p, w) => { let y = 0; for (const l of lines) { if (!l || !l.t) continue; const t = TW(this, 0, y, l.t, w, { size: l.s || 12, color: l.c || COL.text, parent: p }); y += t.h + 1; } return y; }, acts, closeL);
