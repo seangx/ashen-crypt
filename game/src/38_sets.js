@@ -5,9 +5,14 @@ const SETD = DATA.sets, SETS = SETD.list, SET_BY = Object.fromEntries(SETS.map(s
 const SET_KINDS = ['core', 'hands', 'chest', 'shoulders', 'engine', 'amulet'];
 const SET_C = '#7fe08a'; // 套装的颜色（名字、掉落光柱）
 const setOf = it => it && it.set ? SET_BY[it.set] : null;
-const setOfGem = id => SETS.find(s => s.skills.includes(id)) || null;
-// 主技能对应的套装（出手类魂龛里的技能石优先）
-function mainSet() { const g = typeof mainSkillGem === 'function' ? mainSkillGem() : null; return g ? setOfGem(g.b) : null; }
+// 这套服务这颗技能石吗：按三层标签匹配一项（el 元素 / f3 形态 / mech 机制）。一颗技能石可以同时属于几套
+function setFits(s, gemId) { const G = GEM_BY[gemId], t = s && s.tag || {}; if (!G || G.util) return false; return (!!t.el && G.el === t.el) || (!!t.f3 && G.f3 === t.f3) || (!!t.mech && (G.mech || []).includes(t.mech)); }
+const setsOfGem = id => SETS.filter(s => setFits(s, id));
+const setSkills = s => GEMS.filter(G => setFits(s, G.id));
+const setOwned = id => [...Object.values(S.equip), ...S.stash].filter(it => it && it.set === id).length;
+// 主技能能用的套装里，已经有最多件的那套（出手类魂龛里的技能石优先）
+function mainSet() { const g = typeof mainSkillGem === 'function' ? mainSkillGem() : null; if (!g) return null; const c = setsOfGem(g.b); if (!c.length) return null; return c.reduce((a, b) => setOwned(b.id) > setOwned(a.id) ? b : a); }
+const mainSets = () => { const g = typeof mainSkillGem === 'function' ? mainSkillGem() : null; return g ? setsOfGem(g.b) : []; };
 // 身上每套几件（骸王之戒：≥ 2 件的 +1）
 function setCounts(eq = S.equip) {
   const n = {}; for (const it of Object.values(eq)) if (it && it.set && SET_BY[it.set]) n[it.set] = (n[it.set] || 0) + 1;
@@ -46,7 +51,7 @@ function rollSetDrop(ilvl, src) {
   const pity = src === 'boss' && (S.setPity || 0) + 1 >= D.pity;
   if (!pity && rnd() >= (D[src] ?? D.normal)) { if (src === 'boss') S.setPity = (S.setPity || 0) + 1; return null; }
   S.setPity = 0;
-  const ms = mainSet(), s = ms && (pity || rnd() < D.main) ? ms : pick(SETS), miss = setMissing(s.id);
+  const cand = mainSets(), s = cand.length && (pity || rnd() < D.main) ? (pity ? mainSet() : pick(cand)) : pick(SETS), miss = setMissing(s.id); // 主技能能用的几套里挑；保底给已有最多件的那套
   return newSetPiece(s.id, pity && miss.length ? pick(miss) : null, ilvl);
 }
 // 第一次推到 giftDepth 层：送主技能那套 giftN 件（缺的部位）

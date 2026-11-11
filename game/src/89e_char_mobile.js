@@ -10,6 +10,7 @@ Object.assign(MobileUI.prototype, {
       if (ms || Object.keys(n).length) { H('套装');
         if (ms) { const miss = setMissing(ms.id); row(`主技能对应 · ${ms.n}`, `身上 ${Math.min(6, n[ms.id] || 0)} / 6${miss.length ? ' · 还缺 ' + miss.map(k => KIND_N[k]).join('、') : ' · 已集齐'}`, ms.c); }
         for (const id in n) if (!ms || id !== ms.id) row(SET_BY[id].n, `身上 ${Math.min(6, n[id])} / 6`, SET_BY[id].c);
+        { const alt = mainSets().filter(s => !ms || s.id !== ms.id); if (alt.length) note(`　主技能也能走：${alt.map(s => s.n).join('、')}`); }
         for (const t of setTiers()) note(`　${t.set.n} ${t.k} 件：${t.b.t}`);
         note(`　套装件在 ${SETD.drop.minIlvl} 级以上的怪、Boss 宝箱里掉，七成是主技能那套；Boss 宝箱连续 ${SETD.drop.pity} 件不是套装件就必掉一件缺的；第一次推到 ${SETD.drop.giftDepth} 层送 ${SETD.drop.giftN} 件`); } }
     // ---- 输出 ----

@@ -1,21 +1,19 @@
 {
- "_说明": "套装（design/gear-v3.md §3）。每套 6 件：头冠、护手、胸甲、肩甲、遁靴、项链；2 / 4 / 6 件三档。pieces[部位] = [名字, 底材]；bonus[件数]：more 是这套服务的技能伤害总增%（4 件 60、6 件 250，暗黑 3 式，11-11 用户：“套装强度得提升 1000%++”）；add 加到天赋同一个池子（TA，和天赋相加），raw 加到装备词条池子（冰缓效果这类只认装备的），flag 是机制开关（值是参数）。skills：这套服务哪些技能石（智能掉落按主技能挑）。套装件 = 稀有装备 + set 标记：固定是这件的底材，词条照稀有随机，能上铁砧，跟随底材代数。drop：normal / boss / chest 是每次掉装备时变成套装件的几率；main 是掉出主技能那套的几率；pity Boss 宝箱连续这么多件都不是套装件就必掉一件缺的（一个宝箱几件，约 3–5 个 Boss）；gift 第一次推到 giftDepth 层送主技能那套 giftN 件；minIlvl 物品等级到这里才开始掉。ring：骸王之戒（神话戒指，套装需求 −1）",
+ "_说明": "套装（design/gear-v3.md §3）。每套 6 件：头冠、护手、胸甲、肩甲、遁靴、项链；2 / 4 / 6 件三档。11-11 用户：按技能标签拆，先做七套。tag：这套服务哪些技能石，按三层标签匹配一项（el 元素 / f3 形态 melee proj area / mech 机制 delay pierce chain split dot spawn），一颗技能石可以同时属于几套（元素 + 形态 + 机制），新技能石自动归套。pieces[部位] = [名字, 底材]；bonus[件数]：more 是这套服务的技能伤害总增%（4 件 60、6 件 250，各档相乘，暗黑 3 式，11-11 用户：“套装强度得提升 1000%++”）；add 加到天赋同一个池子（TA，和天赋相加）；raw 加到装备词条池子（异常效果这类只认装备的）；flag 是机制开关（值是参数）。套装件 = 稀有装备 + set 标记：固定是这件的底材，词条照稀有随机，能上铁砧，跟随底材代数。drop：normal / boss / chest 是每次掉装备时变成套装件的几率；main 是掉出主技能能用的那几套之一的几率；pity Boss 宝箱连续这么多件都不是套装件就必掉一件缺的（一个宝箱几件，约 3–5 个 Boss）；gift 第一次推到 giftDepth 层送主技能那套 giftN 件；minIlvl 物品等级到这里才开始掉。ring：骸王之戒（神话戒指，套装需求 −1）",
  "drop": {"normal": 0.004, "boss": 0.06, "chest": 0.1, "main": 0.7, "pity": 15, "giftDepth": 30, "giftN": 2, "minIlvl": 20},
  "ring": "BoneKingRing",
  "list": [
   {
-   "id": "Starfall", "n": "陨星", "c": "#ff9a4a",
-   "skills": ["GemMeteor", "GemThunderfall", "GemJudgement"],
+   "id": "Starfall", "n": "陨星", "c": "#ff9a4a", "tag": {"mech": "delay"},
    "pieces": {"core": ["陨星冠", "CrystalCore"], "hands": ["陨星之握", "BoneGlove"], "chest": ["陨星胸甲", "BoneMail"], "shoulders": ["陨星肩甲", "AshPauldron"], "engine": ["陨星履", "Afterburner"], "amulet": ["陨星坠", "BoneAmulet"]},
    "bonus": {
-    "2": {"t": "延迟伤害提高 30%，落地延迟 −20%", "add": {"delayInc": 30, "delayLess": 20}},
-    "4": {"t": "坠落技能每次落地，在附近怪最密处再落下一颗小星（伤害 ×20%，范围 ×0.6）；这套的技能伤害总增 60%", "more": 60, "flag": {"starMini": 0.2}},
-    "6": {"t": "落点留下星痕 4 秒；坠落技能砸中星痕里的敌人，这一下总增 60%；这套的技能伤害总增 250%", "more": 250, "flag": {"starMark": 0.6}}
+    "2": {"t": "延迟伤害提高 30%，落地延迟和陷阱布设时间 −20%", "add": {"delayInc": 30, "delayLess": 20}},
+    "4": {"t": "延迟技能生效（落地、陷阱引爆）时，在附近怪最密处再落下一颗小星（伤害 ×20%，范围 ×0.6）；这套的技能伤害总增 60%", "more": 60, "flag": {"starMini": 0.2}},
+    "6": {"t": "生效点留下星痕 4 秒；延迟技能在星痕里生效，这一下总增 60%；这套的技能伤害总增 250%", "more": 250, "flag": {"starMark": 0.6}}
    }
   },
   {
-   "id": "Winter", "n": "凛冬", "c": "#9fe3ff",
-   "skills": ["GemFrostNova", "GemFrostOrb", "GemFrostStab"],
+   "id": "Winter", "n": "凛冬", "c": "#9fe3ff", "tag": {"el": "cold"},
    "pieces": {"core": ["凛冬之冠", "PhantomCore"], "hands": ["凛冬之握", "ClawGlove"], "chest": ["凛冬尸衣", "Shroud"], "shoulders": ["凛冬肩甲", "BonePauldron"], "engine": ["凛冬履", "Warp"], "amulet": ["凛冬坠", "SoulAmulet"]},
    "bonus": {
     "2": {"t": "寒霜技能每次命中多叠 3 层冰缓（叠满 10 层冻结），冰缓效果 +20%", "flag": {"chillAdd": 3}, "raw": {"ailEff:cold": 20}},
@@ -24,13 +22,48 @@
    }
   },
   {
-   "id": "Blade", "n": "旋刃", "c": "#ffd36a",
-   "skills": ["GemWhirl", "GemRam", "GemThunderCleave"],
+   "id": "Blade", "n": "旋刃", "c": "#ffd36a", "tag": {"f3": "melee"},
    "pieces": {"core": ["旋刃盔", "TitaniumCore"], "hands": ["旋刃之握", "WrapGlove"], "chest": ["旋刃胸甲", "BoneMail"], "shoulders": ["旋刃肩甲", "SpikePauldron"], "engine": ["旋刃履", "Thruster"], "amulet": ["旋刃坠", "RuneAmulet"]},
    "bonus": {
     "2": {"t": "近战伤害提高 30%，受到的近战伤害降低 10%", "add": {"inc:melee": 30, "meleeDR": 10}},
     "4": {"t": "近战技能每次出手叠 1 层刃势（上限 10 层，4 秒不命中清零），每层近战伤害总增 2.5%；这套的技能伤害总增 60%", "more": 60, "flag": {"bladeStack": 2.5}},
     "6": {"t": "刃势满层时，近战技能每次命中再打一次（×30%）；这套的技能伤害总增 250%", "more": 250, "flag": {"bladeMax": 0.3}}
+   }
+  },
+  {
+   "id": "Storm", "n": "风暴", "c": "#8fd0ff", "tag": {"el": "ele"},
+   "pieces": {"core": ["风暴之冠", "EtherealCore"], "hands": ["风暴之握", "ClawGlove"], "chest": ["风暴魂袍", "SoulRobe"], "shoulders": ["风暴肩甲", "SpikePauldron"], "engine": ["风暴履", "EMP"], "amulet": ["风暴坠", "RuneAmulet"]},
+   "bonus": {
+    "2": {"t": "闪电伤害提高 30%，感电效果 +20%", "add": {"inc:ele": 30}, "raw": {"ailEff:ele": 20}},
+    "4": {"t": "闪电技能命中感电的敌人时，向附近另一个敌人跳一道电弧（×30%）；这套的技能伤害总增 60%", "more": 60, "flag": {"stormArc": 0.3}},
+    "6": {"t": "感电的敌人受到的伤害提高 100%；这套的技能伤害总增 250%", "more": 250, "flag": {"shockTaken": 100}}
+   }
+  },
+  {
+   "id": "Pierce", "n": "穿心", "c": "#e6ecf6", "tag": {"f3": "proj"},
+   "pieces": {"core": ["穿心盔", "PolymerCore"], "hands": ["穿心之握", "BoneGlove"], "chest": ["穿心胸甲", "BoneMail"], "shoulders": ["穿心肩甲", "BonePauldron"], "engine": ["穿心履", "Thruster"], "amulet": ["穿心坠", "BoneAmulet"]},
+   "bonus": {
+    "2": {"t": "投射物伤害提高 30%，投射物速度提高 20%", "add": {"inc:proj": 30, "projSpd": 20}},
+    "4": {"t": "投射物 +1；这套的技能伤害总增 60%", "more": 60, "add": {"projAdd": 1}},
+    "6": {"t": "同一发投射物每多打中一个敌人（穿透、弹射），之后的伤害 +35%（最多 +150%）；这套的技能伤害总增 250%", "more": 250, "flag": {"pierceRamp": 0.35}}
+   }
+  },
+  {
+   "id": "Plague", "n": "疫病", "c": "#a8f070", "tag": {"el": "nuc"},
+   "pieces": {"core": ["疫病之冠", "CrystalCore"], "hands": ["疫病之握", "WrapGlove"], "chest": ["疫病尸衣", "Shroud"], "shoulders": ["疫病肩甲", "AshPauldron"], "engine": ["疫病履", "BlackHoleWarp"], "amulet": ["疫病坠", "SoulAmulet"]},
+   "bonus": {
+    "2": {"t": "瘟疫伤害提高 30%，疫病效果 +20%", "add": {"inc:nuc": 30}, "raw": {"ailEff:nuc": 20}},
+    "4": {"t": "带疫病的敌人死亡时，把身上的疫病传给附近 3 个敌人；这套的技能伤害总增 60%", "more": 60, "flag": {"plagueSpread": 3}},
+    "6": {"t": "敌人身上每有 1 层疫病，瘟疫技能对它的伤害 +6%（最多 30 层）；这套的技能伤害总增 350%", "more": 350, "flag": {"plagueStack": 6}}
+   }
+  },
+  {
+   "id": "Holy", "n": "圣光", "c": "#fff3a0", "tag": {"el": "pla"},
+   "pieces": {"core": ["圣光之冠", "TitaniumCore"], "hands": ["圣光之握", "WrapGlove"], "chest": ["圣光魂袍", "SoulRobe"], "shoulders": ["圣光肩甲", "BonePauldron"], "engine": ["圣光履", "Warp"], "amulet": ["圣光坠", "RuneAmulet"]},
+   "bonus": {
+    "2": {"t": "圣光伤害提高 30%，审判效果 +20%（斩杀线更高）", "add": {"inc:pla": 30}, "raw": {"ailEff:pla": 20}},
+    "4": {"t": "审判处决敌人时，在原地爆一圈圣光（这只怪最大生命的 30%，范围 30）；这套的技能伤害总增 60%", "more": 60, "flag": {"holyBurst": 0.3}},
+    "6": {"t": "对精英和 Boss，圣光技能伤害总增 80%；这套的技能伤害总增 350%", "more": 350, "flag": {"holyBig": 80}}
    }
   }
  ]
