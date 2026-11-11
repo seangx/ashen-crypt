@@ -388,7 +388,7 @@ function drawBackground(x, theme, seed) {
   for (const [cx, cy] of [[14, FLOOR_Y + 6], [462, FLOOR_Y + 8], [12, FIELD_B - 12], [464, FIELD_B - 14]]) { x.fillStyle = '#e8dcc0'; x.fillRect(cx, cy, 2, 4); x.fillRect(cx + 3, cy + 1, 2, 3); x.fillStyle = '#9a8f78'; x.fillRect(cx, cy + 3, 5, 1); }
   for (const s of SCONCES) { x.fillStyle = '#2a2016'; x.fillRect(s.x - 2, s.y, 5, 2); x.fillStyle = '#5a4630'; x.fillRect(s.x - 1, s.y + 2, 3, 4); x.fillRect(s.x, s.y + 6, 1, 2); }
   const vg = x.createRadialGradient(VW / 2, (FLOOR_Y + FIELD_B) / 2, 90, VW / 2, (FLOOR_Y + FIELD_B) / 2, 300);
-  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)');
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(60,30,10,.16)'); // 明亮改版：暗角从 0.45 的黑降成很淡的暖色
   x.fillStyle = vg; x.fillRect(0, 0, VW, VH);
 }
 
@@ -403,13 +403,14 @@ function drawFloorTile(x, theme, seed) { // mulberry32 随机
     for (let tx = 0; tx < FLOOR_TW; tx += 16) {
       const bx = tx + off;
       const col = rp(theme.floor), noise = []; for (let n = 0; n < 6; n++) noise.push([R() < 0.5 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.12)', R() * 15 | 0, R() * 15 | 0]);
-      const crack = R() < 0.18 ? [3 + R() * 8, 2 + R() * 8, Array.from({ length: 6 }, () => [R() < 0.5, R() < 0.6])] : null;
+      const crack = R() < 0.18 ? [3 + R() * 8, 2 + R() * 8, Array.from({ length: 6 }, () => [R() < 0.5, R() < 0.6])] : null, sprig = theme.flw && R() < 0.22 ? [2 + (R() * 10 | 0), R() < 0.5 ? theme.flw[R() * theme.flw.length | 0] : null] : null;
       for (const sh of bx + 15 > FLOOR_TW ? [bx, bx - FLOOR_TW] : [bx]) { // 跨右边界的砖在左边补一半
         x.fillStyle = col; x.fillRect(sh, ty, 15, 15);
         x.fillStyle = 'rgba(255,255,255,.05)'; x.fillRect(sh, ty, 15, 1);
         x.fillStyle = 'rgba(0,0,0,.18)'; x.fillRect(sh, ty + 14, 15, 1);
         for (const [c, nx, ny] of noise) { x.fillStyle = c; x.fillRect(sh + nx, ty + ny, 1, 1); }
         if (crack) { x.fillStyle = theme.mortar; let cx = sh + crack[0], cy = ty + crack[1]; for (const [a, b] of crack[2]) { x.fillRect(cx | 0, cy | 0, 1, 1); cx += a ? 1 : 0; cy += b ? 1 : 0; } }
+        if (theme.flw && sprig) { x.fillStyle = theme.acc2; x.fillRect(sh + sprig[0], ty + 14, 3, 1); x.fillStyle = theme.acc; x.fillRect(sh + sprig[0] + 1, ty + 13, 1, 1); if (sprig[1]) { x.fillStyle = sprig[1]; x.fillRect(sh + sprig[0] + 2, ty + 12, 1, 1); } } // 砖缝里冒出的草芽和小花（明亮改版）
       }
     }
   }
@@ -429,11 +430,11 @@ function drawChunkDecor(x, theme, seed) {
     const px_ = 8 + R() * (CHUNK - 16) | 0, py = 8 + R() * (CHUNK - 16) | 0, k = R();
     if (k < 0.35) x.drawImage(SPR.skull, px_, py);
     else if (k < 0.75) { x.fillStyle = '#b9ad94'; x.fillRect(px_, py, 5, 1); x.fillStyle = '#ece3cb'; x.fillRect(px_ - 1, py - 1, 1, 1); x.fillRect(px_ + 5, py - 1, 1, 1); x.fillRect(px_ - 1, py + 1, 1, 1); x.fillRect(px_ + 5, py + 1, 1, 1); }
-    else { for (let i = 0; i < 6; i++) { x.fillStyle = R() < 0.5 ? theme.mortar : '#3a3240'; x.fillRect(px_ + (R() * 9 | 0), py + (R() * 5 | 0), 2 + (R() * 2 | 0), 2); } } // 碎石堆
+    else { for (let i = 0; i < 6; i++) { x.fillStyle = R() < 0.5 ? theme.mortar : (theme.wallM || '#3a3240'); x.fillRect(px_ + (R() * 9 | 0), py + (R() * 5 | 0), 2 + (R() * 2 | 0), 2); } } // 碎石堆
   }
-  if (R() < 0.3) { // 一摊暗色血迹/水渍
-    const cx = 30 + R() * (CHUNK - 60), cy = 30 + R() * (CHUNK - 60); x.fillStyle = 'rgba(0,0,0,.22)';
-    for (let i = 0; i < 40; i++) { const a = R() * 6.28, r = R() * 12; x.fillRect(cx + Math.cos(a) * r | 0, cy + Math.sin(a) * r * 0.6 | 0, 2, 1); }
+  for (let k = 0, nf = theme.flw ? 2 + (R() * 3 | 0) : 0; k < nf; k++) { // 一丛小花（明亮改版：原来是一摊暗色血迹）
+    const cx = 20 + R() * (CHUNK - 40), cy = 20 + R() * (CHUNK - 40), fc = theme.flw[R() * theme.flw.length | 0];
+    for (let i = 0; i < 7; i++) { const a = R() * 6.28, r = R() * 7, fx_ = cx + Math.cos(a) * r | 0, fy = cy + Math.sin(a) * r * 0.6 | 0; x.fillStyle = theme.acc2; x.fillRect(fx_, fy + 1, 1, 2); x.fillStyle = fc; x.fillRect(fx_ - 1, fy, 3, 1); x.fillRect(fx_, fy - 1, 1, 3); x.fillStyle = '#ffd84a'; x.fillRect(fx_, fy, 1, 1); }
   }
   if (R() < 0.45) { // 蜡烛（火苗是动态画的，这里只画蜡柱）
     const cx = 20 + R() * (CHUNK - 40) | 0, cy = 20 + R() * (CHUNK - 40) | 0, n = 2 + (R() * 3 | 0);
@@ -448,7 +449,7 @@ function drawChunkDecor(x, theme, seed) {
 // 屏幕暗角（固定在屏幕上）
 function drawVignette(x) {
   x.clearRect(0, 0, W, H); const cy = SCR_CY;
-  const vg = x.createRadialGradient(W / 2, cy, 90, W / 2, cy, 300); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)');
+  const vg = x.createRadialGradient(W / 2, cy, 90, W / 2, cy, 300); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(60,30,10,.16)'); // 明亮改版：暗角从 0.45 的黑降成很淡的暖色
   x.fillStyle = vg; x.fillRect(0, 0, W, H);
 }
 

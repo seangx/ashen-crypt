@@ -315,9 +315,10 @@ const ulk = s => String(s).replace(/\{u:(\w+)\|([^}]*)\}/g, (_, id, t) => unlock
 const unlockText = id => { const u = unlockOf(id); const p = []; if (u && u.depth) p.push(`通关第 ${u.depth} 层`); if (u && u.level) p.push(`角色 ${u.level} 级`); if (u && u.ladder) p.push(`天梯通过第 ${u.ladder} 层`); return p.join('、') + '后开放'; };
 
 const THEMES = [
-  { from: 1, n: '白骨长廊', wall: ['#4a3f55', '#433a4e', '#3e3548'], wallM: '#2a2233', floor: ['#3a3244', '#352e3f', '#3f3649'], mortar: '#241e2c', acc: '#b9ad94', acc2: '#7d7262', fog: [12, 8, 18] },
-  { from: 6, n: '苔藓墓室', wall: ['#3a4a3f', '#34443a', '#2f3f35'], wallM: '#1e2a22', floor: ['#2d3a31', '#29352d', '#324036'], mortar: '#1a241d', acc: '#6fae5a', acc2: '#3f6a35', fog: [8, 14, 10] },
-  { from: 12, n: '熔渣深坑', wall: ['#4f3530', '#4a302b', '#432a26'], wallM: '#2a1814', floor: ['#3a2824', '#352420', '#402c27'], mortar: '#221410', acc: '#ff6a2a', acc2: '#8a3a1a', fog: [18, 8, 4] },
-  { from: 20, n: '霜冻王座', wall: ['#3a4658', '#354153', '#303c4e'], wallM: '#1e2633', floor: ['#2c3646', '#283241', '#303b4c'], mortar: '#1a202b', acc: '#9fd8ff', acc2: '#5b8fe0', fog: [6, 10, 18] },
+  // 11-12 明亮可爱改版（用户：希望更新明亮可爱一点）：沙岩、嫩绿、暖橙、晴空四种明亮地面；amb 是光照底色（MUL2 叠加，0x80 = 原色），flw 地上小花的颜色
+  { from: 1, n: '暖阳石廊', wall: ['#c9a77a', '#c2a073', '#bd9a6d'], wallM: '#8a6a45', floor: ['#d2b07e', '#cba977', '#d8b787'], mortar: '#a3814f', acc: '#7cbf5a', acc2: '#5a9a44', flw: ['#ffffff', '#ffe066', '#ff9ac8'], amb: 0x8e877a, fog: [60, 40, 20] },
+  { from: 6, n: '青苔花园', wall: ['#a9b97e', '#a2b277', '#9cac71'], wallM: '#6e8048', floor: ['#b0c47c', '#a9bd75', '#b7cb85'], mortar: '#859754', acc: '#5fa84a', acc2: '#4a8c3a', flw: ['#ffd84a', '#ff9ac8', '#ffffff'], amb: 0x8a8a7a, fog: [30, 50, 20] },
+  { from: 12, n: '暖橙熔岩', wall: ['#d49a72', '#cd936b', '#c68c64'], wallM: '#94603e', floor: ['#dca47a', '#d59d72', '#e2ac82'], mortar: '#ad744c', acc: '#ff7a3a', acc2: '#ffd36a', flw: ['#ffd36a', '#ff7a3a', '#fff2b0'], amb: 0x928276, fog: [70, 30, 10] },
+  { from: 20, n: '晴空冰晶', wall: ['#b9d2e6', '#b2cbe0', '#abc4da'], wallM: '#7d9ab4', floor: ['#b4d2ea', '#abcae3', '#bcd9f0'], mortar: '#86a8c6', acc: '#ffffff', acc2: '#8fd0ff', flw: ['#ffffff', '#bfe8ff', '#d8c8ff'], amb: 0x84888e, fog: [20, 40, 70] },
 ];
 const themeFor = d => { let t = THEMES[0]; for (const x of THEMES) if (d >= x.from) t = x; return t; };

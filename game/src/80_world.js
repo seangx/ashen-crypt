@@ -325,15 +325,16 @@ class World extends Phaser.Scene {
     for (const r of this.rings) if (r.fill && lights.length < 22) lights.push({ x: r.x, y: r.y, r2: (r.r * 1.5) ** 2, i: .6, c: hex(ELEM_C[r.el] || '#ffd36a') });
     for (const dp of drops) if (dp.kind === 'item' && dp.item.rar >= 1 && lights.length < 24) lights.push({ x: dp.x, y: dp.y - 8, r2: 520, i: .45, c: hex(icol(dp.item)) });
     if (this.lightRT) {
-      const rt = this.lightRT; rt.setPosition(cx, cy); rt.fill(RUN ? 0x34324c : 0x2e2c44);
-      for (const l of lights) rt.stamp('ldisc', null, (l.x - cx) / 2, (l.y - cy) / 2, { scale: Math.sqrt(l.r2) / 64, tint: l.c, alpha: l.i * 0.85, blendMode: Phaser.BlendModes.ADD });
+      if (this.post) { const b = !!theme.amb; this.post.thr = b ? 0.9 : 0.55; this.post.bloom = b ? 1.2 : 2.2; this.post.vig = b ? 0.12 : 0.4; } // 明亮改版：亮地面不能整片泛光
+      const rt = this.lightRT; rt.setPosition(cx, cy); rt.fill(theme.amb || (RUN ? 0x34324c : 0x2e2c44)); // 明亮改版：底色接近原色（0x80），不再整体压暗
+      for (const l of lights) rt.stamp('ldisc', null, (l.x - cx) / 2, (l.y - cy) / 2, { scale: Math.sqrt(l.r2) / 64, tint: l.c, alpha: l.i * (theme.amb ? 0.12 : 0.85), blendMode: Phaser.BlendModes.ADD });
       // 热浪：墙上的火把、营地的火盆和篝火
       const hz = SC.map(s => ({ x: s.x, y: s.y - 6, w: 6, h: 18 })); for (const d of decoL) if (d.s === 2) hz.push({ x: d.x, y: d.y - 6, w: 6, h: 18 });
       if (!RUN) { const gt = FAC_BY.gate; hz.push({ x: gt.x - 36, y: gt.y - 18, w: 8, h: 26 }, { x: gt.x + 36, y: gt.y - 18, w: 8, h: 26 }, { x: 240, y: 176, w: 9, h: 28 }); }
       this.post.hazes = hz;
-    } else { const amb = RUN ? 0.4 : 0.32; this.lightImg.setPosition(cx, cy); renderLight(this.lightTex.getContext(), lights.map(l => ({ ...l, x: l.x - cx, y: l.y - cy })), amb, theme.fog); this.lightTex.refresh(); }
-    this.glows.forEach(gl => gl.setAlpha(.16 * fl));
-    this.heroGlow.setPosition(player.x + player.face * 4, player.y - 6).setAlpha((this.lightRT ? .07 : .14) * fl);
+    } else { const amb = theme.amb ? 0.95 : RUN ? 0.4 : 0.32; this.lightImg.setPosition(cx, cy); renderLight(this.lightTex.getContext(), lights.map(l => ({ ...l, x: l.x - cx, y: l.y - cy })), amb, theme.fog); this.lightTex.refresh(); }
+    this.glows.forEach(gl => gl.setAlpha((theme.amb ? .05 : .16) * fl));
+    this.heroGlow.setPosition(player.x + player.face * 4, player.y - 6).setAlpha((theme.amb ? .03 : this.lightRT ? .07 : .14) * fl);
     // 投影：火把、营地火光把角色和怪的影子投到地上；怪的影子也背着提灯亡魂的光
     const casters = [...SC, ...decoL.filter(d => d.s === 2)].map(s => ({ x: s.x, y: s.y + 6, r: 140 }));
     if (!RUN) casters.push({ x: FAC_BY.gate.x - 36, y: FAC_BY.gate.y - 10, r: 100 }, { x: FAC_BY.gate.x + 36, y: FAC_BY.gate.y - 10, r: 100 }, { x: 240, y: 180, r: 120 });
@@ -440,7 +441,7 @@ class World extends Phaser.Scene {
     // 异常着色；光圈外的普通怪压成暗剪影（lamp-v2 §3：只看得见轮廓，眼睛那点红光在剪影上还能看出来）
     const dark = RUN && !m.boss && !m.elite && dist2(m, player) > lampLightR() ** 2;
     if (m.fl > 0) o.img.clearTint();
-    else if (dark) o.img.setTint(0x2c2840);
+    else if (dark) o.img.setTint(this.theme && this.theme.amb ? 0x8a7f9a : 0x2c2840); // 明亮主题：光圈外压成淡灰紫，不是黑剪影
     else if (frz) o.img.clearTint();
     else if (m.chill > 0) o.img.setTint(m.chill >= 6 ? 0x8fd0ff : 0xc4ecff); // 冰缓：越深越蓝
     else if (m.shock >= 3 && (t * 8 | 0) % 2) o.img.setTint(0xa8dcff);
