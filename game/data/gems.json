@@ -165,7 +165,7 @@
    "el": "ele",
    "f3": "proj",
    "mech": [
-    "split"
+    "chain"
    ]
   },
   {
@@ -221,7 +221,7 @@
    "el": "ele",
    "f3": "proj",
    "mech": [
-    "chain"
+    "bounce"
    ]
   },
   {
@@ -255,7 +255,7 @@
    "el": "pla",
    "f3": "proj",
    "mech": [
-    "pierce"
+    "chain"
    ]
   },
   {

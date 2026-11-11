@@ -130,7 +130,7 @@ class World extends Phaser.Scene {
         case 'freeze': // 冻结：冰蓝闪一下 + 碎冰粒子
           if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 9, life: 0.2, max: 0.2, el: 'cold' });
           this.em.spark2.particleTint = 0x9fe3ff; this.em.spark2.explode(6, e.x, e.y); if (this.em.chip) this.em.chip.explode(2, e.x, e.y); break;
-        case 'bounce': // 弹射：投射物在场边反弹时的小火花
+        case 'bounce': // 弹射 / 回弹：投射物转向时的小火花
           if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 6, life: 0.1, max: 0.1, el: 'flash' });
           this.em.spark2.particleTint = 0xd8f4ff; this.em.spark2.explode(4, e.x, e.y); break;
         case 'hit': this.star(e.x, e.y, hex(ELEM_C[e.el]), 0); this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(2, e.x, e.y); break;
