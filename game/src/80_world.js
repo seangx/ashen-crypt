@@ -45,6 +45,7 @@ class World extends Phaser.Scene {
     this.spr = new Map(); this.frame = 0; this.lines = []; this.rings = []; this.stars = []; this.dmgCount = 0; this.trail = [];
     const P = (cfg, depth = 30) => this.add.particles(0, 0, 'px', { emitting: false, ...cfg }).setDepth(depth);
     this.scorch = [];
+    this.loadSkillFx();
     this.em = {
       bone: P({ lifespan: { min: 350, max: 800 }, speed: { min: 30, max: 90 }, angle: { min: 200, max: 340 }, gravityY: 260, tint: [0xece3cb, 0xb9ad94, 0x7d7262] }),
       bossdie: P({ lifespan: { min: 500, max: 1200 }, speed: { min: 40, max: 140 }, angle: { min: 190, max: 350 }, gravityY: 200, tint: [0xece3cb, 0x7a55a0, 0xffd75e] }),
@@ -64,6 +65,24 @@ class World extends Phaser.Scene {
     cv.addEventListener('pointermove', e => { const d = nat(e); if (onField()) autoTouch(e.pointerType === 'touch' ? -1 : d); });
     cv.addEventListener('pointerdown', e => { ac(); nat(e); if (onField() && (e.pointerType === 'touch' || e.button === 2)) autoTouch(-1); if (e.button === 2) tryDash(); });
     cv.addEventListener('pointerleave', () => { mouse.on = false; }); cv.addEventListener('pointerenter', () => { mouse.on = true; });
+  }
+  /* 技能专属特效（data/skillfx.json，图集在 vendor/fxsheets.js，特效来自 pixelfx，MIT）：启动时注册成精灵图和动画；没加载到就退回通用圈 */
+  loadSkillFx() {
+    this.skSpr = []; this.skLast = {}; this.skN = {};
+    const SH = window.FX_SHEETS; if (!SH) return;
+    for (const name in SH) { const s = SH[name], im = new Image(); im.onload = () => { if (this.textures.exists(name)) return; this.textures.addSpriteSheet(name, im, { frameWidth: s.fw, frameHeight: s.fh }); this.anims.create({ key: 'fx_' + name, frames: this.anims.generateFrameNumbers(name, { start: 0, end: s.n - 1 }), frameRate: s.fps, repeat: s.loop ? -1 : 0 }); }; im.src = s.img; }
+  }
+  skSheet(sheet, el) { const SH = window.FX_SHEETS || {}, C = DATA.skillfx.sheets[sheet]; const n = SH[sheet + '_' + el] && this.textures.exists(sheet + '_' + el) ? sheet + '_' + el : C && this.textures.exists(sheet + '_' + C.el) ? sheet + '_' + C.el : null; return n ? [n, SH[n]] : null; }
+  skillFx(e) { // 返回 true = 这一条事件已经换成专属特效，不再画通用的
+    const R = DATA.skillfx.play[e.sk], P = R && [].concat(R).find(x => x.ev === e.t); if (!P) return false;
+    const got = this.skSheet(P.sheet, e.el); if (!got) return false; const [name, s] = got;
+    if (P.every && (this.skN[e.sk] = (this.skN[e.sk] || 0) + 1) % P.every !== 1 % P.every) return !!P.replace; // 一次刺很多根时只画其中几根
+    if ((this.skLast[name] || 0) > G.time - 0.05 || this.skSpr.length >= 40) return !!P.replace; // 限频、限量：怪海里不把屏幕糊满
+    this.skLast[name] = G.time;
+    const k = e.r ? clamp(e.r / s.fit, 0.6, 1.6) : 1, sp = this.add.sprite(Math.round(e.x), Math.round(e.y), name).setOrigin(s.ox / s.fw, s.oy / s.fh).setDepth(P.ground ? 9.6 : 59).setScale(k);
+    if (P.rot && e.a != null) { const left = Math.cos(e.a) < 0; sp.setFlipX(left); sp.setRotation(left ? e.a + Math.PI : e.a); }
+    sp.play('fx_' + name); if (P.once && s.loop) this.time.delayedCall(P.once * 1000, () => sp.emit('animationcomplete')); /* 循环图集当一次性用：播一段时间收掉 */ this.skSpr.push(sp); sp.once('animationcomplete', () => { sp.destroy(); this.skSpr = this.skSpr.filter(x => x !== sp); });
+    return !!P.replace;
   }
   // 震屏有冷却，只在大事件上用
   hitStop(d, cd = 0.35) { if (!G.fx || G.time < (this.stopCd || 0)) return; this.stopUntil = G.time + d; this.stopCd = G.time + cd; } // 有冷却，打 Boss 时不会一直卡
@@ -109,6 +128,7 @@ class World extends Phaser.Scene {
   // 处理战斗逻辑产生的表现事件
   consume() {
     for (const e of fxq) {
+      if (e.sk && this.skSpr && this.skillFx(e)) continue;
       switch (e.t) {
         case 'num': this.dmgText(e.x, e.y, fmt(e.v), e.hurt ? COL.bad : e.crit ? COL.emberHi : ELEM_C[e.el], e.crit); break;
         case 'text': this.label(e.x, e.y, e.s, e.c); break;
@@ -254,15 +274,22 @@ class World extends Phaser.Scene {
     for (const z of zones) if (z.fire) fireGroundFx(this, this.groundG, pg, this.glowG, z, t); // 火地：焦土 + 跳动的火舌
     for (const z of zones) { if (z.devil || z.fire) continue; const c = z.enemy && z.el !== 'nuc' ? 0xff3a7a : hex(ELEM_C[z.el]); if (z.enemy) { const ea = Math.min(1, z.t); pg.fillStyle(z.el === 'nuc' ? 0x2f5a22 : 0x4a0a30, (z.el === 'nuc' ? 0.35 : 0.4) * ea).fillEllipse(z.x, z.y, z.r * 2, z.r * 1.2); pg.lineStyle(1, z.el === 'nuc' ? 0x6ad040 : 0xd02060, 0.7 * ea).strokeEllipse(z.x, z.y, z.r * 2, z.r * 1.2); } /* 敌方地面区域：毒池绿、骨法师火圈按元素色 */ const n = Math.max(10, z.r * 1.5 | 0); pg.fillStyle(c, z.vortex ? 0.8 : 0.45); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (z.vortex ? t * 6 : 0), rr = z.r * (z.vortex ? 0.4 + 0.6 * ((i * 7) % 5) / 5 : (0.5 + 0.5 * Math.abs(Math.sin(i * 1.7 + t * 3)))); pg.fillRect(z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr * 0.6, 1, 1); } }
     // 瘟疫光环（常驻 / 拿在手里时）：地上一层半透明的绿盘 + 转动的虚线边，圈里飘孢子，每秒向外脉动一次；画在怪下面
+    let auraOn = null;
     for (const [W_, wi] of combatWs()) if (W_.form === 'aura') {
       const tr = W_.trigSlot ? STATS.trigs[W_.trigSlot - 1] : null; if (tr && (tr.mode !== 'always' || !lampOk())) continue; // 非常驻魂龛：只在触发时放冲击环
       const gg = this.groundG, c = hex(ELEM_C[W_.el] || '#8fe05a'), R = W_.rng, cx = player.x, cy = player.y, k = 0.6;
+      { const P = [].concat(DATA.skillfx.play[skB(W_)] || []).find(x => x.ev === 'auraLoop'), got = P && this.skSheet(P.sheet, W_.el); // 专属特效：脚下一圈循环的毒云（换元素的变体用对应配色）
+        if (got) { const [name, s] = got; // 三层云（后 / 中 / 前，错开播放进度）撑出一个贴地的毒云圈；单层是侧视的一条云带，压扁后只剩一条线
+          if (!this.auraSpr || this.auraSpr.key !== name) { if (this.auraSpr) this.auraSpr.list.forEach(o => o.destroy()); this.auraSpr = { key: name, list: [0, 1, 2].map(i => { const o = this.add.sprite(0, 0, name).setOrigin(0.5, s.oy / s.fh).setDepth(i === 2 ? 31 : 9.6).setAlpha(i === 1 ? 0.9 : 0.7); o.play({ key: 'fx_' + name, startFrame: (i * 7) % s.n }); return o; }), setVisible(v) { this.list.forEach(o => o.setVisible(v)); return this; } }; }
+          [[-0.55, 0.75, 1.25], [0, 1, 1.6], [0.6, 0.8, 1.25]].forEach(([dy, w, hy], i) => this.auraSpr.list[i].setPosition(Math.round(cx), Math.round(cy + R * k * dy + 4)).setScale(R * 2 * w / s.fw, R * 2 * w / s.fw * hy).setVisible(true)); auraOn = this.auraSpr;
+          gg.lineStyle(1, c, 0.25).strokeEllipse(cx, cy, R * 2, R * 2 * k); continue; } }
       gg.fillStyle(c, 0.09 + 0.03 * Math.sin(t * 2.4)).fillEllipse(cx, cy, R * 2, R * 2 * k);
       gg.fillStyle(c, 0.06).fillEllipse(cx, cy, R * 1.3, R * 1.3 * k);
       const n = 24; for (let i = 0; i < n; i++) { if (i % 3 === 2) continue; const a = i / n * Math.PI * 2 + t * 0.5; gg.fillStyle(c, 0.55).fillRect(Math.round(cx + Math.cos(a) * R), Math.round(cy + Math.sin(a) * R * k), 2, 1); }
       if (rnd() < this.dt * 10) { const a = rf(0, Math.PI * 2), d = Math.sqrt(rnd()) * R; this.em.spore.explode(1, cx + Math.cos(a) * d, cy + Math.sin(a) * d * k - 1); }
       const ph = (this.auraPh = ((this.auraPh || 0) + this.dt) % 1.2) / 1.2, pr = R * (0.35 + 0.65 * (1 - (1 - ph) ** 2)); gg.lineStyle(1, c, 0.45 * (1 - ph)).strokeEllipse(cx, cy, pr * 2, pr * 2 * k); // 每 1.2 秒从里往外扩一圈，和地上的椭圆同形
     }
+    if (this.auraSpr && this.auraSpr !== auraOn) this.auraSpr.setVisible(false);
     // 特效线与环
     const fg = this.fxG; fg.clear();
     for (const l of this.lines) { l.life -= dt; if (l.arc) { arcFx(fg, this.glowG, l); continue; } const c = hex(ELEM_C[l.el] || '#ffffff'); fg.fillStyle(c, 1); if (l.jag) jag(fg, l.x1, l.y1, l.x2, l.y2); else { pline(fg, l.x1, l.y1, l.x2, l.y2); fg.fillStyle(0xffffff, 0.8); pline(fg, l.x1, l.y1 - 1, l.x2, l.y2 - 1); } }

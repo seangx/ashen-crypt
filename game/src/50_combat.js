@@ -22,6 +22,7 @@ function ringPoint(m = 18, a) {
 const offView = (o, m) => o.x < CAM.x - m || o.x > CAM.x + AW + m || o.y < CAM.y + AT - m || o.y > CAM.y + AB + m;
 const player = { x: 240, y: 150, vx: 0, vy: 0, life: 1, shield: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: Array(14).fill(0), orbitA: 0, guardT: 0, spin: Array.from({ length: 14 }, () => ({ n: 0, g: 0, idle: 9 })), swing: Array(14).fill(0), devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
 const fx = o => { if (G.fx) fxq.push(o); };
+const skB = W => ((W && W.b && W.b.gem) || '').split('#')[0]; // 表现事件带上技能（原技能石 id，变体共用）：渲染端按 data/skillfx.json 换专属特效
 const MINE_MAX = MECH.mineMax;
 const RL = DATA.rules, PAT = PROG.bossPatterns, ELITE = PROG.elite;
 
@@ -568,7 +569,7 @@ function fire(W, i) {
       if (!inRange(W, W.rng)) return false;
       const n = attacks(W), cost = W.trigSlot ? 0 : NV.soulPerCast * (1 - STATS.soulLess), frost = W.frostNova && (!RUN || player.soul >= cost); // 霜环：灯火不够时放普通的新星；先叠冰缓再结算伤害，这一下冻住的怪当场吃“冻结受伤提高”，打死就碎
       const f0 = RUN ? RUN.freezes || 0 : 0, kb = NV.knockPx * Math.log(50); // 击退 knockPx 像素（kx 每秒衰减到 2%，位移 ≈ kx ÷ ln50）
-      for (let k = 0; k < n; k++) { fx({ t: 'boom', x: px, y: py + 6, r: W.aoeR, el: W.el }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.aoeR + m.size) ** 2) { if (frost) chillOn(m, W.chillStacks, W); hitMob(m, W, frost ? { mul: W.novaMul } : {}); if (frost && !m.dead) { if (!m.boss) { const dx = m.x - player.x, dy = m.y - player.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * kb; m.ky += dy / d * kb; } } } aoePull(px, py + 6, W.aoeR); }
+      for (let k = 0; k < n; k++) { fx({ t: 'boom', x: px, y: py + 6, r: W.aoeR, el: W.el, sk: skB(W) }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.aoeR + m.size) ** 2) { if (frost) chillOn(m, W.chillStacks, W); hitMob(m, W, frost ? { mul: W.novaMul } : {}); if (frost && !m.dead) { if (!m.boss) { const dx = m.x - player.x, dy = m.y - player.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * kb; m.ky += dy / d * kb; } } } aoePull(px, py + 6, W.aoeR); }
       if (W.autoNova && STATS.flag.iceGround) pushGround({ ice: 1, gk: 'ice', x: px, y: py + 6, r: W.aoeR * UQX.iceGround.rMul, t: UQX.iceGround.dur, tickT: 0.5, tick: 0 });
       if (frost && RUN) player.soul = Math.min(STATS.soulMax, Math.max(0, player.soul - cost) + Math.min(NV.refundCap, ((RUN.freezes || 0) - f0) * NV.refund)); // 每冻结一只返还
       sfx('boom'); return true;
@@ -608,13 +609,13 @@ function fire(W, i) {
       const half = W.b.arc || 0.9, tg = aimPick(W, px, py, W.rng, aimMode(W), half); if (!tg) return false;
       const a = aimAt(Math.atan2(tg.y - 4 - py, tg.x - px)); let hits = 0;
       for (const m of mobs) { if (m.dead || m.rise > 0.2) continue; const dx = m.x - px, dy = m.y - 4 - py; if (Math.hypot(dx, dy) > W.rng + m.size) continue; let da = Math.abs(Math.atan2(dy, dx) - a); if (da > Math.PI) da = Math.PI * 2 - da; if (da < half) { hitMob(m, W); hits++; } }
-      fx({ t: 'cleave', x: px, y: py, a, r: W.rng, arc: half, el: W.el }); sfx('slash'); player.swing[i] = 0.18; return true;
+      fx({ t: 'cleave', x: px, y: py, a, r: W.rng, arc: half, el: W.el, sk: skB(W) }); sfx('slash'); player.swing[i] = 0.18; return true;
     }
     case 'stab': { // 骨刺：从地下刺向射程内若干最近的敌人
       const n = 1 + W.extra;
       const t = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2).sort((a, b) => dist2(a, player) - dist2(b, player)).slice(0, n);
       if (!t.length) return false;
-      for (const m of t) { hitMob(m, W); fx({ t: 'spike', x: m.x, y: m.y, el: W.el }); }
+      for (const m of t) { hitMob(m, W); fx({ t: 'spike', x: m.x, y: m.y, el: W.el, sk: skB(W), a: Math.atan2(m.y - player.y, m.x - player.x) }); }
       sfx('slash'); return true;
     }
   }
@@ -670,7 +671,7 @@ function projHit(p, m) {
   if (p.W.pierceStep) mul *= 1 + p.W.pierceStep * Math.max(0, p.hit.size - 1); // tree-v3 穿心：每穿过一个敌人 +10%
   if (STATS.flag.pierceRamp) mul *= 1 + Math.min(1.5, STATS.flag.pierceRamp * Math.max(0, p.hit.size - 1)); // 穿心套 6 件：同一发每多打中一个 +35%，最多 +150%
   if (p.W.aoeR && p.W.form === 'proj') { // 火油罐：命中后范围爆炸
-    fx({ t: 'boom', x: m.x, y: m.y - 3, r: p.W.aoeR, el: p.el }); sfx('boom'); aoePull(m.x, m.y, p.W.aoeR);
+    fx({ t: 'boom', x: m.x, y: m.y - 3, r: p.W.aoeR, el: p.el, sk: skB(p.W) }); sfx('boom'); aoePull(m.x, m.y, p.W.aoeR);
     for (const n of mobs) if (!n.dead && dist2(n, m) < (p.W.aoeR + n.size) ** 2) hitMob(n, p.W, { mul });
     return true;
   }
@@ -827,7 +828,7 @@ function logic(dt) {
     }
     if (W.form === 'ram') { // 撞城骨锤：撞上敌人造成伤害，越快越痛
       const sp = player.dashT > 0 ? MECH.ramDashMul : clamp(Math.hypot(player.vx, player.vy) / P.speed, MECH.ramMinMul, 1);
-      for (const m of mobs) if (!m.dead && m.rise <= 0.2 && m.ramT <= 0 && dist2(m, player) < (m.size + 7) ** 2) { hitMob(m, W, { mul: sp }); m.ramT = MECH.ramCd; fx({ t: 'hit', x: m.x, y: m.y - 4, el: 'kin' }); sfx('slash'); }
+      for (const m of mobs) if (!m.dead && m.rise <= 0.2 && m.ramT <= 0 && dist2(m, player) < (m.size + 7) ** 2) { hitMob(m, W, { mul: sp }); m.ramT = MECH.ramCd; fx({ t: 'hit', x: m.x, y: m.y - 4, el: 'kin' }); fx({ t: 'ramHit', x: m.x, y: m.y, r: 24, el: W.el, sk: skB(W) }); sfx('slash'); }
       return;
     }
     player.wcd[i] -= dt * pChillK();
@@ -955,7 +956,7 @@ function stepOrb(p, dt) { // 冰球：直线慢飞，碰屏幕边一直折返（
   if (hx || hy) { if (hx) p.vx = -p.vx; if (hy) p.vy = -p.vy; p.x = clamp(p.x, F.x0, F.x1); p.y = clamp(p.y, F.y0 - 6, F.y1); p.bn = (p.bn || 0) + 1; fx({ t: 'bounce', x: p.x, y: p.y }); }
   for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (p.r + m.size) ** 2) { const t = p.touch.get(m); if (t == null || p.age - t >= OB.contactTick) { p.touch.set(m, p.age); hitMob(m, p.W, { mul: OB.contactMul }); if (STATS.flag.echoCrown && p.bn) echoBurst(m, p.W); } }
   if (p.rune) { p.emitT -= dt; while (p.emitT <= 0) { p.emitT += p.W.orbEmit || OB.emit; p.rot += OB.rot * Math.PI / 180; orbShards(p.W, p.x, p.y, OB.shardDirs + (STATS.spawnAdd || 0), p.rot, p.W.shardMul, p.cast, 0, null); } }
-  if (p.life <= 0) { p.dead = true; fx({ t: 'frostburst', x: p.x, y: p.y, r: OB.endR }); if (p.rune) orbShards(p.W, p.x, p.y, (OB.endShards || 12) + (STATS.spawnAdd || 0), p.rot, p.W.shardMul, p.cast, 0, null); /* 暗黑 2：寿命到了再爆一圈冰片新星 */ for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (OB.endR + m.size) ** 2) hitMob(m, p.W, { mul: OB.endMul }); }
+  if (p.life <= 0) { p.dead = true; fx({ t: 'frostburst', x: p.x, y: p.y, r: OB.endR, el: p.W.el, sk: skB(p.W) }); if (p.rune) orbShards(p.W, p.x, p.y, (OB.endShards || 12) + (STATS.spawnAdd || 0), p.rot, p.W.shardMul, p.cast, 0, null); /* 暗黑 2：寿命到了再爆一圈冰片新星 */ for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, p) < (OB.endR + m.size) ** 2) hitMob(m, p.W, { mul: OB.endMul }); }
 }
 function stepShieldThrow(W, dt) { // 圣盾掷：盾在手上才扔；飞出去时没有格挡
   const out = projs.some(p => p.sthrow && !p.dead); STATS.armor = out ? STATS.armorOut : STATS.armorHeld;
@@ -996,7 +997,7 @@ function delayFx(W, x, y, r, mul, mini) {
 function stepMeteors(dt) { // 陨石落地：圈内一次命中，击退 + 眩晕；插符文的留火地
   for (const M of meteors) {
     M.t -= dt; if (M.t > 0) { if (STATS.flag.earlyWarn) for (const m of mobs) if (!m.dead && !m.boss && m.frzT <= 0 && !(m.stunT > 0) && dist2(m, M) < (M.r + m.size) ** 2) { const dx = m.x - M.x, dy = m.y - M.y, l = Math.hypot(dx, dy) || 1; m.x += dx / l * UQX.doomDodge * dt; m.y += dy / l * UQX.doomDodge * dt; } continue; } // 末日冠代价：圈里的怪往外躲
-    fx({ t: M.W.b.bolt ? 'boltHit' : M.W.b.smite ? 'smiteHit' : 'meteorHit', x: M.x, y: M.y, r: M.r }); sfx('boom');
+    fx({ t: M.W.b.bolt ? 'boltHit' : M.W.b.smite ? 'smiteHit' : 'meteorHit', x: M.x, y: M.y, r: M.r, el: M.W.el, sk: skB(M.W) }); sfx('boom');
     const markMul = delayFx(M.W, M.x, M.y, M.r, M.mul, M.mini); // 陨星套
     const kb = MT.knockPx * Math.log(50); let kills = 0, hd = 0, hn = 0;
     for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, M) < (M.r + m.size) ** 2) {
@@ -1042,7 +1043,7 @@ function stepProjs(dt) {
       else if (W.b.shoot) { // 雷暴 / 碎骨陷阱：向敌人射出
         if (W.chain) chainHit(W, tg, { x: p.x, y: p.y + 6 }, W.chain);
         else shoot(W, p.x, p.y - 2, Math.atan2(tg.y - p.y, tg.x - p.x), { pierce: W.pierce, chain: 0, split: W.split, ret: 0, hit: new Set(), mul: 1, life: W.rng / W.spd, first: true });
-      } else { fx({ t: 'boom', x: p.x, y: p.y, r: W.aoeR, el: W.el }); sfx('boom'); const mk = delayFx(W, p.x, p.y, W.aoeR, 1, false); for (const m of mobs) if (!m.dead && dist2(m, p) < (W.aoeR + m.size) ** 2) hitMob(m, W, mk !== 1 ? { mul: mk } : {}); aoePull(p.x, p.y, W.aoeR); } // 陨星套：陷阱引爆也算延迟技能生效
+      } else { fx({ t: 'boom', x: p.x, y: p.y, r: W.aoeR, el: W.el, sk: skB(W) }); sfx('boom'); const mk = delayFx(W, p.x, p.y, W.aoeR, 1, false); for (const m of mobs) if (!m.dead && dist2(m, p) < (W.aoeR + m.size) ** 2) hitMob(m, W, mk !== 1 ? { mul: mk } : {}); aoePull(p.x, p.y, W.aoeR); } // 陨星套：陷阱引爆也算延迟技能生效
     } else {
       if (p.cx != null) { // 疫星仪：螺旋向外
         p.sa += dt * 5; p.sr += dt * 55; p.x = p.cx + Math.cos(p.sa) * p.sr; p.y = p.cy + Math.sin(p.sa) * p.sr * 0.75; p.vx = -Math.sin(p.sa); p.vy = Math.cos(p.sa);
