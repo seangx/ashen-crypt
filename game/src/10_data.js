@@ -319,6 +319,6 @@ const THEMES = [
   { from: 1, n: '暖阳石廊', wall: ['#c9a77a', '#c2a073', '#bd9a6d'], wallM: '#8a6a45', floor: ['#d2b07e', '#cba977', '#d8b787'], mortar: '#a3814f', acc: '#7cbf5a', acc2: '#5a9a44', flw: ['#ffffff', '#ffe066', '#ff9ac8'], amb: 0x8e877a, fog: [60, 40, 20] },
   { from: 6, n: '青苔花园', wall: ['#a9b97e', '#a2b277', '#9cac71'], wallM: '#6e8048', floor: ['#b0c47c', '#a9bd75', '#b7cb85'], mortar: '#859754', acc: '#5fa84a', acc2: '#4a8c3a', flw: ['#ffd84a', '#ff9ac8', '#ffffff'], amb: 0x8a8a7a, fog: [30, 50, 20] },
   { from: 12, n: '暖橙熔岩', wall: ['#d49a72', '#cd936b', '#c68c64'], wallM: '#94603e', floor: ['#dca47a', '#d59d72', '#e2ac82'], mortar: '#ad744c', acc: '#ff7a3a', acc2: '#ffd36a', flw: ['#ffd36a', '#ff7a3a', '#fff2b0'], amb: 0x928276, fog: [70, 30, 10] },
-  { from: 20, n: '晴空冰晶', wall: ['#b9d2e6', '#b2cbe0', '#abc4da'], wallM: '#7d9ab4', floor: ['#b4d2ea', '#abcae3', '#bcd9f0'], mortar: '#86a8c6', acc: '#ffffff', acc2: '#8fd0ff', flw: ['#ffffff', '#bfe8ff', '#d8c8ff'], amb: 0x84888e, fog: [20, 40, 70] },
+  { from: 20, n: '晴空冰晶', wall: ['#b9d2e6', '#b2cbe0', '#abc4da'], wallM: '#7d9ab4', floor: ['#9ec0de', '#96b8d7', '#a6c8e4'], mortar: '#7393b4', acc: '#ffffff', acc2: '#8fd0ff', flw: ['#ffffff', '#bfe8ff', '#d8c8ff'], amb: 0x84888e, fog: [20, 40, 70] },
 ];
 const themeFor = d => { let t = THEMES[0]; for (const x of THEMES) if (d >= x.from) t = x; return t; };

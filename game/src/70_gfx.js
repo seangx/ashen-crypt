@@ -20,8 +20,8 @@ function buildTextures(sc) {
   for (const k in SPR.icons) add('i_' + k, SPR.icons[k]);
   for (const k of ['anvil', 'star', 'book', 'ladder']) add('i_' + k, sprite(ART[k]));
   add('i_soulf', sprite(ART.soulf)); add('cursor', sprite(ART.cursor, '#0d0a12')); add('up', sprite(ART.up.map(r => r.replace(/g/g, 'm')), '#0d0a12'));
-  add('oiljar', cvs(7, 9, x => { px(x, '#2a1406', 2, 0, 3, 1); px(x, '#2a1406', 1, 1, 5, 1); px(x, '#2a1406', 0, 2, 7, 7); px(x, '#8a5420', 1, 2, 5, 6); px(x, '#c8842e', 2, 3, 2, 4); px(x, '#ffd36a', 3, 4, 1, 2); px(x, '#5a3412', 1, 7, 5, 1); })); // 灯油罐
-  add('lorb', cvs(7, 7, x => { px(x, '#5a0a14', 1, 0, 5, 7); px(x, '#5a0a14', 0, 1, 7, 5); px(x, '#e0283c', 1, 1, 5, 5); px(x, '#ff9a9a', 2, 2, 2, 2); })); // 生命球
+  if (ARTC.p_oil) add('oiljar', copyCv(ARTC.p_oil)); else add('oiljar', cvs(7, 9, x => { px(x, '#2a1406', 2, 0, 3, 1); px(x, '#2a1406', 1, 1, 5, 1); px(x, '#2a1406', 0, 2, 7, 7); px(x, '#8a5420', 1, 2, 5, 6); px(x, '#c8842e', 2, 3, 2, 4); px(x, '#ffd36a', 3, 4, 1, 2); px(x, '#5a3412', 1, 7, 5, 1); })); // 灯油罐
+  if (ARTC.p_lorb) add('lorb', copyCv(ARTC.p_lorb)); else add('lorb', cvs(7, 7, x => { px(x, '#5a0a14', 1, 0, 5, 7); px(x, '#5a0a14', 0, 1, 7, 5); px(x, '#e0283c', 1, 1, 5, 5); px(x, '#ff9a9a', 2, 2, 2, 2); })); // 生命球
   add('coin', makeCoins('#e9e0c9', '#9d9078', '#ffffff')[0]); // 骨币
   add('shard', SPR.shard); for (const g of GLYPHS) add('glyph_' + g.id, SPR.glyphs[g.id]);
   add('dust', DUST_ICON); add('soul', SOUL_ICON); add('glow', GLOW);
@@ -425,7 +425,12 @@ function drawChunkDecor(x, theme, seed) {
     else if (theme === THEMES[2]) { if (R() < 0.5) { x.fillStyle = theme.acc; let cx = px_, cy = py; for (let i = 0; i < 5; i++) { x.fillRect(cx, cy, 1, 1); cx += 1; cy += R() < 0.5 ? 1 : -1; } } }
     else { x.fillStyle = theme.acc2; x.fillRect(px_, py, 3, 1); x.fillStyle = theme.acc; x.fillRect(px_, py + 1, 1, 1); x.fillRect(px_ + 2, py + 1, 1, 1); }
   }
-  const nb = 3 + (R() * 5 | 0);
+  if (NEW_ART && ARTC.p_bones) { // 明亮改版：散落的小物件换成新像素图（花、草、蘑菇、苔藓、骨头、碎石，偶尔一块墓碑）
+    const pick = [['p_flowerW', 3], ['p_flowerY', 3], ['p_grass', 4], ['p_shroom', 1.5], ['p_moss', 2], ['p_bones', 1.5], ['p_skull', 1], ['p_rocks', 1.5]], tot = pick.reduce((s, p) => s + p[1], 0);
+    for (let n = 0, nb = 6 + (R() * 6 | 0); n < nb; n++) { let r = R() * tot, k = pick[0][0]; for (const [kk, w] of pick) { if ((r -= w) < 0) { k = kk; break; } } const im = ARTC[k]; if (im) x.drawImage(im, 8 + R() * (CHUNK - 24) | 0, 8 + R() * (CHUNK - 24) | 0); }
+    if (R() < 0.35) { const im = ARTC[R() < 0.5 ? 'p_tomb' : 'p_tomb2']; if (im) x.drawImage(im, 16 + R() * (CHUNK - 40) | 0, 16 + R() * (CHUNK - 40) | 0); }
+  }
+  const nb = NEW_ART && ARTC.p_bones ? 0 : 3 + (R() * 5 | 0);
   for (let n = 0; n < nb; n++) {
     const px_ = 8 + R() * (CHUNK - 16) | 0, py = 8 + R() * (CHUNK - 16) | 0, k = R();
     if (k < 0.35) x.drawImage(SPR.skull, px_, py);
@@ -438,10 +443,12 @@ function drawChunkDecor(x, theme, seed) {
   }
   if (R() < 0.45) { // 蜡烛（火苗是动态画的，这里只画蜡柱）
     const cx = 20 + R() * (CHUNK - 40) | 0, cy = 20 + R() * (CHUNK - 40) | 0, n = 2 + (R() * 3 | 0);
-    for (let i = 0; i < n; i++) { const ox = cx + (i * 5) - n * 2, oy = cy + ((i * 3) % 4); x.fillStyle = '#e8dcc0'; x.fillRect(ox, oy, 2, 4); x.fillStyle = '#9a8f78'; x.fillRect(ox, oy + 3, 2, 1); lights.push({ x: ox + 1, y: oy, s: 1 }); }
+    if (NEW_ART && ARTC.p_candles) { const im = ARTC.p_candles; x.drawImage(im, cx - (im.width >> 1), cy - im.height + 4); lights.push({ x: cx, y: cy - im.height + 5, s: 1 }); } // 明亮改版：一组新蜡烛
+    else for (let i = 0; i < n; i++) { const ox = cx + (i * 5) - n * 2, oy = cy + ((i * 3) % 4); x.fillStyle = '#e8dcc0'; x.fillRect(ox, oy, 2, 4); x.fillStyle = '#9a8f78'; x.fillRect(ox, oy + 3, 2, 1); lights.push({ x: ox + 1, y: oy, s: 1 }); }
   } else if (R() < 0.25) { // 火盆
     const cx = 24 + R() * (CHUNK - 48) | 0, cy = 24 + R() * (CHUNK - 48) | 0;
-    x.fillStyle = '#2a2016'; x.fillRect(cx - 4, cy, 9, 3); x.fillStyle = '#5a4630'; x.fillRect(cx - 3, cy + 3, 7, 2); x.fillRect(cx - 1, cy + 5, 3, 4); x.fillStyle = '#1a140e'; x.fillRect(cx - 3, cy + 9, 7, 1);
+    if (NEW_ART && ARTC.p_brazier) { const im = ARTC.p_brazier; x.drawImage(im, cx - (im.width >> 1), cy - 3); } // 明亮改版：新火盆
+    else { x.fillStyle = '#2a2016'; x.fillRect(cx - 4, cy, 9, 3); x.fillStyle = '#5a4630'; x.fillRect(cx - 3, cy + 3, 7, 2); x.fillRect(cx - 1, cy + 5, 3, 4); x.fillStyle = '#1a140e'; x.fillRect(cx - 3, cy + 9, 7, 1); }
     lights.push({ x: cx, y: cy, s: 2 });
   }
   return lights;

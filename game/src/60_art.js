@@ -130,19 +130,34 @@ function silhouette(c, color) {
   const x = s.getContext('2d'); x.drawImage(c, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, s.width, s.height);
   return s;
 }
+/* ---------- 明亮改版像素美术（data/artpack.json → vendor/artpack.js）：启动前解码成画布，有图就用新图 ---------- */
+const ARTC = {};
+const ART_READY = typeof window !== 'undefined' && window.ART_PACK ? Promise.all(Object.entries(window.ART_PACK).map(([k, a]) => new Promise(res => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = a.w; c.height = a.h; c.getContext('2d').drawImage(im, 0, 0); ARTC[k] = c; res(); }; im.onerror = () => res(); im.src = a.img; }))) : Promise.resolve();
+const NEW_ART = !!(typeof window !== 'undefined' && window.ART_PACK && window.ART_PACK.hero_f0);
+const MOB_ART = { skel: 'm_skel', thief: 'm_thief', armor: 'm_armor', mage: 'm_mage', hound: 'm_hound', archer: 'm_archer', wraith: 'm_wraith', boss: 'b_lord', boss_lord: 'b_lord', boss_moon: 'b_moon', boss_bog: 'b_bog', boss_storm: 'b_storm' };
+// 图四周加 1 像素：col 给了就是这个颜色的描边（精英金边、蓝边），没给就是透明边（和描边版尺寸一致）
+function padOutline(src, col) {
+  const c = document.createElement('canvas'); c.width = src.width + 2; c.height = src.height + 2; const x = c.getContext('2d');
+  if (col) { const s = silhouette(src, col); for (const [dx, dy] of [[0, 1], [2, 1], [1, 0], [1, 2]]) x.drawImage(s, dx, dy); }
+  x.drawImage(src, 1, 1); return c;
+}
+const copyCv = src => { const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.getContext('2d').drawImage(src, 0, 0); return c; }; // 登记成贴图时用副本：Phaser 删贴图会回收画布，原图还要反复用
+const flipCv = src => { const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const x = c.getContext('2d'); x.translate(src.width, 0); x.scale(-1, 1); x.drawImage(src, 0, 0); return c; };
 function buildSprites() {
   for (const B of BOSSES) { ART['boss_' + B.id + 'A'] = recolor(ART.bossA, B.pal); ART['boss_' + B.id + 'B'] = recolor(ART.bossB, B.pal); }
   for (const k of MOB_SPR) {
     SPR[k] = [0, 1].map(f => {
+      const nk = MOB_ART[k] && ARTC[MOB_ART[k] + (f ? 'B' : 'A')];
+      if (nk) { const base = padOutline(nk); return { n: base, e1: padOutline(nk, '#4f8dff'), e2: padOutline(nk, '#ffd23a'), fl: silhouette(base, '#ffffff'), ice: silhouette(base, '#9fe8ff') }; } // 明亮改版的新怪物图
       const rows = ART[k + (f ? 'B' : 'A')];
       const base = sprite(rows);
       return { n: base, e1: sprite(rows, '#4f8dff'), e2: sprite(rows, '#ffd23a'), fl: silhouette(base, '#ffffff'), ice: silhouette(base, '#9fe8ff') };
     });
   }
   SPR.ghost = sprite(ART.ghost, '#0b3b40');
-  SPR.chest = sprite(ART.chest); SPR.chestG = sprite(ART.chestG);
+  SPR.chest = ARTC.p_chest ? padOutline(ARTC.p_chest) : sprite(ART.chest); SPR.chestG = ARTC.p_chestG ? padOutline(ARTC.p_chestG) : sprite(ART.chestG);
   SPR.chestFl = silhouette(SPR.chest, '#fff'); SPR.chestGFl = silhouette(SPR.chestG, '#fff');
-  SPR.skull = sprite(ART.skull); SPR.torch = sprite(ART.torch);
+  SPR.skull = ARTC.p_skull ? copyCv(ARTC.p_skull) : sprite(ART.skull); SPR.torch = ARTC.p_torch ? copyCv(ARTC.p_torch) : sprite(ART.torch);
   SPR.icons = {};
   for (const k of ['sword', 'dagger', 'staff', 'axe', 'scepter', 'hood', 'helm', 'crown', 'robe', 'armor', 'armorg', 'mail', 'ring', 'ringb', 'ringm', 'ringd', 'amulet', 'amber', 'flame', 'heart', 'lantern', 'scythe']) SPR.icons[k] = sprite(ART[k]);
   for (const k in ART) if (/^[wao]_/.test(k)) SPR.icons[k] = sprite(ART[k]);
@@ -302,12 +317,13 @@ const HEAD_DOLL = {
     b: ['..NNNNNN..', '.NnnnnnnN.', 'NnnnnnnnnN', 'NnqqqqqqnN', 'NnnnnnnnnN', 'NnqqqqqqnN', '.NnnnnnnN.', '..NNNNNN..'],
   },
 };
-const DOLL_W = 26, DOLL_H = 18, DOLL_OX = 7, DOLL_OY = 4;
+const DOLL_W = NEW_ART ? 48 : 26, DOLL_H = NEW_ART ? 25 : 18, DOLL_OX = 7, DOLL_OY = 4; // 明亮改版：主角 16×20，左右各留 16 放武器，头顶留 5 放头冠
 const dollSig = eq => ['wl', 'wr', 'core', 'engine'].map(k => eq[k] ? eq[k].b : '-').join('|');
 // 画出一帧纸娃娃（outline 后的画布）
 // view：0 正面，1 侧面，2 背面（旋风斩转身用）。侧面把身子压窄、脸只露一只眼在边上；背面盖住脸、两手的武器前后对调
 const DOLL_SIDE = r => (r.slice(2, 10) + '').padEnd(8, '.');
 function dollCanvas(eq, fr, view = 0, noMain = false) { // noMain：正面不画主手武器（战场上武器是单独一张图，跟着出手方向转）
+  if (NEW_ART) return dollCanvasNew(eq, fr, view, noMain);
   const c = document.createElement('canvas'); c.width = DOLL_W; c.height = DOLL_H; const x = c.getContext('2d');
   const put = (img, dx, dy, alpha = 1) => { x.globalAlpha = alpha; x.drawImage(img, dx, dy); x.globalAlpha = 1; };
   // 盾：背在身后
@@ -328,10 +344,35 @@ function dollCanvas(eq, fr, view = 0, noMain = false) { // noMain：正面不画
   if (hr) put(sprite(hr, undefined, null, hd.pal), DOLL_W / 2 - hr[0].length / 2 - 1, DOLL_OY + 5 - hr.length); // 头最后画，武器不挡脸
   return c;
 }
+// 明亮改版的纸娃娃：正面图水平翻一下（空手在右握武器，灯在左手）；头冠底边对齐头部下沿；副手 / 盾挂在身后左侧
+const HERO_BX = 16, HERO_BY = 5, HERO_HAND = { 0: [13, 14], 1: [12, 13], 2: [3, 14] }, HERO_HEAD = { 0: [8, 12], 1: [7, 12], 2: [8, 12] };
+function dollCanvasNew(eq, fr, view, noMain) {
+  const c = document.createElement('canvas'); c.width = DOLL_W; c.height = DOLL_H; const x = c.getContext('2d');
+  const body = view === 1 ? ARTC['hero_s' + (fr & 1)] : view === 2 ? ARTC['hero_b' + (fr & 1)] : flipCv(ARTC['hero_f' + (fr & 1)]);
+  const bx = HERO_BX + Math.round((16 - body.width) / 2), by = DOLL_H - body.height;
+  const wpn = it => { const w = it && ARTC['w_' + it.b]; if (!w) return; const g = weaponGrip(w), [hx, hy] = HERO_HAND[view]; x.drawImage(w, HERO_BX + hx - g[0], HERO_BY + hy - g[1]); };
+  const off = eq.wr && ARTC[eq.wr.kind === 'shield' ? 'o_shield' : 'o_' + eq.wr.b]; if (off && view !== 2) x.drawImage(off, HERO_BX - off.width + 3, HERO_BY + 7); // 副手 / 盾：身后左侧
+  if (view === 2 && !noMain) wpn(eq.wl); // 背面：武器在身前（被身体挡住）
+  x.drawImage(body, bx, by);
+  if (view !== 2 && !noMain) wpn(eq.wl);
+  if (off && view === 2) x.drawImage(off, HERO_BX + 13, HERO_BY + 7);
+  const hm = eq.core && ARTC['h_' + eq.core.b]; if (hm) { const [cx, cy] = HERO_HEAD[view], im = view === 1 ? hm : hm; x.drawImage(im, HERO_BX + cx - Math.round(im.width / 2), HERO_BY + cy - im.height); }
+  return c;
+}
+const GRIP_CACHE = new Map();
+function weaponGrip(cv) { // 握把：最左边 3 列不透明像素的平均高度，横向往里 2 格
+  if (GRIP_CACHE.has(cv)) return GRIP_CACHE.get(cv);
+  const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let x0 = -1;
+  for (let i = 0; i < cv.width && x0 < 0; i++) for (let j = 0; j < cv.height; j++) if (d[(j * cv.width + i) * 4 + 3] > 0) { x0 = i; break; }
+  let sy = 0, n = 0; for (let i = x0; i < x0 + 3; i++) for (let j = 0; j < cv.height; j++) if (d[(j * cv.width + i) * 4 + 3] > 0) { sy += j; n++; }
+  const g = [x0 + 2, Math.round(sy / Math.max(1, n))]; GRIP_CACHE.set(cv, g); return g;
+}
 // 主手武器单独的图：战场上画大一点（WPN_SCALE 倍），握把对准前手，枪口朝出手方向
 // base：图里武器本来指的方向（握把 → 武器重心），转的时候减掉；朝左时用左右镜像的那张，武器不会倒过来
-const WPN_SCALE = 1.5;
+const HERO_SCALE = NEW_ART ? 1.5 : 1; // 明亮改版：战场上主角整体放大 1.5 倍（武器、头冠跟着），比小怪大一号
+const WPN_SCALE = NEW_ART ? HERO_SCALE : 1.5; // 明亮改版的武器本身就画得大，只跟着主角放大
 function heldWeapon(b) {
+  if (NEW_ART && ARTC['w_' + b]) { const cv = ARTC['w_' + b], [gx, gy] = weaponGrip(cv), w = cv.width, hh = cv.height; return { cv: copyCv(cv), fl: flipCv(cv), ox: (gx + 0.5) / w, oy: (gy + 0.5) / hh, oxF: (w - gx - 0.5) / w, base: 0, baseF: Math.PI }; } // 明亮改版：图里武器朝右
   const h = HELD[b]; if (!h) return null;
   const [rows, ax, ay] = h, cv = sprite(rows), w = cv.width, hh = cv.height;
   let sx = 0, sy = 0, n = 0; rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.') { sx += i; sy += j; n++; } }));

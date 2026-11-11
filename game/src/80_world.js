@@ -228,21 +228,21 @@ class World extends Phaser.Scene {
     const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.fbT > 0.12 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
     if (player.chill > 0) this.hero.setTint(0xb8e6ff); else if (this.hero.isTinted) this.hero.clearTint(); // 角色被冰缓
-    this.hero.setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(ySort(player.y)).setAlpha(player.dashT > 0 ? 0.5 : 1);
+    this.hero.setScale(HERO_SCALE).setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(ySort(player.y)).setAlpha(player.dashT > 0 ? 0.5 : 1);
     // 主手武器：单独一张图，握把在前手，朝最近一次出手的方向转（没出手时平端朝面向）；出手瞬间往后顶一下；旋风斩转身时藏起来（侧面、背面图里自带武器）
     if (!this.heroW) { this.heroW = this.add.image(0, 0, 'px').setScale(WPN_SCALE); this.wA = 0; }
     { const wp = this.wpn, hw = this.heroW, on = !!wp && !this.spinRate; hw.setVisible(on);
       if (on) {
         const at = AIM_HOLD - (player.aimT || 0), tgt = player.aimT > 0 ? player.aimA : player.face < 0 ? Math.PI : 0;
         let d = tgt - this.wA; d = Math.atan2(Math.sin(d), Math.cos(d)); this.wA += d * Math.min(1, dt * 22);
-        const L = Math.cos(this.wA) < 0, kick = at < 0.08 ? 1.5 * (1 - at / 0.08) : 0, hx = player.x + (player.face < 0 ? -3.5 : 3.5) - Math.cos(this.wA) * kick, hy = player.y - 8 + (this.spinRate ? 0 : bob) - Math.sin(this.wA) * kick;
+        const L = Math.cos(this.wA) < 0, kick = at < 0.08 ? 1.5 * (1 - at / 0.08) : 0, hx = player.x + (player.face < 0 ? -1 : 1) * (NEW_ART ? (HERO_BX + HERO_HAND[0][0] - DOLL_W / 2) * HERO_SCALE : 3.5) - Math.cos(this.wA) * kick, hy = player.y - (NEW_ART ? (DOLL_H - HERO_BY - HERO_HAND[0][1]) * HERO_SCALE : 8) + (this.spinRate ? 0 : bob) - Math.sin(this.wA) * kick;
         hw.setTexture(L ? 'wpn_f' : 'wpn').setOrigin(L ? wp.oxF : wp.ox, wp.oy).setRotation(this.wA - (L ? wp.baseF : wp.base)).setPosition(hx, hy)
           .setDepth(ySort(player.y) + (Math.sin(this.wA) < -0.6 ? -0.001 : 0.001)).setAlpha(player.dashT > 0 ? 0.5 : 1); // 朝上举时放到身后
         if (player.fbT > 0.12) hw.setTintFill(0xffffff); else if (player.chill > 0) hw.setTint(0xb8e6ff); else if (hw.isTinted) hw.clearTint();
       } }
     if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x7a2a1a));
-    this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(ph * Math.PI / 2 + i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
-    this.heroSh.setPosition(player.x, player.y + 1);
+    this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setScale(HERO_SCALE).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(ph * Math.PI / 2 + i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
+    this.heroSh.setPosition(player.x, player.y + 1).setScale(HERO_SCALE);
     { const hub = eqK(S.equip, 'hub'), hg = this.hubG; hg.clear(); if (hub) { const b = baseOf(hub); const c = hex(b.el ? ELEM_C[b.el] : b.mass ? '#e9e0c9' : b.energy ? '#c08aff' : '#57e0d0'); const n = 22; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.7; hg.fillStyle(c, 0.35 + 0.3 * Math.sin(i * 1.3 + t * 3)); hg.fillRect(Math.round(player.x + Math.cos(a) * 9), Math.round(player.y + 1 + Math.sin(a) * 3), 1, 1); } } }
     if (player.dashT > 0 && this.frame % 2 === 0) {
       const ghost = this.add.image(player.x, player.y, 'doll_fl_' + fr).setOrigin(0.5, 1).setTint(0x7a55a0).setAlpha(0.5).setDepth(9.5).setFlipX(player.face < 0);
@@ -433,7 +433,7 @@ class World extends Phaser.Scene {
     if (m.kbT > 0) { const k = 2.5 * m.kbT / 0.12; sx += Math.cos(m.kbA) * k; sy += Math.sin(m.kbA) * k * 0.6; m.kbT -= this.dt || 0.016; } // 挨打时往后一顿
     const moving = Math.abs(m.vx) + Math.abs(m.vy) > 2; const fr = moving ? ((t * 6 + m.x * 0.1) | 0) % 2 : 0;
     const frz = m.frzT > 0, key = `m_${m.type}_${frz ? 0 : fr}${m.fl > 0 ? '_fl' : frz ? '_ice' : m.elite ? '_e' : ''}`; // 冻结：整只变成冰蓝剪影、不摆动
-    if (o.key !== key) { o.img.setTexture(key); o.key = key; }
+    if (o.key !== key) { o.img.setTexture(key); o.key = key; if (NEW_ART && m.boss) o.img.setScale(1.6); } // 明亮改版：主角放大了，首领也放大一号保持压迫感
     const h = o.img.height, w = o.img.width;
     const rise = m.rise > 0 ? Math.round(h * clamp(m.rise / 0.45, 0, 1)) : 0;
     o.img.setPosition(sx, sy + 1 + rise).setDepth(ySort(sy)).setFlipX(m.face < 0);
