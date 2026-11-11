@@ -44,7 +44,7 @@ Object.assign(MobileUI.prototype, {
   /* 符文页 */
   winSupport(c, w, h, oy = 0) {
     const Fr = this.F, B = c; c = Fr.head(10); // 头：部位页签、这件装备的符文槽、筛选；主体：库存（上下滑）；底：提示
-    const host = S.equip[modWeapon], hosts = ['gem', 'core', 'engine', 'hub'].filter(s => s !== 'gem'), bw = Math.floor((w - 20) / hosts.length); this.sockR = [];
+    const host = S.equip[modWeapon], hosts = runeHosts(), bw = Math.floor((w - 20) / hosts.length); this.sockR = [];
     hosts.forEach((s, i) => mkBtn(this, c, 10 + i * bw, 4 + oy, bw - 2, 28, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; runePage = 0; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
     let y = 36 + oy;
     if (!host) { T(this, 10, y + 4, '这个位置没有装备。', { size: 8, color: COL.faint, parent: c }); y += 20; }

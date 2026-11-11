@@ -105,6 +105,11 @@
   "Chip": { "n": "印记", "ic": "a_sigil", "req": 12, "w": 0 },
   "EmpoweredChip": { "n": "强化印记", "ic": "a_sigil_e", "req": 70, "w": 0 }
  },
+ "hands": {"_说明": "gear-v3 护手：进攻", "BoneGlove": {"n": "骨手", "ic": "a_glove_bone", "req": 1, "w": 600}, "ClawGlove": {"n": "爪手", "ic": "a_glove_claw", "req": 8, "w": 600}, "WrapGlove": {"n": "缠布手", "ic": "a_glove_wrap", "req": 14, "w": 600}},
+ "chest": {"_说明": "gear-v3 胸甲：防御核心", "BoneMail": {"n": "骨甲", "ic": "a_chest_bone", "req": 1, "w": 600, "armor": [5.0, 9.09, 21.36, 41.82, 70.45, 107.27, 152.27, 205.45, 266.82, 336.36, 414.09]}, "Shroud": {"n": "尸衣", "ic": "a_chest_shroud", "req": 8, "w": 600, "dodge": [4.0, 4.13, 4.53, 5.19, 6.12, 7.31, 8.76, 10.48, 12.46, 14.71, 17.22]}, "SoulRobe": {"n": "魂袍", "ic": "a_chest_robe", "req": 14, "w": 600, "deflect": [4.0, 5.79, 11.14, 20.07, 32.56, 48.63, 68.26, 91.47, 118.25, 148.6, 182.51]}},
+ "shoulders": {"_说明": "gear-v3 肩甲：混合", "BonePauldron": {"n": "骨肩", "ic": "a_shoulder_bone", "req": 1, "w": 600}, "SpikePauldron": {"n": "刺肩", "ic": "a_shoulder_spike", "req": 8, "w": 600}, "AshPauldron": {"n": "灰肩", "ic": "a_shoulder_ash", "req": 14, "w": 600}},
+ "ring": {"_说明": "gear-v3 戒指（两个格子）：基础属性。req 需求等级，w 掉落权重；隐性在 gear2.json armor", "BoneRing": {"n": "骨戒", "ic": "a_ring_bone", "req": 1, "w": 500}, "CrystalRing": {"n": "晶戒", "ic": "a_ring_crystal", "req": 6, "w": 500}, "BloodRing": {"n": "血戒", "ic": "a_ring_blood", "req": 12, "w": 500}, "LampRing": {"n": "灯戒", "ic": "a_ring_lamp", "req": 18, "w": 500}},
+ "amulet": {"_说明": "gear-v3 项链：稀缺的高价值词条（魂龛位 +1、所有技能石等级 +1）", "BoneAmulet": {"n": "骨链", "ic": "a_amulet_bone", "req": 6, "w": 400}, "SoulAmulet": {"n": "魂链", "ic": "a_amulet_soul", "req": 12, "w": 400}, "RuneAmulet": {"n": "符链", "ic": "a_amulet_rune", "req": 20, "w": 400}},
  "offhand": {
   "_说明": "副手：不带独立技能，只强化主手技能。sup 是隐性支援效果 [品质 0 的值, 品质 10 的值]（中间线性）：extra 主手投射物 +N（主手带投射物标签才生效）；inc 主手技能伤害提高%；projInc 投射物伤害提高%（主手带投射物）；aoeInc 范围提高%；areaInc 范围伤害提高%（主手带范围）；aspdMore 主手攻速总增%；critInc 暴击率提高%；critDmg 暴击伤害 +%；ail 主手异常效果 +%（全元素）；gain 额外获得主手元素伤害%。tags 决定能掷出哪些带标签的词条（any = 全部）；d 是一句话定位。",
   "BoneQuiver": { "n": "骨羽箭袋", "ic": "o_quiver", "tags": ["Offhand", "Projectile", "ProjectileCanChain"], "w": 1000, "req": 1, "sup": { "more": [70, 110], "extra": [1, 2], "chain": [1, 3], "projInc": [25, 70] }, "d": "投射物技能：多射一发、多弹一次" },

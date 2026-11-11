@@ -23,6 +23,8 @@ function load(data) {
   S = freshState();
   if (raw) try { const o = JSON.parse(raw); if (o.v === 4 && (o.gemV || 0) >= 3) S = Object.assign(S, o); else if (o.v === 4) { S.wiped = 1; const tell = () => G.ui ? toast('地窖已重塑，旧的旅程已封存', COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); } } catch (e) { } // 魂龛改版不兼容老存档（system-v2 §11）：直接清档
   migrateRetiredWeapons(S); // 11-11：停用的旧武器底子已删
+  for (const T of S.trigs || []) if (T && T.c === 'always') T.socks.forEach((g, k) => { if (g && g.kind === 'gem' && g.b === 'GemSpark') { T.socks[k] = null; S.stash.unshift(g); S.sparkMoved = 1; } }); // gear-v3 §5：游雷不再能插常驻
+  for (const k of ['shield', 'hub']) { const it = S.equip[k]; if (!it) continue; delete S.equip[k]; if (!S.equip.wr) S.equip.wr = it; else S.stash.unshift(it); } // gear-v3：盾、法阵并进副手格
   S.shards ??= {}; S.glyphs = { ...freshState().glyphs, ...(S.glyphs || {}) };
   if (!S.equip.wl && !S.stash.length && !S.uqV) { S.uqV = 3; S.skV = 3; } // 新档：不用跑装备改版 / 技能重做的迁移
   // 新做装系统之前的存档：丢掉骰子和魂萃词条，装备补上锻造潜力，独特装备补上传奇潜力
@@ -144,8 +146,8 @@ function starterKit() {
   const w = newItem('weapon', K.weapon, 1, 0, 0); S.equip.wl = w;
   const g = newGem(K.gem || 'GemBolt', { sock: K.gemSockets || 1 }); K.gemRunes.forEach((id, i) => { g.mods[i] = newMod(id); }); S.equip.gem = g; S.gemV = 1; S.legacyV = 1; S.seenUnlocks = {}; S.events = {}; S.treeSeen = []; // 技能石：骨矢 1 级
   if (K.engine) S.equip.engine = newItem('engine', K.engine, 1, 0, 0);
-  if (K.shield) S.equip.shield = newItem('shield', K.shield, 1, 0, 0);
+  if (K.shield) S.stash.unshift(newItem('shield', K.shield, 1, 0, 0)); // gear-v3：盾在副手格，开局放背包
   if (PROG.unlocks.wr && PROG.unlocks.wr.event && !UNLOCK_ALL) { /* 渐进式披露：副手由第一只 Boss 宝箱保底给 */ } else { const OH = DATA.mechanics.offhand, tg = itemTags(g), b = (OH.starterByTag.find(([t]) => tg.includes(t)) || [0, OH.fallback])[1]; S.equip.wr = newItem('off', b, 1, 0, 0); } // 新档：按主手标签送一件普通副手
-  if (K.hub) { const h = newItem('hub', K.hub, 1, 0, 0); h.sock = Math.max(1, h.sock); h.mods = Array(h.sock).fill(null); S.equip.hub = h; }
+  if (K.hub) { const h = newItem('hub', K.hub, 1, 0, 0); h.sock = Math.max(1, h.sock); h.mods = Array(h.sock).fill(null); S.stash.unshift(h); }
   starterTrigs(); // 魂龛：一个普通“命中时”2 孔 + 一颗按主手类别的技能石
 }

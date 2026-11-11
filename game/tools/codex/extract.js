@@ -16,7 +16,7 @@ const GAME = process.argv[2], OUT = process.argv[3], BENCH_F = process.argv[4] |
   const data = await p.evaluate(() => {
     const A = window.__ash, T = {}, safe = f => { try { return f(); } catch (e) { return ''; } };
     const rng = v => Array.isArray(v) ? (v.length > 1 && v[0] !== v[1] ? `${v[0]}–${v[1]}` : String(v[0])) : String(v);
-    const KIND = { weapon: '主手', off: '副手', shield: '盾牌', core: '头冠', engine: '遁靴', hub: '法阵' };
+    const KIND = { weapon: '主手', off: '副手', shield: '盾牌（副手格）', core: '头冠', engine: '遁靴', hub: '法阵（副手格）', hands: '护手', chest: '胸甲', shoulders: '肩甲', ring: '戒指', amulet: '项链' };
     const tagN = t => (TAG_N[t] || t);
     // 品质
     const GL = GENS.list, gEnd = i => i + 1 < GL.length ? GL[i + 1].from - 1 : GENS.topLvl;
@@ -54,6 +54,9 @@ const GAME = process.argv[2], OUT = process.argv[3], BENCH_F = process.argv[4] |
           B.range ? Math.round(B.range * UNIT * (g.rngMul || 1)) : '', B.aoe ? Math.round(B.aoe * UNIT) : '', beh(B),
           bn.kills != null ? Math.round(bn.kills) : '', bn.pack != null ? Math.round(bn.pack) : '', bn.single != null ? Math.round(bn.single) : '',
           rng(g.mul || []), g.req, g.w, C.cost ? rng(C.cost) : '', fr ? safe(() => fr.d(fr.fx(1))) : '', fr ? safe(() => fr.d(fr.fx(20))) : '', (g.tags || []).map(tagN).join('、')]; }) };
+    // 套装（gear-v3）
+    if (typeof SETS !== 'undefined') T.sets = { name: '套装', cols: ['id', '名称', '服务技能', '部位', '2 件', '4 件', '6 件'], key: 0,
+      rows: SETS.map(s => [s.id, s.n, s.skills.map(g => (GEM_BY[g] || {}).n || g).join('、'), SET_KINDS.map(k => `${KIND[k] || k}：${s.pieces[k][0]}`).join('\n'), s.bonus[2].t, s.bonus[4].t, s.bonus[6].t]) };
     // 辅助石
     T.supports = { name: '辅助石（符文）', cols: ['id', '名称', '生效条件', '1 级', '20 级', '需求等级', '掉落权重', '力场'], key: 0,
       rows: MODS.filter(m => !m.retired).map(m => { const d = MOD_BY[m.id]; return [m.id, m.n, (RUNE_FIT[m.id] || []).map(c => c === 'weapon' ? '技能石 / 武器' : c.startsWith('tag:') ? '标签 ' + tagN(c.slice(4)) : c).join(' 且 '), safe(() => d.d(d.fx(1))), safe(() => d.d(d.fx(20))), m.req, m.w ?? '', m.field ? '是' : '']; }) };
@@ -69,7 +72,7 @@ const GAME = process.argv[2], OUT = process.argv[3], BENCH_F = process.argv[4] |
       for (const k of M.keys) ms.push([k.id, M.n, (k.elem ? '元素大天赋 · ' : '大天赋 · ') + k.n, `专精条 ${k.tier}`, k.need ? MPASS[k.need].n + ' 3 级' : '', k.d]); }
     T.mastery = { name: '专精', cols: ['id', '专精', '项目', '解锁', '前置', '效果'], key: 0, rows: ms };
     // 誓约
-    T.oaths = { name: '誓约', cols: ['id', '部位', '正面', '负面'], key: 0, rows: OATH.list.map(o => [o.id, (o.on || []).map(s => (SLOTS.find(x => x.id === s) || {}).n || s).join('、'), o.pos, o.neg]) };
+    T.oaths = { name: '誓约', cols: ['id', '部位', '正面', '负面'], key: 0, rows: OATH.list.map(o => [o.id, (o.on || []).map(s => KIND[s] || (SLOTS.find(x => x.id === s) || {}).n || s).join('、'), o.pos, o.neg]) };
     // 怪物 / Boss / 精英词缀
     T.monsters = { name: '怪物', cols: ['id', '名称', '元素', 'AI', '1 级血量', '1 级伤害', '出现层数', '权重', '抗性'], key: 0,
       rows: Object.entries(PROG.monsters).filter(([k, v]) => v && typeof v === 'object' && !k.startsWith('_')).map(([k, m]) => [k, m.n || k, ELEM_N[m.el] || m.el || '', m.ai || '', m.hp, m.dmg, m.minL || 1, m.w ?? '', m.res ? Object.entries(m.res).map(([e, v]) => (ELEM_N[e] || e) + ' ' + v).join('，') : '']) };

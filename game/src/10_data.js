@@ -36,17 +36,22 @@ const genQ = ilvl => { const L = GENS.list, g = genOf(ilvl), x = L[g], end = g +
 const RAR = [{ n: '普通', max: 0 }, { n: '罕见', max: 2 }, { n: '稀有', max: 4 }, { n: '神话', max: 0 }];
 const RCOL = ['#c9c2b4', '#78a9ff', '#ffd84a', '#ff8a3d'];
 const LEG_C = '#ff5fa2', EX_C = '#7dffcf'; // 传奇（稀有 + 传奇词条）、溢彩（带只能掉落的顶档词条）
-const icol = it => it.la ? LEG_C : it.ex ? EX_C : RCOL[it.rar];
-const rarName = it => it.leg ? '神话 · 已熔铸' : it.la ? (it.ex ? '溢彩传奇' : '传奇') : it.ex ? '溢彩' + RAR[it.rar].n : RAR[it.rar].n;
+const icol = it => it.set ? '#7fe08a' : it.la ? LEG_C : it.ex ? EX_C : RCOL[it.rar]; // 套装件：绿色
+const rarName = it => it.set ? '套装' : it.leg ? '神话 · 已熔铸' : it.la ? (it.ex ? '溢彩传奇' : '传奇') : it.ex ? '溢彩' + RAR[it.rar].n : RAR[it.rar].n;
 
 // 装备槽
+// gear-v3（design/gear-v3.md）：全身 10 格。副手格三选一（副手类 / 盾 / 法阵，物品 kind 不变），新增护手、胸甲、肩甲、戒指 ×2、项链
 const SLOTS = [
-  { id: 'gem', n: '技能', kind: 'gem' }, // 技能格（spec-skill-gems）
-  { id: 'wl', n: '主手', kind: 'weapon' }, { id: 'wr', n: '副手', kind: 'off' }, // 只有主手武器带技能；副手只强化主手技能
-  { id: 'shield', n: '盾牌', kind: 'shield' }, { id: 'core', n: '头冠', kind: 'core' },
-  { id: 'engine', n: '遁靴', kind: 'engine' }, { id: 'hub', n: '法阵', kind: 'hub' },
+  { id: 'wl', n: '主手', kind: 'weapon' }, { id: 'wr', n: '副手', kind: 'off', kinds: ['off', 'shield', 'hub'] },
+  { id: 'core', n: '头冠', kind: 'core' }, { id: 'hands', n: '护手', kind: 'hands' }, { id: 'chest', n: '胸甲', kind: 'chest' },
+  { id: 'shoulders', n: '肩甲', kind: 'shoulders' }, { id: 'engine', n: '遁靴', kind: 'engine' },
+  { id: 'ring1', n: '戒指', kind: 'ring' }, { id: 'ring2', n: '戒指', kind: 'ring' }, { id: 'amulet', n: '项链', kind: 'amulet' },
 ];
-const KIND_N = { gem: '技能石', weapon: '武器', off: '副手', shield: '盾牌', core: '头冠', engine: '遁靴', hub: '法阵', chip: '印记' };
+const KIND_N = { gem: '技能石', weapon: '武器', off: '副手', shield: '盾牌', core: '头冠', engine: '遁靴', hub: '法阵', hands: '护手', chest: '胸甲', shoulders: '肩甲', ring: '戒指', amulet: '项链', chip: '印记' };
+const eqK = (eq, kind) => eq && eq.wr && eq.wr.kind === kind ? eq.wr : null; // 副手格里正好是这种底材（盾 / 法阵）才算
+const slotKinds = s => s.kinds || [s.kind];
+const runeHosts = () => ['core', 'engine', ...(eqK(S.equip, 'hub') ? ['wr'] : [])]; // 有符文槽的格：头冠、遁靴，副手格是法阵时也算
+const isRuneHost = s => runeHosts().includes(s);
 
 // 模组槽 / 升级槽数量的随机权重（原作配置：武器、头冠（原作：核心）、遁靴有模组槽；法阵有升级槽）
 const SOCKET_W = LOOT.sockets.weapon;
@@ -77,7 +82,7 @@ const WEAPONS = {};
 for (const k in WEAPON_SKIN) WEAPONS[k] = { key: k, ...ASTRO.weapons[k], ...WEAPON_SKIN[k], tags: ASTRO.weapons[k].tags.filter(t => t !== 'Weapon').concat('Weapon') };
 // 遁靴（原作：引擎，冲刺即技能；本身也带武器标签）
 const ENGINE_SKIN = DATA.items.engines;
-const ARMORS = { shield: {}, core: {}, engine: {}, hub: {}, off: {}, gem: {} };
+const ARMORS = { shield: {}, core: {}, engine: {}, hub: {}, off: {}, hands: {}, chest: {}, shoulders: {}, ring: {}, amulet: {}, gem: {} };
 /* 技能石（spec-skill-gems，data/gems.json）：主手只给数值，技能来自技能格里的技能石 */
 const GEMC = DATA.mechanics.gems;
 const GEMS = DATA.gems.list, GEM_BY = Object.fromEntries(GEMS.map(g => [g.id, g]));
@@ -91,6 +96,7 @@ for (const [kind, skin, src] of [['shield', SHIELD_SKIN, ASTRO.shield], ['core',
   for (const k in skin) ARMORS[kind][k] = { key: k, ...src[k], n: skin[k][0], ic: skin[k][1] };
 // 副手：data/items.json 的 offhand（隐性支援效果 sup）
 for (const k in DATA.items.offhand) if (k[0] !== '_') ARMORS.off[k] = { key: k, ...DATA.items.offhand[k] };
+for (const kind of ['hands', 'chest', 'shoulders', 'ring', 'amulet']) for (const k in DATA.items[kind] || {}) if (k[0] !== '_') ARMORS[kind][k] = { key: k, tags: [], ...DATA.items[kind][k] }; // gear-v3 新部位
 // 印记（原作：芯片）：插在天赋树的印记槽里
 ARMORS.chip = Object.fromEntries(Object.entries(DATA.items.chip).map(([k, v]) => [k, { key: k, ...v }]));
 const ENGINE_THRUST = ASTRO.thrust; // 原作：所有引擎共享的推力 / 最高速度（按品质）

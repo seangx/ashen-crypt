@@ -17,7 +17,7 @@ const HELPERS = () => {
       const S = A.S; A.setUnlockAll(true); S.level = o.level ?? 40; S.maxDepth = S.depth = o.depth ?? 20; S.auto.lock = true;
       P.stop(); if (A.G.ui.winId) A.G.ui.closeWin(true);
       if (o.weapon !== false) S.equip.wl = A.newItem('weapon', o.weapon || 'Cannon', o.ilvl ?? 40, 0, 0);
-      if (o.shield) S.equip.shield = A.newItem('shield', o.shield === true ? 'SigilShield' : o.shield, o.ilvl ?? 40, 0, 0);
+      if (o.shield) S.equip.wr = A.newItem('shield', o.shield === true ? 'SigilShield' : o.shield, o.ilvl ?? 40, 0, 0); // gear-v3：盾在副手格
       if (o.gems) { const T = newTrig(o.trig || 'cast', { rar: 2, sock: 4, ilvl: o.ilvl ?? 40 }); o.gems.forEach((g, k) => { T.socks[k] = typeof g === 'string' ? A.newGem(g, { lvl: 10 }) : A.newGem(g.id, { lvl: g.lvl ?? 10 }); }); S.trigs = [T, null, null, null]; }
       A.refreshStats(); return P.W();
     },

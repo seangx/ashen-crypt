@@ -1,6 +1,6 @@
 /* ---------------- 物品 ---------------- */
 const RARE_A = ['怨毒', '幽寂', '灰烬', '骸鸣', '血月', '寒鸦', '腐朽', '雷殛', '余晖', '深渊', '残烛', '碎骨', '暮色', '嚎风', '冥火', '铁锈', '哀歌', '霜咬'];
-const RARE_B = { weapon: ['之牙', '之刃', '裁决', '断罪', '悲鸣'], shield: ['壁垒', '之墙', '庇护', '骨盾'], core: ['之冠', '遗容', '之眼', '面甲'], engine: ['之步', '疾影', '残迹', '飞踪'], off: ['之器', '遗物', '之握', '低语', '残响'], hub: ['之环', '法阵', '誓约', '回响'], chip: ['之印', '刻痕', '烙印', '铭文'] };
+const RARE_B = { weapon: ['之牙', '之刃', '裁决', '断罪', '悲鸣'], shield: ['壁垒', '之墙', '庇护', '骨盾'], core: ['之冠', '遗容', '之眼', '面甲'], engine: ['之步', '疾影', '残迹', '飞踪'], off: ['之器', '遗物', '之握', '低语', '残响'], hub: ['之环', '法阵', '誓约', '回响'], hands: ['之爪', '之握', '缚手', '指骨'], chest: ['之铠', '尸衣', '胸骨', '壳'], shoulders: ['之肩', '重负', '骨棘', '肩铠'], ring: ['之戒', '指环', '契约', '骨环'], amulet: ['之链', '护符', '心坠', '遗骨'], chip: ['之印', '刻痕', '烙印', '铭文'] };
 const AFF_LIMIT = [LOOT.affixCount.limit.normal, LOOT.affixCount.limit.magic, LOOT.affixCount.limit.rare]; // [前缀, 后缀] 上限：普通 / 罕见 / 稀有
 
 const baseOf = it => it.fb ? it.fb : it.kind === 'weapon' ? WEAPONS[it.b] : ARMORS[it.kind][it.b];
@@ -42,7 +42,7 @@ const craftTop = a => hasEx(a) ? a.tiers.length - EXA.topTiers - 1 : a.tiers.len
 function setRarity(it, rar) {
   it.rar = rar; it.affs = []; it.rn = null;
   if (rar === 1) { const c = LOOT.affixCount.magic, n = ri(c[0], c[1]); for (let i = 0; i < n; i++) rollAffix(it); }
-  if (rar === 2) { const c = LOOT.affixCount.rare, n = ri(c[0], c[1]); for (let i = 0; i < n; i++) rollAffix(it); it.rn = pick(RARE_A) + pick(RARE_B[it.kind]); }
+  if (rar === 2) { const c = LOOT.affixCount.rare, n = ri(c[0], c[1]); for (let i = 0; i < n; i++) rollAffix(it); it.rn = it.set && SET_BY[it.set] ? SET_BY[it.set].pieces[it.kind][0] : pick(RARE_A) + pick(RARE_B[it.kind]); } // 套装件重洗也保留名字
 }
 // 可以出现的（词条族, 档位）组合：部位对得上、同组没有、前后缀没满、物品等级落在档位窗口里
 function affOptions(it) {
@@ -113,6 +113,7 @@ function rollUnique(ilvl, boss, ladder) {
   return newUnique(wpick(pool, u => u.w || LOOT.uniqueBossOnlyWeight.w).id, ilvl, boss ? G2.uniques.randChest : 0);
 }
 function rollItem(ilvl, rarBonus = 0, boss = false, rarity = null, ladder = false, only = null) { // rarity：指定稀有度（不出独特）；ladder：天梯宝箱；only：只出这个部位（骨坊）
+  if (rarity === null && !only) { const sp = rollSetDrop(ilvl, ladder ? 'chest' : boss ? 'boss' : 'normal'); if (sp) return sp; } // gear-v3 套装件
   if (rarity === null && !only && rnd() < (boss ? DROP.uniqueBoss : DROP.unique) * (1 + (LX.unique || 0) / 100)) { const u = rollUnique(ilvl, boss, ladder); if (u) return u; }
   const [kind, b] = wpick(allBases().filter(x => (x[2].req || 1) <= ilvl && (!only || x[0] === only)), x => (x[2].w || 1000) * (1 + ((LX.call || {})[x[0]] || 0) / 100));
   const rar = rarity ?? wpick([0, 1, 2], r => RARITY_W[r] * (r === 2 ? 1 + rarBonus / 100 : 1));
@@ -171,10 +172,10 @@ function gemBase(g, wl) {
     aps: timed ? wAps(wl.b) : undefined, rngMul: g.basic ? 1 : G.rngMul || 1, /* 骨刺、霜刺：技能射程 ×3.5（普攻不变） */ crit: wb.crit, aff: aff > 1, gem: G.id, el: G.el || B.el, ...(g.basic && wb.bel ? { el: wb.bel } : {}) }; // v3：技能石固定一种元素 // gear-v2：普攻用武器自带元素
 }
 // 技能格“需要盾牌”：装着圣盾掷但没有盾（此时技能改成骨矢 1 级）
-const needShield = (eq = S.equip) => !!(eq.gem && eq.gem.kind === 'gem' && GEM_BY[eq.gem.b].form === 'shieldThrow' && !eq.shield);
+const needShield = (eq = S.equip) => !!(eq.gem && eq.gem.kind === 'gem' && GEM_BY[eq.gem.b].form === 'shieldThrow' && !eqK(eq, 'shield'));
 function skillItem(eq) { // 技能格里的技能石 → 虚拟武器；圣盾掷返回 null（走 shieldWeapon）
   let g = eq.gem && eq.gem.kind === 'gem' ? eq.gem : null;
-  if (g && GEM_BY[g.b].form === 'shieldThrow' && eq.shield) return null;
+  if (g && GEM_BY[g.b].form === 'shieldThrow' && eqK(eq, 'shield')) return null;
   if (!g || GEM_BY[g.b].form === 'shieldThrow') g = { kind: 'gem', b: 'GemBolt', lvl: 1, q: 0, mods: [], sock: 0, affs: [], fake: 1 }; // 没装技能石 / 圣盾掷没盾：骨矢 1 级，无辅助
   const wl = eq.wl && eq.wl.kind === 'weapon' ? eq.wl : { kind: 'weapon', b: GEMC.unarmed, q: 0, ilvl: 1, affs: [], rar: 0, id: -1 };
   return { ...wl, fb: gemBase(g, wl), src: g, gem: g };
@@ -204,9 +205,15 @@ function stashTrim() {
   const cands = S.stash.filter(x => x.kind !== 'gem' && x.kind !== 'chip' && !(x.u || x.la || x.ex) && !(x.affs || []).some(a => fav.includes(a.k))).sort((a, b) => val(a) - val(b));
   for (const x of cands) { if (over <= 0) break; pickSalvage(x); over--; if (RUN && !RUN.trimTold) { RUN.trimTold = 1; toast(`储物箱满了（${STASH_CAP} 件）：自动拆掉最不值钱的装备`, '#d9cfb8'); } } // 独特、传奇、溢彩、带收藏词条的不拆；更好的估值高，排在最后
 }
+// 物品进哪个格：武器 → 主手；副手类 / 盾 / 法阵 → 副手格；戒指 → 指定的那只，没指定就先放空的那只
+function slotFor(it, want) {
+  const ok = SLOTS.filter(s => slotKinds(s).includes(it.kind)); if (!ok.length) return null;
+  if (want && ok.some(s => s.id === want)) return want;
+  return (ok.find(s => !S.equip[s.id]) || ok[0]).id;
+}
 function equipItem(it, slot) {
   if (it.kind === 'gem') { const b = bestGemSpot(it); if (b) socketInto(b.T, b.k, it); return; } // 技能石插进魂龛（旧技能格已经不生效）
-  slot = it.kind === 'weapon' ? 'wl' : it.kind === 'off' ? 'wr' : it.kind; // 武器只进主手，副手只进副手槽
+  slot = slotFor(it, slot);
   const cur = S.equip[slot];
   S.stash = S.stash.filter(x => x !== it);
   for (const k in S.equip) if (S.equip[k] === it) S.equip[k] = null;

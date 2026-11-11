@@ -72,10 +72,7 @@
   "list": [
    {
     "id": "OathFullShield",
-    "on": [
-     "shield",
-     "core"
-    ],
+    "on": ["shield", "core", "chest"],
     "pos": "护盾全满时伤害总增 25%",
     "neg": "护盾回复 −40%",
     "fx": {
@@ -85,10 +82,7 @@
    },
    {
     "id": "OathFrozen",
-    "on": [
-     "core",
-     "hub"
-    ],
+    "on": ["core", "hub", "chest"],
     "pos": "对冻结的敌人伤害总增 30%",
     "neg": "冰缓效果 −30%",
     "fx": {
@@ -98,11 +92,7 @@
    },
    {
     "id": "OathChainStep",
-    "on": [
-     "core",
-     "wl",
-     "wr"
-    ],
+    "on": ["core", "wl", "wr", "hands"],
     "pos": "每次弹射伤害 +10%",
     "neg": "投射物 −1（最少 1）",
     "fx": {
@@ -112,11 +102,7 @@
    },
    {
     "id": "OathDelay",
-    "on": [
-     "core",
-     "wl",
-     "wr"
-    ],
+    "on": ["core", "wl", "wr", "shoulders"],
     "pos": "延迟类伤害总增 30%",
     "neg": "延迟 +0.3 秒",
     "fx": {
@@ -126,10 +112,7 @@
    },
    {
     "id": "OathArea",
-    "on": [
-     "core",
-     "engine"
-    ],
+    "on": ["core", "engine", "shoulders"],
     "pos": "范围提高 40%",
     "neg": "移速 −15%",
     "fx": {
@@ -139,11 +122,7 @@
    },
    {
     "id": "OathVolley",
-    "on": [
-     "wl",
-     "wr",
-     "core"
-    ],
+    "on": ["wl", "wr", "core", "hands"],
     "pos": "投射物 +2",
     "neg": "投射物伤害总降 30%",
     "fx": {
@@ -153,14 +132,7 @@
    },
    {
     "id": "OathGlass",
-    "on": [
-     "wl",
-     "wr",
-     "shield",
-     "core",
-     "engine",
-     "hub"
-    ],
+    "on": ["wl", "wr", "shield", "core", "engine", "hub", "hands", "chest", "shoulders", "ring", "amulet"],
     "pos": "伤害总增 20%",
     "neg": "生命上限 −25%",
     "fx": {

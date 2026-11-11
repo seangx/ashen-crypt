@@ -32,8 +32,8 @@
   {
    "id": "StormEye",
    "n": "风暴之眼",
-   "kind": "hub",
-   "b": "IridiumNexus",
+   "kind": "amulet",
+   "b": "SoulAmulet",
    "req": 20,
    "w": 40,
    "ladderOnly": 20,
@@ -894,10 +894,32 @@
    ]
   },
   {
+   "id": "BoneKingRing",
+   "n": "骸王之戒",
+   "kind": "ring",
+   "b": "CrystalRing",
+   "req": 30,
+   "w": 30,
+   "fixed": [
+    [
+     "IncreasedLife",
+     1
+    ]
+   ],
+   "rules": [
+    [
+     "setLess",
+     1,
+     1
+    ]
+   ],
+   "_说明": "gear-v3 §3.4：套装需求 −1（每套 ≥ 2 件的 +1）。5 件拿 6 件效果，或两套混搭"
+  },
+  {
    "id": "ScorchedCircle",
-   "n": "焦土法阵",
-   "kind": "hub",
-   "b": "AmberNexus",
+   "n": "焦土之戒",
+   "kind": "ring",
+   "b": "BoneRing",
    "req": 24,
    "w": 40,
    "fixed": [
@@ -1106,9 +1128,9 @@
   },
   {
    "id": "PrismCircle",
-   "n": "棱镜法阵",
-   "kind": "hub",
-   "b": "IridiumNexus",
+   "n": "棱镜项链",
+   "kind": "amulet",
+   "b": "BoneAmulet",
    "req": 36,
    "w": 40,
    "fixed": [
@@ -1205,9 +1227,9 @@
   },
   {
    "id": "WildfireCircle",
-   "n": "焚野法阵",
-   "kind": "hub",
-   "b": "AmberNexus",
+   "n": "焚野之戒",
+   "kind": "ring",
+   "b": "BloodRing",
    "req": 30,
    "w": 40,
    "fixed": [

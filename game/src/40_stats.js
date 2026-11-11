@@ -2,7 +2,7 @@
    原作规则：固定附加 → 提高（同类相加）→ 总增（彼此相乘）。
    武器的 flat / baseInc / baseAspd 词条是局部的，只作用于那把武器。 */
 const THERMAL_E = ['exp', 'pla', 'ele', 'cold'];
-const ARMOR_KINDS = ['shield', 'core', 'hub'];
+const ARMOR_KINDS = ['shield', 'core', 'hub', 'hands', 'chest', 'shoulders', 'ring', 'amulet']; // 有底材固有数值 / 隐性的部位（按物品种类，盾和法阵在副手格）
 
 // 全局词条按 stat + 元素汇总：G['res:kin']、G.armor ...
 function sumGlobal(items) {
@@ -24,22 +24,24 @@ function computeStats(eq = S.equip) {
   const A = sumGlobal(items);
   { const ad = (k, v) => A[k] = (A[k] || 0) + v; stoneSum(items, ad); // gear-v2：属性石、副手隐性、“全部”类词条摊到每种元素
     const ob = eq.wr && eq.wr.kind === 'off' && ARMORS.off[eq.wr.b]; if (ob && ob.imp2) ad(ob.imp2[0], impV(ob.imp2, eq.wr));
-    for (const k of ARMOR_KINDS) { const it = eq[k], ab = it && ARMORS[it.kind] && ARMORS[it.kind][it.b]; if (ab && ab.imp2) ad(ab.imp2[0], impV(ab.imp2, it)); } // 防具隐性
+    for (const it of items) { if (!ARMOR_KINDS.includes(it.kind)) continue; const ab = ARMORS[it.kind] && ARMORS[it.kind][it.b]; if (ab && ab.imp2) ad(ab.imp2[0], impV(ab.imp2, it)); } // 防具隐性
     for (const it of items) { const g3 = gen3Imp(it); if (g3) ad(g3[0], g3[1]); } // 三代底材的第二隐性
     if (A.gainPct) ad('soulRegen', A.gainPct);
     for (const k of ['pen', 'ailEff', 'res']) if (A[k + ':all']) for (const e of [...ELEM, 'burn']) ad(k + ':' + e, A[k + ':all']); }
   const TS = treeStats(S.tree, eq), TA = TS.add, TM = TS.more, FL = TS.flag;
+  applySets(eq, A, TA, FL); // gear-v3 套装：2 / 4 / 6 件效果（data/sets.json）
   const P = { eq, raw: A, modLvl: (A.modLvl || 0) + (TA.modLvl || 0), tree: TS, flag: FL, shockMul: TS.flag.shockMul || 1, afterRep: TS.flag.afterRep || 0 };
   // 法阵里的力场
   const F = {};
-  if (eq.hub) for (const { fx } of activeRunes(eq.hub, P)) for (const k in fx) {
+  const hubIt = eqK(eq, 'hub'), shIt = eqK(eq, 'shield');
+  if (hubIt) for (const { fx } of activeRunes(hubIt, P)) for (const k in fx) {
     if (k === 'res') for (const e in fx.res) F['res:' + e] = (F['res:' + e] || 0) + fx.res[e];
     else F[k] = (F[k] || 0) + fx[k];
   }
   // 护甲类底材的固有数值（按品质）
   const base = {};
-  for (const k of ARMOR_KINDS) {
-    const it = eq[k]; if (!it) continue; const b = baseOf(it);
+  for (const it of items) {
+    if (!ARMOR_KINDS.includes(it.kind)) continue; const b = baseOf(it);
     for (const s of ['shieldDmg', 'armor', 'deflect', 'dodge', 'mass', 'energy', 'time']) if (b[s]) base[s] = (base[s] || 0) + qv(b[s], it.q);
     if (b.res) base['res:' + b.el] = (base['res:' + b.el] || 0) + qv(b.res, it.q);
   }
@@ -54,8 +56,8 @@ function computeStats(eq = S.equip) {
   P.armor = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100)));
   // 原来的灵障并进护盾；天赋/独特里“护甲总降”的代价改成护盾总降
   P.armorOut = P.armor; // 盾扔出去时没有格挡
-  if (FL.martyrArmor && eq.shield) P.armorOut = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) - qv(baseOf(eq.shield).armor || 0, eq.shield.q) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100))); // 殉道者之盾：盾在飞时不算盾的护甲
-  const blk = (A.block || 0) + (TA.block || 0); P.blk = eq.shield ? Math.min(75, blk + G2D.shieldBlock) : 0; P.blockVal = eq.shield ? Math.round((G2D.blockBase + G2D.blockPerIlvl * (eq.shield.ilvl || 1)) * (1 + (A.blockValInc || 0) / 100)) : 0; // defense-v3：格挡几率 + 格挡值（挡住时减去格挡值）
+  if (FL.martyrArmor && shIt) P.armorOut = Math.max(0, Math.round((PLAYER.armor + (base.armor || 0) - qv(baseOf(shIt).armor || 0, shIt.q) + (A.armor || 0) + (TA.armor || 0)) * (1 + ((A.armorInc || 0) + (TA.armorInc || 0) + P.mass * MECH.massArmor * 100) / 100))); // 殉道者之盾：盾在飞时不算盾的护甲
+  const blk = (A.block || 0) + (TA.block || 0); P.blk = shIt ? Math.min(75, blk + G2D.shieldBlock) : 0; P.blockVal = shIt ? Math.round((G2D.blockBase + G2D.blockPerIlvl * (shIt.ilvl || 1)) * (1 + (A.blockValInc || 0) / 100)) : 0; // defense-v3：格挡几率 + 格挡值（挡住时减去格挡值）
   P.shield = Math.round((PLAYER.shield + (A.deflect || 0) + (F.deflect || 0) + (TA.deflect || 0)) * (1 + ((A.deflectInc || 0) + (TA.deflectInc || 0) + P.energy * MECH.energyDeflect * 100) / 100) * (TM.deflect ?? 1) * (TM.armor ?? 1));
   P.shieldRegen = P.shield * (PLAYER.shieldRegenPct + (F.armorRegen || 0) + (TA.shieldRegenPct || 0)) / 100 * (TM.deflRate ?? 1) + (A.shieldRegen || 0) + (TA.shieldRegen || 0); // 每秒回复：上限的 % + 复骨力场 + 词条的固定值
   // 护盾只从词条来（堆生存的一个方向）；底子原来的护盾值改算成生命
@@ -111,7 +113,7 @@ function computeStats(eq = S.equip) {
   P.twin = eq.wl && eq.wl.u === 'TheTwin' && eq.wr ? 2 : 0; // 双生圣焰铳：拿着副手时生效
   P.gem = null; const sk = skillItem({ ...eq, gem: basicGem(eq) }); // 触发器改版：没有主攻石，普攻按主手类别 // 技能石（spec-skill-gems）：主手只给数值
   P.weapons = [sk ? weaponStats(sk, P) : null, null];
-  P.armorHeld = P.armor; P.shieldW = sk ? null : shieldWeapon(eq.shield, P, P.gem); // 圣盾掷：盾变成一把虚拟武器
+  P.armorHeld = P.armor; P.shieldW = sk ? null : shieldWeapon(eqK(eq, 'shield'), P, P.gem); // 圣盾掷：盾变成一把虚拟武器
   P.dps = P.weapons.reduce((s, w) => s + (w ? w.dps : 0), 0) + (P.shieldW ? P.shieldW.dps : 0);
   if (P.weapons[0]) P.weapons[0].basic = 1; elemStats(P); trigStats(P, eq);
   return P;
@@ -168,7 +170,7 @@ function weaponStats(it, P, isEngine) {
     else if (a.stat === 'baseAspd') baseAspd += x.v;
     else if (a.stat === 'spinCap') spinCap += x.v;
   }
-  if (!isEngine && !it.th && (!it.fb || it.gem)) for (const o of [P.eq && P.eq.wr, P.eq && P.eq.hub]) if (o && o !== it) for (const x of o.affs) { const a = AFF_BY[x.k]; if (a && a.stat === 'flat') { const f = flat[a.el] || [0, 0]; flat[a.el] = [f[0] + x.v[0], f[1] + x.v[1]]; } } // 副手 / 法阵上的附加伤害给主手
+  if (!isEngine && !it.th && (!it.fb || it.gem)) for (const o of [P.eq && P.eq.wr]) if (o && o !== it) for (const x of o.affs) { const a = AFF_BY[x.k]; if (a && a.stat === 'flat') { const f = flat[a.el] || [0, 0]; flat[a.el] = [f[0] + x.v[0], f[1] + x.v[1]]; } } // 副手 / 法阵上的附加伤害给主手
   if (!isEngine) for (const e of ELEM) { const v = (P.raw['flat:' + e] || 0); if (v) { const f = flat[e] || [0, 0]; flat[e] = [f[0] + v, f[1] + v * 2]; } } // 属性石的附加伤害
   if (U('kinBaseInc')) baseInc.kin = (baseInc.kin || 0) + U('kinBaseInc');
   if (U('flatPerArmor')) { const f = flat.kin || [0, 0], v = Math.round(U('flatPerArmor') * (P.armor || 0) / 100); flat.kin = [f[0] + v, f[1] + v * 2]; } // 攻城骨弩：每 100 护甲加物理平伤
@@ -246,6 +248,7 @@ function weaponStats(it, P, isEngine) {
   if (P.flag.echoShield) { if (has('Shield')) W.more *= SHT.heartMore; } // 回响圣盾：【盾】
   if (P.flag.shardChain) { if (has('Spawn')) W.more *= OB.heartMore; } // 碎冰连锁：【派生】
   if (P.flag.starfall) { if (has('Delayed')) W.more *= MT.heartMore; } // 星坠雨：【延迟】
+  if (P.flag.setMore && b.gem) for (const id in P.flag.setMore) if (SET_BY[id] && SET_BY[id].skills.includes(b.gem)) W.more *= P.flag.setMore[id]; // gear-v3 套装 4 / 6 件：这套服务的技能伤害总增（倍数）
   if (P.flag.shatter) { if (has('Nova') || W.frostNova) W.more *= NV.heartMore; } // 碎冰：【新星】
   conv('kin', [...THERMAL_E, 'nuc'], U('convKinThermal') / 100); /* 三棱穿心弩：另外 5 种元素 */ conv('exp', ['nuc'], U('convExpNuc') / 100); conv('pla', ['nuc'], U('convPlaNuc') / 100);
   // 额外获得：按加成前总伤害的比例

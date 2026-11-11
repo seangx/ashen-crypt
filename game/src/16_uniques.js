@@ -7,7 +7,7 @@ const UNIQUES = DATA.uniques.list.filter(u => !u.leg); // 神话（data/uniques.
 const LEGA = DATA.uniques.list.filter(u => u.leg); // 传奇词条模板：稀有装备带一条（11-10 稀有度改版）
 const ruleSrc = it => it ? UNIQUE_BY[it.u] || UNIQUE_BY[it.la] || null : null; // 神话的规则，或传奇装备的传奇词条
 const RULE_TEXT = {
-  knock: () => '命中击退敌人', knockMore: v => `伤害总增 ${v}%`, aspdLess: v => `攻击速度总降 ${v}%`,
+  setLess: () => '身上每套套装（至少 2 件）多算 1 件：5 件拿到 6 件效果，或两套混搭', knock: () => '命中击退敌人', knockMore: v => `伤害总增 ${v}%`, aspdLess: v => `攻击速度总降 ${v}%`,
   afterPct: v => `余震每次保留 ${v}% 伤害`, afterRep: v => `余震多重复 ${v} 次`, convKinThermal: v => `${v}% 的物理伤害平均转换为火焰、圣光、闪电、寒霜、瘟疫`, pierceInf: () => '投射物穿透所有敌人（因此不会弹射）',
   pierce: v => `穿透 +${v}`, convExpNuc: v => `${v}% 的火焰伤害转换为瘟疫伤害`, pull: () => '命中把敌人拉近',
   dotMore: v => `持续伤害总增 ${v}%`, 'shred:nuc': v => `命中使敌人瘟疫抗性 -${v}%（3 秒）`, chain: v => `弹射 +${v}（投射物打中敌人后转向附近另一个没打过的敌人，射程重新算；穿透次数用完才弹射）`,

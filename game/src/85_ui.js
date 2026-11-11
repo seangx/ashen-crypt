@@ -122,6 +122,7 @@ function helpPages() {
 function baseLines(it) {
   const b = baseOf(it), q = it.q, out = [], dim = '#b8afc4';
   if (it.kind === 'gem') return gemLines(it);
+  if (it.set) out.push(...setLines(it)); // gear-v3 套装
   if (it.kind === 'weapon') { // 主手只给数值（spec-skill-gems）：类别、对口、暴击；伤害按技能石算
     const cat = GEMC.cats[b.cat], sk = skillItem({ ...S.equip, wl: it, gem: basicGem({ ...S.equip, wl: it }) }), sb = sk ? sk.fb : null; // 伤害在魂龛 / 宝石那边看，这里只给武器本身的数值
     out.push([`类别：${cat ? cat.n : '—'}${cat ? `（对口：${cat.tags.map(t => TAG_N[t] || t).join('、')}）` : ''}`, COL.dim]);
@@ -576,7 +577,7 @@ class UI extends Phaser.Scene {
       mkBtn(this, p, 104, by, 48, 16, confirmKey === 'sal' + it.id ? '确认' : '拆解', () => { if (confirm2('sal' + it.id)) { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n || g.coins) toast(`得到 ${n} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); selId = null; save(); } this.refresh(); }, { size: 8, style: confirmKey === 'sal' + it.id ? 'r' : 'n', tip: [{ t: '拆解', c: COL.emberHi }, { t: `毁掉装备，每条词条给 ${CRAFT.shatter.perAffix} 个对应的碎片，T${CRAFT.shatter.bonusTier} 及以上多给 ${CRAFT.shatter.bonus} 个。`, s: 8 }] });
     } else {
       mkBtn(this, p, 0, by, 48, 16, '卸下', () => { unequip(f.slot); save(); this.refresh(); }, { size: 8 });
-      if (unlocked('mods') && (it.sock || ['core', 'engine', 'hub'].includes(f.slot))) mkBtn(this, p, 52, by, 48, 16, '符文', () => { modWeapon = f.slot; this.openWin('mods'); }, { size: 8 });
+      if (unlocked('mods') && (it.sock || isRuneHost(f.slot))) mkBtn(this, p, 52, by, 48, 16, '符文', () => { modWeapon = f.slot; this.openWin('mods'); }, { size: 8 });
     }
     if (it.kind === 'gem') { // 技能石：打磨、开孔（代替铁砧）
       if (unlocked('craftAdv')) mkBtn(this, p, 0, by - 20, 74, 16, `打磨 ${GEMC.polishCost}碎片`, () => { const r = gemPolish(it); if (r) toast(r, COL.emberHi); this.refresh(); }, { size: 8, disabled: !canPolish(it), tip: [{ t: '打磨', c: COL.emberHi }, { t: `花 ${GEMC.polishCost} 个随机词条碎片，品质 +1%（最高 ${GEMC.qMax}%）`, s: 8 }] });
@@ -587,9 +588,9 @@ class UI extends Phaser.Scene {
   /* 符文 */
   win_mods(c) {
     const host = S.equip[modWeapon];
-    const hosts = ['gem', 'core', 'engine', 'hub']; // 副手没有符文槽
+    const hosts = ['gem', ...runeHosts()]; // 副手格只有放法阵时有符文槽
     hosts.forEach((s, i) => mkBtn(this, c, 10 + i * 46, 8, 43, 16, SLOTS.find(x => x.id === s).n, () => { modWeapon = s; this.refresh(); }, { size: 8, style: modWeapon === s ? 's' : 'n' }));
-    const isHub = modWeapon === 'hub';
+    const isHub = !!(S.equip[modWeapon] && S.equip[modWeapon].kind === 'hub');
     if (!host) { TW(this, 10, 34, '这个位置没有装备。', 200, { size: 8, color: COL.faint, parent: c }); }
     else {
       mkCell(this, c, 10, 30, host, { size: 24 });
