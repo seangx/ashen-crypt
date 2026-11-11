@@ -7,7 +7,7 @@ const GAME = process.argv[2], OUT = process.argv[3], BENCH_F = process.argv[4] |
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.addInitScript(() => { try { localStorage.clear(); } catch (e) {} });
-  await p.route('**/phaser.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(GAME, 'tools/vendor/phaser.min.js')), contentType: 'application/javascript' }));
+  await p.route('**/phaser.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(GAME, 'vendor/phaser.min.js')), contentType: 'application/javascript' }));
   await p.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
   const tmp = path.join(os.tmpdir(), 'ashen-extract.html'); fs.writeFileSync(tmp, `<!doctype html><html><head><meta charset="utf-8"></head><body>${fs.readFileSync(path.join(GAME, 'ashen-crypt-mobile.html'), 'utf8')}</body></html>`);
   const BENCH = fs.existsSync(BENCH_F) ? Object.fromEntries(JSON.parse(fs.readFileSync(BENCH_F, 'utf8')).map(r => [r.id, r])) : {};

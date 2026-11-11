@@ -6,8 +6,8 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 name, out = sys.argv[1], sys.argv[2]
 if not os.path.exists(os.path.join(root, 'saves', name + '.json')): sys.exit(f'没有 saves/{name}.json')
 html = open(os.path.join(root, 'ashen-crypt.html'), encoding='utf8').read()
-phaser = open(os.path.join(root, 'tools', 'vendor', 'phaser.min.js'), encoding='utf8').read().replace('</script', '<\\/script')
-tag = '<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>'
+phaser = open(os.path.join(root, 'vendor', 'phaser.min.js'), encoding='utf8').read().replace('</script', '<\\/script')
+tag = '<script src="vendor/phaser.min.js"></script>'
 if tag not in html: sys.exit('ashen-crypt.html 里没找到 Phaser 的 script 标签')
 html = html.replace(tag, f'<script>window.ASH_BOOT_DEMO = {name!r};</script>\n<script>{phaser}</script>', 1)
 open(out, 'w', encoding='utf8').write(f'<!doctype html><html><head><meta charset="utf-8"><title>灰烬地窖 · {name} 毕业存档</title></head><body>{html}</body></html>')

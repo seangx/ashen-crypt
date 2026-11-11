@@ -1,7 +1,6 @@
 <meta charset="utf-8">
 <title>灰烬地窖</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@500;700&display=swap" rel="stylesheet">
+<!-- 11-11：不再从 jsDelivr / Google Fonts 加载（国内慢或打不开，样式表还会卡住启动）。Phaser、rexUI 在同目录 vendor/；字体用系统的中文字体（安卓是思源黑体，苹果是苹方） -->
 <style>
 /* 整页就是一块像素画布，界面全部在游戏里绘制 */
 :root{--ink:#0d0a12;color-scheme:dark}
@@ -10,6 +9,6 @@ html,body{height:100%;margin:0;background:var(--ink);overflow:hidden}
 #game canvas{image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
 </style>
 <div id="game"></div>
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+<script src="vendor/phaser.min.js"></script>
 <script>
-/* 灰烬地窖：系统与数值复刻 Astroloot，表现参考 Bones and Coins。代码、像素美术与文字为原创；文字使用 Noto Sans SC（SIL OFL 1.1，Google Fonts）。 */
+/* 灰烬地窖：系统与数值复刻 Astroloot，表现参考 Bones and Coins。代码、像素美术与文字为原创；文字使用系统中文字体（安卓思源黑体 / Noto Sans CJK，苹果苹方）。 */
