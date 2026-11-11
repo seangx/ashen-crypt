@@ -235,7 +235,7 @@ class MobileUI extends UI {
       const F = this.F, tg = [c, F && F.panel, F && F.headBox, F && F.footBox].filter(Boolean);
       for (const o of tg) { this.tweens.killTweensOf(o); o.setAlpha(0); } this.tweens.add({ targets: tg, alpha: 1, duration: 170, ease: 'Quad.easeOut' });
       if (this.dimFresh) { this.dimR.setAlpha(0); this.tweens.add({ targets: this.dimR, alpha: 1, duration: 200 }); this.dimFresh = false; }
-      const rib = c.list.find(o => o.type === 'NineSlice' && o.y === -10); if (rib) { const t = title && c.list.find(o => (o.type === 'Text' || o.type === 'BitmapText') && o.text === title); const parts = [rib, t].filter(Boolean); for (const o of parts) o.y -= 14; this.tweens.add({ targets: parts, y: '+=14', duration: 260, ease: 'Back.easeOut' }); }
+      const rib = title && c.list.find(o => o.type === 'NineSlice' && o.y === -10); if (rib) { const t = title && c.list.find(o => (o.type === 'Text' || o.type === 'BitmapText') && o.text === title); const parts = [rib, t].filter(Boolean); for (const o of parts) { const y0 = o.y; o.y = y0 - 14; this.tweens.add({ targets: o, y: y0, duration: 260, ease: 'Back.easeOut' }); } }
     }
   }
   openWin(id, arg) { if (this.winId !== id) this.pan = 0; super.openWin(id, arg); }
@@ -263,6 +263,19 @@ class MobileUI extends UI {
       : { shoulders: [0, 0], core: [32, 0], amulet: [64, 0], wl: [0, 32], wr: [64, 32], hands: [0, 64], chest: [32, 64], ring1: [64, 64], ring2: [0, 96], engine: [32, 96] };
     const ghost = { wl: 'i_w_crossbow', wr: 'i_o_source', core: 'i_a_helm', engine: 'i_a_shadowstep', hands: 'i_a_glove_bone', chest: 'i_a_chest_bone', shoulders: 'i_a_shoulder_bone', ring1: 'i_a_ring_bone', ring2: 'i_a_ring_bone', amulet: 'i_a_amulet_bone' };
     for (const s of SLOTS) { if (!pos[s.id]) continue; if (s.id === 'wr' && !unlocked('wr')) { lockedCell(this, c, ox + pos.wr[0], oy + pos.wr[1], E, ghost.wr, `副手：${unlockText('wr')}`); continue; } const it = S.equip[s.id], [x, y] = pos[s.id]; mkCell(this, c, ox + x, oy + y, it, { size: E, sel: selFn(it, s.id), ghost: ghost[s.id], acts: v => this.itemActs(v) }); }
+  }
+  /* ui-v2（11-11，参考迷雾大陆的“恭喜获得”）：奖励格子 6 列大格，第一次打开时逐个弹出，神话 / 套装多一道光。key 变了才重播（窗口每次刷新都会重建） */
+  rewardGrid(c, w, y, items, key) {
+    const cols = 6, st = Math.floor((w - 16) / cols), x0 = Math.round((w - cols * st) / 2) + 1, fresh = this.rewardKey !== key && G.fx !== false; this.rewardKey = key;
+    items.forEach((it, i) => {
+      const x = x0 + (i % cols) * st, yy = y + (i / cols | 0) * st, cell = mkCell(this, c, x, yy, it, { size: st - 2, upg: true, acts: v => this.itemActs(v) });
+      if (!fresh || i > 29) return;
+      const d = 80 + i * 55, s2 = (st - 2) / 2; cell.setAlpha(0).setScale(0.3); cell.x += s2 * 0.7; cell.y += s2 * 0.7;
+      this.tweens.add({ targets: cell, alpha: 1, scale: 1, x, y: yy, delay: d, duration: 260, ease: 'Back.easeOut', onStart: () => { if (i < 12) sfx(it.rar >= 2 || it.set ? 'craft' : 'click'); } });
+      if (it.rar === 3 || it.set) { const fl = this.add.image(x + s2, yy + s2, 'fx_glow').setDisplaySize(st * 2.2, st * 2.2).setTint(hex(it.set ? '#7fe08a' : '#ff9a4a')).setBlendMode('ADD').setAlpha(0); c.add(fl);
+        this.tweens.add({ targets: fl, alpha: { from: 0.9, to: 0 }, scale: fl.scale * 1.6, delay: d + 120, duration: 600, onComplete: () => fl.destroy() }); }
+    });
+    return Math.ceil(items.length / cols) * st;
   }
   /* 装备：竖屏原生。ui-v2（11-11，参考迷雾大陆）：头 = 两侧装备栏 + 中间人物和三个核心数 + 详细属性；背包栏一行；主体 = 6 列大格子 */
   win_gear(c, w, h) {
@@ -558,9 +571,8 @@ class MobileUI extends UI {
     y = this.dmgStat(c, w, y, r);
     T(this, 12, y, `带回的装备 ${kept.length}`, { size: 8, color: COL.dim, parent: c }); y += 12;
     const best = [...kept].sort((a, b) => b.rar - a.rar || b.q - a.q), st = TOUCH;
-    best.forEach((it, i) => mkCell(this, c, 9 + (i % MCOLS) * st, y + (i / MCOLS | 0) * st, it, { size: st, upg: true, acts: v => this.itemActs(v) }));
-    if (!best.length) T(this, 12, y, '没有留下装备', { size: 8, color: COL.faint, parent: c });
-    y += Math.max(1, Math.ceil(best.length / MCOLS)) * st + 6;
+    if (!best.length) { T(this, 12, y, '没有留下装备', { size: 8, color: COL.faint, parent: c }); y += st + 6; }
+    else y += this.rewardGrid(c, w, y, best, r) + 6;
     if (extra.length) { T(this, 12, y, '辅助宝石 · 铸符', { size: 8, color: COL.dim, parent: c }); y += 12; let ex = 12;
       for (const [ic, t] of extra) { const s2 = this.textures.get(ic).getSourceImage(), ww = s2.width + 1 + (t ? textW(t, 8) : 0) + 6; if (ex + ww > w - 12) { ex = 12; y += 18; } img(this, ex, y, ic, c); if (t) T(this, ex + s2.width + 1, y + 3, t, { size: 8, parent: c }); ex += ww; }
       y += 22; }

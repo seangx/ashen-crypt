@@ -483,10 +483,12 @@ class UI extends Phaser.Scene {
     const best = [...live].sort((a, b) => b.rar - a.rar || b.q - a.q), cs = mob ? 30 : 20, gap = mob ? 3 : 1, cols = Math.max(1, Math.floor((w - 20) / (cs + gap)));
     T(this, 12, 18, `宝箱 ${live.length} 件 · ` + (mob ? '点物品看详情、装备或拆解' : '悬停看详情，点一下装备'), { size: 8, color: COL.dim, parent: c });
     const rows = mob ? 999 : 2, show = best.slice(0, cols * rows);
-    show.forEach((it, i) => mkCell(this, c, 12 + (i % cols) * (cs + gap), 32 + (i / cols | 0) * (cs + gap), it, mob ? { size: cs, upg: true, acts: v => this.itemActs(v) } : { size: cs, upg: true, onClick: v => { if (slotsFor(v)[0]) { equipItem(v); save(); refreshStats(); this.refresh(); } } }));
+    if (mob && this.rewardGrid) { show.length = 0; best.forEach(x => show.push(x)); } // 手机：大格子 + 逐个弹出（86_ui_mobile.js rewardGrid）
+    const gh = mob && this.rewardGrid ? this.rewardGrid(c, w, 32, show, R) : 0;
+    if (!gh) show.forEach((it, i) => mkCell(this, c, 12 + (i % cols) * (cs + gap), 32 + (i / cols | 0) * (cs + gap), it, mob ? { size: cs, upg: true, acts: v => this.itemActs(v) } : { size: cs, upg: true, onClick: v => { if (slotsFor(v)[0]) { equipItem(v); save(); refreshStats(); this.refresh(); } } }));
     if (!show.length) T(this, w / 2, 40, '没有留下装备', { size: 8, color: COL.faint, align: 'center', parent: c });
     if (best.length > show.length) T(this, w - 12, 18, `另 ${best.length - show.length} 件在背包`, { size: 8, color: COL.faint, align: 'right', parent: c });
-    let y = 32 + Math.max(1, Math.ceil(show.length / cols)) * (cs + gap) + 6;
+    let y = 32 + (gh || Math.max(1, Math.ceil(show.length / cols)) * (cs + gap)) + 6;
     const life = Math.round(player.life / STATS.life * 100);
     T(this, 12, y, `生命 ${life}% · 灯火 ${Math.round(player.soul / STATS.soulMax * 100)}% · 下一层 ${RUN.base + 1}`, { size: 8, color: COL.text, parent: c }); y += 14;
     const tabs = [['gear', '装备'], ['mods', '符文'], ['tree', '天赋'], ['craft', '铁砧'], ['bulk', '拆解']].filter(([id]) => unlocked(id === 'bulk' ? 'salvage' : id)), bh = mob ? 40 : 18, tw = Math.floor((w - 24 - (tabs.length - 1) * 4) / Math.max(1, tabs.length));

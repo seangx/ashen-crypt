@@ -80,7 +80,10 @@ Object.assign(MobileUI.prototype, {
   },
   closePopup() { if (this.popF) { this.popF.destroy(); this.popF = null; } if (this.popC) { this.popC.destroy(); this.popC = null; } },
   showLines(lines, acts = [], closeL) {
-    this.popup((p, w) => { let y = 0; for (const l of lines) { if (!l || !l.t) continue; const t = TW(this, 0, y, l.t, w, { size: l.s || 12, color: l.c || COL.text, parent: p }); y += t.h + 1; } return y; }, acts, closeL);
+    this.popup((p, w) => { let y = 0, odd = 0; for (const l of lines) { if (!l || !l.t) continue;
+      if (l.hd) { if (y) y += 6; rect(this, -4, y, w + 8, 17, COL.ember, 0.18, p); rect(this, -4, y, 3, 17, COL.emberHi, 1, p); T(this, 4, y + 2, l.t, { color: COL.emberHi, parent: p }); y += 20; odd = 0; continue; } // ui-v2：分段标题条
+      if (l.k && textW(l.k, 8) + textW(l.v, 8) + 16 < w) { if (odd++ % 2 === 0) rect(this, -4, y - 1, w + 8, 13, '#ffffff', 0.04, p); T(this, 4, y, l.k, { size: 8, color: COL.dim, parent: p }); T(this, w - 2, y, l.v, { size: 8, color: l.c || COL.text, align: 'right', parent: p }); y += 13; continue; } // 名左值右的行条
+      const t = TW(this, l.k ? 4 : 0, y, l.t, w - (l.k ? 4 : 0), { size: l.s || 12, color: l.c || COL.text, parent: p }); y += t.h + 1; odd = 0; } return y; }, acts, closeL);
   },
   // 手指按下后移动超过 8 像素 = 在滑动，不是点击：主体里的东西这一下都不响应（不管内容滚不滚得动）
   initTapCancel() {

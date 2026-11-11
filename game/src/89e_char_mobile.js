@@ -3,7 +3,7 @@
 Object.assign(MobileUI.prototype, {
   charLines() {
     const P = STATS, TA = (P.tree && P.tree.add) || {}, R = P.raw || {}, F = P.flag || {}, L = [], pc = v => Math.round(v * 100) + '%', n1 = v => Math.round(v * 10) / 10;
-    const H = t => L.push({ t, c: COL.emberHi }), row = (a, b, c) => L.push({ t: `${a}：${b}`, s: 8, c: c || COL.text }), note = t => L.push({ t, s: 8, c: COL.dim });
+    const H = t => L.push({ t, c: COL.emberHi, hd: true }), row = (a, b, c) => L.push({ t: `${a}：${b}`, k: a, v: String(b), s: 8, c: c || COL.text }), note = t => L.push({ t, s: 8, c: COL.dim });
     const lv = monLv();
     // ---- 套装（gear-v3）----
     { const ms = mainSet(), n = setCounts();
