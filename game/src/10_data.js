@@ -56,7 +56,7 @@ const SOCKET_KINDS = { core: 1, engine: 1 }; // 武器不再有符文槽（辅�
 // 标签（原作同名机制）
 // 技能 v3 三层标签（design/skill-v3.md）：元素 · 形态 · 机制
 const EFX_D = { kin: '破甲：每次命中叠一层，目标受到的所有伤害提高，最多 10 层', exp: '灼烧：火焰伤害的一部分转成持续燃烧，打得越重烧得越狠', ele: '感电：这一下越重层数越高，目标短时间内更脆', nuc: '疫病：每次命中叠一层持续伤害，层数不设上限', cold: '冰缓：叠层减速，叠满碎冰——结算这一轮寒霜伤害的一部分', pla: '审判：目标血量低于一条线直接处决，打得越重线越高' };
-const F3_N = { melee: '近战', proj: '投射物', area: '范围', util: '功能' }, MECH_N = { chain: '弹射', bounce: '回弹', pierce: '穿透', split: '分裂', dot: '持续', delay: '延迟', spawn: '派生' };
+const F3_N = { melee: '近战', proj: '投射物', area: '范围', util: '功能' }, MECH_N = { chain: '弹射', pierce: '穿透', split: '分裂', dot: '持续', delay: '延迟', spawn: '派生' };
 const TAG_N = {
   Attack: '攻击', AttackSpeed: '攻速', Range: '射程', AoE: '范围', Projectile: '投射物', ProjectileCanReturn: '可返回', ProjectileCanPierce: '可穿透',
   ProjectileCanChain: '可弹射', ProjectileCanSplit: '可分裂', DoT: '持续伤害', Hit: '命中', Melee: '近战', Mine: '陷阱', Field: '力场', Reflect: '反伤',
@@ -192,12 +192,12 @@ const NV = DATA.mechanics.nova; // 霜环（冰霜新星）流派的数值
 const GEAR = DATA.mechanics.gear; // 词条改版（spec-bd-gear §2、§3）
 const SOUL = DATA.mechanics.soul; // 魂火（共用资源）
 const MOD_D = {
-  ShieldThrow: f => `只对圣徽盾生效：盾每 1/攻速 秒自动扔向最近的敌人，伤害 = 盾的护甲 × ${f.throwK}（吃盾牌伤害、圣光伤害），无限穿透；回弹 ${f.bounce} 次（碰屏幕边反弹），每弹一次之后伤害 +${f.chainStepInc}%；弹完或寿命到了飞回手上。盾在飞时没有格挡。每次投掷消耗 ${SHT.soulPerThrow} 灯火，反弹过之后每次命中返还 ${SHT.soulPerChain}`,
+  ShieldThrow: f => `只对圣徽盾生效：盾每 1/攻速 秒自动扔向最近的敌人，伤害 = 盾的护甲 × ${f.throwK}（吃盾牌伤害、圣光伤害），打中后弹射到 ${SHT.chainR} 像素内下一个没打过的敌人，弹射 ${f.chain} 次，每弹一次之后伤害 +${f.chainStepInc}%；弹完、找不到下一个或寿命到了飞回手上。盾在飞时没有格挡。每次投掷消耗 ${SHT.soulPerThrow} 灯火，弹射过之后每次命中返还 ${SHT.soulPerChain}`,
   FrostOrbRune: f => `只对寒魄宝珠生效：冰球飞行中每 ${OB.emit} 秒向四周放 ${OB.shardDirs} 片冰片（+ 派生 +N），每片 ×${f.shardMul}，不穿透，算投射物。每次施放消耗 ${OB.soulPerCast} 灯火，冰片打中冻结的敌人每片返还 ${OB.refund}（每次最多 ${OB.refundCap}）`,
   Meteor: f => `只对坠星杖生效：陨石伤害 ×${f.meteorMul}，落地留 ${f.ground.dur} 秒火地（每 ${f.ground.tick} 秒造成这次命中的 ${Math.round(f.ground.pct * 100)}%，吃持续时间），火地里的敌人伤害降低 ${Math.round(MT.groundWeaken * 100)}%。每次施放消耗 ${MT.soulPerCast} 灯火，一次杀 ${MT.refundKills} 只以上返还 ${MT.soulRefund}`,
   FrostNova: f => `只对霜钟 / 圣钟生效：新星伤害 ×${f.novaMul}，每次命中叠 ${f.chillStacks} 层冰缓，击退 ${NV.knockPx} 像素；圣钟的元素改成寒霜。每次新星消耗 ${NV.soulPerCast} 灯火，每冻结一只返还 ${NV.refund}（每次最多 ${NV.refundCap}）`,
-  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），沿波浪线飞 ${SP.life} 秒（吃持续时间和投射物持续时间，弹速决定飞多远）；碰到屏幕边按回弹次数反弹（每弹一次伤害 ×${SP.chainMul}），回弹用完就飞出屏幕；有穿透时无限穿透，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次，没有穿透时打中就消失；回弹 +${f.bounce}（游雷不吃弹射）；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。投射物 +N 让每次多放 N 颗（相加）。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
-  Pierce: f => `投射物无限穿透（同一个敌人每 ${MECH.projRehit} 秒最多打一次），穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
+  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），沿波浪线飞 ${SP.life} 秒（吃持续时间和投射物持续时间，弹速决定飞多远）；碰到屏幕边折返（每折返一次伤害 ×${SP.chainMul}），一直飞到寿命结束；有穿透时无限穿透，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次，没有穿透时打中就消失；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。投射物 +N 让每次多放 N 颗（相加）。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
+  Pierce: f => `穿透 +${f.pierce}（打中后继续往前飞，同一个敌人每 ${MECH.projRehit} 秒最多打一次；穿透次数用完才弹射），穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
   Chain: f => `弹射 +${f.chain}（投射物打中敌人后转向附近另一个敌人；闪电链类多连锁 ${f.chain} 次），每剩一次弹射伤害提高 ${Math.round(f.chainInc * 100)}%`,
   Split: f => `投射物分裂 ${f.split} 次，初次命中每次分裂伤害提高 ${Math.round(f.splitInc * 100)}%`,
   Boomerang: f => `投射物飞到尽头后返回，投射物伤害${f.projInc >= 0 ? '提高' : '降低'} ${Math.abs(f.projInc)}%`,

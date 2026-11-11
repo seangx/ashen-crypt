@@ -145,7 +145,7 @@ function baseLines(it) {
     if (p.length) out.push([p.join(' · '), dim]);
     const im = [];
     const big = v => v >= 1000000 ? '无限' : v;
-    if (b.pierce) im.push('无限穿透');
+    if (b.pierce) { const pv = qv(b.pierce, q); im.push(pv >= 99 ? '穿透所有敌人' : `穿透 ${Math.round(pv)}`); }
     if (b.chain) im.push(`弹射 ${qv(b.chain, q)}`);
     if (b.split) im.push(`分裂 ${qv(b.split, q)}`);
     if (b.extra) im.push(b.form === 'stab' ? `同时刺 ${1 + qv(b.extra, q)} 个目标` : `额外攻击 ${qv(b.extra, q)}`);
@@ -602,7 +602,7 @@ class UI extends Phaser.Scene {
       if (Wi) {
         const lines = [Wi.form === 'engine' ? `冲刺伤害 ${fmt(Wi.avg)}` : `秒伤 ${fmt(Wi.dps)} · 每秒攻击 ${r1(Wi.aps)} · 暴击 ${pct(Math.min(1, Wi.crit))} ×${Wi.critMult.toFixed(2)}`,
           ELEM.filter(e => Wi.max[e] > 0).map(e => `${ELEM_N[e]} ${fmt(Wi.min[e])}–${fmt(Wi.max[e])}`).join('  '),
-          [Wi.pierce && '无限穿透', Wi.chain && `弹射 ${Wi.chain}`, Wi.bounce && `回弹 ${Wi.bounce}`, Wi.split && `分裂 ${Wi.split}`, Wi.ret && '回旋', Wi.extra && `额外攻击 ${Wi.extra}`].filter(Boolean).join('  ') || '没有弹道加成',
+          [Wi.pierce && (Wi.pierce >= 99 ? '穿透所有敌人' : `穿透 ${Wi.pierce}`), Wi.chain && `弹射 ${Wi.chain}`, Wi.split && `分裂 ${Wi.split}`, Wi.ret && '回旋', Wi.extra && `额外攻击 ${Wi.extra}`].filter(Boolean).join('  ') || '没有弹道加成',
           '异常几率：' + (ELEM.filter(e => Wi.ail[e] > 0).map(e => `${AIL[e].n} ${pct(Math.min(1, Wi.ail[e]))}`).join('  ') || '无')];
         lines.forEach((s, i) => TW(this, 10, 116 + i * 11, s, 220, { size: 8, color: i === 0 ? COL.emberHi : COL.text, parent: c }));
       }

@@ -472,6 +472,7 @@
   "shieldOnHit": 0.5,
   "soulPerThrow": 0.4,
   "soulPerChain": 0.06,
+  "chainR": 100,
   "echoR": 24,
   "echoMul": 0.4,
   "heartMore": 1.8,
@@ -687,7 +688,7 @@
   "base": "FrostBell"
  },
  "spark": {
-  "_说明": "游雷（电球）流派（规格 design/spec-spark.md、design/spec-pierce-chain.md；2026-10-24 用户定稿：寿命按本地方案，穿透保持无限穿透，弹射是指弹屏幕边缘；11-11 用户改定：碰屏幕边反弹改叫“回弹”（bounce），“弹射”只指在敌人之间跳）。游雷符文：插在雷灵（form proj + wander）上，每次出手朝目标扇形放出一串游雷，数量 = 符文的 sparkN + 投射物数量（相加，照流放之路；投射物 +N 来自词条、天赋、百骨冠）；每颗伤害 = 武器单发 × 符文的 sparkMul。轨迹是固定的正弦波：沿出手方向直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，不追踪、不随机。速度 = 武器弹速 × speedMul；寿命 life 秒 × (1 + 持续时间提高% + 投射物持续时间提高%) × 缓流等符文总增，寿命到了就消失（反弹不补寿命），弹速决定这段时间飞多远；同屏最多 maxAlive 颗，超出时最老的消失。弹射 = 中心线碰到当前屏幕边（视野去掉顶部状态栏，左右各留 10 像素）镜面反射的次数，每反弹一次耗 1 次弹射、之后的伤害 ×chainMul，反弹后继续走波形；弹射用完再碰到屏幕边就飞出去消失。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、织雷之心、雷冠）。穿透是布尔的：有任何穿透来源（basePierce、穿刺符文、穿透词条）就无限穿透，同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）；没有穿透时打中一个敌人就消失。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每反弹一次之后的命中伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，数值在 rules.json chainCrown）：反弹过的游雷打中的敌人感电；第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉的不再分叉、不弹射）。estLeg / estLegHit / estRehit 只给秒伤估算用：一趟屏幕约 estLeg 像素，每多一趟按 estLegHit 估多打的命中，穿透时飞在屏幕里每多 1 秒按 estRehit 估重复命中。chainR / chainLife 已不用（投射物不再在敌人之间转向）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
+  "_说明": "游雷（电球）流派（规格 design/spec-spark.md、design/spec-pierce-chain.md；2026-10-24 用户定稿：寿命按本地方案，穿透保持无限穿透，弹射是指弹屏幕边缘；11-11 用户改定：照流放之路，“弹射”只指在敌人之间跳，投射物打中后按 分裂 → 穿透 → 弹射 一次只触发一种，穿透有次数；碰屏幕边折返不再是属性，是游雷、寒魄球自己的飞行方式，一直到寿命结束）。游雷符文：插在雷灵（form proj + wander）上，每次出手朝目标扇形放出一串游雷，数量 = 符文的 sparkN + 投射物数量（相加，照流放之路；投射物 +N 来自词条、天赋、百骨冠）；每颗伤害 = 武器单发 × 符文的 sparkMul。轨迹是固定的正弦波：沿出手方向直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，不追踪、不随机。速度 = 武器弹速 × speedMul；寿命 life 秒 × (1 + 持续时间提高% + 投射物持续时间提高%) × 缓流等符文总增，寿命到了就消失（反弹不补寿命），弹速决定这段时间飞多远；同屏最多 maxAlive 颗，超出时最老的消失。弹射 = 中心线碰到当前屏幕边（视野去掉顶部状态栏，左右各留 10 像素）镜面反射的次数，每反弹一次耗 1 次弹射、之后的伤害 ×chainMul，反弹后继续走波形；弹射用完再碰到屏幕边就飞出去消失。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、织雷之心、雷冠）。穿透是布尔的：有任何穿透来源（basePierce、穿刺符文、穿透词条）就无限穿透，同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）；没有穿透时打中一个敌人就消失。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每反弹一次之后的命中伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，数值在 rules.json chainCrown）：反弹过的游雷打中的敌人感电；第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉的不再分叉、不弹射）。estLeg / estLegHit / estRehit 只给秒伤估算用：一趟屏幕约 estLeg 像素，每多一趟按 estLegHit 估多打的命中，穿透时飞在屏幕里每多 1 秒按 estRehit 估重复命中。chainR / chainLife 已不用（投射物不再在敌人之间转向）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
   "life": 3.5,
   "rehit": 0.66,
   "speedMul": 1.1,
@@ -1184,20 +1185,20 @@
    "fx": {
     "pierce": 1
    },
-   "t": "穿透"
+   "t": "穿透 +1"
   },
   "Railgun": {
    "fx": {
     "pierce": 1,
     "projSpd": 30
    },
-   "t": "穿透；投射物速度提高 30%"
+   "t": "穿透 +1；投射物速度提高 30%"
   },
   "Zapper": {
    "fx": {
-    "bounce": 1
+    "chain": 1
    },
-   "t": "回弹 +1（碰屏幕边反弹）"
+   "t": "弹射 +1"
   },
   "Shuriken": {
    "fx": {
