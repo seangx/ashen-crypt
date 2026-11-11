@@ -39,6 +39,7 @@ Object.assign(MobileUI.prototype, {
     row('站位减伤', `每个贴身敌人 ${n1(P.closePer || 0)}%（上限 ${n1(P.closeCap || 0)}%） · 身边没人时 ${n1(P.farDR || 0)}%`);
     row('恢复', `每秒回生命 ${n1(P.lifeRegen || 0)} · 击杀回生命 ${n1(P.lifeOnKill || 0)} · 命中回护盾 ${n1(P.shieldOnHit || 0)}‰`);
     row('坚韧', `${fmt(toughness(P))}（按 ${lv} 级的怪，等于能扛多少原始伤害）`, '#ffd0a0');
+    row('最缺', elemNeed(P), COL.cyan); // 装备页改版后从首页挪到这里
     // ---- 灯火 ----
     H('灯火');
     row('上限 / 回复', `${fmt(P.soulMax)} · 回复 +${n1(P.soulRegen || 0)}% · 燃烧 ×${(P.burnMul || 1).toFixed(2)}`);
