@@ -85,9 +85,11 @@ class World extends Phaser.Scene {
     if (P.every && (this.skN[nk] = (this.skN[nk] || 0) + 1) % P.every !== 1 % P.every) return !!P.replace; // 一次刺很多根时只画其中几根
     if ((this.skLast[name] || 0) > G.time - 0.05 || this.skSpr.length >= 40) return !!P.replace; // 限频、限量：怪海里不把屏幕糊满
     this.skLast[name] = G.time;
-    const k = e.r ? clamp(e.r / s.fit, 0.4, 3) : 1, /* fit = 图集主体半宽（skillfx.json），特效宽度对上实际直径；过大过小才限幅 */ sp = this.add.sprite(Math.round(e.x), Math.round(e.y), name).setOrigin(s.ox / s.fw, s.oy / s.fh).setDepth(P.ground ? 9.6 : 59).setScale(k);
-    if (P.rot && e.a != null) { const left = Math.cos(e.a) < 0; sp.setFlipX(left); sp.setRotation(left ? e.a + Math.PI : e.a); }
-    sp.play('fx_' + name); if (P.once && s.loop) this.time.delayedCall(P.once * 1000, () => sp.emit('animationcomplete')); /* 循环图集当一次性用：播一段时间收掉 */ this.skSpr.push(sp); sp.once('animationcomplete', () => { sp.destroy(); this.skSpr = this.skSpr.filter(x => x !== sp); });
+    const k = e.r ? clamp(e.r / s.fit, 0.4, 3) : 1; /* fit = 图集主体半宽（skillfx.json），特效宽度对上实际直径；过大过小才限幅 */
+    const angs = P.fan && e.arc && e.a != null ? [-P.fan, 0, P.fan].map(f => e.a + f * e.arc) : [e.a]; // fan：劈斩在扇形里铺几道（腐爪的爪痕铺满实际扇形）
+    for (const an of angs) { const sp = this.add.sprite(Math.round(e.x), Math.round(e.y), name).setOrigin(s.ox / s.fw, s.oy / s.fh).setDepth(P.ground ? 9.6 : 59).setScale(k);
+      if (P.rot && an != null) { const left = Math.cos(an) < 0; sp.setFlipX(left); sp.setRotation(left ? an + Math.PI : an); }
+      sp.play('fx_' + name); if (P.once && s.loop) this.time.delayedCall(P.once * 1000, () => sp.emit('animationcomplete')); /* 循环图集当一次性用：播一段时间收掉 */ this.skSpr.push(sp); sp.once('animationcomplete', () => { sp.destroy(); this.skSpr = this.skSpr.filter(x => x !== sp); }); }
     return !!P.replace;
   }
   /* 独特武器的常驻表现（data/skillfx.json 的 uniq）：尖端飘粒子、脉动光晕，出手时喷一圈火花。主角小，所以效果画在武器周围，不画在身上 */
