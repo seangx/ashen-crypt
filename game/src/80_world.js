@@ -90,16 +90,27 @@ class World extends Phaser.Scene {
   }
   /* 独特武器的常驻表现（data/skillfx.json 的 uniq）：尖端飘粒子、脉动光晕，出手时喷一圈火花。主角小，所以效果画在武器周围，不画在身上 */
   uniqAura(dt, wp, hx, hy, at) {
-    const it = S.equip.wl, U = this.uFx = uqId(it) && DATA.skillfx.uniq && DATA.skillfx.uniq[uqId(it)] || null; if (!wp) { this.uGlow && this.uGlow.setVisible(false); return; }
+    const it = S.equip.wl, U = this.uFx = uqId(it) && DATA.skillfx.uniq && DATA.skillfx.uniq[uqId(it)] || null; if (!wp) { this.uGlow && this.uGlow.setVisible(false); this.uSun && this.uSun.setVisible(false); return; }
     if (!this.uGlow) { this.uGlow = this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD).setVisible(false); this.uEm = this.add.particles(0, 0, 'px2', { emitting: false, lifespan: 600, alpha: { start: 1, end: 0 } }); this.uAcc = 0; }
-    if (!U || !G.fx) { this.uGlow.setVisible(false); return; }
-    if (this.uKey !== uqId(it)) { this.uKey = uqId(it); const tint = U.tint.map(hex); this.uEm.setConfig({ emitting: false, lifespan: { min: U.life[0], max: U.life[1] }, speedY: { min: -U.rise[1], max: -U.rise[0] }, speedX: { min: -7, max: 7 }, alpha: { start: 1, end: 0 }, scale: { start: 1, end: 0.3 }, tint, blendMode: 'ADD' }); this.uTint = tint; }
+    if (!U || !G.fx) { this.uGlow.setVisible(false); this.uSun && this.uSun.setVisible(false); return; }
+    if (this.uKey !== uqId(it)) { this.uKey = uqId(it); const tint = U.tint.map(hex); this.uEm.setConfig({ emitting: false, lifespan: { min: U.life[0], max: U.life[1] }, speedY: { min: -U.rise[1], max: -U.rise[0] }, speedX: { min: -U.rise[0] / 2, max: U.rise[0] / 2 }, alpha: { start: 1, end: 0 }, scale: { start: 1, end: 0.3 }, tint, blendMode: 'ADD' }); this.uTint = tint; }
     const len = wp.cv.width * (U.tip - wp.ox) * WPN_SCALE, tx = hx + Math.cos(this.wA) * len, ty = hy + Math.sin(this.wA) * len, dep = this.heroW.depth + 0.002;
     this.uEm.setDepth(dep);
-    if (U.glow) this.uGlow.setVisible(true).setPosition(tx, ty).setTint(hex(U.glow)).setDepth(dep).setScale(0.45 + 0.08 * Math.sin(G.time * 6)).setAlpha(0.3 + 0.12 * Math.sin(G.time * 9));
+    if (U.glow) this.uGlow.setVisible(true).setPosition(tx, ty).setTint(hex(U.glow)).setDepth(dep).setScale(0.3 + 0.04 * Math.sin(G.time * 4)).setAlpha(0.16 + 0.05 * Math.sin(G.time * 4));
+    if (U.sun) { this.uSun ??= this.add.image(0, 0, this.sunTex()).setOrigin(0.5); this.uSun.setVisible(true).setPosition(Math.round(tx), Math.round(ty)).setDepth(dep + 0.001).setFrame((G.time * 5 | 0) % 2); } else if (this.uSun) this.uSun.setVisible(false);
     this.uAcc += dt * U.rate; const n = this.uAcc | 0; this.uAcc -= n; for (let i = 0; i < n; i++) this.uEm.emitParticleAt(tx + (Math.random() - 0.5) * 6, ty + (Math.random() - 0.5) * 6, 1);
     if (U.burst && at < dt * 1.5) { this.uEm.emitParticleAt(tx, ty, U.burst); this.star(tx, ty, this.uTint[0], 1); } // 出手：尖端喷一圈
   }
+  /* 杖头的小太阳：13×13 像素画，两帧（十字长芒 / 斜角长芒）交替闪，不旋转免得糊 */
+  sunTex() { const key = 'u_sun'; if (this.textures.exists(key)) return key;
+    const N = 13, c = this.textures.createCanvas(key, N * 2, N), x = c.getContext(), C = N >> 1, px = (f, i, j, col) => { x.fillStyle = col; x.fillRect(f * N + C + i, C + j, 1, 1); };
+    for (let f = 0; f < 2; f++) {
+      for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) { const d = Math.hypot(i, j); if (d <= 2.6) px(f, i, j, d < 1.6 ? '#ffffff' : '#ffd84a'); }
+      const D = [[1, 0], [0, 1], [-1, 0], [0, -1]], X = [[1, 1], [-1, 1], [-1, -1], [1, -1]], lo = f ? X : D, sh = f ? D : X;
+      for (const [a, b] of lo) for (let k = 3; k <= 6; k++) px(f, a * k, b * k, k < 5 ? '#fff2a8' : '#ffb040');
+      for (const [a, b] of sh) for (let k = 3; k <= 3 + (f ? 1 : 0); k++) px(f, a * k, b * k, '#ffcc4a');
+    }
+    c.add(0, 0, 0, 0, N, N); c.add(1, 0, N, 0, N, N); c.refresh(); return key; }
   // 震屏有冷却，只在大事件上用
   hitStop(d, cd = 0.35) { if (!G.fx || G.time < (this.stopCd || 0)) return; this.stopUntil = G.time + d; this.stopCd = G.time + cd; } // 有冷却，打 Boss 时不会一直卡
   shake(ms, amt) { if (!G.fx || G.time < (this.shakeT || 0)) return; this.shakeT = G.time + 0.6; this.cameras.main.shake(ms, amt); }

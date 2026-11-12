@@ -276,28 +276,23 @@
    ],
    "keepPal": true
   },
-  "sunring": {
-   "fx": "fire/fire-ring",
+  "solarflare": {
+   "fx": "ashen/solar-flare",
    "el": "exp",
    "keepPal": true,
    "opts": {
     "palette": [
      "#2a0c06",
-     "#6a1a0a",
-     "#b8320c",
-     "#f06a14",
-     "#ffa82a",
-     "#ffd84a",
-     "#fff2a8",
-     "#ffffff"
+     "#7a2a10",
+     "#c84a12",
+     "#f08a20",
+     "#ffaa22",
+     "#ffc838",
+     "#ffe070",
+     "#fff0b0"
     ]
    },
-   "t": [
-    0.3,
-    1.7
-   ],
-   "speed": 1.4,
-   "scale": 0.42,
+   "scale": 0.5,
    "fit": 45
   }
  },
@@ -378,23 +373,24 @@
   "_说明": "独特武器的常驻表现：tip 杖头 / 刃尖的位置（握把到武器尖端的比例），rate 每秒飘出的粒子数，tint 粒子配色，rise 上飘速度，glow 尖端光晕颜色（null 不要），burst 出手时喷出的火花数；hit 拿着这件武器时，技能的哪些表现事件（ev，可多个；els 限元素）换成哪张图集——武器本身不出手，专属命中挂在技能上",
   "SolarasFire": {
    "tip": 0.78,
-   "rate": 40,
+   "rate": 10,
    "tint": [
+    "#ffe98a",
     "#ffd84a",
-    "#ff9a3d",
-    "#f0531a",
-    "#fff2a8"
+    "#fff6d0",
+    "#ffb040"
    ],
    "rise": [
-    16,
-    34
+    6,
+    14
    ],
    "life": [
-    500,
-    1100
+    700,
+    1400
    ],
-   "glow": "#ff8a2a",
-   "burst": 14,
+   "glow": "#ffc848",
+   "sun": true,
+   "burst": 10,
    "hit": {
     "ev": [
      "boom",
@@ -403,7 +399,7 @@
     "els": [
      "exp"
     ],
-    "sheet": "sunring",
+    "sheet": "solarflare",
     "replace": true,
     "ground": true
    }

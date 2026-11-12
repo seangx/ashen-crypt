@@ -3,7 +3,7 @@
    之后跑 python3 tools/fx/pack.py 裁帧、缩小、打包成 vendor/fxsheets.js。
    用法：PIXELFX=/path/to/pixelfx node tools/fx/bake.mjs [键...]
    不设 PIXELFX 时依次找：仓库旁边的 _vendor/pixelfx（往上找几层目录）。 */
-import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, writeFileSync, copyFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -19,6 +19,10 @@ const out = join(GAME, 'build', 'fxraw'); mkdirSync(out, { recursive: true });
 const want = process.argv.slice(2);
 for (const [key, s] of Object.entries(cfg.sheets)) {
   if (want.length && !want.includes(key)) continue;
+  if (s.fx.startsWith('ashen/')) { // 自制特效放在 tools/fx/custom/，渲染前复制到 pixelfx 的 src/fx/ashen/（import 路径按那里写）
+    const dst = join(PFX, 'src', 'fx', 'ashen'); mkdirSync(dst, { recursive: true });
+    copyFileSync(join(GAME, 'tools', 'fx', 'custom', s.fx.slice(6) + '.js'), join(dst, s.fx.slice(6) + '.js'));
+  }
   const fx = await L.loadEffect(s.fx);
   for (const el of [s.el, ...(s.els || [])]) {
     const options = { ...(s.opts || {}) };
