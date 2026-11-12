@@ -54,6 +54,10 @@ const GAME = process.argv[2], OUT = process.argv[3], BENCH_F = process.argv[4] |
           B.range ? Math.round(B.range * UNIT * (g.rngMul || 1)) : '', B.aoe ? Math.round(B.aoe * UNIT) : '', beh(B),
           bn.kills != null ? Math.round(bn.kills) : '', bn.pack != null ? Math.round(bn.pack) : '', bn.single != null ? Math.round(bn.single) : '',
           rng(g.mul || []), g.req, g.w, C.cost ? rng(C.cost) : '', fr ? safe(() => fr.d(fr.fx(1))) : '', fr ? safe(() => fr.d(fr.fx(20))) : '', (g.tags || []).map(tagN).join('、')]; }) };
+    // 技能变体（variants-v1，11-12）：每颗输出技能石 3 个，技能石到对应等级解锁
+    if (DATA.variants) { const VU = DATA.variants.unlock || [], VL = DATA.variants.list || {};
+      T.variants = { name: '技能变体', cols: ['id', '技能石', '变体', '解锁等级', '效果', '元素'], key: 0,
+        rows: Object.entries(VL).flatMap(([gid, vs]) => vs.map((v, i) => [`${gid}.${v.id}`, (GEM_BY[gid] || {}).n || gid, v.n, VU[i] != null ? `${VU[i]} 级` : '', v.t || '', v.el ? ELEM_N[v.el] || v.el : ''])) }; }
     // 套装（gear-v3）
     if (typeof SETS !== 'undefined') T.sets = { name: '套装', cols: ['id', '名称', '标签', '服务技能', '部位', '2 件', '4 件', '6 件'], key: 0,
       rows: SETS.map(s => [s.id, s.n, s.tag.el ? ELEM_N[s.tag.el] : s.tag.f3 ? F3_N[s.tag.f3] : MECH_N[s.tag.mech], setSkills(s).map(G => G.n).join('、'), SET_KINDS.map(k => `${KIND[k] || k}：${s.pieces[k][0]}`).join('\n'), s.bonus[2].t, s.bonus[4].t, s.bonus[6].t]) };
