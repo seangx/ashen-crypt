@@ -11,6 +11,7 @@ uniform float uTime;
 uniform float uBloom;
 uniform float uThr;
 uniform float uVig;
+uniform float uWhite;
 uniform float uFlipY;
 uniform vec4 uWave[4];
 uniform vec4 uHaze[8];
@@ -18,7 +19,7 @@ varying vec2 outTexCoord;
 const vec2 GS = vec2(480.0, 270.0);
 vec2 toGame(vec2 uv) { return vec2(uv.x, mix(uv.y, 1.0 - uv.y, uFlipY)) * GS; }
 vec2 toUV(vec2 g) { vec2 u = g / GS; return vec2(u.x, mix(u.y, 1.0 - u.y, uFlipY)); }
-vec3 bright(vec2 uv) { vec3 c = texture2D(uMainSampler, uv).rgb; return c * smoothstep(uThr, 1.0, dot(c, vec3(0.3, 0.59, 0.11))); }
+vec3 bright(vec2 uv) { vec3 c = texture2D(uMainSampler, uv).rgb; float s = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b)); return c * smoothstep(uThr, 1.0, dot(c, vec3(0.3, 0.59, 0.11))) * mix(uWhite, 1.0, smoothstep(0.08, 0.35, s)); } // 11-12：近白的像素（新主角白兜帽、骷髅）只吃 uWhite 的泛光，火光法术这类饱和亮色照旧
 void main() {
   vec2 uv = outTexCoord;
   if (uPass == 1) { // 取亮部并缩到一半（2×2 平均）
@@ -55,13 +56,13 @@ void main() {
   gl_FragColor = vec4(col, 1.0);
 }`;
 const CryptFX = window.Phaser && Phaser.Renderer.WebGL ? class extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
-  constructor(game) { super({ game, name: 'CryptFX', fragShader: CRYPT_FRAG }); this.waves = []; this.hazes = []; this.bloom = 2.2; this.thr = 0.55; this.vig = 0.4; this.flip = 1; } // 明亮主题（theme.amb）由 World 改成高阈值、弱泛光、淡暗角
+  constructor(game) { super({ game, name: 'CryptFX', fragShader: CRYPT_FRAG }); this.waves = []; this.hazes = []; this.bloom = 2.2; this.thr = 0.55; this.vig = 0.4; this.white = 0.2; this.flip = 1; } // 泛光阈值 / 强度 / 暗角可调
   onPreRender() {
     const w = new Float32Array(16), h = new Float32Array(32);
     this.waves = this.waves.filter(o => G.time - o.t0 < o.life);
     this.waves.slice(-4).forEach((o, i) => { const a = (G.time - o.t0) / o.life; w.set([o.x - CAM.x, o.y - CAM.y, a * o.r, (1 - a) * o.k], i * 4); });
     this.hazes.slice(0, 8).forEach((o, i) => h.set([o.x - CAM.x, o.y - CAM.y, o.w, o.h], i * 4));
-    this.set1f('uTime', G.time); this.set1f('uBloom', this.bloom); this.set1f('uThr', this.thr); this.set1f('uVig', this.vig); this.set1f('uFlipY', this.flip);
+    this.set1f('uTime', G.time); this.set1f('uBloom', this.bloom); this.set1f('uThr', this.thr); this.set1f('uVig', this.vig); this.set1f('uWhite', this.white); this.set1f('uFlipY', this.flip);
     this.set4fv('uWave', w); this.set4fv('uHaze', h);
   }
   // 辉光分四步：取亮部缩一半 → 横向模糊 → 竖向模糊 → 和原图合成（同时做热浪、冲击波、调色）
