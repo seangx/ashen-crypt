@@ -351,6 +351,7 @@
    "sheet": "froststab",
    "replace": true,
    "rot": true,
+   "center": true,
    "every": 3
   },
   "GemStab": {

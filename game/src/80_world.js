@@ -82,12 +82,12 @@ class World extends Phaser.Scene {
   playFx(e, P, nk) {
     const got = this.skSheet(P.sheet, e.el); if (!got) return false; const [name, s] = got;
     if (P.replace && e.r && AREA_EV.includes(e.t)) this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.25, max: 0.25, el: e.el, fill: true }); // 专属特效多是侧视图（地上一条），实际范围是俯视的圆：照旧画一个准确半径的地面圈
-    if (P.every && (this.skN[nk] = (this.skN[nk] || 0) + 1) % P.every !== 1 % P.every) return !!P.replace; // 一次刺很多根时只画其中几根
-    if ((this.skLast[name] || 0) > G.time - 0.05 || this.skSpr.length >= 40) return !!P.replace; // 限频、限量：怪海里不把屏幕糊满
+    if (P.every && (this.skN[nk] = (this.skN[nk] || 0) + 1) % P.every !== 1 % P.every) return !!P.replace && AREA_EV.includes(e.t); // 一次刺很多根时只画其中几根，没轮到的照旧画通用的小特效（以前直接什么都不画，一半命中看不见）
+    if ((this.skLast[name] || 0) > G.time - 0.05 || this.skSpr.length >= 40) return !!P.replace && AREA_EV.includes(e.t); // 限频、限量：怪海里不把屏幕糊满
     this.skLast[name] = G.time;
     const k = e.r ? clamp(e.r / s.fit, 0.4, 3) : 1; /* fit = 图集主体半宽（skillfx.json），特效宽度对上实际直径；过大过小才限幅 */
     const angs = P.fan && e.arc && e.a != null ? [-P.fan, 0, P.fan].map(f => e.a + f * e.arc) : [e.a]; // fan：劈斩在扇形里铺几道（腐爪的爪痕铺满实际扇形）
-    for (const an of angs) { const sp = this.add.sprite(Math.round(e.x), Math.round(e.y), name).setOrigin(s.ox / s.fw, s.oy / s.fh).setDepth(P.ground ? 9.6 : 59).setScale(k);
+    for (const an of angs) { const sp = this.add.sprite(Math.round(e.x), Math.round(e.y), name).setOrigin(P.center ? 0.5 : s.ox / s.fw, s.oy / s.fh).setDepth(P.ground ? 9.6 : 59).setScale(k);
       if (P.rot && an != null) { const left = Math.cos(an) < 0; sp.setFlipX(left); sp.setRotation(left ? an + Math.PI : an); }
       sp.play('fx_' + name); if (P.once && s.loop) this.time.delayedCall(P.once * 1000, () => sp.emit('animationcomplete')); /* 循环图集当一次性用：播一段时间收掉 */ this.skSpr.push(sp); sp.once('animationcomplete', () => { sp.destroy(); this.skSpr = this.skSpr.filter(x => x !== sp); }); }
     return !!P.replace;
@@ -238,7 +238,7 @@ class World extends Phaser.Scene {
         case 'spike': for (const [dx, h] of [[-4, 11], [0, 18], [4, 12]]) this.lines.push({ x1: e.x + dx * 0.4, y1: e.y + 2, x2: e.x + dx, y2: e.y - h, el: e.el, life: 0.2 }); if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y + 2, r: 9, life: 0.2, max: 0.2, el: e.el }); this.em.chip.explode(3, e.x, e.y); /* 骨刺：三根刺从地下顶出来 + 地面一圈裂纹 */ if (e.el === 'cold') { this.em.spark2.particleTint = 0x9fe3ff; this.em.spark2.explode(2, e.x, e.y - 4); } else this.em.bone.explode(2, e.x, e.y - 2); break;
         /* 技能 v3 新特效 */
         case 'buff': { const c = hex(e.c); for (let i = 0; i < 2; i++) this.rings.push({ x: e.x, y: e.y + 4, r: 10 + i * 6, life: 0.3 + i * 0.1, max: 0.3 + i * 0.1, el: 'flash' }); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; this.lines.push({ x1: e.x + Math.cos(a) * 5, y1: e.y + 2 + Math.sin(a) * 3, x2: e.x + Math.cos(a) * 5, y2: e.y - 8 + Math.sin(a) * 3, el: 'pla', life: 0.18 }); } this.em.spark2.particleTint = c; this.em.spark2.explode(8, e.x, e.y); if (e.s) this.label(e.x, e.y - 14, e.s, e.c); break; } // 功能技能：脚下升起一圈光 + 技能名
-        case 'cleave': (this.slashes || (this.slashes = [])).push({ ...e, life: 0.18, max: 0.18 }); this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(3, e.x + Math.cos(e.a) * e.r * 0.7, e.y + Math.sin(e.a) * e.r * 0.7); break; // 劈斩：一道扫过去的弧光
+        case 'cleave': (this.slashes || (this.slashes = [])).push({ ...e, life: 0.26, max: 0.26 }); this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(3, e.x + Math.cos(e.a) * e.r * 0.7, e.y + Math.sin(e.a) * e.r * 0.7); break; // 劈斩：一道扫过去的弧光
         case 'shatter': if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 12, life: 0.22, max: 0.22, el: 'cold', fill: true }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + rf(0, 0.6); this.lines.push({ x1: e.x, y1: e.y, x2: e.x + Math.cos(a) * 9, y2: e.y + Math.sin(a) * 6, el: 'cold', life: 0.1 }); } this.em.spark2.particleTint = 0xdff6ff; this.em.spark2.explode(8, e.x, e.y); break; // 碎冰：冰晶炸开
         case 'judge': this.lines.push({ x1: e.x, y1: e.y - 46, x2: e.x, y2: e.y + 6, el: 'pla', life: 0.2 }, { x1: e.x - 5, y1: e.y - 18, x2: e.x + 5, y2: e.y - 18, el: 'pla', life: 0.2 }); if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y + 4, r: 10, life: 0.25, max: 0.25, el: 'pla' }); this.em.spark2.particleTint = 0xfff2b0; this.em.spark2.explode(6, e.x, e.y); break; // 审判：一道光柱落下处决
         case 'boltHit': { let x = e.x + rf(-10, 10), y = e.y - 120; const pts = [[x, y]]; while (y < e.y - 8) { y += rf(14, 24); x += (e.x - x) * 0.35 + rf(-9, 9); pts.push([x, Math.min(y, e.y)]); } pts.push([e.x, e.y]); // 落雷：从天上劈下来的锯齿电光
@@ -365,10 +365,12 @@ class World extends Phaser.Scene {
     const fg = this.fxG; fg.clear();
     for (const l of this.lines) { l.life -= dt; if (l.arc) { arcFx(fg, this.glowG, l); continue; } const c = hex(ELEM_C[l.el] || '#ffffff'); fg.fillStyle(c, 1); if (l.jag) jag(fg, l.x1, l.y1, l.x2, l.y2); else { pline(fg, l.x1, l.y1, l.x2, l.y2); fg.fillStyle(0xffffff, 0.8); pline(fg, l.x1, l.y1 - 1, l.x2, l.y2 - 1); } }
     this.lines = this.lines.filter(l => l.life > 0);
-    if (this.slashes && this.slashes.length) { // 劈斩弧光：亮边从弧的一头扫到另一头，后面拖一段渐暗的尾
-      for (const s of this.slashes) { s.life -= dt; const k = clamp(1 - s.life / s.max, 0, 1), c = hex(ELEM_C[s.el] || '#ffffff'), head = s.a - s.arc + 2 * s.arc * Math.min(1, k * 1.6), n = Math.max(8, s.r * s.arc * 0.5 | 0);
-        for (let i = 0; i <= n; i++) { const a = s.a - s.arc + 2 * s.arc * i / n; if (a > head) break; const back = (head - a) / (2 * s.arc), al = (1 - back) * (1 - k * 0.7); if (al <= 0.05) continue;
-          for (let q = 0; q < 3; q++) { const rr = s.r * (0.72 + q * 0.12); fg.fillStyle(q === 2 && back < 0.2 ? 0xffffff : c, al * (q === 2 ? 1 : 0.55)).fillRect(Math.round(s.x + Math.cos(a) * rr), Math.round(s.y + Math.sin(a) * rr * 0.8), q === 2 ? 2 : 1, q === 2 ? 2 : 1); } } }
+    if (this.slashes && this.slashes.length) { // 劈斩：整片扇形先压一层元素色（= 实际判定，圆心在出手点上方 4 像素、不压扁），亮边从一头扫到另一头、后面拖渐暗的尾，外沿一道实线就是够得到的最远处
+      for (const s of this.slashes) { s.life -= dt; const k = clamp(1 - s.life / s.max, 0, 1), c = hex(ELEM_C[s.el] || '#ffffff'), cy = s.y - 4, sw = Math.min(1, k * 2.2), head = s.a - s.arc + 2 * s.arc * sw, n = Math.max(10, s.r * s.arc * 0.6 | 0), fade = k < 0.45 ? 1 : 1 - (k - 0.45) / 0.55;
+        const fan = [{ x: s.x, y: cy }]; for (let i = 0; i <= n; i++) { const a = s.a - s.arc + (head - s.a + s.arc) * i / n; fan.push({ x: s.x + Math.cos(a) * s.r, y: cy + Math.sin(a) * s.r }); }
+        if (fan.length > 2) fg.fillStyle(c, 0.24 * fade).fillPoints(fan, true);
+        for (let i = 0; i <= n; i++) { const a = s.a - s.arc + 2 * s.arc * i / n; if (a > head + 1e-6) break; const back = (head - a) / (2 * s.arc), al = (1 - back * 0.75) * fade; if (al <= 0.05) continue;
+          for (let q = 0; q < 4; q++) { const rr = s.r * (0.55 + q * 0.15), big = q === 3; fg.fillStyle(big && back < 0.25 ? 0xffffff : c, al * (big ? 1 : 0.35 + q * 0.12)).fillRect(Math.round(s.x + Math.cos(a) * rr) - (big ? 1 : 0), Math.round(cy + Math.sin(a) * rr) - (big ? 1 : 0), big ? 2 : 1, big ? 2 : 1); } } }
       this.slashes = this.slashes.filter(s => s.life > 0); }
     for (const r of this.rings) { // 环：快出慢收（outQuart）、头两帧白色亮帧、实线内亮外暗两级、后 40% 按格子抖散消失（不再是均匀虚点 + 线性淡出）
       r.life -= dt; const k = clamp(1 - r.life / r.max, 0, 1), rr = r.r * (0.3 + 0.7 * (1 - (1 - k) ** 4)), c = r.el === 'cyan' ? 0x57e0d0 : r.el === 'flash' ? 0xe8fbff : hex(ELEM_C[r.el]), hero = r.max - r.life < 0.034;
