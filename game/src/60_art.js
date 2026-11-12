@@ -318,7 +318,18 @@ const HEAD_DOLL = {
   },
 };
 const DOLL_W = NEW_ART ? 48 : 26, DOLL_H = NEW_ART ? 25 : 18, DOLL_OX = 7, DOLL_OY = 4; // 明亮改版：主角 16×20，左右各留 16 放武器，头顶留 5 放头冠
-const dollSig = eq => ['wl', 'wr', 'core', 'engine'].map(k => eq[k] ? eq[k].b + (uqId(eq[k]) || '') : '-').join('|');
+const dollSig = eq => ['wl', 'wr', 'core', 'engine'].map(k => eq[k] ? eq[k].b + (uqId(eq[k]) || '') : '-').join('|') + '|' + (setLook(eq) || { id: '-' }).id;
+/* 套装穿齐的背饰（data/skillfx.json 的 sets）：返回 { id, cfg, cv 单只右翼, root 根部像素 }，没有就 null */
+function setLook(eq = S.equip) {
+  const L = DATA.skillfx && DATA.skillfx.sets; if (!L || !NEW_ART || typeof setCounts !== 'function') return null; const n = setCounts(eq);
+  for (const id in n) { const c = L[id]; if (c && c.art && ARTC[c.art] && n[id] >= c.need) return { id, cfg: c, cv: ARTC[c.art], root: weaponGrip(ARTC[c.art]) }; } return null;
+}
+// 一对翅膀拼成一张图（纸娃娃 UI 用）：返回 { cv, x, y }，x / y 是这张图放在纸娃娃画布上的左上角（可以是负的）
+function setBackPair(eq) {
+  const L = setLook(eq); if (!L) return null; const { cv, root: [rx, ry] } = L, w = cv.width, h = cv.height, c = document.createElement('canvas'); c.width = 2 * (w - rx); c.height = h; const x = c.getContext('2d');
+  x.drawImage(cv, w - 2 * rx, 0); x.save(); x.scale(-1, 1); x.drawImage(cv, -(w - rx) - rx, 0); x.restore(); // 右翼根部对齐中线，左翼镜像
+  const [sx, sy] = L.cfg.sh; return { cv: c, x: sx - (w - rx), y: sy - ry };
+}
 const uqId = it => it && (it.u || it.la); // 独特（u）或传奇词条（la）的 id：专属造型、特效都按它找
 const wpnArt = it => it && (uqId(it) && ARTC['u_' + uqId(it)] || ARTC['w_' + it.b]); // 独特 / 传奇武器有专属造型（art-src/uniques.png）就用专属的
 // 画出一帧纸娃娃（outline 后的画布）

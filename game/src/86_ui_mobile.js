@@ -285,6 +285,7 @@ class MobileUI extends UI {
     c.add(nine(this, cx, 4, cw, 5 * (E + 2) - 2, 'f_slot', 3)); // 中间面板
     { const cv = dollCanvas(S.equip, 0); if (this.textures.exists('doll_ui')) this.textures.remove('doll_ui'); this.textures.addCanvas('doll_ui', cv);
       const k = Math.min(2.4, 50 / DOLL_H), gl = this.add.image(mid, 34, 'fx_glow').setDisplaySize(90, 60).setAlpha(0.18).setTint(hex(COL.ember)); c.add(gl);
+      { const bp = setBackPair(S.equip); if (bp) { if (this.textures.exists('doll_back')) this.textures.remove('doll_back'); this.textures.addCanvas('doll_back', bp.cv); const wi = img(this, 0, 0, 'doll_back', c); wi.setScale(k).setOrigin(0, 0); wi.setPosition(Math.round(mid - DOLL_W * k / 2 + bp.x * k), Math.max(6, 8 + Math.round(bp.y * k))); } } // 套装穿齐的背饰画在人物后面
       const im = img(this, 0, 0, 'doll_ui', c); im.setScale(k); im.setPosition(Math.round(mid - DOLL_W * k / 2), 8); }
     const lv = mstS().picks.map(x => MST_BY[x].n).join(' + '); T(this, mid, 58, lv || '还没选职业', { size: 8, color: lv ? COL.dim : COL.faint, align: 'center', parent: c });
     const big = (y, label, val, col, fn) => { T(this, cx + 7, y + 4, label, { size: 8, color: COL.dim, parent: c }); T(this, cx + cw - 7, y, val, { size: 12, scale: 1.25, color: col, align: 'right', parent: c }); if (fn) zoneOn(this, c, cx, y - 2, cw, 18, fn); };

@@ -111,6 +111,29 @@ class World extends Phaser.Scene {
       for (const [a, b] of sh) for (let k = 3; k <= 3 + (f ? 1 : 0); k++) px(f, a * k, b * k, '#ffcc4a');
     }
     c.add(0, 0, 0, 0, N, N); c.add(1, 0, N, 0, N, N); c.refresh(); return key; }
+  /* 套装穿齐的背饰：两只翅膀各绕根部扇动，背后一层淡光，翼面上随机跳短电弧（data/skillfx.json 的 sets） */
+  setBack(dt, t, bob) {
+    const L = setLook(); if (!this.wingR) { this.wingR = this.add.image(0, 0, 'px'); this.wingL = this.add.image(0, 0, 'px'); this.wingG = this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD); this.wingA = this.add.graphics().setBlendMode(Phaser.BlendModes.ADD); this.arcs = []; this.arcAcc = 0; }
+    const parts = [this.wingR, this.wingL, this.wingG]; this.wingA.clear();
+    if (!L) { parts.forEach(p => p.setVisible(false)); this.arcs.length = 0; return; }
+    const C = L.cfg, key = 'wing_' + L.id; if (!this.textures.exists(key)) { this.textures.addCanvas(key, copyCv(L.cv)); this.textures.addCanvas(key + '_f', flipCv(L.cv)); }
+    const w = L.cv.width, h = L.cv.height, [rx, ry] = L.root, k = HERO_SCALE, sx = player.x + (C.sh[0] - DOLL_W / 2) * k, sy = player.y + (this.spinRate ? 0 : bob) - (DOLL_H - C.sh[1]) * k;
+    const fl = Math.sin(t * C.flap[1] * Math.PI * 2) * C.flap[0] * Math.PI / 180, dep = ySort(player.y) - 0.004, a = player.dashT > 0 ? 0.5 : 1;
+    this.wingR.setVisible(true).setTexture(key).setOrigin((rx + 0.5) / w, (ry + 0.5) / h).setScale(k).setPosition(sx + 1, sy).setRotation(-fl).setDepth(dep).setAlpha(a);
+    this.wingL.setVisible(true).setTexture(key + '_f').setOrigin(1 - (rx + 0.5) / w, (ry + 0.5) / h).setScale(k).setPosition(sx - 1, sy).setRotation(fl).setDepth(dep).setAlpha(a);
+    if (!G.fx) { this.wingG.setVisible(false); return; }
+    this.wingG.setVisible(true).setPosition(sx, sy - 6).setTint(hex(C.glow)).setDepth(dep - 0.001).setScale(0.9 + 0.08 * Math.sin(t * 5)).setAlpha(0.18 + 0.06 * Math.sin(t * 7));
+    // 电弧：在一只翼面里随机挑两点，中间折几折；亮 0.08–0.14 秒
+    const A = C.arc; if (A) { this.arcAcc += dt * A.rate; while (this.arcAcc >= 1) { this.arcAcc--; const side = Math.random() < 0.5 ? 1 : -1, r0 = 0.15 + Math.random() * 0.3, r1 = 0.6 + Math.random() * 0.4, aa = -0.35 - Math.random() * 0.5, ab = aa + (Math.random() - 0.5) * 0.6; this.arcs.push({ side, p: [[r0, aa], [r1, ab]], life: 0.08 + Math.random() * 0.06, c: hex(A.c[(Math.random() * A.c.length) | 0]) }); }
+      const reach = (w - rx) * k;
+      this.arcs = this.arcs.filter(z => (z.life -= dt) > 0);
+      for (const z of this.arcs) { const rot = z.side > 0 ? -fl : fl, pt = ([r, an]) => { const ang = an + rot; return [sx + z.side * Math.cos(ang) * r * reach, sy + Math.sin(ang) * r * reach]; }, [x0, y0] = pt(z.p[0]), [x1, y1] = pt(z.p[1]);
+        let px = x0, py = y0; this.wingA.lineStyle(1, z.c, 1).beginPath().moveTo(Math.round(px), Math.round(py));
+        for (let i = 1; i <= 4; i++) { const f = i / 4, jx = i < 4 ? (Math.random() - 0.5) * 4 : 0, jy = i < 4 ? (Math.random() - 0.5) * 4 : 0; px = x0 + (x1 - x0) * f + jx; py = y0 + (y1 - y0) * f + jy; this.wingA.lineTo(Math.round(px), Math.round(py)); }
+        this.wingA.strokePath(); }
+      this.wingA.setDepth(ySort(player.y) - 0.003);
+    }
+  }
   // 震屏有冷却，只在大事件上用
   hitStop(d, cd = 0.35) { if (!G.fx || G.time < (this.stopCd || 0)) return; this.stopUntil = G.time + d; this.stopCd = G.time + cd; } // 有冷却，打 Boss 时不会一直卡
   shake(ms, amt) { if (!G.fx || G.time < (this.shakeT || 0)) return; this.shakeT = G.time + 0.6; this.cameras.main.shake(ms, amt); }
@@ -271,6 +294,7 @@ class World extends Phaser.Scene {
     }
     if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x7a2a1a));
     this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setScale(HERO_SCALE).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(ph * Math.PI / 2 + i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
+    this.setBack(dt, t, bob);
     this.heroSh.setPosition(player.x, player.y + 1).setScale(HERO_SCALE);
     { const hub = eqK(S.equip, 'hub'), hg = this.hubG; hg.clear(); if (hub) { const b = baseOf(hub); const c = hex(b.el ? ELEM_C[b.el] : b.mass ? '#e9e0c9' : b.energy ? '#c08aff' : '#57e0d0'); const n = 22; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.7; hg.fillStyle(c, 0.35 + 0.3 * Math.sin(i * 1.3 + t * 3)); hg.fillRect(Math.round(player.x + Math.cos(a) * 9), Math.round(player.y + 1 + Math.sin(a) * 3), 1, 1); } } }
     if (player.dashT > 0 && this.frame % 2 === 0) {

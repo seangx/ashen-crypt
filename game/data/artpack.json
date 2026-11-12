@@ -274,6 +274,18 @@
     "u_SolarasFire"
    ],
    "w": 28
+  },
+  "wings": {
+   "src": "art-src/wings.png",
+   "rows": [
+    3
+   ],
+   "names": [
+    "set_StormA",
+    "set_StormB",
+    "set_Storm"
+   ],
+   "w": 30
   }
  },
  "anchor": {}
