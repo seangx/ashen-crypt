@@ -1,5 +1,6 @@
 /* ---------- 场景：Boot ---------- */
 function newCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+const AREA_EV = ['boom', 'boltHit', 'smiteHit', 'frostburst', 'meteorHit', 'auraburst']; // 有半径的范围事件：换成专属特效时也要画地面圈
 class Boot extends Phaser.Scene {
   constructor() { super('boot'); }
   create() { buildTextures(this); this.scene.start('world'); this.scene.launch('ui'); }
@@ -80,10 +81,11 @@ class World extends Phaser.Scene {
   }
   playFx(e, P, nk) {
     const got = this.skSheet(P.sheet, e.el); if (!got) return false; const [name, s] = got;
+    if (P.replace && e.r && AREA_EV.includes(e.t)) this.rings.push({ x: e.x, y: e.y, r: e.r, life: 0.25, max: 0.25, el: e.el, fill: true }); // 专属特效多是侧视图（地上一条），实际范围是俯视的圆：照旧画一个准确半径的地面圈
     if (P.every && (this.skN[nk] = (this.skN[nk] || 0) + 1) % P.every !== 1 % P.every) return !!P.replace; // 一次刺很多根时只画其中几根
     if ((this.skLast[name] || 0) > G.time - 0.05 || this.skSpr.length >= 40) return !!P.replace; // 限频、限量：怪海里不把屏幕糊满
     this.skLast[name] = G.time;
-    const k = e.r ? clamp(e.r / s.fit, 0.6, 1.6) : 1, sp = this.add.sprite(Math.round(e.x), Math.round(e.y), name).setOrigin(s.ox / s.fw, s.oy / s.fh).setDepth(P.ground ? 9.6 : 59).setScale(k);
+    const k = e.r ? clamp(e.r / s.fit, 0.4, 3) : 1, /* fit = 图集主体半宽（skillfx.json），特效宽度对上实际直径；过大过小才限幅 */ sp = this.add.sprite(Math.round(e.x), Math.round(e.y), name).setOrigin(s.ox / s.fw, s.oy / s.fh).setDepth(P.ground ? 9.6 : 59).setScale(k);
     if (P.rot && e.a != null) { const left = Math.cos(e.a) < 0; sp.setFlipX(left); sp.setRotation(left ? e.a + Math.PI : e.a); }
     sp.play('fx_' + name); if (P.once && s.loop) this.time.delayedCall(P.once * 1000, () => sp.emit('animationcomplete')); /* 循环图集当一次性用：播一段时间收掉 */ this.skSpr.push(sp); sp.once('animationcomplete', () => { sp.destroy(); this.skSpr = this.skSpr.filter(x => x !== sp); });
     return !!P.replace;

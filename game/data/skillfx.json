@@ -68,8 +68,8 @@
     2.4
    ],
    "speed": 1.6,
-   "scale": 0.42,
-   "fit": 34,
+   "scale": 0.9,
+   "fit": 38,
    "els": [
     "exp",
     "cold"
@@ -85,7 +85,7 @@
    ],
    "speed": 1,
    "scale": 0.5,
-   "fit": 64,
+   "fit": 49,
    "loop": true,
    "els": [
     "cold",
@@ -121,8 +121,8 @@
     1.2
    ],
    "speed": 1.3,
-   "scale": 0.42,
-   "fit": 47,
+   "scale": 0.75,
+   "fit": 66,
    "els": [
     "ele"
    ]
@@ -135,8 +135,8 @@
     2.6
    ],
    "speed": 1.8,
-   "scale": 0.32,
-   "fit": 60,
+   "scale": 0.6,
+   "fit": 69,
    "keepPal": true
   },
   "firepot": {
@@ -148,7 +148,7 @@
    ],
    "speed": 1.5,
    "scale": 0.36,
-   "fit": 40,
+   "fit": 48,
    "els": [
     "cold"
    ],
@@ -174,7 +174,7 @@
    ],
    "speed": 1.6,
    "scale": 0.42,
-   "fit": 30,
+   "fit": 20,
    "els": [
     "pla",
     "cold"
@@ -190,7 +190,7 @@
    ],
    "speed": 1.6,
    "scale": 0.42,
-   "fit": 28,
+   "fit": 22,
    "els": [
     "ele",
     "exp"
@@ -253,7 +253,7 @@
    ],
    "speed": 1.4,
    "scale": 0.38,
-   "fit": 40,
+   "fit": 42,
    "els": [
     "ele",
     "pla"
@@ -269,7 +269,7 @@
    ],
    "speed": 1.6,
    "scale": 0.4,
-   "fit": 20,
+   "fit": 50,
    "els": [
     "ele",
     "nuc"
@@ -293,7 +293,7 @@
     ]
    },
    "scale": 0.5,
-   "fit": 45
+   "fit": 24
   }
  },
  "play": {
