@@ -326,9 +326,13 @@ function setLook(eq = S.equip) {
 }
 // 一对翅膀拼成一张图（纸娃娃 UI 用）：返回 { cv, x, y }，x / y 是这张图放在纸娃娃画布上的左上角（可以是负的）
 function setBackPair(eq) {
-  const L = setLook(eq); if (!L) return null; const { cv, root: [rx, ry] } = L, w = cv.width, h = cv.height, c = document.createElement('canvas'); c.width = 2 * (w - rx); c.height = h; const x = c.getContext('2d');
+  const L = setLook(eq); if (!L) return null;
+  if (L.cfg.type === 'orbit') { const C = L.cfg, b = L.cv, r = C.uiR || C.r, n = C.uiN || 5, R = r + b.height + 1, c = document.createElement('canvas'); c.width = c.height = 2 * R; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; // 装备窗口：静态图里一整圈看不清，改成头后面一扇 n 把刀尖朝外的飞刃（像一圈剑光环）
+    for (let i = 0; i < n; i++) { const a = Math.PI + 0.3 + (Math.PI - 0.6) * i / (n - 1); x.save(); x.translate(R + Math.cos(a) * r, R + Math.sin(a) * r); x.rotate(a + Math.PI / 2); x.drawImage(b, -b.width / 2, -b.height); x.restore(); }
+    const [ax, ay] = C.uiSh || C.sh; return { cv: c, x: ax - R, y: ay - R, s: 1 }; }
+  const { cv, root: [rx, ry] } = L, w = cv.width, h = cv.height, c = document.createElement('canvas'); c.width = 2 * (w - rx); c.height = h; const x = c.getContext('2d');
   x.drawImage(cv, w - 2 * rx, 0); x.save(); x.scale(-1, 1); x.drawImage(cv, -(w - rx) - rx, 0); x.restore(); // 右翼根部对齐中线，左翼镜像
-  const [sx, sy] = L.cfg.sh; return { cv: c, x: sx - (w - rx), y: sy - ry };
+  const [sx, sy] = L.cfg.sh; return { cv: c, x: sx - (w - rx), y: sy - ry, s: 1 };
 }
 const uqId = it => it && (it.u || it.la); // 独特（u）或传奇词条（la）的 id：专属造型、特效都按它找
 const wpnArt = it => it && (uqId(it) && ARTC['u_' + uqId(it)] || ARTC['w_' + it.b]); // 独特 / 传奇武器有专属造型（art-src/uniques.png）就用专属的

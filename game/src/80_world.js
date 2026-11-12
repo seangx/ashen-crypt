@@ -115,7 +115,8 @@ class World extends Phaser.Scene {
   setBack(dt, t, bob) {
     const L = setLook(); if (!this.wingR) { this.wingR = this.add.image(0, 0, 'px'); this.wingL = this.add.image(0, 0, 'px'); this.wingG = this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD); this.wingA = this.add.graphics().setBlendMode(Phaser.BlendModes.ADD); this.arcs = []; this.arcAcc = 0; }
     const parts = [this.wingR, this.wingL, this.wingG]; this.wingA.clear();
-    if (!L) { parts.forEach(p => p.setVisible(false)); this.arcs.length = 0; return; }
+    const orb = L && L.cfg.type === 'orbit'; this.setOrbit(dt, orb ? L : null, bob);
+    if (!L || orb) { parts.forEach(p => p.setVisible(false)); this.arcs.length = 0; return; }
     const C = L.cfg, key = 'wing_' + L.id; if (!this.textures.exists(key)) { this.textures.addCanvas(key, copyCv(L.cv)); this.textures.addCanvas(key + '_f', flipCv(L.cv)); }
     const w = L.cv.width, h = L.cv.height, [rx, ry] = L.root, k = HERO_SCALE, sx = player.x + (C.sh[0] - DOLL_W / 2) * k, sy = player.y + (this.spinRate ? 0 : bob) - (DOLL_H - C.sh[1]) * k;
     const fl = Math.sin(t * C.flap[1] * Math.PI * 2) * C.flap[0] * Math.PI / 180, dep = ySort(player.y) - 0.004, a = player.dashT > 0 ? 0.5 : 1;
@@ -133,6 +134,18 @@ class World extends Phaser.Scene {
         this.wingA.strokePath(); }
       this.wingA.setDepth(ySort(player.y) - 0.003);
     }
+  }
+  /* 一圈飞刃在背后转（旋刃套）：转速跟着刃势层数涨，满层时每把刀叠一层金色发光 */
+  setOrbit(dt, L, bob) {
+    if (!L) { if (this.orbB) this.orbB.forEach(([a, b]) => { a.setVisible(false); b.setVisible(false); }); this.orbG && this.orbG.setVisible(false); return; }
+    const C = L.cfg, key = 'orb_' + L.id; if (!this.textures.exists(key)) this.textures.addCanvas(key, copyCv(L.cv));
+    if (!this.orbB || this.orbB.length !== C.n) { (this.orbB || []).forEach(p => p.forEach(q => q.destroy())); this.orbB = Array.from({ length: C.n }, () => [this.add.image(0, 0, key), this.add.image(0, 0, key).setBlendMode(Phaser.BlendModes.ADD)]); this.orbG ??= this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD); this.orbA = 0; }
+    const f = RUN ? Math.min(1, (player[C.stack] || 0) / 10) : 0, sp = C.spin[0] + (C.spin[1] - C.spin[0]) * f; this.orbA += dt * sp * Math.PI * 2;
+    const k = HERO_SCALE, cx = player.x + (C.sh[0] - DOLL_W / 2) * k, cy = player.y + (this.spinRate ? 0 : bob) - (DOLL_H - C.sh[1]) * k, dep = ySort(player.y) - 0.004, al = player.dashT > 0 ? 0.5 : 1, gc = hex(C.glow);
+    this.orbB.forEach(([b, g], i) => { const a = this.orbA + i / C.n * Math.PI * 2, x = cx + Math.cos(a) * C.r * k, y = cy + Math.sin(a) * C.r * k;
+      b.setVisible(true).setTexture(key).setOrigin(0.5, 0.5).setScale(k).setPosition(x, y).setRotation(a + Math.PI).setDepth(dep).setAlpha(al);
+      g.setVisible(G.fx && f > 0).setTexture(key).setOrigin(0.5, 0.5).setScale(k).setPosition(x, y).setRotation(a + Math.PI).setDepth(dep + 0.0005).setTint(gc).setAlpha(f * f * 0.85); });
+    this.orbG.setVisible(!!G.fx).setPosition(cx, cy).setTint(gc).setDepth(dep - 0.001).setScale(0.7 + 0.5 * f).setAlpha(0.1 + 0.25 * f);
   }
   // 震屏有冷却，只在大事件上用
   hitStop(d, cd = 0.35) { if (!G.fx || G.time < (this.stopCd || 0)) return; this.stopUntil = G.time + d; this.stopCd = G.time + cd; } // 有冷却，打 Boss 时不会一直卡

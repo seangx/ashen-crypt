@@ -286,6 +286,18 @@
     "set_Storm"
    ],
    "w": 30
+  },
+  "blades": {
+   "src": "art-src/blades.png",
+   "rows": [
+    3
+   ],
+   "names": [
+    "set_BladeA",
+    "set_Blade",
+    "set_BladeC"
+   ],
+   "h": 13
   }
  },
  "anchor": {}
