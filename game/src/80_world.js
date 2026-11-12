@@ -74,15 +74,31 @@ class World extends Phaser.Scene {
   }
   skSheet(sheet, el) { const SH = window.FX_SHEETS || {}, C = DATA.skillfx.sheets[sheet]; const n = SH[sheet + '_' + el] && this.textures.exists(sheet + '_' + el) ? sheet + '_' + el : C && this.textures.exists(sheet + '_' + C.el) ? sheet + '_' + C.el : null; return n ? [n, SH[n]] : null; }
   skillFx(e) { // 返回 true = 这一条事件已经换成专属特效，不再画通用的
-    const R = DATA.skillfx.play[e.sk], P = R && [].concat(R).find(x => x.ev === e.t); if (!P) return false;
+    const R = e.sk && DATA.skillfx.play[e.sk], P = R && [].concat(R).find(x => x.ev === e.t); if (P) return this.playFx(e, P, e.sk);
+    const U = this.uFx; if (!U || !U.hit) return false; // 拿着有专属特效的独特 / 传奇武器：对应元素的技能事件换成它的特效
+    const H = [].concat(U.hit).find(x => [].concat(x.ev).includes(e.t) && (!x.els || x.els.includes(e.el))); return H ? this.playFx(e, H, 'U') : false;
+  }
+  playFx(e, P, nk) {
     const got = this.skSheet(P.sheet, e.el); if (!got) return false; const [name, s] = got;
-    if (P.every && (this.skN[e.sk] = (this.skN[e.sk] || 0) + 1) % P.every !== 1 % P.every) return !!P.replace; // 一次刺很多根时只画其中几根
+    if (P.every && (this.skN[nk] = (this.skN[nk] || 0) + 1) % P.every !== 1 % P.every) return !!P.replace; // 一次刺很多根时只画其中几根
     if ((this.skLast[name] || 0) > G.time - 0.05 || this.skSpr.length >= 40) return !!P.replace; // 限频、限量：怪海里不把屏幕糊满
     this.skLast[name] = G.time;
     const k = e.r ? clamp(e.r / s.fit, 0.6, 1.6) : 1, sp = this.add.sprite(Math.round(e.x), Math.round(e.y), name).setOrigin(s.ox / s.fw, s.oy / s.fh).setDepth(P.ground ? 9.6 : 59).setScale(k);
     if (P.rot && e.a != null) { const left = Math.cos(e.a) < 0; sp.setFlipX(left); sp.setRotation(left ? e.a + Math.PI : e.a); }
     sp.play('fx_' + name); if (P.once && s.loop) this.time.delayedCall(P.once * 1000, () => sp.emit('animationcomplete')); /* 循环图集当一次性用：播一段时间收掉 */ this.skSpr.push(sp); sp.once('animationcomplete', () => { sp.destroy(); this.skSpr = this.skSpr.filter(x => x !== sp); });
     return !!P.replace;
+  }
+  /* 独特武器的常驻表现（data/skillfx.json 的 uniq）：尖端飘粒子、脉动光晕，出手时喷一圈火花。主角小，所以效果画在武器周围，不画在身上 */
+  uniqAura(dt, wp, hx, hy, at) {
+    const it = S.equip.wl, U = this.uFx = uqId(it) && DATA.skillfx.uniq && DATA.skillfx.uniq[uqId(it)] || null; if (!wp) { this.uGlow && this.uGlow.setVisible(false); return; }
+    if (!this.uGlow) { this.uGlow = this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD).setVisible(false); this.uEm = this.add.particles(0, 0, 'px2', { emitting: false, lifespan: 600, alpha: { start: 1, end: 0 } }); this.uAcc = 0; }
+    if (!U || !G.fx) { this.uGlow.setVisible(false); return; }
+    if (this.uKey !== uqId(it)) { this.uKey = uqId(it); const tint = U.tint.map(hex); this.uEm.setConfig({ emitting: false, lifespan: { min: U.life[0], max: U.life[1] }, speedY: { min: -U.rise[1], max: -U.rise[0] }, speedX: { min: -7, max: 7 }, alpha: { start: 1, end: 0 }, scale: { start: 1, end: 0.3 }, tint, blendMode: 'ADD' }); this.uTint = tint; }
+    const len = wp.cv.width * (U.tip - wp.ox) * WPN_SCALE, tx = hx + Math.cos(this.wA) * len, ty = hy + Math.sin(this.wA) * len, dep = this.heroW.depth + 0.002;
+    this.uEm.setDepth(dep);
+    if (U.glow) this.uGlow.setVisible(true).setPosition(tx, ty).setTint(hex(U.glow)).setDepth(dep).setScale(0.45 + 0.08 * Math.sin(G.time * 6)).setAlpha(0.3 + 0.12 * Math.sin(G.time * 9));
+    this.uAcc += dt * U.rate; const n = this.uAcc | 0; this.uAcc -= n; for (let i = 0; i < n; i++) this.uEm.emitParticleAt(tx + (Math.random() - 0.5) * 6, ty + (Math.random() - 0.5) * 6, 1);
+    if (U.burst && at < dt * 1.5) { this.uEm.emitParticleAt(tx, ty, U.burst); this.star(tx, ty, this.uTint[0], 1); } // 出手：尖端喷一圈
   }
   // 震屏有冷却，只在大事件上用
   hitStop(d, cd = 0.35) { if (!G.fx || G.time < (this.stopCd || 0)) return; this.stopUntil = G.time + d; this.stopCd = G.time + cd; } // 有冷却，打 Boss 时不会一直卡
@@ -128,7 +144,7 @@ class World extends Phaser.Scene {
   // 处理战斗逻辑产生的表现事件
   consume() {
     for (const e of fxq) {
-      if (e.sk && this.skSpr && this.skillFx(e)) continue;
+      if ((e.sk || this.uFx) && this.skSpr && this.skillFx(e)) continue;
       switch (e.t) {
         case 'num': this.dmgText(e.x, e.y, fmt(e.v), e.hurt ? COL.bad : e.crit ? COL.emberHi : ELEM_C[e.el], e.crit); break;
         case 'text': this.label(e.x, e.y, e.s, e.c); break;
@@ -220,7 +236,7 @@ class World extends Phaser.Scene {
       const putTex = (key, cv) => { const t = this.textures.exists(key) && this.textures.get(key); if (t && t.context && t.width === cv.width && t.height === cv.height) { t.context.clearRect(0, 0, t.width, t.height); t.context.drawImage(cv, 0, 0); t.refresh(); return; } if (t) this.textures.remove(key); this.textures.addCanvas(key, cv); }; // 原地重画：残影、转身残像还拿着这些贴图，删掉重建会让它们读到空纹理崩溃
       for (const f of [0, 1]) { const cv = dollCanvas(S.equip, f, 0, true); for (const [k, c] of [['doll_', cv], ['doll_fl_', silhouette(cv, '#ffffff')]]) { const key = k + f; putTex(key, c); } }
       for (const v of [1, 2]) putTex('doll_v' + v, dollCanvas(S.equip, 0, v)); // 转身用的侧面、背面
-      this.wpn = S.equip.wl ? heldWeapon(S.equip.wl.b) : null; if (this.wpn) { putTex('wpn', this.wpn.cv); putTex('wpn_f', this.wpn.fl); }
+      this.wpn = S.equip.wl ? heldWeapon(S.equip.wl) : null; if (this.wpn) { putTex('wpn', this.wpn.cv); putTex('wpn_f', this.wpn.fl); }
       this.hero.setTexture('doll_0'); if (this.heroCS && this.heroCS.cs) this.heroCS.cs.setTexture('doll_0'); G.ui && G.ui.dollChanged && G.ui.dollChanged(); // 影子也要换到新纹理，旧的已经删掉
     }
     // 旋风斩转身：正 → 侧 → 背 → 另一侧，一圈 4 帧；身后拖两个旧帧的淡残影
@@ -239,7 +255,9 @@ class World extends Phaser.Scene {
         hw.setTexture(L ? 'wpn_f' : 'wpn').setOrigin(L ? wp.oxF : wp.ox, wp.oy).setRotation(this.wA - (L ? wp.baseF : wp.base)).setPosition(hx, hy)
           .setDepth(ySort(player.y) + (Math.sin(this.wA) < -0.6 ? -0.001 : 0.001)).setAlpha(player.dashT > 0 ? 0.5 : 1); // 朝上举时放到身后
         if (player.fbT > 0.12) hw.setTintFill(0xffffff); else if (player.chill > 0) hw.setTint(0xb8e6ff); else if (hw.isTinted) hw.clearTint();
-      } }
+        this.uniqAura(dt, wp, hx, hy, at);
+      } else this.uniqAura(dt, null);
+    }
     if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x7a2a1a));
     this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setScale(HERO_SCALE).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(ph * Math.PI / 2 + i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
     this.heroSh.setPosition(player.x, player.y + 1).setScale(HERO_SCALE);

@@ -318,7 +318,9 @@ const HEAD_DOLL = {
   },
 };
 const DOLL_W = NEW_ART ? 48 : 26, DOLL_H = NEW_ART ? 25 : 18, DOLL_OX = 7, DOLL_OY = 4; // 明亮改版：主角 16×20，左右各留 16 放武器，头顶留 5 放头冠
-const dollSig = eq => ['wl', 'wr', 'core', 'engine'].map(k => eq[k] ? eq[k].b : '-').join('|');
+const dollSig = eq => ['wl', 'wr', 'core', 'engine'].map(k => eq[k] ? eq[k].b + (uqId(eq[k]) || '') : '-').join('|');
+const uqId = it => it && (it.u || it.la); // 独特（u）或传奇词条（la）的 id：专属造型、特效都按它找
+const wpnArt = it => it && (uqId(it) && ARTC['u_' + uqId(it)] || ARTC['w_' + it.b]); // 独特 / 传奇武器有专属造型（art-src/uniques.png）就用专属的
 // 画出一帧纸娃娃（outline 后的画布）
 // view：0 正面，1 侧面，2 背面（旋风斩转身用）。侧面把身子压窄、脸只露一只眼在边上；背面盖住脸、两手的武器前后对调
 const DOLL_SIDE = r => (r.slice(2, 10) + '').padEnd(8, '.');
@@ -350,7 +352,7 @@ function dollCanvasNew(eq, fr, view, noMain) {
   const c = document.createElement('canvas'); c.width = DOLL_W; c.height = DOLL_H; const x = c.getContext('2d');
   const body = view === 1 ? ARTC['hero_s' + (fr & 1)] : view === 2 ? ARTC['hero_b' + (fr & 1)] : flipCv(ARTC['hero_f' + (fr & 1)]);
   const bx = HERO_BX + Math.round((16 - body.width) / 2), by = DOLL_H - body.height;
-  const wpn = it => { const w = it && ARTC['w_' + it.b]; if (!w) return; const g = weaponGrip(w), [hx, hy] = HERO_HAND[view]; x.drawImage(w, HERO_BX + hx - g[0], HERO_BY + hy - g[1]); };
+  const wpn = it => { const w = wpnArt(it); if (!w) return; const g = weaponGrip(w), [hx, hy] = HERO_HAND[view]; x.drawImage(w, HERO_BX + hx - g[0], HERO_BY + hy - g[1]); };
   const off = eq.wr && ARTC[eq.wr.kind === 'shield' ? 'o_shield' : 'o_' + eq.wr.b]; if (off && view !== 2) x.drawImage(off, HERO_BX - off.width + 3, HERO_BY + 7); // 副手 / 盾：身后左侧
   if (view === 2 && !noMain) wpn(eq.wl); // 背面：武器在身前（被身体挡住）
   x.drawImage(body, bx, by);
@@ -371,8 +373,9 @@ function weaponGrip(cv) { // 握把：最左边 3 列不透明像素的平均高
 // base：图里武器本来指的方向（握把 → 武器重心），转的时候减掉；朝左时用左右镜像的那张，武器不会倒过来
 const HERO_SCALE = NEW_ART ? 1.5 : 1; // 明亮改版：战场上主角整体放大 1.5 倍（武器、头冠跟着），比小怪大一号
 const WPN_SCALE = NEW_ART ? HERO_SCALE : 1.5; // 明亮改版的武器本身就画得大，只跟着主角放大
-function heldWeapon(b) {
-  if (NEW_ART && ARTC['w_' + b]) { const cv = ARTC['w_' + b], [gx, gy] = weaponGrip(cv), w = cv.width, hh = cv.height; return { cv: copyCv(cv), fl: flipCv(cv), ox: (gx + 0.5) / w, oy: (gy + 0.5) / hh, oxF: (w - gx - 0.5) / w, base: 0, baseF: Math.PI }; } // 明亮改版：图里武器朝右
+function heldWeapon(it) {
+  const b = it.b;
+  if (NEW_ART && wpnArt(it)) { const cv = wpnArt(it), [gx, gy] = weaponGrip(cv), w = cv.width, hh = cv.height; return { cv: copyCv(cv), fl: flipCv(cv), ox: (gx + 0.5) / w, oy: (gy + 0.5) / hh, oxF: (w - gx - 0.5) / w, base: 0, baseF: Math.PI }; } // 明亮改版：图里武器朝右
   const h = HELD[b]; if (!h) return null;
   const [rows, ax, ay] = h, cv = sprite(rows), w = cv.width, hh = cv.height;
   let sx = 0, sy = 0, n = 0; rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.') { sx += i; sy += j; n++; } }));

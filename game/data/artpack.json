@@ -1,12 +1,280 @@
 {
  "_说明": "明亮可爱改版的像素美术（11-12）。源图在 art-src/（Codex 按 art-src/style-ref.png 的风格生成：绿底、网格排布），tools/art/pack.py 抠绿、按 rows 切图、缩到游戏尺寸（h 目标高度或 w 目标宽度，单项可在 size 里覆盖）、限色，打包成 vendor/artpack.js。游戏启动前预加载（99_main.js），有图就用新图，没有就退回 60_art.js 的字符画。anchor：图上的挂点（像素坐标，切图缩放后量的）——主角 hand 前手、back 后手、head 头顶中心（头冠底边对齐的位置）；武器 grip 握把；头冠 base 戴上后对齐头部的点。",
  "sheets": {
-  "hero": { "src": "art-src/hero.png", "rows": [2, 2, 2], "names": ["hero_f0", "hero_f1", "hero_s0", "hero_s1", "hero_b0", "hero_b1"], "h": 20 },
-  "weapons": { "src": "art-src/weapons.png", "rows": [5, 5, 3], "names": ["w_Cannon", "w_Laser", "w_Hullbreaker", "w_TurbineBlades", "w_PlasmaNova", "w_StarfallRod", "w_FrostOrb", "w_Railgun", "w_Blastgun", "w_SporeBlaster", "w_Spikes", "w_PlasmaBlaster", "w_Siegebow"], "w": 17 },
-  "gear": { "src": "art-src/gear.png", "rows": [6, 6], "names": ["h_TitaniumCore", "h_PhantomCore", "h_NebulaCore", "h_CrystalCore", "h_EtherealCore", "h_PolymerCore", "o_BoneQuiver", "o_SoulSource", "o_AshCenser", "o_BoneTotem", "o_GraveLantern", "o_shield"], "w": 13, "size": { "o_BoneQuiver": { "h": 9 }, "o_SoulSource": { "h": 7 }, "o_AshCenser": { "h": 9 }, "o_BoneTotem": { "h": 10 }, "o_GraveLantern": { "h": 10 }, "o_shield": { "h": 10 } } },
-  "mobs": { "src": "art-src/mobs.png", "rows": [2, 2, 2, 2, 2, 2, 2], "names": ["m_skelA", "m_skelB", "m_thiefA", "m_thiefB", "m_armorA", "m_armorB", "m_mageA", "m_mageB", "m_houndA", "m_houndB", "m_archerA", "m_archerB", "m_wraithA", "m_wraithB"], "h": 15, "size": { "m_houndA": { "h": 9 }, "m_houndB": { "h": 9 }, "m_thiefA": { "h": 13 }, "m_thiefB": { "h": 13 }, "m_armorA": { "h": 16 }, "m_armorB": { "h": 16 } } },
-  "bosses": { "src": "art-src/bosses.png", "rows": [2, 2, 2, 2], "names": ["b_lordA", "b_lordB", "b_moonA", "b_moonB", "b_bogA", "b_bogB", "b_stormA", "b_stormB"], "h": 28 },
-  "props": { "src": "art-src/props.png", "rows": [6, 6, 6, 6], "names": ["p_skull", "p_bones", "p_candle", "p_candles", "p_tomb", "p_tomb2", "p_flowerW", "p_flowerY", "p_moss", "p_shroom", "p_grass", "p_rocks", "p_chest", "p_chestG", "p_brazier", "p_torch", "p_oil", "p_coin", "p_lorb", "p_soul", "p_potion", "p_gem", "p_shard", "p_key"], "h": 10, "size": { "p_skull": { "h": 6 }, "p_bones": { "h": 6 }, "p_candle": { "h": 8 }, "p_candles": { "h": 9 }, "p_tomb": { "h": 12 }, "p_tomb2": { "h": 12 }, "p_flowerW": { "h": 7 }, "p_flowerY": { "h": 7 }, "p_moss": { "h": 5 }, "p_shroom": { "h": 7 }, "p_grass": { "h": 6 }, "p_rocks": { "h": 6 }, "p_chest": { "h": 9 }, "p_chestG": { "h": 9 }, "p_brazier": { "h": 12 }, "p_torch": { "h": 10 }, "p_oil": { "h": 9 }, "p_coin": { "h": 7 }, "p_lorb": { "h": 7 }, "p_soul": { "h": 8 }, "p_potion": { "h": 9 }, "p_gem": { "h": 9 }, "p_shard": { "h": 7 }, "p_key": { "h": 8 } } }
+  "hero": {
+   "src": "art-src/hero.png",
+   "rows": [
+    2,
+    2,
+    2
+   ],
+   "names": [
+    "hero_f0",
+    "hero_f1",
+    "hero_s0",
+    "hero_s1",
+    "hero_b0",
+    "hero_b1"
+   ],
+   "h": 20
+  },
+  "weapons": {
+   "src": "art-src/weapons.png",
+   "rows": [
+    5,
+    5,
+    3
+   ],
+   "names": [
+    "w_Cannon",
+    "w_Laser",
+    "w_Hullbreaker",
+    "w_TurbineBlades",
+    "w_PlasmaNova",
+    "w_StarfallRod",
+    "w_FrostOrb",
+    "w_Railgun",
+    "w_Blastgun",
+    "w_SporeBlaster",
+    "w_Spikes",
+    "w_PlasmaBlaster",
+    "w_Siegebow"
+   ],
+   "w": 17
+  },
+  "gear": {
+   "src": "art-src/gear.png",
+   "rows": [
+    6,
+    6
+   ],
+   "names": [
+    "h_TitaniumCore",
+    "h_PhantomCore",
+    "h_NebulaCore",
+    "h_CrystalCore",
+    "h_EtherealCore",
+    "h_PolymerCore",
+    "o_BoneQuiver",
+    "o_SoulSource",
+    "o_AshCenser",
+    "o_BoneTotem",
+    "o_GraveLantern",
+    "o_shield"
+   ],
+   "w": 13,
+   "size": {
+    "o_BoneQuiver": {
+     "h": 9
+    },
+    "o_SoulSource": {
+     "h": 7
+    },
+    "o_AshCenser": {
+     "h": 9
+    },
+    "o_BoneTotem": {
+     "h": 10
+    },
+    "o_GraveLantern": {
+     "h": 10
+    },
+    "o_shield": {
+     "h": 10
+    }
+   }
+  },
+  "mobs": {
+   "src": "art-src/mobs.png",
+   "rows": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "names": [
+    "m_skelA",
+    "m_skelB",
+    "m_thiefA",
+    "m_thiefB",
+    "m_armorA",
+    "m_armorB",
+    "m_mageA",
+    "m_mageB",
+    "m_houndA",
+    "m_houndB",
+    "m_archerA",
+    "m_archerB",
+    "m_wraithA",
+    "m_wraithB"
+   ],
+   "h": 15,
+   "size": {
+    "m_houndA": {
+     "h": 9
+    },
+    "m_houndB": {
+     "h": 9
+    },
+    "m_thiefA": {
+     "h": 13
+    },
+    "m_thiefB": {
+     "h": 13
+    },
+    "m_armorA": {
+     "h": 16
+    },
+    "m_armorB": {
+     "h": 16
+    }
+   }
+  },
+  "bosses": {
+   "src": "art-src/bosses.png",
+   "rows": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "names": [
+    "b_lordA",
+    "b_lordB",
+    "b_moonA",
+    "b_moonB",
+    "b_bogA",
+    "b_bogB",
+    "b_stormA",
+    "b_stormB"
+   ],
+   "h": 28
+  },
+  "props": {
+   "src": "art-src/props.png",
+   "rows": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "names": [
+    "p_skull",
+    "p_bones",
+    "p_candle",
+    "p_candles",
+    "p_tomb",
+    "p_tomb2",
+    "p_flowerW",
+    "p_flowerY",
+    "p_moss",
+    "p_shroom",
+    "p_grass",
+    "p_rocks",
+    "p_chest",
+    "p_chestG",
+    "p_brazier",
+    "p_torch",
+    "p_oil",
+    "p_coin",
+    "p_lorb",
+    "p_soul",
+    "p_potion",
+    "p_gem",
+    "p_shard",
+    "p_key"
+   ],
+   "h": 10,
+   "size": {
+    "p_skull": {
+     "h": 6
+    },
+    "p_bones": {
+     "h": 6
+    },
+    "p_candle": {
+     "h": 8
+    },
+    "p_candles": {
+     "h": 9
+    },
+    "p_tomb": {
+     "h": 12
+    },
+    "p_tomb2": {
+     "h": 12
+    },
+    "p_flowerW": {
+     "h": 7
+    },
+    "p_flowerY": {
+     "h": 7
+    },
+    "p_moss": {
+     "h": 5
+    },
+    "p_shroom": {
+     "h": 7
+    },
+    "p_grass": {
+     "h": 6
+    },
+    "p_rocks": {
+     "h": 6
+    },
+    "p_chest": {
+     "h": 9
+    },
+    "p_chestG": {
+     "h": 9
+    },
+    "p_brazier": {
+     "h": 12
+    },
+    "p_torch": {
+     "h": 10
+    },
+    "p_oil": {
+     "h": 9
+    },
+    "p_coin": {
+     "h": 7
+    },
+    "p_lorb": {
+     "h": 7
+    },
+    "p_soul": {
+     "h": 8
+    },
+    "p_potion": {
+     "h": 9
+    },
+    "p_gem": {
+     "h": 9
+    },
+    "p_shard": {
+     "h": 7
+    },
+    "p_key": {
+     "h": 8
+    }
+   }
+  },
+  "uniques": {
+   "src": "art-src/uniques.png",
+   "rows": [
+    3
+   ],
+   "names": [
+    "u_SolarasFireA",
+    "u_SolarasFireB",
+    "u_SolarasFire"
+   ],
+   "w": 28
+  }
  },
  "anchor": {}
 }

@@ -275,6 +275,30 @@
     "nuc"
    ],
    "keepPal": true
+  },
+  "sunring": {
+   "fx": "fire/fire-ring",
+   "el": "exp",
+   "keepPal": true,
+   "opts": {
+    "palette": [
+     "#2a0c06",
+     "#6a1a0a",
+     "#b8320c",
+     "#f06a14",
+     "#ffa82a",
+     "#ffd84a",
+     "#fff2a8",
+     "#ffffff"
+    ]
+   },
+   "t": [
+    0.3,
+    1.7
+   ],
+   "speed": 1.4,
+   "scale": 0.42,
+   "fit": 45
   }
  },
  "play": {
@@ -348,6 +372,41 @@
    "ev": "frostburst",
    "sheet": "orbshatter",
    "replace": true
+  }
+ },
+ "uniq": {
+  "_说明": "独特武器的常驻表现：tip 杖头 / 刃尖的位置（握把到武器尖端的比例），rate 每秒飘出的粒子数，tint 粒子配色，rise 上飘速度，glow 尖端光晕颜色（null 不要），burst 出手时喷出的火花数；hit 拿着这件武器时，技能的哪些表现事件（ev，可多个；els 限元素）换成哪张图集——武器本身不出手，专属命中挂在技能上",
+  "SolarasFire": {
+   "tip": 0.78,
+   "rate": 40,
+   "tint": [
+    "#ffd84a",
+    "#ff9a3d",
+    "#f0531a",
+    "#fff2a8"
+   ],
+   "rise": [
+    16,
+    34
+   ],
+   "life": [
+    500,
+    1100
+   ],
+   "glow": "#ff8a2a",
+   "burst": 14,
+   "hit": {
+    "ev": [
+     "boom",
+     "meteorHit"
+    ],
+    "els": [
+     "exp"
+    ],
+    "sheet": "sunring",
+    "replace": true,
+    "ground": true
+   }
   }
  }
 }
