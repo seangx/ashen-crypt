@@ -318,21 +318,22 @@ const HEAD_DOLL = {
   },
 };
 const DOLL_W = NEW_ART ? 48 : 26, DOLL_H = NEW_ART ? 25 : 18, DOLL_OX = 7, DOLL_OY = 4; // 明亮改版：主角 16×20，左右各留 16 放武器，头顶留 5 放头冠
-const dollSig = eq => ['wl', 'wr', 'core', 'engine'].map(k => eq[k] ? eq[k].b + (uqId(eq[k]) || '') : '-').join('|') + '|' + (setLook(eq) || { id: '-' }).id;
+const dollSig = eq => ['wl', 'wr', 'core', 'engine'].map(k => eq[k] ? eq[k].b + (uqId(eq[k]) || '') : '-').join('|') + '|' + (L => L ? L.id + L.T : '-')(setLook(eq));
 /* 套装穿齐的背饰（data/skillfx.json 的 sets）：返回 { id, cfg, cv 单只右翼, root 根部像素 }，没有就 null */
 function setLook(eq = S.equip) {
   const L = DATA.skillfx && DATA.skillfx.sets; if (!L || !NEW_ART || typeof setCounts !== 'function') return null; const n = setCounts(eq);
-  for (const id in n) { const c = L[id]; if (c && c.art && ARTC[c.art] && n[id] >= c.need) return { id, cfg: c, cv: ARTC[c.art], root: weaponGrip(ARTC[c.art]) }; } return null;
+  let best = null; for (const id in n) { const c = L[id]; if (c && c.art && ARTC[c.art] && n[id] >= c.need && (!best || n[id] > n[best])) best = id; } if (!best) return null; // 几套都够件数时显示件数最多的那套
+  const c = L[best], T = n[best] >= 6 ? 2 : n[best] >= 4 ? 1 : 0; return { id: best, T, cfg: c, cv: ARTC[c.art], root: weaponGrip(ARTC[c.art]) }; // T 档：2 / 4 / 6 件 → 0 / 1 / 2，随件数长大
 }
 // 一对翅膀拼成一张图（纸娃娃 UI 用）：返回 { cv, x, y }，x / y 是这张图放在纸娃娃画布上的左上角（可以是负的）
 function setBackPair(eq) {
   const L = setLook(eq); if (!L) return null;
-  if (L.cfg.type === 'orbit') { const C = L.cfg, b = L.cv, r = C.uiR || C.r, n = C.uiN || 5, R = r + b.height + 1, c = document.createElement('canvas'); c.width = c.height = 2 * R; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; // 装备窗口：静态图里一整圈看不清，改成头后面一扇 n 把刀尖朝外的飞刃（像一圈剑光环）
+  if (L.cfg.type === 'orbit') { const C = L.cfg, b = L.cv, r = C.uiR || C.r, n = C.uiNs ? C.uiNs[L.T] : C.uiN || 5, R = r + b.height + 1, c = document.createElement('canvas'); c.width = c.height = 2 * R; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; // 装备窗口：静态图里一整圈看不清，改成头后面一扇 n 把刀尖朝外的飞刃（像一圈剑光环）
     for (let i = 0; i < n; i++) { const a = Math.PI + 0.3 + (Math.PI - 0.6) * i / (n - 1); x.save(); x.translate(R + Math.cos(a) * r, R + Math.sin(a) * r); x.rotate(a + Math.PI / 2); x.drawImage(b, -b.width / 2, -b.height); x.restore(); }
     const [ax, ay] = C.uiSh || C.sh; return { cv: c, x: ax - R, y: ay - R, s: 1 }; }
   const { cv, root: [rx, ry] } = L, w = cv.width, h = cv.height, c = document.createElement('canvas'); c.width = 2 * (w - rx); c.height = h; const x = c.getContext('2d');
   x.drawImage(cv, w - 2 * rx, 0); x.save(); x.scale(-1, 1); x.drawImage(cv, -(w - rx) - rx, 0); x.restore(); // 右翼根部对齐中线，左翼镜像
-  const [sx, sy] = L.cfg.sh; return { cv: c, x: sx - (w - rx), y: sy - ry, s: 1 };
+  const [sx, sy] = L.cfg.sh, k = L.cfg.ks ? L.cfg.ks[L.T] : 1; return { cv: c, x: sx - (w - rx) * k, y: sy - ry * k, s: k };
 }
 const uqId = it => it && (it.u || it.la); // 独特（u）或传奇词条（la）的 id：专属造型、特效都按它找
 const wpnArt = it => it && (uqId(it) && ARTC['u_' + uqId(it)] || ARTC['w_' + it.b]); // 独特 / 传奇武器有专属造型（art-src/uniques.png）就用专属的

@@ -118,14 +118,14 @@ class World extends Phaser.Scene {
     const orb = L && L.cfg.type === 'orbit'; this.setOrbit(dt, orb ? L : null, bob);
     if (!L || orb) { parts.forEach(p => p.setVisible(false)); this.arcs.length = 0; return; }
     const C = L.cfg, key = 'wing_' + L.id; if (!this.textures.exists(key)) { this.textures.addCanvas(key, copyCv(L.cv)); this.textures.addCanvas(key + '_f', flipCv(L.cv)); }
-    const w = L.cv.width, h = L.cv.height, [rx, ry] = L.root, k = HERO_SCALE, sx = player.x + (C.sh[0] - DOLL_W / 2) * k, sy = player.y + (this.spinRate ? 0 : bob) - (DOLL_H - C.sh[1]) * k;
+    const w = L.cv.width, h = L.cv.height, [rx, ry] = L.root, ks = C.ks ? C.ks[L.T] : 1, k = HERO_SCALE * ks, sx = player.x + (C.sh[0] - DOLL_W / 2) * k, sy = player.y + (this.spinRate ? 0 : bob) - (DOLL_H - C.sh[1]) * k;
     const fl = Math.sin(t * C.flap[1] * Math.PI * 2) * C.flap[0] * Math.PI / 180, dep = ySort(player.y) - 0.004, a = player.dashT > 0 ? 0.5 : 1;
     this.wingR.setVisible(true).setTexture(key).setOrigin((rx + 0.5) / w, (ry + 0.5) / h).setScale(k).setPosition(sx + 1, sy).setRotation(-fl).setDepth(dep).setAlpha(a);
     this.wingL.setVisible(true).setTexture(key + '_f').setOrigin(1 - (rx + 0.5) / w, (ry + 0.5) / h).setScale(k).setPosition(sx - 1, sy).setRotation(fl).setDepth(dep).setAlpha(a);
     if (!G.fx) { this.wingG.setVisible(false); return; }
-    this.wingG.setVisible(true).setPosition(sx, sy - 6).setTint(hex(C.glow)).setDepth(dep - 0.001).setScale(0.9 + 0.08 * Math.sin(t * 5)).setAlpha(0.18 + 0.06 * Math.sin(t * 7));
+    this.wingG.setVisible(true).setPosition(sx, sy - 6).setTint(hex(C.glow)).setDepth(dep - 0.001).setScale((0.9 + 0.08 * Math.sin(t * 5)) * ks).setAlpha(0.18 + 0.06 * Math.sin(t * 7));
     // 电弧：在一只翼面里随机挑两点，中间折几折；亮 0.08–0.14 秒
-    const A = C.arc; if (A) { this.arcAcc += dt * A.rate; while (this.arcAcc >= 1) { this.arcAcc--; const side = Math.random() < 0.5 ? 1 : -1, r0 = 0.15 + Math.random() * 0.3, r1 = 0.6 + Math.random() * 0.4, aa = -0.35 - Math.random() * 0.5, ab = aa + (Math.random() - 0.5) * 0.6; this.arcs.push({ side, p: [[r0, aa], [r1, ab]], life: 0.08 + Math.random() * 0.06, c: hex(A.c[(Math.random() * A.c.length) | 0]) }); }
+    const A = L.T >= (C.arcT ?? 0) && C.arc; if (A) { this.arcAcc += dt * A.rate; while (this.arcAcc >= 1) { this.arcAcc--; const side = Math.random() < 0.5 ? 1 : -1, r0 = 0.15 + Math.random() * 0.3, r1 = 0.6 + Math.random() * 0.4, aa = -0.35 - Math.random() * 0.5, ab = aa + (Math.random() - 0.5) * 0.6; this.arcs.push({ side, p: [[r0, aa], [r1, ab]], life: 0.08 + Math.random() * 0.06, c: hex(A.c[(Math.random() * A.c.length) | 0]) }); }
       const reach = (w - rx) * k;
       this.arcs = this.arcs.filter(z => (z.life -= dt) > 0);
       for (const z of this.arcs) { const rot = z.side > 0 ? -fl : fl, pt = ([r, an]) => { const ang = an + rot; return [sx + z.side * Math.cos(ang) * r * reach, sy + Math.sin(ang) * r * reach]; }, [x0, y0] = pt(z.p[0]), [x1, y1] = pt(z.p[1]);
@@ -139,10 +139,11 @@ class World extends Phaser.Scene {
   setOrbit(dt, L, bob) {
     if (!L) { if (this.orbB) this.orbB.forEach(([a, b]) => { a.setVisible(false); b.setVisible(false); }); this.orbG && this.orbG.setVisible(false); return; }
     const C = L.cfg, key = 'orb_' + L.id; if (!this.textures.exists(key)) this.textures.addCanvas(key, copyCv(L.cv));
-    if (!this.orbB || this.orbB.length !== C.n) { (this.orbB || []).forEach(p => p.forEach(q => q.destroy())); this.orbB = Array.from({ length: C.n }, () => [this.add.image(0, 0, key), this.add.image(0, 0, key).setBlendMode(Phaser.BlendModes.ADD)]); this.orbG ??= this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD); this.orbA = 0; }
+    const N = C.ns ? C.ns[L.T] : C.n; // 件数越多刀越多
+    if (!this.orbB || this.orbB.length !== N) { (this.orbB || []).forEach(p => p.forEach(q => q.destroy())); this.orbB = Array.from({ length: N }, () => [this.add.image(0, 0, key), this.add.image(0, 0, key).setBlendMode(Phaser.BlendModes.ADD)]); this.orbG ??= this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD); this.orbA = 0; }
     const f = RUN ? Math.min(1, (player[C.stack] || 0) / 10) : 0, sp = C.spin[0] + (C.spin[1] - C.spin[0]) * f; this.orbA += dt * sp * Math.PI * 2;
     const k = HERO_SCALE, cx = player.x + (C.sh[0] - DOLL_W / 2) * k, cy = player.y + (this.spinRate ? 0 : bob) - (DOLL_H - C.sh[1]) * k, dep = ySort(player.y) - 0.004, al = player.dashT > 0 ? 0.5 : 1, gc = hex(C.glow);
-    this.orbB.forEach(([b, g], i) => { const a = this.orbA + i / C.n * Math.PI * 2, x = cx + Math.cos(a) * C.r * k, y = cy + Math.sin(a) * C.r * k;
+    this.orbB.forEach(([b, g], i) => { const a = this.orbA + i / N * Math.PI * 2, x = cx + Math.cos(a) * C.r * k, y = cy + Math.sin(a) * C.r * k;
       b.setVisible(true).setTexture(key).setOrigin(0.5, 0.5).setScale(k).setPosition(x, y).setRotation(a + Math.PI).setDepth(dep).setAlpha(al);
       g.setVisible(G.fx && f > 0).setTexture(key).setOrigin(0.5, 0.5).setScale(k).setPosition(x, y).setRotation(a + Math.PI).setDepth(dep + 0.0005).setTint(gc).setAlpha(f * f * 0.85); });
     this.orbG.setVisible(!!G.fx).setPosition(cx, cy).setTint(gc).setDepth(dep - 0.001).setScale(0.7 + 0.5 * f).setAlpha(0.1 + 0.25 * f);
