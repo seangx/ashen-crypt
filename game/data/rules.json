@@ -42,5 +42,6 @@
   "ironWall": { "mul": 2, "hard": 60, "alone": 20, "text": "【贴身】每个贴身敌人的减伤 ×{mul}，上限 {hard}%；身边没有敌人时受到的伤害 +{alone}%" },
   "ctrlPrison": { "base": 20, "cap": 70, "less": 15, "text": "【控场】受控敌人伤害降低的基础值 {base}%，上限 {cap}%；对未受控的敌人伤害总降 {less}%" },
   "drinkShield": { "mul": 1.5, "cap": 10, "text": "【续航】命中回护盾 ×{mul}，每秒上限 {cap}%" },
+  "momentum": { "forms": ["cleave", "stab", "ram"], "r": 80, "n": 6, "dmg": 100, "text": "【余势】劈斩、地刺、冲撞一击打死敌人时，溢出的伤害劈向附近另一个敌人，打死了接着劈，最多连斩 {n} 次" },
   "loneWolf": { "mul": 2, "cap": 60, "crowd": 30, "text": "【远离】无人贴身时的减伤 ×{mul}，上限 {cap}%；被贴身时受到的伤害 +{crowd}%" }
 }

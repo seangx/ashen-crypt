@@ -877,8 +877,8 @@
    ],
    "base": {
     "form": "cleave",
-    "range": 230,
-    "arc": 0.75,
+    "range": 250,
+    "arc": 1,
     "eff": 1.013,
     "vis": "RotClawBase",
     "role": "mix"

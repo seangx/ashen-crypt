@@ -161,8 +161,9 @@ function hitMob(m, W, o = {}) {
     let d = rf(W.min[e], W.max[e]) * mul; if (e === 'ele') d = Math.max(1, d);
     d = mitigate(m, e, d); by[e] = d; total += d; if (d > topv) { topv = d; top = e; }
   }
-  const shockedBefore = m.shock > 0;
+  const shockedBefore = m.shock > 0, hp0 = m.hp;
   DSRC = o.dsrc || dsrcOf(W); damage(m, total, top, crit, W.cont);
+  if (m.dead && !o.ground && !o.re && RL.momentum.forms.includes(W.form) && hp0 > 0) momentum(m, W, (total - hp0) * RL.momentum.dmg / 100, top, o.mom || 0); // 余势：一击打死，溢出的伤害劈向下一个
   if (STATS.flag.emberGround && W.el === 'exp' && !o.ground && !o.re && !o.splash) pushGround({ W, x: m.x, y: m.y, r: 12, t: 2, tickT: 0.5, tick: 0.5, mul: (o.mul || 1) * STATS.flag.emberGround, el: 'exp', fire: 1, gk: 'ember' }); // 余烬套 4 件：火地（同一处只留一片）
   if (STATS.flag.quakeSplash && (m.elite || m.boss) && isAreaW(W) && !o.splash && !o.ground) for (const x of mobs) if (x !== m && !x.dead && !x.elite && !x.boss && dist2(x, m) < 40 * 40) hitMob(x, W, { mul: (o.mul || 1) * STATS.flag.quakeSplash, splash: 1, procK: 0 }); // 震荡套 4 件：溅射
   if (STATS.flag.stormArc && W.el === 'ele' && shockedBefore && !o.arc2 && !o.re && !o.ground) { const n = nearest(m.x, m.y - 4, 60, new Set([m])); if (n) { fx({ t: 'bolt', x1: m.x, y1: m.y - 5, x2: n.x, y2: n.y - 5, el: 'ele' }); hitMob(n, W, { mul: (o.mul || 1) * STATS.flag.stormArc, arc2: 1, procK: 0 }); } } // 风暴套 4 件：电弧
@@ -246,6 +247,15 @@ function ailment(m, e, d, W, o) {
 let DSRC = null;
 const dsrcOf = W => !W ? '其他' : W.trigSlot ? (W.b && W.b.n) || W.n || '技能' : W.atk ? '普攻' : (W.b && W.b.n) || '其他';
 function dstatAdd(k, amt, crit, small) { if (!RUN || !(amt > 0)) return; const D = RUN.dstat || (RUN.dstat = {}), e = D[k] || (D[k] = { d: 0, n: 0, c: 0 }); e.d += amt; if (!small) { e.n++; if (crit) e.c++; } }
+/* 余势（11-12，用户：旋风斩毕业秒全屏，腐爪、雷斩还在一只只地砍）：毕业后近战一下就打死一只怪，九成以上伤害溢出浪费，清怪速度只看每秒碰到几只怪。
+   劈斩 / 地刺 / 冲撞打死敌人时，把溢出的伤害沿刀势劈向附近最近的一只（r 内），打死了接着劈，最多 n 次；伤害刚够用时几乎不触发 */
+function momentum(m, W, over, el, depth) {
+  const M = RL.momentum; if (depth >= M.n || over <= 0) return;
+  const n = nearest(m.x, m.y - 4, M.r, new Set([m])); if (!n) return;
+  fx({ t: 'cleave', x: m.x, y: m.y - 4, a: Math.atan2(n.y - m.y, n.x - m.x), r: Math.hypot(n.x - m.x, n.y - m.y) + 6, arc: 0.18, el });
+  const hp0 = n.hp; DSRC = dsrcOf(W); damage(n, mitigate(n, el, over), el, false, true);
+  if (n.dead && hp0 > 0) momentum(n, W, over - hp0, el, depth + 1);
+}
 function damage(m, amt, el, crit, small) {
   const src = DSRC; DSRC = null;
   if (m.dead || amt <= 0) return;
