@@ -1,4 +1,6 @@
 /* ---------- 界面状态 ---------- */
+let ANVIL_HIT = null; // 铁砧刚锻完：{ t, before 锻前词条, kind }，界面刷新后播一锤
+const anvilSnap = it => it && it.affs ? it.affs.map(x => ({ k: x.k, t: x.t, v: [].concat(x.v).reduce((a, b) => a + b, 0) })) : null;
 let selId = null, hoverId = null, modWeapon = 'gem', stashTab = 0, craftId = null, confirmKey = null, craftLog = [], helpTopic = 0;
 let craftAff = -1, craftTab = 0, addPage = 0, useHope = false, useChaos = false, fuseId = null, feedOn = false, feedSrc = null;
 let ladPick = 1;
@@ -60,7 +62,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
   }
   if (typeof stoneOf === 'function' && it.stones && it.stones.some(Boolean)) ln('属性石：' + it.stones.filter(Boolean).map(s => { const S0 = stoneOf(s.sid), f = stoneFx(it, s); return `${S0.n}${s.t}阶${f ? ` ${STAT_N2[f[0]] || f[0]} +${f[1]}` : ''}`; }).join('；'), '#9be05a'); // gear-v2 §7：详情里显示已镶的属性石
   if (it.affs.length) { rect(sc, 0, cy + 1, w, 1, '#3a3049', 1, c); cy += 4; }
-  it.affs.forEach((x, i) => {
+  it.affs.forEach((x, i) => { const y0 = cy;
     const a = AFF_BY[x.k]; const ex = exTier(a, x.t), top = !ex && x.t === craftTop(a), hi = a.tiers.length - x.t <= 3;
     rect(sc, 0, cy + 2, 13, 9, ex ? '#0f4a3a' : top ? '#5a2d10' : hi ? '#3c2a52' : '#2a2236', 1, c);
     T(sc, 7, cy + 3, tierLabel(x), { size: 8, color: ex ? EX_C : top ? COL.emberHi : hi ? '#d9b8ff' : COL.dim, align: 'center', shadow: false, parent: c });
@@ -75,7 +77,7 @@ function mkCard(sc, parent, x, y, it, w, o = {}) {
       z.on('pointerup', () => { if (MOBILE) return affDetail(x, [{ l: '选中这条', style: 'w', fn: () => o.pick(i) }]); o.pick(i); });
       if (MOBILE) cy += rh - 1 - t.h;
     }
-    cy += t.h;
+    cy += t.h; if (o.rows) o.rows[i] = [y0 - 1, cy - y0 + 1]; // 铁砧的反馈要知道每条词条画在哪
   });
   if (it.oath) ln(oathText(it.oath), '#c0392b'); // 誓约：暗红，在词条最下面
   if (it.u) { rect(sc, 0, cy + 1, w, 1, '#5a3a14', 1, c); cy += 4; for (const r of ruleLines(it)) ln(r, '#ff9a3c'); }

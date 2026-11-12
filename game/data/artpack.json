@@ -298,6 +298,30 @@
     "set_BladeC"
    ],
    "h": 13
+  },
+  "anvil": {
+   "src": "art-src/anvil.png",
+   "rows": [
+    4
+   ],
+   "names": [
+    "x_anvil",
+    "x_hammer",
+    "x_spark",
+    "x_shard"
+   ],
+   "w": 44,
+   "size": {
+    "x_hammer": {
+     "w": 30
+    },
+    "x_spark": {
+     "w": 7
+    },
+    "x_shard": {
+     "w": 6
+    }
+   }
   }
  },
  "anchor": {}

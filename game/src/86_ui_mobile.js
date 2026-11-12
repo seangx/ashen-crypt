@@ -346,28 +346,71 @@ class MobileUI extends UI {
     if (craftLog[0]) { const r = TW(this, 10, y, craftLog[0], w - 20, { size: 8, color: COL.good, parent: c }); y += r.h + 4; }
     if (!it) { T(this, 10, y, '没有可锻造的装备。', { size: 8, color: COL.faint, parent: c }); return F.end(y + 20); }
     if (craftAff >= it.affs.length) craftAff = -1;
-    const card = mkCard(this, c, 10, y, it, w - 20, { pick: craftable(it) ? i => { craftAff = craftAff === i ? -1 : i; this.refresh(); } : null, selAff: craftAff });
-    y += card.h + 8;
-    const done = msg => { craftLog.unshift(msg); sfx('craft'); refreshStats(); save(); this.refresh(); }, adv = unlocked('craftAdv');
+    const stage = this.anvilStage(c, w, y, it); y += stage.h + 4;
+    const rows = [], card = mkCard(this, c, 10, y, it, w - 20, { pick: craftable(it) ? i => { craftAff = craftAff === i ? -1 : i; this.refresh(); } : null, selAff: craftAff, rows });
+    this.anvilPlay(stage, c, 10, y, w - 20, rows, it); y += card.h + 8;
+    const done = (fn, fx) => { const before = anvilSnap(it), msg = typeof fn === 'function' ? fn() : fn; craftLog.unshift(msg); sfx('craft'); refreshStats(); save(); ANVIL_HIT = { t: performance.now(), id: it.id, before, kind: fx || 'hit' }; this.refresh(); }, adv = unlocked('craftAdv');
     if (useHope && !glyphN('hope')) useHope = false; if (useChaos && !glyphN('chaos')) useChaos = false;
     // 底：操作
     { const fc = F.foot(96), bw = Math.floor((w - 24) / 3), Bt = (i, row, n, fn, o) => mkBtn(this, fc, 10 + i * (bw + 2), 34 + row * 30, bw, 28, n, fn, Object.assign({ size: 8 }, o));
       const sel = it.affs[craftAff], uw = upWhy(it, craftAff);
-      mkBtn(this, fc, 10, 4, w - 20, 28, sel ? `升一档 · 碎片 ${shardN(sel.k)}` : '升一档（先点一条词条）', () => done(craftUp(it, craftAff, useHope, useChaos)), { size: 8, style: 'w', disabled: !!uw });
+      mkBtn(this, fc, 10, 4, w - 20, 28, sel ? `升一档 · 碎片 ${shardN(sel.k)}` : '升一档（先点一条词条）', () => done(() => craftUp(it, craftAff, useHope, useChaos)), { size: 8, style: 'w', disabled: !!uw });
       const rw = adv ? refineWhy(it, craftAff) : unlockText('craftAdv'), sw = adv ? stripWhy(it) : unlockText('craftAdv'), ow = oathWhy(it);
-      Bt(0, 0, '洗数值', () => done(craftRefine(it, craftAff)), { disabled: !!rw });
-      Bt(1, 0, '移除', () => done(craftStrip(it)), { disabled: !!sw });
-      Bt(2, 0, `立誓 ×${glyphN('oath')}`, () => done(craftOath(it)), { disabled: !!ow });
+      Bt(0, 0, '洗数值', () => done(() => craftRefine(it, craftAff)), { disabled: !!rw });
+      Bt(1, 0, '移除', () => done(() => craftStrip(it)), { disabled: !!sw });
+      Bt(2, 0, `立誓 ×${glyphN('oath')}`, () => done(() => craftOath(it)), { disabled: !!ow });
       Bt(0, 1, useHope ? '带希望符' : '不带希望', () => { useHope = !useHope; this.refresh(); }, { style: useHope ? 's' : 'n', disabled: !glyphN('hope') });
       Bt(1, 1, useChaos ? '带混沌符' : '不带混沌', () => { useChaos = !useChaos; this.refresh(); }, { style: useChaos ? 's' : 'n', disabled: !glyphN('chaos') });
-      Bt(2, 1, '拆解', () => this.ask(`拆解 ${itemName(it)}？`, '拆解', '会变成词条碎片，不能撤销。', () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片${coinTxt(g)}`); }), { style: 'n' }); }
+      Bt(2, 1, '拆解', () => this.ask(`拆解 ${itemName(it)}？`, '拆解', '会变成词条碎片，不能撤销。', () => { const sh = { shatter: 'i_' + iconOf(it), c: icol(it) }, g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); craftId = null; done(`拆解 ${itemName(it)}，得到 ${n} 个词条碎片${coinTxt(g)}`, sh); }), { style: 'n' }); }
     // 主体下半：能加的词条，有多少列多少
     const opts = craftable(it) ? AFF.filter(a => shardN(a.k) > 0 && canAdd(it, a)) : [];
     T(this, 10, y, `加词条（${opts.length} 种可加）`, { size: 8, color: COL.dim, parent: c }); y += 14;
     const aw = anvilWhy(it);
     if (!opts.length) { const r = TW(this, 10, y, aw || (it.affs.length >= AFF_MAX ? `已经有 ${AFF_MAX} 条词条` : '没有能加到这件装备上的碎片。'), w - 20, { size: 8, color: COL.faint, parent: c }); y += r.h + 4; }
-    opts.forEach((a, i) => mkBtn(this, c, 10, y + i * 30, w - 20, 28, `${a.type === 'P' ? '前' : '后'} ${affName(a)} ×${shardN(a.k)}`, () => done(craftAdd(it, a.k, useHope)), { size: 8, labelX: 4, disabled: !!addWhy(it, a.k) }));
+    opts.forEach((a, i) => mkBtn(this, c, 10, y + i * 30, w - 20, 28, `${a.type === 'P' ? '前' : '后'} ${affName(a)} ×${shardN(a.k)}`, () => done(() => craftAdd(it, a.k, useHope)), { size: 8, labelX: 4, disabled: !!addWhy(it, a.k) }));
     F.end(y + opts.length * 30 + 6);
+  }
+  /* 铁砧台面（11-12，用户：铁砧、职业、魂龛缺少游戏感，纯纯的 UI）：砧上放着要锻的装备，锤子悬在旁边；
+     每次锻造（done）记下锻前的词条，界面刷新后在新台面上播一锤：锤子砸下、白闪、火花、台面一震，变了的词条整行闪色（升档 / 新词条金色，变好绿，变差暗红） */
+  anvilStage(c, w, y, it) {
+    if (!ARTC.x_anvil) return { h: 0 };
+    for (const k of ['x_anvil', 'x_hammer', 'x_spark', 'x_shard']) if (!this.textures.exists(k)) this.textures.addCanvas(k, copyCv(ARTC[k]));
+    const H = 60, cx = Math.round(w / 2), st = this.add.container(0, y); c.add(st);
+    rect(this, 10, 0, w - 20, H, '#0d0810', 0.75, st);
+    const glow = this.add.image(cx, H - 12, 'fx_glow').setDisplaySize(170, 56).setTint(hex(COL.ember)).setAlpha(0.22).setBlendMode('ADD'); st.add(glow);
+    this.tweens.add({ targets: glow, alpha: 0.32, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' }); // 炉火光一呼一吸
+    const anv = this.add.image(cx, H - 2, 'x_anvil').setOrigin(0.5, 1).setScale(1.5); st.add(anv);
+    const top = H - 2 - anv.displayHeight + 4; let item = null, ig = null;
+    if (it) { const key = 'i_' + iconOf(it);
+      ig = this.add.image(cx + 4, top - 8, 'fx_glow').setDisplaySize(46, 28).setTint(hex(icol(it))).setAlpha(it.rar ? 0.4 : 0.15).setBlendMode('ADD'); st.add(ig);
+      item = this.add.image(cx + 4, top + 1, key).setOrigin(0.5, 1).setScale(2); st.add(item);
+      this.tweens.add({ targets: item, y: top, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.InOut' }); }
+    const ham = this.add.image(cx + 50, top - 6, 'x_hammer').setOrigin(0.96, 0.5).setFlipX(true).setScale(1.5).setRotation(0.35); st.add(ham); // 翻过来锤头朝左，绕手柄末端转；正角度 = 锤头抬起
+    this.tweens.add({ targets: ham, rotation: 0.45, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    return { h: H, st, cx, top, item, ig, ham, glow };
+  }
+  anvilPlay(S0, c, x0, y0, cw, rows, it) {
+    const A = ANVIL_HIT; if (!A || !S0.st || performance.now() - A.t > 600) return; ANVIL_HIT = null;
+    const { st, cx, top, item, ham, glow } = S0, hx = cx + 4, hy = top - 10;
+    // 词条变化：按词条 id 对比锻前锻后
+    const now = anvilSnap(it) || [], before = A.before || [], marks = []; let best = 0; // 0 无变化 1 变差 2 变好 3 升档 / 新词条
+    now.forEach((x, i) => { const b = before.find(z => z.k === x.k); const m = !b ? 3 : x.t > b.t ? 3 : x.v > b.v ? 2 : x.v < b.v ? 1 : 0; if (m) marks.push([i, m]); best = Math.max(best, m); });
+    const RC = ['#8a7f99', '#c0392b', '#7fe08a', '#ffd36a'], col = A.kind && A.kind.shatter ? A.kind.c : RC[best];
+    this.tweens.killTweensOf(ham); ham.setRotation(0.9);
+    this.tweens.add({ targets: ham, rotation: -0.08, duration: 110, ease: 'Quad.In', onComplete: () => {
+      // 砸中：白闪、火花、台面震、炉光变成结果色
+      if (item) { item.setTintFill(0xffffff); this.time.delayedCall(70, () => item.active && item.clearTint()); }
+      const fl = this.add.image(hx, hy, 'fx_glow').setDisplaySize(60, 40).setTint(hex(col)).setBlendMode('ADD').setAlpha(0.9); st.add(fl); this.tweens.add({ targets: fl, alpha: 0, scaleX: fl.scaleX * 1.6, scaleY: fl.scaleY * 1.6, duration: 380, onComplete: () => fl.destroy() });
+      glow.setTint(hex(col)); this.time.delayedCall(450, () => glow.active && glow.setTint(hex(COL.ember)));
+      const N = A.kind && A.kind.shatter ? 10 : 14, ps = [];
+      for (let i = 0; i < N; i++) { const shard = A.kind && A.kind.shatter, p = this.add.image(hx, hy + 4, shard ? 'x_shard' : 'x_spark').setBlendMode(shard ? 'NORMAL' : 'ADD'); if (shard) p.setTint(hex(A.kind.c)); st.add(p); const a = -Math.PI * (0.1 + 0.8 * Math.random()), sp = 60 + Math.random() * 90; ps.push({ p, vx: Math.cos(a) * sp * (shard ? 0.8 : 1), vy: Math.sin(a) * sp, r: (Math.random() - 0.5) * 12 }); }
+      this.tweens.addCounter({ from: 0, to: 1, duration: 600, onUpdate: tw => { const dt = 1 / 60; for (const q of ps) { q.vy += 260 * dt; q.p.x += q.vx * dt; q.p.y += q.vy * dt; q.p.rotation += q.r * dt; q.p.setAlpha(1 - tw.progress); q.p.setScale(1 - tw.progress * 0.5); } }, onComplete: () => ps.forEach(q => q.p.destroy()) });
+      const sx = st.x; this.tweens.add({ targets: st, x: sx + 2, duration: 30, yoyo: true, repeat: 2, onComplete: () => st.active && (st.x = sx) });
+      this.tweens.add({ targets: ham, rotation: 0.35, duration: 320, ease: 'Back.Out' });
+      // 变了的词条：整行闪一下结果色，右边飘一个字
+      for (const [i, m] of marks) { const r = rows[i]; if (!r) continue; const b = rect(this, x0 - 2, y0 + r[0], cw + 4, r[1], RC[m], 0.55, c); this.tweens.add({ targets: b, alpha: 0, duration: 1100, delay: 120, onComplete: () => b.destroy() });
+        const tx = T(this, x0 + cw, y0 + r[0], ['', '变差', '变好', '升档'][m], { size: 8, color: RC[m], align: 'right', parent: c }); this.tweens.add({ targets: tx, y: tx.y - 10, alpha: 0, duration: 1100, delay: 250, onComplete: () => tx.destroy() }); }
+    } });
   }
   // 熔铸：主体 = 选神话 → 选同部位的稀有 → 神话的卡；底 = 熔铸按钮和不能熔的原因
   fusePaneM(c, w, h) {
@@ -741,7 +784,7 @@ class MobileUI extends UI {
       if (it.kind === 'off') A.push({ l: '装副手', style: 'w', fn: () => { equipItem(it, 'wr'); R(); }, disabled: !unlocked('wr'), why: `副手：${unlockText('wr')}` });
       else if (it.kind === 'gem') A.push({ l: '去魂龛', style: 'w', fn: () => this.openWin('trig') });
       else if (slotsFor(it)[0]) A.push({ l: it.kind === 'weapon' ? '装主手' : '装备', style: 'w', fn: () => { equipItem(it); R(); } });
-      A.push({ l: '拆解', fn: () => this.ask(`拆解 ${itemName(it)}？`, () => { const g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n || g.coins) toast(`得到 ${n} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); R(); }, '拆解', '会变成词条碎片，不能撤销。') });
+      A.push({ l: '拆解', fn: () => this.ask(`拆解 ${itemName(it)}？`, () => { const sh = { shatter: 'i_' + iconOf(it), c: icol(it) }, g = salvage(it); const n = Object.values(g).reduce((a, b) => a + b, 0); if (n || g.coins) toast(`得到 ${n} 个词条碎片${coinTxt(g)}`, '#d9cfb8'); R(); }, '拆解', '会变成词条碎片，不能撤销。') });
     } else {
       A.push({ l: '卸下', fn: () => { unequip(f.slot); R(); } });
       if (stoneSockN(it) > 0) A.push({ l: '属性石', fn: () => this.openWin('stones') });
