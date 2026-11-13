@@ -5,7 +5,7 @@
    ========================================================= */
 const TRIALS = {
   pounce: { n: '腐爪 · 流光闪斩', gem: 'GemRotClaw', lvl: 20, depth: 25, level: 50, dens: 3.5, cap: 220, weapon: 'TurbineBlades', ilvl: 60, // 怪海要密：一直有怪，闪斩才不断
-    trial: { pounce: { T: 0.06, gap: 0.08, rng: 150, over: 10, mul: 1 } } },
+    trial: { pounce: { T: 0.07, gap: 0.08, rng: 150, over: 34, mul: 1, trail: 0.38 } } },
 };
 let TRIAL = null;
 try { const q = new URLSearchParams(location.search).get('try'); if (q && TRIALS[q]) TRIAL = q; } catch (e) { }

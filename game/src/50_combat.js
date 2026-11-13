@@ -463,10 +463,10 @@ function pounceStart(W, i) {
 }
 function pounceLeap(m) {
   const pp = player.pounce, F = pp.W.pounce, T = F.T, x0 = player.x, y0 = player.y, cx = m.x, cy = m.y - 4;
-  let a = Math.atan2(cy - y0, cx - x0); if (m === pp.last || Math.hypot(cx - x0, cy - y0) < m.size + 12) { pp.rot = -pp.rot; a = Math.atan2(y0 - cy, x0 - cx) + Math.PI + pp.rot * rf(1.6, 2.4); } // 同一个目标 / 贴身：绕到另一侧，换角度斩
+  const near = Math.hypot(cx - x0, cy - y0) < 4, a = (near ? rf(0, Math.PI * 2) : Math.atan2(cy - y0, cx - x0)) + pp.rot * rf(0.35, 0.8); // 穿过目标中心后往一侧偏一点出去：同一个目标（Boss）每斩的方向一直往同一边转，绕着它一圈圈斩
   const out = m.size + F.over, x1 = cx + Math.cos(a) * out, y1 = cy + Math.sin(a) * out + 4;
   player.dvx = (x1 - x0) / T; player.dvy = (y1 - y0) / T; player.dashT = T; player.dashEnd = 'pounce'; player.face = Math.cos(a) >= 0 ? 1 : -1;
-  pp.tg = m; pp.a = a; fx({ t: 'streak', x1: x0, y1: y0 - 6, x2: x1, y2: y1 - 6, el: pp.W.el, life: F.T + 0.16 });
+  pp.tg = m; pp.a = a; fx({ t: 'streak', x1: x0, y1: y0 - 6, xm: cx, ym: cy - 2, x2: x1, y2: y1 - 6, el: pp.W.el, life: F.T + (F.trail || 0.16) }); // 光带：起点 → 目标中心 → 出口
 }
 function pounceLand() {
   const pp = player.pounce; if (!pp) return; const W = pp.W, m = pp.tg;
