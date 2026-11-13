@@ -28,7 +28,7 @@ function bootDemo() {
 async function start(data) {
   await Promise.all([waitFonts(), ICON_READY, ART_READY]); // 手机包：矢量物品图标先画好
   Z = clamp(Math.round((window.devicePixelRatio || 1) * Math.min(innerWidth / W, innerHeight / H)), 2, 6);
-  load(data || {}); bootDemo(); refreshStats();
+  load(data || {}); bootDemo(); trialBoot(); refreshStats();
   if (S.auto.loop) AUTO.nextT = 1; // 上次是自动循环：打开就接着刷
   window.claude?.hot?.snapshot?.(() => ({ save: JSON.stringify(S) }));
   setInterval(() => { if (RUN) save(); }, 10000);

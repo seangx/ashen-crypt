@@ -14,12 +14,13 @@ function freshState() {
   };
 }
 function save() {
+  if (typeof TRIAL !== 'undefined' && TRIAL) return; // 试玩台不写存档（95_trial.js）
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { }
   window.claude?.hot?.snapshot?.(() => ({ save: JSON.stringify(S) }));
 }
 function load(data) {
   let raw = data && data.save;
-  if (!raw) try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { }
+  if (!raw && !(typeof TRIAL !== 'undefined' && TRIAL)) try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { } // 试玩台：不读玩家存档，从空档开始
   S = freshState();
   if (raw) try { const o = JSON.parse(raw); if (o.v === 4 && (o.gemV || 0) >= 3) S = Object.assign(S, o); else if (o.v === 4) { S.wiped = 1; const tell = () => G.ui ? toast('地窖已重塑，旧的旅程已封存', COL.emberHi) : setTimeout(tell, 500); setTimeout(tell, 1200); } } catch (e) { } // 魂龛改版不兼容老存档（system-v2 §11）：直接清档
   migrateRetiredWeapons(S); // 11-11：停用的旧武器底子已删

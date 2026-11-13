@@ -49,7 +49,7 @@ async function openGame(html, o = {}) {
   await pg.route('**/phaser.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(V, 'phaser.min.js')), contentType: 'application/javascript' }));
   await pg.route('**/rexuiplugin.min.js', r => r.fulfill({ body: fs.readFileSync(path.join(V, 'rexuiplugin.min.js')), contentType: 'application/javascript' }));
   await pg.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
-  await pg.goto('file://' + path.resolve(html)); await pg.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 30000 }); await pg.waitForTimeout(800);
+  await pg.goto('file://' + path.resolve(html) + (o.query || '')); // o.query：比如 '?try=pounce'（毕业形态试玩台） await pg.waitForFunction(() => window.__ash && window.__ash.G.ui, null, { timeout: 30000 }); await pg.waitForTimeout(800);
   await pg.evaluate(`(${HELPERS.toString()})()`);
   return { browser: b, page: pg, errs };
 }

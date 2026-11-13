@@ -296,6 +296,7 @@ class World extends Phaser.Scene {
     const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.fbT > 0.12 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
     if (player.chill > 0) this.hero.setTint(0xb8e6ff); else if (NEW_ART) this.hero.setTint(0xc4bccf); else if (this.hero.isTinted) this.hero.clearTint(); // 角色被冰缓；新主角是白兜帽，站在提灯光圈正中会被光照提爆，压一层淡灰紫
+    if (player.pounce && player.dashT > 0 && G.time - (this.pgT || 0) > 0.022) { this.pgT = G.time; const h = this.hero, gh = this.add.image(h.x, h.y, h.texture.key, h.frame.name).setOrigin(h.originX, h.originY).setScale(HERO_SCALE).setFlipX(h.flipX).setTint(0x8fe05a).setAlpha(0.6).setDepth(h.depth - 0.001).setBlendMode(Phaser.BlendModes.ADD); this.tweens.add({ targets: gh, alpha: 0, duration: 280, onComplete: () => gh.destroy() }); } // 疫兽扑杀（试玩台）：扑的路上留一串绿色残影
     this.hero.setScale(HERO_SCALE).setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(ySort(player.y)).setAlpha(player.dashT > 0 ? 0.5 : 1);
     // 主手武器：单独一张图，握把在前手，朝最近一次出手的方向转（没出手时平端朝面向）；出手瞬间往后顶一下；旋风斩转身时藏起来（侧面、背面图里自带武器）
     if (!this.heroW) { this.heroW = this.add.image(0, 0, 'px').setScale(WPN_SCALE); this.wA = 0; }

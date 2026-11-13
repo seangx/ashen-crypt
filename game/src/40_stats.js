@@ -224,6 +224,7 @@ function weaponStats(it, P, isEngine) {
     if (fx.gain) for (const e in fx.gain) gain[e] = (gain[e] || 0) + fx.gain[e];
     if (fx.flat) for (const e in fx.flat) { const f = rflat[e] || [0, 0]; rflat[e] = [f[0] + fx.flat[e][0], f[1] + fx.flat[e][1]]; }
   }
+  { const tr = (it.src || it).trial; if (tr) Object.assign(W, tr); } // 毕业形态试玩台（95_trial.js）：只有试玩台的技能石带 trial
   // 底材 + 附加 → 基础提高
   const [bmin, bmax] = it.throwDmg ? [it.throwDmg, it.throwDmg] : b.min ? weaponBase(b, q) : [0, 0];
   const ok = e => !pure || e === b.el;
