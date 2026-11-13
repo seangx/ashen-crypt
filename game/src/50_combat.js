@@ -453,24 +453,29 @@ function hurtPlayer(d, el, ck = 1, src = null) { // src：{ melee, ranged, elite
 // to：冲向哪里（默认鼠标）；byAuto：自动战斗发起的，打开窗口时也能冲
 // 前方 blockR 像素内怪够多 = 路被堵住
 const dashBlocked = (ux, uy) => { const K = PROG.slam.stack; if (!K) return false; let n = 0; for (const m of mobs) { if (m.dead) continue; const ax = m.x - player.x, ay = m.y - player.y; if (ax * ux + ay * uy > 0 && ax * ax + ay * ay < K.blockR * K.blockR && ++n >= K.blockN) return true; } return false; };
-// 毕业形态试玩：疫兽扑杀（95_trial.js）。一次出手连扑 n 下：每下 T 秒扑到下一只没扑过的怪跟前（借冲刺，期间无敌），落地一记小扇形爪击 + 毒痕
-function pounceNext(hit, rng) { let best = null, bd = rng * rng; for (const m of mobs) { if (m.dead || m.rise > 0.2 || hit.has(m)) continue; const d = dist2(m, player); if (d < bd) { bd = d; best = m; } } return best; }
+// 毕业形态试玩：流光闪斩（95_trial.js，用户 11-13：闪打不该是 AOE，人化成一道流光、从不同角度斩过目标，只要有怪就一直闪）
+// 进入闪斩后人隐身：每 gap 秒（借冲刺 T 秒，期间无敌）穿过一个目标、从它另一侧出来，斩一下（单体）；没有怪了才现身。同一个目标（Boss）每次换一个角度穿过
+function flickNext(last, rng) { let best = null, bd = rng * rng; for (const m of mobs) { if (m.dead || m.rise > 0.2) continue; const d = dist2(m, player) * (m === last ? 2.5 : 1); if (d < bd) { bd = d; best = m; } } return best; }
 function pounceStart(W, i) {
   if (player.pounce || player.dashT > 0) return false;
-  const tg = pounceNext(new Set(), W.pounce.rng); if (!tg) return false;
-  player.pounce = { W, i, left: W.pounce.n, hit: new Set() }; pounceLeap(tg); return true;
+  const tg = flickNext(null, W.pounce.rng); if (!tg) return false;
+  player.pounce = { W, i, wait: 0, last: null, rot: rnd() < 0.5 ? 1 : -1 }; pounceLeap(tg); return true;
 }
 function pounceLeap(m) {
-  const pp = player.pounce, T = pp.W.pounce.T, dx = m.x - player.x, dy = m.y - 4 - player.y, d = Math.hypot(dx, dy) || 1, go = Math.max(0, d - (m.size + 6));
-  player.dvx = dx / d * go / T; player.dvy = dy / d * go / T; player.dashT = T; player.dashEnd = 'pounce'; player.face = dx > 0 ? 1 : -1; pp.tg = m; pp.a = Math.atan2(dy, dx); pp.left--;
+  const pp = player.pounce, F = pp.W.pounce, T = F.T, x0 = player.x, y0 = player.y, cx = m.x, cy = m.y - 4;
+  let a = Math.atan2(cy - y0, cx - x0); if (m === pp.last || Math.hypot(cx - x0, cy - y0) < m.size + 12) { pp.rot = -pp.rot; a = Math.atan2(y0 - cy, x0 - cx) + Math.PI + pp.rot * rf(1.6, 2.4); } // 同一个目标 / 贴身：绕到另一侧，换角度斩
+  const out = m.size + F.over, x1 = cx + Math.cos(a) * out, y1 = cy + Math.sin(a) * out + 4;
+  player.dvx = (x1 - x0) / T; player.dvy = (y1 - y0) / T; player.dashT = T; player.dashEnd = 'pounce'; player.face = Math.cos(a) >= 0 ? 1 : -1;
+  pp.tg = m; pp.a = a; fx({ t: 'streak', x1: x0, y1: y0 - 6, x2: x1, y2: y1 - 6, el: pp.W.el, life: F.T + 0.16 });
 }
 function pounceLand() {
-  const pp = player.pounce; if (!pp) return; const W = pp.W, P0 = W.pounce, a = pp.a, half = P0.arc, R = P0.r;
-  for (const m of mobs) { if (m.dead || m.rise > 0.2) continue; const dx = m.x - player.x, dy = m.y - 4 - player.y; if (Math.hypot(dx, dy) > R + m.size) continue; let da = Math.abs(Math.atan2(dy, dx) - a); if (da > Math.PI) da = Math.PI * 2 - da; if (da < half) { hitMob(m, W); pp.hit.add(m); } }
-  pp.hit.add(pp.tg);
-  fx({ t: 'cleave', x: player.x, y: player.y, a, r: R, arc: half, el: W.el, sk: skB(W) }); fx({ t: 'auraburst', x: player.x + Math.cos(a) * R * 0.5, y: player.y + Math.sin(a) * R * 0.5, r: R * 0.6, el: W.el }); sfx('slash'); player.swing[pp.i] = 0.18;
-  if (P0.trail && RUN) pushGround({ W, x: player.x, y: player.y, r: P0.trail, t: 3 * STATS.durMul, el: W.el, pool: 1, gk: 'pool' });
-  const nx = pp.left > 0 && RUN ? pounceNext(pp.hit, P0.rng) : null; if (nx) pounceLeap(nx); else player.pounce = null;
+  const pp = player.pounce; if (!pp) return; const W = pp.W, m = pp.tg;
+  if (m && !m.dead) { hitMob(m, W, { mul: W.pounce.mul }); fx({ t: 'xslash', x: m.x, y: m.y - m.size * 0.6, a: pp.a + Math.PI / 2 + rf(-0.5, 0.5), r: m.size + 8, el: W.el }); sfx('slash'); }
+  pp.last = m; pp.wait = W.pounce.gap;
+}
+function pounceTick(dt) { // 两斩之间：人不现身、原地等 gap，再闪向下一个；没有怪了就结束闪斩
+  const pp = player.pounce; pp.wait -= dt; if (pp.wait > 0) return;
+  const nx = RUN ? flickNext(pp.last, pp.W.pounce.rng) : null; if (nx) pounceLeap(nx); else { player.pounce = null; fx({ t: 'flickOut', x: player.x, y: player.y, el: pp.W.el }); }
 }
 function tryDash(to = mouse, byAuto = false) {
   if (player.dash < 1 || player.dashT > 0 || (!byAuto && G.ui && G.ui.winId)) return;
@@ -755,6 +760,7 @@ function logic(dt) {
     if (P.flag.fireTrail && RUN) { const W0 = P.weapons.find(Boolean); if (W0) zones.push({ W: W0, mul: RL.fireTrail.pct / 100, x: player.x, y: player.y, r: RL.fireTrail.r, t: RL.fireTrail.dur * P.durMul, el: 'exp', trail: 1 }); }
     if (player.trail && RUN && P.engine) zones.push({ W: P.engine, x: player.x, y: player.y, r: 10, t: 2 * P.durMul, el: P.engine.el, trail: 1 });
     if (player.dashT <= 0 && player.dashEnd) { const k = player.dashEnd; player.dashEnd = null; dashEnd(k); }
+  } else if (player.pounce) { player.vx = player.vy = 0; pounceTick(dt); // 流光闪斩（试玩台）：两斩之间不走路
   } else {
     let tvx = 0, tvy = 0;
     const tg = at || (STICK.on && (STICK.x || STICK.y) ? { x: player.x + STICK.x * 24, y: player.y + STICK.y * 24 } : fieldActive() ? { x: mouse.x + CAM.x, y: mouse.y + 4 + CAM.y } : null); // 鼠标是屏幕坐标，换成世界坐标

@@ -238,6 +238,9 @@ class World extends Phaser.Scene {
         case 'spike': for (const [dx, h] of [[-4, 11], [0, 18], [4, 12]]) this.lines.push({ x1: e.x + dx * 0.4, y1: e.y + 2, x2: e.x + dx, y2: e.y - h, el: e.el, life: 0.2 }); if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y + 2, r: 9, life: 0.2, max: 0.2, el: e.el }); this.em.chip.explode(3, e.x, e.y); /* 骨刺：三根刺从地下顶出来 + 地面一圈裂纹 */ if (e.el === 'cold') { this.em.spark2.particleTint = 0x9fe3ff; this.em.spark2.explode(2, e.x, e.y - 4); } else this.em.bone.explode(2, e.x, e.y - 2); break;
         /* 技能 v3 新特效 */
         case 'buff': { const c = hex(e.c); for (let i = 0; i < 2; i++) this.rings.push({ x: e.x, y: e.y + 4, r: 10 + i * 6, life: 0.3 + i * 0.1, max: 0.3 + i * 0.1, el: 'flash' }); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; this.lines.push({ x1: e.x + Math.cos(a) * 5, y1: e.y + 2 + Math.sin(a) * 3, x2: e.x + Math.cos(a) * 5, y2: e.y - 8 + Math.sin(a) * 3, el: 'pla', life: 0.18 }); } this.em.spark2.particleTint = c; this.em.spark2.explode(8, e.x, e.y); if (e.s) this.label(e.x, e.y - 14, e.s, e.c); break; } // 功能技能：脚下升起一圈光 + 技能名
+        case 'streak': { (this.streaks || (this.streaks = [])).push({ ...e, max: e.life }); const h = this.hero; if (h && h.texture) { const gh = this.add.image(e.x2, e.y2 + 6, h.texture.key, h.frame.name).setOrigin(h.originX, h.originY).setScale(HERO_SCALE).setFlipX(e.x2 < e.x1).setTint(hex(ELEM_C[e.el] || '#ffffff')).setAlpha(0.55).setDepth(ySort(e.y2 + 6)).setBlendMode(Phaser.BlendModes.ADD); this.tweens.add({ targets: gh, alpha: 0, duration: 200, onComplete: () => gh.destroy() }); } break; } // 流光闪斩：一道光带 + 落点一闪残影
+        case 'xslash': (this.xsl || (this.xsl = [])).push({ ...e, life: 0.16, max: 0.16 }); this.em.spark2.particleTint = hex(ELEM_C[e.el] || '#ffffff'); this.em.spark2.explode(4, e.x, e.y); break; // 流光闪斩：目标身上一道斜切刀痕
+        case 'flickOut': this.rings.push({ x: e.x, y: e.y - 6, r: 12, life: 0.22, max: 0.22, el: e.el, fill: true }); break; // 流光闪斩结束：现身一闪
         case 'cleave': (this.slashes || (this.slashes = [])).push({ ...e, life: 0.26, max: 0.26 }); this.em.spark2.particleTint = hex(ELEM_C[e.el]); this.em.spark2.explode(3, e.x + Math.cos(e.a) * e.r * 0.7, e.y + Math.sin(e.a) * e.r * 0.7); break; // 劈斩：一道扫过去的弧光
         case 'shatter': if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y, r: 12, life: 0.22, max: 0.22, el: 'cold', fill: true }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + rf(0, 0.6); this.lines.push({ x1: e.x, y1: e.y, x2: e.x + Math.cos(a) * 9, y2: e.y + Math.sin(a) * 6, el: 'cold', life: 0.1 }); } this.em.spark2.particleTint = 0xdff6ff; this.em.spark2.explode(8, e.x, e.y); break; // 碎冰：冰晶炸开
         case 'judge': this.lines.push({ x1: e.x, y1: e.y - 46, x2: e.x, y2: e.y + 6, el: 'pla', life: 0.2 }, { x1: e.x - 5, y1: e.y - 18, x2: e.x + 5, y2: e.y - 18, el: 'pla', life: 0.2 }); if (this.rings.length < 40) this.rings.push({ x: e.x, y: e.y + 4, r: 10, life: 0.25, max: 0.25, el: 'pla' }); this.em.spark2.particleTint = 0xfff2b0; this.em.spark2.explode(6, e.x, e.y); break; // 审判：一道光柱落下处决
@@ -296,8 +299,8 @@ class World extends Phaser.Scene {
     const hk = this.spinRate ? SPIN[(ph | 0) % 4][0] : (player.fbT > 0.12 ? 'doll_fl_' : 'doll_') + fr;
     if (this.hero.texture.key !== hk || this.dollDirty !== this.dollN) { this.hero.setTexture(hk); this.dollDirty = this.dollN; }
     if (player.chill > 0) this.hero.setTint(0xb8e6ff); else if (NEW_ART) this.hero.setTint(0xc4bccf); else if (this.hero.isTinted) this.hero.clearTint(); // 角色被冰缓；新主角是白兜帽，站在提灯光圈正中会被光照提爆，压一层淡灰紫
-    if (player.pounce && player.dashT > 0 && G.time - (this.pgT || 0) > 0.022) { this.pgT = G.time; const h = this.hero, gh = this.add.image(h.x, h.y, h.texture.key, h.frame.name).setOrigin(h.originX, h.originY).setScale(HERO_SCALE).setFlipX(h.flipX).setTint(0x8fe05a).setAlpha(0.6).setDepth(h.depth - 0.001).setBlendMode(Phaser.BlendModes.ADD); this.tweens.add({ targets: gh, alpha: 0, duration: 280, onComplete: () => gh.destroy() }); } // 疫兽扑杀（试玩台）：扑的路上留一串绿色残影
-    this.hero.setScale(HERO_SCALE).setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(ySort(player.y)).setAlpha(player.dashT > 0 ? 0.5 : 1);
+    const flick = !!player.pounce; // 流光闪斩（试玩台）：人化成流光，隐身；光带、刀痕在 fx 里画
+    this.hero.setScale(HERO_SCALE).setPosition(player.x, player.y + (this.spinRate ? 0 : bob)).setFlipX(this.spinRate ? SPIN[(ph | 0) % 4][1] : player.face < 0).setDepth(ySort(player.y)).setAlpha(flick ? 0 : player.dashT > 0 ? 0.5 : 1);
     // 主手武器：单独一张图，握把在前手，朝最近一次出手的方向转（没出手时平端朝面向）；出手瞬间往后顶一下；旋风斩转身时藏起来（侧面、背面图里自带武器）
     if (!this.heroW) { this.heroW = this.add.image(0, 0, 'px').setScale(WPN_SCALE); this.wA = 0; }
     { const wp = this.wpn, hw = this.heroW, on = !!wp && !this.spinRate; hw.setVisible(on);
@@ -306,7 +309,7 @@ class World extends Phaser.Scene {
         let d = tgt - this.wA; d = Math.atan2(Math.sin(d), Math.cos(d)); this.wA += d * Math.min(1, dt * 22);
         const L = Math.cos(this.wA) < 0, kick = at < 0.08 ? 1.5 * (1 - at / 0.08) : 0, hx = player.x + (player.face < 0 ? -1 : 1) * (NEW_ART ? (HERO_BX + HERO_HAND[0][0] - DOLL_W / 2) * HERO_SCALE : 3.5) - Math.cos(this.wA) * kick, hy = player.y - (NEW_ART ? (DOLL_H - HERO_BY - HERO_HAND[0][1]) * HERO_SCALE : 8) + (this.spinRate ? 0 : bob) - Math.sin(this.wA) * kick;
         hw.setTexture(L ? 'wpn_f' : 'wpn').setOrigin(L ? wp.oxF : wp.ox, wp.oy).setRotation(this.wA - (L ? wp.baseF : wp.base)).setPosition(hx, hy)
-          .setDepth(ySort(player.y) + (Math.sin(this.wA) < -0.6 ? -0.001 : 0.001)).setAlpha(player.dashT > 0 ? 0.5 : 1); // 朝上举时放到身后
+          .setDepth(ySort(player.y) + (Math.sin(this.wA) < -0.6 ? -0.001 : 0.001)).setAlpha(flick ? 0 : player.dashT > 0 ? 0.5 : 1); // 朝上举时放到身后
         if (player.fbT > 0.12) hw.setTintFill(0xffffff); else if (player.chill > 0) hw.setTint(0xb8e6ff); else if (hw.isTinted) hw.clearTint();
         this.uniqAura(dt, wp, hx, hy, at);
       } else this.uniqAura(dt, null);
@@ -314,7 +317,7 @@ class World extends Phaser.Scene {
     if (!this.spinGh) this.spinGh = [0, 1].map(i => this.add.image(0, 0, 'doll_0').setOrigin(0.5, 1).setTintFill(0x7a2a1a));
     this.spinGh.forEach((gh, i) => { if (!this.spinRate) return gh.setVisible(false); const s = SPIN[((ph | 0) + 3 - i) % 4]; gh.setVisible(true).setScale(HERO_SCALE).setTexture(s[0]).setFlipX(s[1]).setPosition(player.x + Math.cos(ph * Math.PI / 2 + i) * (i + 1) * 1.5, player.y).setDepth(ySort(player.y) - 0.01).setAlpha(0.4 - i * 0.15); });
     this.setBack(dt, t, bob);
-    this.heroSh.setPosition(player.x, player.y + 1).setScale(HERO_SCALE);
+    this.heroSh.setPosition(player.x, player.y + 1).setScale(HERO_SCALE).setVisible(!flick);
     { const hub = eqK(S.equip, 'hub'), hg = this.hubG; hg.clear(); if (hub) { const b = baseOf(hub); const c = hex(b.el ? ELEM_C[b.el] : b.mass ? '#e9e0c9' : b.energy ? '#c08aff' : '#57e0d0'); const n = 22; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + t * 0.7; hg.fillStyle(c, 0.35 + 0.3 * Math.sin(i * 1.3 + t * 3)); hg.fillRect(Math.round(player.x + Math.cos(a) * 9), Math.round(player.y + 1 + Math.sin(a) * 3), 1, 1); } } }
     if (player.dashT > 0 && this.frame % 2 === 0) {
       const ghost = this.add.image(player.x, player.y, 'doll_fl_' + fr).setOrigin(0.5, 1).setTint(0x7a55a0).setAlpha(0.5).setDepth(9.5).setFlipX(player.face < 0);
@@ -366,6 +369,8 @@ class World extends Phaser.Scene {
     const fg = this.fxG; fg.clear();
     for (const l of this.lines) { l.life -= dt; if (l.arc) { arcFx(fg, this.glowG, l); continue; } const c = hex(ELEM_C[l.el] || '#ffffff'); fg.fillStyle(c, 1); if (l.jag) jag(fg, l.x1, l.y1, l.x2, l.y2); else { pline(fg, l.x1, l.y1, l.x2, l.y2); fg.fillStyle(0xffffff, 0.8); pline(fg, l.x1, l.y1 - 1, l.x2, l.y2 - 1); } }
     this.lines = this.lines.filter(l => l.life > 0);
+    if (this.streaks && this.streaks.length) { for (const s of this.streaks) { s.life -= dt; const k = clamp(s.life / s.max, 0, 1), c = hex(ELEM_C[s.el] || '#ffffff'); fg.lineStyle(4, c, 0.35 * k).lineBetween(s.x1, s.y1, s.x2, s.y2); fg.lineStyle(2, c, 0.8 * k).lineBetween(s.x1, s.y1, s.x2, s.y2); fg.lineStyle(1, 0xffffff, k).lineBetween(s.x1 + (s.x2 - s.x1) * (1 - k) * 0.6, s.y1 + (s.y2 - s.y1) * (1 - k) * 0.6, s.x2, s.y2); } this.streaks = this.streaks.filter(s => s.life > 0); } // 流光：外晕 + 实色 + 白芯（白芯从尾巴往头收）
+    if (this.xsl && this.xsl.length) { for (const s of this.xsl) { s.life -= dt; const k = clamp(s.life / s.max, 0, 1), g = Math.min(1, (1 - k) * 4), L = s.r * g, ux = Math.cos(s.a) * L, uy = Math.sin(s.a) * L, c = hex(ELEM_C[s.el] || '#ffffff'); fg.lineStyle(3, c, 0.7 * k).lineBetween(s.x - ux, s.y - uy, s.x + ux, s.y + uy); fg.lineStyle(1, 0xffffff, k).lineBetween(s.x - ux * 0.8, s.y - uy * 0.8, s.x + ux * 0.8, s.y + uy * 0.8); } this.xsl = this.xsl.filter(s => s.life > 0); } // 刀痕：一下子拉开，再淡掉
     if (this.slashes && this.slashes.length) { // 劈斩：整片扇形先压一层元素色（= 实际判定，圆心在出手点上方 4 像素、不压扁），亮边从一头扫到另一头、后面拖渐暗的尾，外沿一道实线就是够得到的最远处
       for (const s of this.slashes) { s.life -= dt; const k = clamp(1 - s.life / s.max, 0, 1), c = hex(ELEM_C[s.el] || '#ffffff'), cy = s.y - 4, sw = Math.min(1, k * 2.2), head = s.a - s.arc + 2 * s.arc * sw, n = Math.max(10, s.r * s.arc * 0.6 | 0), fade = k < 0.45 ? 1 : 1 - (k - 0.45) / 0.55;
         const fan = [{ x: s.x, y: cy }]; for (let i = 0; i <= n; i++) { const a = s.a - s.arc + (head - s.a + s.arc) * i / n; fan.push({ x: s.x + Math.cos(a) * s.r, y: cy + Math.sin(a) * s.r }); }
