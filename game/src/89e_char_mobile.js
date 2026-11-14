@@ -21,8 +21,8 @@ Object.assign(MobileUI.prototype, {
     const W0 = P.weapons && P.weapons[0]; if (W0) { row('普攻', wLine(W0), ELEM_C[W0.el]); if (P.castShare) note(`出手类魂龛占掉 ${pc(P.castShare)} 的出手`); }
     (P.trigs || []).forEach((t, i) => { if (!t || !t.on) return; const C = TCOND[t.T.c];
       if (!t.ws.length) return row(`魂龛 ${i + 1} · ${C.n}`, '空', COL.faint);
-      for (const W of t.ws) { if (W.util) { row(`魂龛 ${i + 1} · ${C.n}`, `${W.n}（功能）· 每秒约 ${n1(t.per || 0)} 次 · 耗灯 ${n1(W.cost)}`, '#c98cff'); continue; }
-        row(`魂龛 ${i + 1} · ${C.n}`, `${(GEM_BY[W.gem] || {}).n || W.n || ''} · 秒伤 ${fmt(t.dps)}`, ELEM_C[W.el]); note(`　${wLine(W)} · 每秒放 ${n1(t.per || 0)} 次 · 耗灯 ${n1(W.cost)}${t.mode === 'always' ? ' / 秒' : ' / 次'}`); } });
+      for (const W of t.ws) { if (W.util) { row(`魂龛 ${i + 1} · ${C.n}`, `${W.n}（功能）· 每秒约 ${n1(t.per || 0)} 次 · 耗能 ${n1(W.cost)}`, '#c98cff'); continue; }
+        row(`魂龛 ${i + 1} · ${C.n}`, `${(GEM_BY[W.gem] || {}).n || W.n || ''} · 秒伤 ${fmt(t.dps)}`, ELEM_C[W.el]); note(`　${wLine(W)} · 每秒放 ${n1(t.per || 0)} 次 · 耗能 ${n1(W.cost)}${t.mode === 'always' ? ' / 秒' : ' / 次'}`); } });
     row('通用', `全部伤害提高 ${n1((TA['inc:all'] || 0) + (R['inc:all'] || 0))}% · 攻击速度 ×${(P.aspdInc ? 1 + P.aspdInc / 100 : 1).toFixed(2)} · 基础暴击率 +${n1(P.baseCrit || 0)}%`);
     row('形态', `投射物 +${P.projAdd || 0} · 范围提高 ${n1((R.aoeInc || 0) + (TA.aoeInc || 0))}% · 持续时间提高 ${n1(P.durInc || 0)}% · 延迟 +${n1(P.delayAdd || 0)} 秒`);
     // ---- 六系 ----
@@ -41,10 +41,12 @@ Object.assign(MobileUI.prototype, {
     row('坚韧', `${fmt(toughness(P))}（按 ${lv} 级的怪，等于能扛多少原始伤害）`, '#ffd0a0');
     row('最缺', elemNeed(P), COL.cyan); // 装备页改版后从首页挪到这里
     // ---- 灯火 ----
+    H('能量');
+    row('上限 / 回复', `${fmt(P.enMax)} · 每秒回 ${n1(P.enRegen || 0)}`);
+    row('消耗', `技能消耗降低 ${pc(P.soulLess || 0)} · 魂龛总耗能每秒约 ${n1(P.trigCost || 0)}`);
+    row('回能', `底技能命中 ${n1(P.lampHit || 0)} · 命中 ${n1(P.lampOnHit || 0)} · 暴击 ${n1(P.lampOnCrit || 0)} · 被命中 ${n1(P.lampOnStruck || 0)}`);
     H('灯火');
-    row('上限 / 回复', `${fmt(P.soulMax)} · 回复 +${n1(P.soulRegen || 0)}% · 燃烧 ×${(P.burnMul || 1).toFixed(2)}`);
-    row('消耗', `技能消耗降低 ${pc(P.soulLess || 0)} · 魂龛总耗灯每秒约 ${n1(P.trigCost || 0)}`);
-    row('回灯', `普攻命中 ${n1(P.lampHit || 0)} · 命中 ${n1(P.lampOnHit || 0)} · 暴击 ${n1(P.lampOnCrit || 0)} · 被命中 ${n1(P.lampOnStruck || 0)}`);
+    row('上限 / 燃烧', `${fmt(P.soulMax)} · 燃烧 ×${(P.burnMul || 1).toFixed(2)} · 击杀回 ×${(P.soulGainMul || 1).toFixed(2)}`);
     // ---- 其他 ----
     H('其他');
     row('移动', `移速 ${Math.round(P.speed)} · 冲刺槽 ${P.dashMax} · 冲刺回复每秒 ${n1(P.dashRegen || 0)}`);

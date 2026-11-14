@@ -58,7 +58,7 @@ const isWeaponLike = it => it && (it.kind === 'weapon' || it.kind === 'off');
 function stoneSockN(it) { const s = STONES.sockets[it.kind]; if (!s) return 0; if (it.u) return it.stoneN ?? 1; return s[clamp(it.rar || 0, 0, 2)]; }
 function stoneFx(it, s) { const S0 = stoneOf(s.sid); if (!S0) return null; const r = isWeaponLike(it) ? S0.w : S0.a; if (!r) return null; return [r[0], +stoneVal(r, s.t).toFixed(r[2] < 5 ? 2 : 0)]; }
 function stoneText(it, s) { const S0 = stoneOf(s.sid), f = stoneFx(it, s); if (!f) return `${S0.n}：此部位无效`; return `${S0.n} ${s.t} 阶：${STAT_N2[f[0]] || f[0]} +${f[1]}`; }
-const STAT_N2 = { 'inc:all': '伤害提高%', life: '生命', baseCrit: '基础暴击率%', critDmgG: '暴击伤害%', aspd: '攻速提高%', moveInc: '移速提高%', 'pen:all': '穿抗%', armor: '护甲', lifeOnKill: '击杀回复生命', lifeRegen: '每秒回复生命', rangedDR: '远程伤害降低%', soulKillInc: '击杀回灯火%', burnLess: '灯火燃烧降低%', findInc: '掉落提高%', lampOnCrit: '暴击回灯火' };
+const STAT_N2 = { 'inc:all': '伤害提高%', life: '生命', baseCrit: '基础暴击率%', critDmgG: '暴击伤害%', aspd: '攻速提高%', moveInc: '移速提高%', 'pen:all': '穿抗%', armor: '护甲', lifeOnKill: '击杀回复生命', lifeRegen: '每秒回复生命', rangedDR: '远程伤害降低%', soulKillInc: '击杀回灯火%', burnLess: '灯火燃烧降低%', findInc: '掉落提高%', lampOnCrit: '暴击回能量' };
 for (const e of ELEM) { STAT_N2['flat:' + e] = `附加${ELEM_N[e]}伤害`; STAT_N2['res:' + e] = `${ELEM_N[e]}抗性`; }
 function rollStone(ilvl) { const ids = Object.keys(STONES.list), tw = STONES.tierW.map((w, i) => i * 20 <= (ilvl || 1) ? w : 0); return { id: S.nextId++, kind: 'stone', sid: pick(ids), t: wpick([1, 2, 3, 4, 5], t => tw[t - 1]), isNew: 1 }; }
 // 装备上属性石的汇总（同种只算一颗，取最高阶）
@@ -74,6 +74,7 @@ function stoneUnsocket(it, k) { const s = (it.stones || [])[k]; if (!s) return; 
 const monLv = () => (typeof RUN !== 'undefined' && RUN && RUN.L) || (S.depth || 1);
 const armorDrL = (A, L) => A > 0 ? A / (A + G2D.armorK * Math.max(1, L)) : 0;
 const resDrL = (R, L) => R > 0 ? R / (R + G2D.resK * Math.max(1, L)) : R < 0 ? Math.max(-1, R / (G2D.resK * Math.max(1, L))) : 0;
-// 灯火回复类词条：每秒有上限（gear-v2 §4.3）
-function lampGain(k, v, cap) { if (!v || typeof RUN === 'undefined' || !RUN) return; if (RUN.mode === 'ladder') v *= 0.5; /* 天梯：灯火获取减半 */ const g = RUN.lg || (RUN.lg = {}), s = Math.floor(RUN.t); if (!g[k] || g[k].s !== s) g[k] = { s, n: 0 };
-  const a = Math.min(v, cap - g[k].n); if (a <= 0) return; g[k].n += a; player.soul = Math.min(STATS.soulMax, player.soul + a); }
+function enAdd(v) { player.en = clamp(player.en + v, 0, STATS.enMax || 0); } // 能量增减都走这里
+// 回能类词条（命中 / 暴击 / 受击回能量）：每秒有上限（gear-v2 §4.3；11-14 起回的是能量，不是灯火）
+function lampGain(k, v, cap) { if (!v || typeof RUN === 'undefined' || !RUN) return; const g = RUN.lg || (RUN.lg = {}), s = Math.floor(RUN.t); if (!g[k] || g[k].s !== s) g[k] = { s, n: 0 };
+  const a = Math.min(v, cap - g[k].n); if (a <= 0) return; g[k].n += a; enAdd(a); }

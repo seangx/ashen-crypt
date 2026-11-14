@@ -155,7 +155,7 @@ const gemCost = g => { const C = TSK[g.b] || { cost: [1, 1] }, t = clamp((g.lvl 
 
 /* 属性计算：每个生效栏位 → 被触发技能的武器数值 + 充能参数 */
 // 武器基础回灯：每击回多少灯火（按攻速反比，各类武器每秒回灯大致相同）
-function weaponLamp(b) { const w = WEAPONS[b], H = SOUL.hitLamp; if (!w || !H) return 0; return Math.round(H.perSec * (H.cat[w.cat] ?? 1) / Math.max(0.3, w.aps || 1.2) * 1000) / 1000; }
+function weaponLamp(b) { const w = WEAPONS[b], H = SOUL.hitLamp; if (!w || !H) return 0; return Math.round(H.perSec * (EN.hitMul || 1) * (H.cat[w.cat] ?? 1) / Math.max(0.3, w.aps || 1.2) * 1000) / 1000; } // 11-14 起回的是能量（× energy.hitMul）
 function trigStats(P, eq) {
   P.trigs = []; const n = trigSlots(), W0 = P.weapons[0]; P.lampHit = 0; P.dupGems = new Set(); const seenGem = new Set(); // gear-v3 §5：同一种技能石同时只生效一颗（以前出手 + 常驻各插一颗旋风斩会同时转两个）
   if (W0) { for (const o of [W0.min, W0.max]) if (o) for (const e in o) o[e] *= TRG.basicMul; W0.dps *= TRG.basicMul; W0.proc = basicProc(eq); W0.atk = 1; const b = eq.wl && eq.wl.kind === 'weapon' ? eq.wl.b : null, w = b && WEAPONS[b]; P.lampHit = W0.lampHit = b ? weaponLamp(b) : 0; P.lampGap = W0.lampGap = SOUL.hitLamp ? SOUL.hitLamp.gap / Math.max(0.3, (w && w.aps) || 1.2) : 1; }
@@ -229,15 +229,15 @@ const lampCritAdd = () => TRIGS_RT.lampState === 'ember' ? LST.ember.crit * embe
 const lampTaken = () => TRIGS_RT.lampState === 'ember' ? 1 + LST.ember.taken * emberK() / 100 : 1;
 const lampShieldRegen = () => TRIGS_RT.lampState === 'bright' ? 1 + LST.bright.shieldRegen / 100 : 1;
 const lampLightR = () => { if (typeof RUN === 'undefined' || !RUN || !STATS.soulMax) return 110; const f = clamp(player.soul / STATS.soulMax, 0, 1); return LST.ember.lightMin + (LST.ember.lightMax - LST.ember.lightMin) * f; };
-const lampOk = () => typeof RUN === 'undefined' || !RUN || player.soul >= STATS.soulMax * TRG.lampFloor;
-// 放一个魂龛的技能（旧主技能石的每次施放灯火 soulPerCast 不再重复扣：W.trigSlot 时为 0）。付灯火（血誓付生命），按全局每秒上限防循环
+const trigDry = i => !!(TRIGS_RT.dry && TRIGS_RT.dry[i]); // 常驻魂龛：能量耗尽后停下，回到上限的 energy.restart 才重新启动
+// 放一个魂龛的技能（旧主技能石的每次施放 soulPerCast 不再重复扣：W.trigSlot 时为 0）。付能量（血誓付生命），能量不够就不放（出手类退回底技能，充能类留着等）；按全局每秒上限防循环
 function trigFire(i, o = {}) {
   const t = STATS.trigs && STATS.trigs[i]; if (!t || !t.on || !t.ws.length) return false;
   const fx = trigFx(t.T), now = G.time || 0; TRIGS_RT.fired = TRIGS_RT.fired.filter(x => now - x < 1);
   if (TRIGS_RT.fired.length >= TRG.capPerSec) return false;
-  if (!fx.lifeCost && !lampOk()) return false;
   let list = t.ws; if (fx.rotate && list.length > 1) { list = [list[TRIGS_RT.rot[i] % list.length]]; }
   const LT = TRIGS_RT.last || (TRIGS_RT.last = {}); list = list.filter(W => !(now - (LT[W.wi] ?? -9) < TRG.gemGap)); if (!list.length) return false; // 每颗技能石最快 gemGap 秒一次
+  if (RUN && !fx.lifeCost && player.en < list.reduce((s, W) => s + (W.cost || 0), 0)) return false; // 能量不够：这次不放
   const mulSt = fx.stack ? 1 + TRIGS_RT.stack[i] * fx.stack / 100 : 1, A = t.T.affs || {};
   let any = false;
   for (const W0 of list) {
@@ -247,13 +247,13 @@ function trigFire(i, o = {}) {
     if (ok && (W0.cont || W0.form === 'orbit') && t.T.c !== 'always' && !o.sus) { const SU = TRIGS_RT.sus || (TRIGS_RT.sus = []), d = t.cast ? 0.4 : (TRG.sustain || 2); const ex = SU.find(x => x.wi === W0.wi); if (ex) ex.t = d; else SU.push({ i, W, wi: W0.wi, t: d, cd: 1 / (W0.aps || 1) }); } // 持续型：响应放一次持续 2 秒（出手 0.4 秒）
     if (ok && A.extra && rnd() * 100 < Math.min(TRG.affCap.extra, A.extra)) fire(W, W0.wi);
     if (ok && W0.extraCast) for (let k = 0; k < W0.extraCast; k++) fire(W, W0.wi); // 连发：额外施放
-    if (ok && RUN) { if (fx.lifeCost) player.life = Math.max(1, player.life - player.life * fx.lifeCost); else player.soul = Math.max(0, player.soul - W0.cost * (RUN.mode === 'ladder' ? 1 : (SOUL.pushCostMul ?? 1))); }
+    if (ok && RUN) { if (fx.lifeCost) player.life = Math.max(1, player.life - player.life * fx.lifeCost); else enAdd(-W0.cost); }
   }
   TRIGS_RT.castSlot = -1;
   if (!any) return false;
   if (fx.rotate) TRIGS_RT.rot[i]++;
   if (fx.stack) { TRIGS_RT.stack[i] = Math.min(fx.stackMax, TRIGS_RT.stack[i] + 1); TRIGS_RT.stackT[i] = fx.stackT; }
-  if (A.lampOn && RUN) player.soul = Math.min(STATS.soulMax, player.soul + A.lampOn);
+  if (A.lampOn && RUN) enAdd(A.lampOn);
   TRIGS_RT.fired.push(now); TRIGS_RT.flash[i] = 0.25; TRIGS_RT.n[i] = (TRIGS_RT.n[i] || 0) + 1;
   if (fx.echo && !o.echo) { for (let j = i + 1; j < 4; j++) if (STATS.trigs[j] && STATS.trigs[j].on && STATS.trigs[j].ws.length) { trigFire(j, { echo: 1 }); break; } }
   if (fx.again && !o.again) TRIGS_RT.later.push({ i, t: 1 });
@@ -264,7 +264,7 @@ const scaleDmg = (o, k) => { if (!o) return o; const r = {}; for (const e in o) 
 function trigCharge(i, v) {
   const t = STATS.trigs[i], R = TRIGS_RT, fx = trigFx(t.T), store = Math.max(fx.store || TRG.store, STATS.flag && STATS.flag.overflow ? 3 : 0); R.ch[i] += v * t.gain;
   while (R.ch[i] >= t.cap) {
-    if (!t.cast) { if (lampOk() || fx.lifeCost) { R.ch[i] -= t.cap; if (!trigFire(i)) { R.ch[i] = t.cap; break; } } else { R.ch[i] = t.cap; break; } }
+    if (!t.cast) { R.ch[i] -= t.cap; if (!trigFire(i)) { R.ch[i] = t.cap; break; } }
     else { if (R.st[i] >= store) { R.ch[i] = t.cap; break; } R.st[i]++; R.ch[i] -= t.cap; }
   }
 }
@@ -274,7 +274,7 @@ function castAttack(W, wi) {
   const R = TRIGS_RT; R.cg = [0, 0, 0, 0];
   liveTrigs((t, i) => { const fx = trigFx(t.T); if (fx.fixed) trigCharge(i, fx.fixed / t.gain); }); // 回旋之刃：每次出手固定充能
   let done = false;
-  if (lampOk()) {
+  {
     for (let i = 0; i < 4 && !done; i++) { const t = STATS.trigs && STATS.trigs[i]; if (!t || !t.on || !t.cast || t.mode !== 'charge' || !t.ws.length || R.st[i] < 1) continue; if (trigFire(i)) { R.st[i]--; done = true; } }
     if (!done) for (let i = 0; i < 4; i++) { const t = STATS.trigs && STATS.trigs[i]; if (!t || !t.on || t.T.c !== 'cast' || !t.ws.length) continue; done = trigFire(i); break; }
   }
@@ -316,12 +316,12 @@ function trigStep(dt) {
     if (R.stackT[i] > 0 && (R.stackT[i] -= dt) <= 0) R.stack[i] = 0;
     const c = t.T.c;
     if (c === 'always') {
-      if (RUN && player.soul > 0) player.soul = Math.max(0, player.soul - t.cost * dt);
-      if (!lampOk()) return;
+      const D = R.dry || (R.dry = []); if (RUN) { if (D[i]) { if (player.en >= STATS.enMax * (EN.restart || 0)) D[i] = 0; } else { enAdd(-t.cost * dt); if (player.en <= 0) D[i] = 1; } } else D[i] = 0;
+      if (D[i]) return;
       for (const W of t.ws) { player.wcd[W.wi] -= dt; if (player.wcd[W.wi] <= 0) player.wcd[W.wi] = fire(W, W.wi) ? (W.aps ? 1 / W.aps : 0.5) : 0.05; }
       return;
     }
-    if (c === 'timer') { R.tm[i] += dt; if (R.tm[i] >= t.N && lampOk()) { if (trigFire(i)) R.tm[i] = 0; else R.tm[i] = t.N - 0.2; } }
+    if (c === 'timer') { R.tm[i] += dt; if (R.tm[i] >= t.N) { if (trigFire(i)) R.tm[i] = 0; else R.tm[i] = t.N - 0.2; } }
     else if (c === 'bright') { if (ls === 'bright') trigCharge(i, TCOND.bright.per * dt); }
     else if (c === 'low' || c === 'elite') {
       R.tm[i] = Math.max(0, R.tm[i] - dt); if (R.tm[i] > 0) return;

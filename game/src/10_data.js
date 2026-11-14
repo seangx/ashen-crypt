@@ -204,13 +204,14 @@ const OB = DATA.mechanics.orb; // 寒魄球（冰封球）流派的数值
 const MT = DATA.mechanics.meteor; // 陨火（陨石术）流派的数值
 const NV = DATA.mechanics.nova; // 霜环（冰霜新星）流派的数值
 const GEAR = DATA.mechanics.gear; // 词条改版（spec-bd-gear §2、§3）
-const SOUL = DATA.mechanics.soul; // 魂火（共用资源）
+const SOUL = DATA.mechanics.soul; // 灯火：一趟的倒计时
+const EN = DATA.mechanics.energy; // 能量：放技能的资源（11-14 从灯火里拆出来）
 const MOD_D = {
-  ShieldThrow: f => `只对圣徽盾生效：盾每 1/攻速 秒自动扔向最近的敌人，伤害 = 盾的护甲 × ${f.throwK}（吃盾牌伤害、圣光伤害），打中后弹射到 ${SHT.chainR} 像素内下一个没打过的敌人，弹射 ${f.chain} 次，每弹一次之后伤害 +${f.chainStepInc}%；弹完、找不到下一个或寿命到了飞回手上。盾在飞时没有格挡。每次投掷消耗 ${SHT.soulPerThrow} 灯火，弹射过之后每次命中返还 ${SHT.soulPerChain}`,
-  FrostOrbRune: f => `只对寒魄宝珠生效：冰球飞行中每 ${OB.emit} 秒向四周放 ${OB.shardDirs} 片冰片（+ 派生 +N），每片 ×${f.shardMul}，不穿透，算投射物。每次施放消耗 ${OB.soulPerCast} 灯火，冰片打中冻结的敌人每片返还 ${OB.refund}（每次最多 ${OB.refundCap}）`,
-  Meteor: f => `只对坠星杖生效：陨石伤害 ×${f.meteorMul}，落地留 ${f.ground.dur} 秒火地（每 ${f.ground.tick} 秒造成这次命中的 ${Math.round(f.ground.pct * 100)}%，吃持续时间），火地里的敌人伤害降低 ${Math.round(MT.groundWeaken * 100)}%。每次施放消耗 ${MT.soulPerCast} 灯火，一次杀 ${MT.refundKills} 只以上返还 ${MT.soulRefund}`,
-  FrostNova: f => `只对霜钟 / 圣钟生效：新星伤害 ×${f.novaMul}，每次命中叠 ${f.chillStacks} 层冰缓，击退 ${NV.knockPx} 像素；圣钟的元素改成寒霜。每次新星消耗 ${NV.soulPerCast} 灯火，每冻结一只返还 ${NV.refund}（每次最多 ${NV.refundCap}）`,
-  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），沿波浪线飞 ${SP.life} 秒（吃持续时间和投射物持续时间，弹速决定飞多远）；碰到屏幕边折返（每折返一次伤害 ×${SP.chainMul}），一直飞到寿命结束；有穿透时无限穿透，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次，没有穿透时打中就消失；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。投射物 +N 让每次多放 N 颗（相加）。每次出手消耗 ${SP.soulPerCast} 灯火，灯火不够时只射普通的一发`,
+  ShieldThrow: f => `只对圣徽盾生效：盾每 1/攻速 秒自动扔向最近的敌人，伤害 = 盾的护甲 × ${f.throwK}（吃盾牌伤害、圣光伤害），打中后弹射到 ${SHT.chainR} 像素内下一个没打过的敌人，弹射 ${f.chain} 次，每弹一次之后伤害 +${f.chainStepInc}%；弹完、找不到下一个或寿命到了飞回手上。盾在飞时没有格挡。每次投掷消耗 ${SHT.soulPerThrow} 能量，弹射过之后每次命中返还 ${SHT.soulPerChain}`,
+  FrostOrbRune: f => `只对寒魄宝珠生效：冰球飞行中每 ${OB.emit} 秒向四周放 ${OB.shardDirs} 片冰片（+ 派生 +N），每片 ×${f.shardMul}，不穿透，算投射物。每次施放消耗 ${OB.soulPerCast} 能量，冰片打中冻结的敌人每片返还 ${OB.refund}（每次最多 ${OB.refundCap}）`,
+  Meteor: f => `只对坠星杖生效：陨石伤害 ×${f.meteorMul}，落地留 ${f.ground.dur} 秒火地（每 ${f.ground.tick} 秒造成这次命中的 ${Math.round(f.ground.pct * 100)}%，吃持续时间），火地里的敌人伤害降低 ${Math.round(MT.groundWeaken * 100)}%。每次施放消耗 ${MT.soulPerCast} 能量，一次杀 ${MT.refundKills} 只以上返还 ${MT.soulRefund}`,
+  FrostNova: f => `只对霜钟 / 圣钟生效：新星伤害 ×${f.novaMul}，每次命中叠 ${f.chillStacks} 层冰缓，击退 ${NV.knockPx} 像素；圣钟的元素改成寒霜。每次新星消耗 ${NV.soulPerCast} 能量，每冻结一只返还 ${NV.refund}（每次最多 ${NV.refundCap}）`,
+  Spark: f => `只对雷灵生效：每次出手朝目标扇形放出 ${f.sparkN} 颗游雷（每颗伤害 ×${f.sparkMul}），沿波浪线飞 ${SP.life} 秒（吃持续时间和投射物持续时间，弹速决定飞多远）；碰到屏幕边折返（每折返一次伤害 ×${SP.chainMul}），一直飞到寿命结束；有穿透时无限穿透，同一串游雷对同一个敌人每 ${SP.rehit} 秒最多打一次，没有穿透时打中就消失；${AIL.ele.n}几率 +${Math.round(f.ail.ele * 100)}%。投射物 +N 让每次多放 N 颗（相加）。每次出手消耗 ${SP.soulPerCast} 能量，能量不够时只射普通的一发`,
   Pierce: f => `穿透 +${f.pierce}（打中后继续往前飞，同一个敌人每 ${MECH.projRehit} 秒最多打一次；穿透次数用完才弹射），穿透后的命中伤害总增 ${Math.round((f.pierceMore - 1) * 100)}%`,
   Chain: f => `弹射 +${f.chain}（投射物打中敌人后转向附近另一个敌人；闪电链类多连锁 ${f.chain} 次），每剩一次弹射伤害提高 ${Math.round(f.chainInc * 100)}%`,
   Split: f => `投射物分裂 ${f.split} 次，初次命中每次分裂伤害提高 ${Math.round(f.splitInc * 100)}%`,
@@ -229,8 +230,8 @@ const MOD_D = {
   MultiProj: f => `投射物 +${f.extra}，伤害总降 ${Math.round((1 - f.more) * 100)}%；每发触发系数 ×${f.procMul}`,
   Ignite: f => `${AIL.exp.n}几率 +${Math.round(f.ail.exp * 100)}%，${AIL.exp.n}伤害总增 ${Math.round((f.burnMore - 1) * 100)}%`,
   Frostbite: f => `${AIL.cold.n}几率 +${Math.round(f.ail.cold * 100)}%，冻结时间 +${f.freezeInc}%`,
-  LampSaver: f => `伤害总降 ${Math.round((1 - f.more) * 100)}%，灯火消耗倍率 ×${TRG_SUPCOST('LampSaver')}`,
-  Burnwick: f => `伤害总增 ${Math.round((f.more - 1) * 100)}%，灯火消耗倍率 ×${TRG_SUPCOST('Burnwick')}`,
+  LampSaver: f => `伤害总降 ${Math.round((1 - f.more) * 100)}%，能量消耗倍率 ×${TRG_SUPCOST('LampSaver')}`,
+  Burnwick: f => `伤害总增 ${Math.round((f.more - 1) * 100)}%，能量消耗倍率 ×${TRG_SUPCOST('Burnwick')}`,
   EmberEdge: f => `残灯时伤害总增 ${Math.round((f.emberMore - 1) * 100)}%；明灯时伤害总降 ${Math.round((1 - f.brightLess) * 100)}%`,
   ConvKin: f => `本源元素转为物理（本源异常一起换成碎骨），伤害 +${f.convMore}%`, ConvExp: f => `本源元素转为火焰（本源异常换成灼烧），伤害 +${f.convMore}%`, ConvEle: f => `本源元素转为闪电（本源异常换成感电），伤害 +${f.convMore}%`,
   ConvCold: f => `本源元素转为寒霜（本源异常换成冰缓），伤害 +${f.convMore}%`, ConvPla: f => `本源元素转为圣光（本源异常换成致盲），伤害 +${f.convMore}%`, ConvNuc: f => `本源元素转为瘟疫（本源异常换成疫病），伤害 +${f.convMore}%`,
@@ -249,7 +250,7 @@ const MOD_D = {
   ArmorOnHit: f => `命中时回复 ${f.armorOnHit} 点生命`,
   Thorns: f => `受击时对周围的敌人造成一次技能伤害的 ${f.thorns}%（荆棘）`,
   Melee: f => `近战伤害提高 ${f.meleeInc}%，近战命中后承受伤害总降 ${Math.round(MECH.meleeGuardLess * 100)}%`,
-  Whirl: f => `回旋骨刃连续砍中时每秒 +${WH.gainPerSec} 层旋势（基础上限 ${WH.maxStacks} 层，${WH.decay} 秒没砍中清零）。有旋势时角色原地转起来，边转边走（移速 ×${WH.spinMoveMul}）：每层伤害总增 ${Math.round((f.spinMore - 1) * 1000) / 10}%（乘算），判定半径 +${WH.rngPer}%，承受伤害降低 ${WH.drPerStack}%（最多 ${WH.drCap}%）。转的时候每秒消耗 ${WH.soulPerSec} 灯火，每砍中一个敌人回 ${WH.soulPerHit}（一次最多按 ${WH.soulHitCap} 个算），灯火空了不再涨层。命中后 ${MECH.meleeGuardTime} 秒内承受伤害总降 ${Math.round(MECH.meleeGuardLess * 100)}%${f.armorOnHit ? `，每砍中一个敌人回复 ${Math.round(f.armorOnHit * 10) / 10} 点生命` : ''}`,
+  Whirl: f => `回旋骨刃连续砍中时每秒 +${WH.gainPerSec} 层旋势（基础上限 ${WH.maxStacks} 层，${WH.decay} 秒没砍中清零）。有旋势时角色原地转起来，边转边走（移速 ×${WH.spinMoveMul}）：每层伤害总增 ${Math.round((f.spinMore - 1) * 1000) / 10}%（乘算），判定半径 +${WH.rngPer}%，承受伤害降低 ${WH.drPerStack}%（最多 ${WH.drCap}%）。转的时候每秒消耗 ${WH.soulPerSec} 能量，每砍中一个敌人回 ${WH.soulPerHit}（一次最多按 ${WH.soulHitCap} 个算），能量空了不再涨层。命中后 ${MECH.meleeGuardTime} 秒内承受伤害总降 ${Math.round(MECH.meleeGuardLess * 100)}%${f.armorOnHit ? `，每砍中一个敌人回复 ${Math.round(f.armorOnHit * 10) / 10} 点生命` : ''}`,
   Crush: f => `近战伤害总增 ${Math.round((f.meleeMore - 1) * 100)}%，${Math.round(f.doubleChance * 100)}% 几率造成双倍伤害`,
   Purity: f => `伤害总增 ${Math.round((f.more - 1) * 100)}%，但这把武器的伤害不能附加或转换成其他元素`,
   DeathThreshold: f => `敌人生命低于 ${f.cull}% 时直接击杀`,

@@ -21,7 +21,7 @@
     "ShieldOnHit": {"on": ["shield"]}, "CtrlWeaken": {"on": ["hub"]}, "CloseCap": {"on": ["core"]}, "FarDR": {"on": ["engine"]},
     "GearArmorOnHit": {"on": ["weapon", "off", "hands"]},
     "MoveSpeed": {"on": ["engine"]}, "DashSlot": {"on": ["engine"], "w": 50},
-    "LampBurnLess": {"on": ["engine", "hub"]}, "SoulRegen": {"on": ["engine", "hub"], "text": "回灯火提高 #%"}, "LampOnKill": {"on": ["engine", "ring"]},
+    "LampBurnLess": {"on": ["engine", "hub"]}, "SoulRegen": {"on": ["engine", "hub"], "text": "能量回复提高 #%"}, "LampOnKill": {"on": ["engine", "ring"]},
     "FlatEnergy": {"on": ["weapon", "off", "shield", "core", "engine", "hub", "chest"]}
   },
   "add": {
@@ -42,10 +42,10 @@
     "EliteDR": ["精英伤害降低 #%", "eliteDR", "S", ["core", "shield", "shoulders"], 4, 15, 60, {}],
     "LifeRegen": ["每秒回复 # 生命", "lifeRegen", "S", ["core", "engine", "hub", "chest"], 1, 30, 68, {}],
     "LifeOnKill": ["击杀回复 # 生命", "lifeOnKill", "S", ["weapon", "engine", "ring"], 3, 60, 68, {}],
-    "LampOnCrit": ["暴击回 # 灯火（每秒最多 3）", "lampOnCrit", "S", ["off"], 0.1, 0.3, 55, {"dec": 1}],
-    "LampOnStruck": ["被命中回 # 灯火（每秒最多 2）", "lampOnStruck", "S", ["shield"], 0.5, 1.5, 55, {"dec": 1}],
+    "LampOnCrit": ["暴击回 # 能量（每秒最多 3）", "lampOnCrit", "S", ["off"], 0.1, 0.3, 55, {"dec": 1}],
+    "LampOnStruck": ["被命中回 # 能量（每秒最多 2）", "lampOnStruck", "S", ["shield"], 0.5, 1.5, 55, {"dec": 1}],
     "SkillCostLess": ["技能消耗降低 #%", "costLess", "S", ["core", "hub", "shoulders"], 4, 25, 60, {}],
-    "LampOnHit": ["命中回 # 灯火（每秒最多 2）", "lampOnHit", "S", ["weapon", "off", "hands"], 0.02, 0.08, 60, {"dec": 2}],
+    "LampOnHit": ["命中回 # 能量（每秒最多 2）", "lampOnHit", "S", ["weapon", "off", "hands"], 0.02, 0.08, 60, {"dec": 2}],
     "LampMax": ["灯火上限 +#", "lampMax", "P", ["engine", "hub", "shield", "amulet"], 10, 60, 68, {}],
     "FullLampDmg": ["灯火 ≥ 90% 时伤害提高 #%", "fullLampDmg", "S", ["core"], 10, 30, 55, {}],
     "FlatKineticDamageOff": ["附加 # 物理伤害", "flat", "P", ["off"], 0, 0, 0, {"src": "FlatKineticDamage", "mul": 0.6, "el": "kin"}],
@@ -98,7 +98,7 @@
   },
   "armor": {
     "BoneGlove": {"imp": ["aspd", 4, 8], "t": "攻速提高 #%"}, "ClawGlove": {"imp": ["critChance", 8, 16], "t": "暴击率提高 #%"}, "WrapGlove": {"imp": ["lifeRegen", 2, 10], "t": "每秒回复 # 生命"}, "BoneMail": {"imp": ["armorInc", 8, 16], "t": "护甲提高 #%"}, "Shroud": {"imp": ["lifeInc", 5, 10], "t": "生命提高 #%"}, "SoulRobe": {"imp": ["deflectInc", 8, 16], "t": "护盾提高 #%"}, "BonePauldron": {"imp": ["aoeInc", 5, 10], "t": "范围提高 #%"}, "SpikePauldron": {"imp": ["eliteDR", 4, 8], "t": "精英伤害降低 #%"}, "AshPauldron": {"imp": ["durInc", 6, 12], "t": "持续时间提高 #%"},
-    "BoneRing": {"imp": ["lifeInc", 4, 8], "t": "生命提高 #%"}, "CrystalRing": {"imp": ["res:all", 3, 8], "t": "全抗 +#"}, "BloodRing": {"imp": ["lifeOnKill", 2, 10], "t": "击杀回复 # 生命"}, "LampRing": {"imp": ["lampMax", 4, 10], "t": "灯火上限 +#"}, "BoneAmulet": {"imp": ["res:all", 4, 10], "t": "全抗 +#"}, "SoulAmulet": {"imp": ["soulRegen", 4, 10], "t": "灯火回复提高 #%"}, "RuneAmulet": {"imp": ["trigDmg", 8, 16], "t": "触发技能伤害提高 #%"},
+    "BoneRing": {"imp": ["lifeInc", 4, 8], "t": "生命提高 #%"}, "CrystalRing": {"imp": ["res:all", 3, 8], "t": "全抗 +#"}, "BloodRing": {"imp": ["lifeOnKill", 2, 10], "t": "击杀回复 # 生命"}, "LampRing": {"imp": ["lampMax", 4, 10], "t": "灯火上限 +#"}, "BoneAmulet": {"imp": ["res:all", 4, 10], "t": "全抗 +#"}, "SoulAmulet": {"imp": ["soulRegen", 4, 10], "t": "能量回复提高 #%"}, "RuneAmulet": {"imp": ["trigDmg", 8, 16], "t": "触发技能伤害提高 #%"},
     "_说明": "防具隐性（11-10 用户批注：防具也要有基础词条，不只是护甲 / 生命 / 闪避）。imp [stat, 品质 0, 品质 10]，和武器隐性一样按品质线性",
     "TitaniumShield": {"imp": ["block", 6, 12], "t": "格挡 #%"},
     "PhantomShield": {"imp": ["rangedDR", 4, 8], "t": "远程伤害降低 #%"},

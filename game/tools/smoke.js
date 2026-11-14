@@ -29,7 +29,7 @@ const WINS = ['gear', 'trig', 'mods', 'tree', 'craft', 'salvage', 'shop', 'ladde
         if (!W) return { err: '魂龛里没有生成技能（插不进去或被过滤）' };
         const info = { form: W.form, rng: Math.round(W.rng || 0), aoe: Math.round(W.aoeR || 0), dps: Math.round(W.dps || 0) };
         if (!(await P.start())) return { ...info, err: '开局失败' };
-        let e = null; try { P.step(6, () => { P.tank(); P.A.player.life = P.A.STATS.life; P.A.player.soul = P.A.STATS.soulMax; }); } catch (x) { e = x.message; }
+        let e = null; try { P.step(6, () => { P.tank(); P.A.player.life = P.A.STATS.life; P.A.player.soul = P.A.STATS.soulMax; P.A.player.en = P.A.STATS.enMax; }); } catch (x) { e = x.message; }
         const res = { ...info, fired: P.fired(), dealt: Math.round(P.dealt()), err: e }; P.stop(); return res;
       }, g).catch(e => ({ err: e.message.split('\n')[0] }));
       const name = `技能 ${g.n}`;
@@ -44,7 +44,7 @@ const WINS = ['gear', 'trig', 'mods', 'tree', 'craft', 'salvage', 'shop', 'ladde
         const W0 = P.setup({ gems: [{ id: G.id, lvl: 15 }], trig: 'cast', shield: G.form === 'shieldThrow', weapon: 'Cannon' }); const g = A.S.trigs[0].socks[0]; g.v = d.v.id; A.refreshStats(); const W = P.W();
         if (!W) { bad.push(`${d.n}·${d.vn}：魂龛里没有技能`); continue; } if (W.el !== d.el) bad.push(`${d.n}·${d.vn}：元素 ${W.el}，应为 ${d.el}`);
         if (!(await P.start())) { bad.push(`${d.n}·${d.vn}：开局失败`); continue; }
-        try { P.step(6, () => { P.tank(); A.player.life = A.STATS.life; A.player.soul = A.STATS.soulMax; }); } catch (e) { bad.push(`${d.n}·${d.vn}：${e.message}`); }
+        try { P.step(6, () => { P.tank(); A.player.life = A.STATS.life; A.player.soul = A.STATS.soulMax; A.player.en = A.STATS.enMax; }); } catch (e) { bad.push(`${d.n}·${d.vn}：${e.message}`); }
         if (!P.fired()) bad.push(`${d.n}·${d.vn}：6 秒内没放出来`); else if (P.dealt() <= 0) bad.push(`${d.n}·${d.vn}：放了但没打出伤害`); P.stop(); }
       return { n, bad }; }).catch(e => ({ n: 0, bad: [e.message.split('\n')[0]] }));
     for (const b of vr.bad) fail('技能变体', b); if (!vr.n) fail('技能变体', '一个变体都没有');

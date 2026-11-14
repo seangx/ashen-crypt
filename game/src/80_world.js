@@ -351,7 +351,7 @@ class World extends Phaser.Scene {
     // 瘟疫光环（常驻 / 拿在手里时）：地上一层半透明的绿盘 + 转动的虚线边，圈里飘孢子，每秒向外脉动一次；画在怪下面
     let auraOn = null;
     for (const [W_, wi] of combatWs()) if (W_.form === 'aura') {
-      const tr = W_.trigSlot ? STATS.trigs[W_.trigSlot - 1] : null; if (tr && (tr.mode !== 'always' || !lampOk())) continue; // 非常驻魂龛：只在触发时放冲击环
+      const tr = W_.trigSlot ? STATS.trigs[W_.trigSlot - 1] : null; if (tr && (tr.mode !== 'always' || trigDry(W_.trigSlot - 1))) continue; // 非常驻魂龛：只在触发时放冲击环
       const gg = this.groundG, c = hex(ELEM_C[W_.el] || '#8fe05a'), R = W_.rng, cx = player.x, cy = player.y, k = 0.6;
       { const P = [].concat(DATA.skillfx.play[skB(W_)] || []).find(x => x.ev === 'auraLoop'), got = P && this.skSheet(P.sheet, W_.el); // 专属特效：脚下一圈循环的毒云（换元素的变体用对应配色）
         if (got) { const [name, s] = got; // 三层云（后 / 中 / 前，错开播放进度）撑出一个贴地的毒云圈；单层是侧视的一条云带，压扁后只剩一条线

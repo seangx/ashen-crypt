@@ -10,7 +10,7 @@ Object.assign(MobileUI.prototype, {
       lines.push([`${it.lvl || 1} 级 · 品质 ${it.q || 0}% · ${FORM_N[G.form] || '技能石'}`, '#ffe066']);
       for (const [t, c] of gemLines(it)) if (t && !/主手 ×|现在的主手|需要盾牌|经验/.test(t)) lines.push([t, c]);
       if (VARS[it.b] && VARS[it.b].length) { const d = gdef(it); lines.push([d.v ? `变体：${d.vn} —— ${d.v.t}` : `变体：原版（${VARS[it.b].filter(x => varUnlocked(it, x)).length} / ${VARS[it.b].length} 个变体已解锁，点“变体”换）`, d.v ? '#7fe08a' : '#b9c2ea']); }
-      lines.push([`施放耗灯：${gemCost(it).toFixed(1)} / 次`, '#ffb347']);
+      lines.push([`施放耗能：${gemCost(it).toFixed(1)} / 次`, '#ffb347']);
       lines.push([G.util ? '插在：响应类魂龛的孔（击杀、受击、格挡、冲刺、定时、明灯、低血、遇精英）' : `插在：出手类魂龛的孔（出手、命中、暴击、残灯；每个魂龛最多 ${T0 ? trigMaxSkills(T0) : 1} 颗技能石）`, '#b9c2ea']);
     } else {
       const host = T0 && T0.socks.find(isSkill);

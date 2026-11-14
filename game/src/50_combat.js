@@ -20,7 +20,7 @@ function ringPoint(m = 18, a) {
   return { x: cx + c * k, y: cy + s * k };
 }
 const offView = (o, m) => o.x < CAM.x - m || o.x > CAM.x + AW + m || o.y < CAM.y + AT - m || o.y > CAM.y + AB + m;
-const player = { x: 240, y: 150, vx: 0, vy: 0, life: 1, shield: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: Array(14).fill(0), orbitA: 0, guardT: 0, spin: Array.from({ length: 14 }, () => ({ n: 0, g: 0, idle: 9 })), swing: Array(14).fill(0), devilT: 0, soul: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
+const player = { x: 240, y: 150, vx: 0, vy: 0, life: 1, shield: 0, dash: 1, dashT: 0, dvx: 0, dvy: 0, hurtT: 0, face: 1, wcd: Array(14).fill(0), orbitA: 0, guardT: 0, spin: Array.from({ length: 14 }, () => ({ n: 0, g: 0, idle: 9 })), swing: Array(14).fill(0), devilT: 0, soul: 100, en: 100, soulEmpty: 0, walk: 0, lx: 240, ly: 150 };
 const fx = o => { if (G.fx) fxq.push(o); };
 const skB = W => ((W && W.b && W.b.gem) || '').split('#')[0]; // 表现事件带上技能（原技能石 id，变体共用）：渲染端按 data/skillfx.json 换专属特效
 const MINE_MAX = MECH.mineMax;
@@ -63,7 +63,7 @@ function spawnOil() { const O = TRG.oil; if (!O || !RUN) return; for (let i = 0,
 function arenaReset() {
   mobs = []; projs = []; drops = []; zones = []; meteors = [];
   player.x = 240; player.y = 150; player.vx = player.vy = 0; player.chill = 0; player.chillT = 0; player.wcd = Array(14).fill(0); trigReset(); camSnap(); if (typeof AUTO !== 'undefined') AUTO.anchor = null;
-  player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.swing = Array(14).fill(0); player.devilT = 0; player.soul = STATS.soulMax; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
+  player.spin.forEach(s => { s.n = 0; s.g = 0; s.idle = 9; }); player.swing = Array(14).fill(0); player.devilT = 0; player.soul = STATS.soulMax; player.en = STATS.enMax; TRIGS_RT.dry = []; player.soulEmpty = 0; player.walk = 0; player.lx = player.x; player.ly = player.y;
   resetPlayer(); spawnOil();
   sfx('start');
 }
@@ -138,7 +138,7 @@ function hitMob(m, W, o = {}) {
   if (m.dead) return 0;
   const cm = W.cont ? 1 : rollCrit(W); const crit = cm > 1; m.lastSlot = W.trigSlot || 0;
   trigHit(W, crit, o.procK);
-  if (W.atk && STATS.lampHit && RUN) { const t = RUN.t || 0; if (t >= (player.lampHitT || 0) || t < (player.lampHitT || 0) - 5) { player.lampHitT = t + STATS.lampGap; const g = STATS.lampHit * (STATS.soulGainMul || 1) * lampGainMul(RUN.base); player.soul = Math.min(STATS.soulMax, player.soul + g); RUN.lampHit = (RUN.lampHit || 0) + g; } } // 武器出手命中回灯：普攻和出手时技能（替这一下普攻放出的）都算，每次出手只算一次；其他触发的技能不回；残灯也回
+  if (W.atk && STATS.lampHit && RUN) { const t = RUN.t || 0; if (t >= (player.lampHitT || 0) || t < (player.lampHitT || 0) - 5) { player.lampHitT = t + STATS.lampGap; const g = STATS.lampHit * (STATS.enGainMul || 1); enAdd(g); RUN.lampHit = (RUN.lampHit || 0) + g; } } // 武器出手命中回能量（11-14 前回的是灯火）：普攻和出手时技能（替这一下普攻放出的）都算，每次出手只算一次；其他触发的技能不回；残灯也回
   let mul = (o.mul || 1) * cm * lampMore() * (TRIGS_RT.lampState === 'ember' ? W.emberMore || 1 : TRIGS_RT.lampState === 'bright' ? W.brightLess || 1 : 1); // 残焰符文
   if (m.boss) mul *= W.bossMore;
   if (W.perDashInc) mul *= 1 + W.perDashInc * Math.floor(player.dash);
@@ -567,7 +567,7 @@ function castUtil(W) {
   switch (U.k) {
     case 'shield': if (STATS.shield > 0) { player.shield = Math.min(STATS.shield, player.shield + STATS.shield * v / 100); s = '骨盾'; c = '#9fe3ff'; } else { player.life = Math.min(STATS.life, player.life + STATS.life * v / 200); s = '骨盾'; c = '#9fe3ff'; } break;
     case 'heal': player.life = Math.min(STATS.life, player.life + STATS.life * v / 100); s = '回春'; c = '#8fe05a'; break;
-    case 'lamp': player.soul = Math.min(STATS.soulMax, player.soul + v); s = '聚火'; c = '#ffb347'; break;
+    case 'lamp': enAdd(v); s = '聚火'; c = '#ffb347'; break;
     case 'guard': set('guard'); s = '石肤'; c = '#e9e0c9'; break;
     case 'dmg': set('dmg'); s = '战吼'; c = '#ff8a3d'; break;
     case 'haste': set('haste'); s = '疾步'; c = '#7fc8ff'; break;
@@ -597,21 +597,21 @@ function fire(W, i) {
       const st = player.spin[i], n = W.whirl ? st.n : 0, mul = W.whirl ? Math.pow(W.morePer, n) : 1, r = whirlR(W, n);
       let hits = 0;
       for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (r + m.size) ** 2) { const d = hitMob(m, W, { mul }); hits++; if (n > 0 && hits <= 5) fx({ t: 'wcut', x: m.x, y: m.y - m.size, a: Math.atan2(m.y - player.y, m.x - player.x) }); if (RUN && RUN.dmg) RUN.dmg.whirl += d; }
-      if (hits) { sfx('slash'); st.idle = 0; player.swing[i] = 0.18; if (W.whirl && n > 0) player.soul = Math.min(STATS.soulMax, player.soul + Math.min(hits, WH.soulHitCap) * WH.soulPerHit); }
+      if (hits) { sfx('slash'); st.idle = 0; player.swing[i] = 0.18; if (W.whirl && n > 0) enAdd(Math.min(hits, WH.soulHitCap) * WH.soulPerHit); }
       return true;
     }
     case 'nova': { // 圣钟 / 霜钟：以自身为中心
       if (!inRange(W, W.rng)) return false;
-      const n = attacks(W), cost = W.trigSlot ? 0 : NV.soulPerCast * (1 - STATS.soulLess), frost = W.frostNova && (!RUN || player.soul >= cost); // 霜环：灯火不够时放普通的新星；先叠冰缓再结算伤害，这一下冻住的怪当场吃“冻结受伤提高”，打死就碎
+      const n = attacks(W), cost = W.trigSlot ? 0 : NV.soulPerCast * (1 - STATS.soulLess), frost = W.frostNova && (!RUN || player.en >= cost); // 霜环：灯火不够时放普通的新星；先叠冰缓再结算伤害，这一下冻住的怪当场吃“冻结受伤提高”，打死就碎
       const f0 = RUN ? RUN.freezes || 0 : 0, kb = NV.knockPx * Math.log(50); // 击退 knockPx 像素（kx 每秒衰减到 2%，位移 ≈ kx ÷ ln50）
       for (let k = 0; k < n; k++) { fx({ t: 'boom', x: px, y: py + 6, r: W.aoeR, el: W.el, sk: skB(W) }); for (const m of mobs) if (!m.dead && m.rise <= 0.2 && dist2(m, player) < (W.aoeR + m.size) ** 2) { if (frost) chillOn(m, W.chillStacks, W); hitMob(m, W, frost ? { mul: W.novaMul } : {}); if (frost && !m.dead) { if (!m.boss) { const dx = m.x - player.x, dy = m.y - player.y, d = Math.hypot(dx, dy) || 1; m.kx += dx / d * kb; m.ky += dy / d * kb; } } } aoePull(px, py + 6, W.aoeR); }
       if (W.autoNova && STATS.flag.iceGround) pushGround({ ice: 1, gk: 'ice', x: px, y: py + 6, r: W.aoeR * UQX.iceGround.rMul, t: UQX.iceGround.dur, tickT: 0.5, tick: 0 });
-      if (frost && RUN) player.soul = Math.min(STATS.soulMax, Math.max(0, player.soul - cost) + Math.min(NV.refundCap, ((RUN.freezes || 0) - f0) * NV.refund)); // 每冻结一只返还
+      if (frost && RUN) enAdd(-cost + Math.min(NV.refundCap, ((RUN.freezes || 0) - f0) * NV.refund)); // 每冻结一只返还
       sfx('boom'); return true;
     }
     case 'orb': { // 寒魄宝珠：朝怪最密的方向放慢速冰球（无限穿透），插符文的沿途放冰片
       const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
-      const cost = W.trigSlot ? 0 : OB.soulPerCast * (W.orbCost || 1) * (1 - STATS.soulLess), rune = W.frostOrb && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost;
+      const cost = W.trigSlot ? 0 : OB.soulPerCast * (W.orbCost || 1) * (1 - STATS.soulLess), rune = W.frostOrb && (!RUN || player.en >= cost); if (rune && RUN) enAdd(-cost);
       const dR = AU.hold.denseR ** 2; let best = live[0], bn = -1; for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < dR) c++; if (c > bn) { bn = c; best = a; } }
       const a0 = aimAt(Math.atan2(best.y - 5 - py, best.x - px)), n = attacks(W), fan = OB.fan * Math.PI / 180, cast = { ref: 0, rune };
       for (let k = 0; k < n; k++) { const a = a0 + (k - (n - 1) / 2) * fan; projs.push({ W, orb: 1, x: px, y: py, a, vx: Math.cos(a) * W.orbSpd, vy: Math.sin(a) * W.orbSpd, life: W.orbLife, age: 0, el: W.el, r: 5, rune, cast, emitT: OB.emit, rot: rf(0, Math.PI * 2), touch: new Map(), hit: new Set(), mul: 1 }); }
@@ -619,7 +619,7 @@ function fire(W, i) {
     }
     case 'meteor': { // 坠星杖：选射程内敌人最多的点（按速度 × 延迟预判），预警后落地
       const live = mobs.filter(m => !m.dead && m.rise <= 0.2 && dist2(m, player) < (W.rng + m.size) ** 2); if (!live.length) return false;
-      const cost = W.trigSlot ? 0 : MT.soulPerCast * (1 - STATS.soulLess), rune = W.meteor && (!RUN || player.soul >= cost); if (rune && RUN) player.soul -= cost; // 灯火不够时放不带符文的陨石
+      const cost = W.trigSlot ? 0 : MT.soulPerCast * (1 - STATS.soulLess), rune = W.meteor && (!RUN || player.en >= cost); if (rune && RUN) enAdd(-cost); // 灯火不够时放不带符文的陨石
       const delay = (W.delayTot || (W.delay || MT.delay)) * (1 - (((STATS.tree && STATS.tree.add.delayLess) || 0)) / 100), R2 = W.aoeR * W.aoeR; let best = live[0], bn = -1; // 陨星套 2 件：落地延迟 −20%
       for (const a of live) { let c = 0; for (const b2 of live) if (dist2(a, b2) < R2) c++; if (c > bn) { bn = c; best = a; } }
       let cx = 0, cy = 0, vx = 0, vy = 0, k0 = 0; for (const b2 of live) if (dist2(best, b2) < R2) { cx += b2.x; cy += b2.y; vx += b2.vx || 0; vy += b2.vy || 0; k0++; }
@@ -669,12 +669,12 @@ function fire(W, i) {
     for (let k = 0; k < n; k++) chainHit(W, k === 0 ? tg : nearest(px, py, W.rng, new Set([tg])) || tg, player, W.chain);
     if (rnd() < 0.3) sfx('beam'); return true;
   }
-  if (W.spark && player.soul >= SP.soulPerCast * (1 - STATS.soulLess)) { // 游雷：扇形放出一串，贴地乱窜（灯火不够时退回普通的一发）
+  if (W.spark && (W.trigSlot || player.en >= SP.soulPerCast * (1 - STATS.soulLess))) { // 游雷：扇形放出一串，贴地乱窜（灯火不够时退回普通的一发）
     const n = W.sparkN + attacks(W) - 1, vol = { last: new Map() }, life = SP.life * W.sparkLifeMul; // 颗数 = 符文的 sparkN + 投射物 +N（相加，照流放之路），寿命吃持续时间和投射物持续时间
     const old = projs.filter(p => p.spark && !p.dead), over = old.length + n - SP.maxAlive; for (let k = 0; k < over && k < old.length; k++) old[k].dead = true; // 同屏上限：最老的先消失
     for (let k = 0; k < n; k++) shoot(W, px, py, a + (n > 1 ? (k / (n - 1) - 0.5) * SP.fan : 0), { pierce: W.pierce, chain: 0, split: 0, ret: 0, hit: new Set(), mul: W.sparkMul, life, first: true, spark: 1, vol, ph: k % 2 ? Math.PI : 0 });
     if (RUN && RUN.dmg) RUN.dmg.sN = (RUN.dmg.sN || 0) + n; // 模拟统计：放出的游雷颗数
-    if (RUN && !W.trigSlot) player.soul = Math.max(0, player.soul - SP.soulPerCast * (1 - STATS.soulLess)); // 魂龛里的技能石已经按 cost 付过灯火
+    if (RUN && !W.trigSlot) enAdd(-SP.soulPerCast * (1 - STATS.soulLess)); // 魂龛里的技能石已经按 cost 付过灯火
     sfx('shoot'); return true;
   }
   const n = attacks(W), pel = W.b.pellets || 1;
@@ -784,13 +784,14 @@ function logic(dt) {
   player.shield = Math.min(P.shield, player.shield + P.shieldRegen * lampShieldRegen() * (1 - ((RUN && RUN.mob.noRegen) || 0) / 100) * dt); // 护盾每秒回复，挨打也照回；生命不自然回复
   player.swing = player.swing.map(v => Math.max(0, v - dt));
   player.orbitA += dt * 5 * (1 + 0.12 * Math.max(0, ...player.spin.map(s => s.n))); // 旋转层数越高转得越快
-  if (!RUN) { player.life = P.life; player.shield = P.shield; player.soul = P.soulMax; return; }
+  if (!RUN) { player.life = P.life; player.shield = P.shield; player.soul = P.soulMax; player.en = P.enMax; return; }
   // 魂火：天梯里每秒自然回复；推关里是灯火，每秒燃烧，越深越快，只靠击杀回。转旋风的时候每秒另外消耗 whirl.soulPerSec
   const spin = spinning(), lad = RUN.mode === 'ladder';
   if (!RUN.ending && !RUN.next) {
     const rv = !lad && RUN.base < RUN.descent.prevMax; // 重温已经打过的层
-    const net = -(lad ? (SOUL.ladderBurn ?? SOUL.burn) + lampBurnL(RUN.L, SOUL.ladderBurnPerFloor ?? SOUL.burnPerFloor) : SOUL.burn + lampBurnL(RUN.base)) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1) - (spin && P.weapons.some(W => W && W.whirl) ? WH.soulPerSec * (1 - P.soulLess) : 0); // 魂龛里的旋风斩已按 cost 每秒付灯火，不再重复扣
+    const net = -(lad ? (SOUL.ladderBurn ?? SOUL.burn) + lampBurnL(RUN.L, SOUL.ladderBurnPerFloor ?? SOUL.burnPerFloor) : SOUL.burn + lampBurnL(RUN.base)) * P.burnMul * (rv ? SOUL.revisitBurnMul : 1) * (lad ? 1 + 0.25 * Math.floor(RUN.t / 30) : 1) * (P.flag.longLight && TRIGS_RT.lampState === 'bright' ? 0.5 : 1) * (P.flag.lampChain ? 1 - P.flag.lampChain / 100 : 1);
     player.soul = clamp(player.soul + net * dt, 0, P.soulMax);
+    enAdd((P.enRegen - (spin && P.weapons.some(W => W && W.whirl) ? WH.soulPerSec * (1 - P.soulLess) : 0)) * dt); // 能量：每秒自然回复；不在魂龛里的旋风斩转着时每秒耗能（魂龛里的已按 cost 付过）
     if (P.lifeRegen && player.life > 0 && !healBlocked()) player.life = Math.min(P.life, player.life + P.lifeRegen * dt); // gear-v2：每秒回生命
     if (P.flag.returnLight && !RUN.rlUsed && player.soul < P.soulMax * 0.1) { RUN.rlUsed = 1; player.soul = P.soulMax * P.flag.returnLight / 100; if (G.ui) G.ui.banner('归光 · 灯火复燃', COL.emberHi); } // 归光（每局一次）
     if (player.soul <= 0) player.soulEmpty += dt;
@@ -855,7 +856,7 @@ function logic(dt) {
   for (const [W, i] of whirlWs()) {
     const st = player.spin[i]; st.idle += dt;
     if (st.idle >= WH.decay * (STATS.flag.spinDecay || 1)) { st.n = 0; st.g = 0; }
-    else if (st.n < W.stackMax && player.soul > 0 && (st.g += dt * WH.gainPerSec) >= 1) { st.g -= 1; st.n++; } // 魂火空了不再涨层
+    else if (st.n < W.stackMax && player.en > 0 && (st.g += dt * WH.gainPerSec) >= 1) { st.g -= 1; st.n++; } // 魂火空了不再涨层
   }
   // 武器
   P.weapons.forEach((W, i) => {
@@ -872,7 +873,7 @@ function logic(dt) {
     if (player.wcd[i] <= 0) { if (W.basic ? castAttack(W, i) : fire(W, i)) player.wcd[i] = (W.aps ? 1 / W.aps : 0.5) / (1 + buffV('haste') / 100); else player.wcd[i] = 0.05; } // 疾步：出手更快
   });
   // 魂龛【常驻】里的瘟疫光环：每 auraTick 结算一次（灯火见底就停）
-  for (const [W, i] of combatWs()) if (i >= 2 && W.form === 'aura') { const t = STATS.trigs[W.trigSlot - 1]; if (!t || t.mode !== 'always' || !lampOk()) continue; if ((W._at = (W._at || 0) - dt) <= 0) { W._at = MECH.auraTick; auraHit(W); } }
+  for (const [W, i] of combatWs()) if (i >= 2 && W.form === 'aura') { const t = STATS.trigs[W.trigSlot - 1]; if (!t || t.mode !== 'always' || trigDry(W.trigSlot - 1)) continue; if ((W._at = (W._at || 0) - dt) <= 0) { W._at = MECH.auraTick; auraHit(W); } }
   trigStep(dt); elemStep(dt); stepProjs(dt);
   if (STATS.shieldW) stepShieldThrow(STATS.shieldW, dt); else if (STATS.armorHeld != null) STATS.armor = STATS.armorHeld;
   stepZones(dt); stepMeteors(dt);
@@ -983,7 +984,7 @@ function orbShards(W, x, y, n, a0, mul, cast, gen, skip) { // 寒魄球的冰片
   if (RUN && RUN.dmg) RUN.dmg.oshards = (RUN.dmg.oshards || 0) + n;
 }
 function orbShardHit(p, m) { // 冰片命中：打中冻结的敌人返还灯火；碎冰连锁再派生一层
-  const c = p.cast; if (RUN && c && c.rune && m.frzT > 0 && c.ref < OB.refundCap) { const r = Math.min(OB.refund, OB.refundCap - c.ref); c.ref += r; player.soul = Math.min(STATS.soulMax, player.soul + r); }
+  const c = p.cast; if (RUN && c && c.rune && m.frzT > 0 && c.ref < OB.refundCap) { const r = Math.min(OB.refund, OB.refundCap - c.ref); c.ref += r; enAdd(r); }
   const lim = (STATS.flag.shardChain ? 1 : 0) + (STATS.flag.shardCrown ? 1 : 0), g = p.gen || 0; // 碎冰连锁一层，碎晶冠再加一层（每层 ×0.5）
   if (g < lim) orbShards(p.W, m.x, m.y - 5, STATS.flag.shardChain && !g ? OB.scN : UQX.crownN, rf(0, Math.PI * 2), p.mul * OB.scMul, c, g + 1, m);
 }
@@ -999,7 +1000,7 @@ function stepShieldThrow(W, dt) { // 圣盾掷：盾在手上才扔；飞出去�
   const out = projs.some(p => p.sthrow && !p.dead); STATS.armor = out ? STATS.armorOut : STATS.armorHeld;
   player.thCd = (player.thCd || 0) - dt; if (out || player.thCd > 0) return;
   const t = nearest(player.x, player.y - 5, W.rng); if (!t) return;
-  const cost = SHT.soulPerThrow * (1 - STATS.soulLess); if (RUN) { if (player.soul < cost) return; player.soul -= cost; }
+  const cost = SHT.soulPerThrow * (1 - STATS.soulLess); if (RUN) { if (player.en < cost) return; enAdd(-cost); }
   player.thCd = 1 / W.aps; const a = Math.atan2(t.y - 5 - (player.y - 6), t.x - player.x);
   projs.push({ W, sthrow: 1, x: player.x, y: player.y - 6, a, vx: Math.cos(a) * W.thSpd, vy: Math.sin(a) * W.thSpd, life: W.thLife, age: 0, el: 'pla', r: 6, chain: W.chain, bn: 0, touch: new Map(), hit: new Set(), mul: 1 }); sfx('shoot');
 }
@@ -1015,7 +1016,7 @@ function stepThrow(p, dt) { // 飞盾：朝目标飞，打中后弹射到附近�
     const mul = 1 + W.chainStep * p.bn; hitMob(m, W, { mul }); if (STATS.flag.echoCrown && p.bn) echoBurst(m, W);
     if (STATS.flag.echoShield) { fx({ t: 'boom', x: m.x, y: m.y - 3, r: SHT.echoR, el: 'pla' }); for (const n of mobs) if (!n.dead && n.rise <= 0.2 && dist2(n, m) < (SHT.echoR + n.size) ** 2) hitMob(n, W, { mul: mul * SHT.echoMul }); }
     player.shield = Math.min(STATS.shield, player.shield + STATS.shield * (SHT.shieldOnHit + (STATS.flag.martyrThrow || 0)) / 100); // 殉道者之盾再加
-    if (RUN && p.bn > 0) player.soul = Math.min(STATS.soulMax, player.soul + SHT.soulPerChain);
+    if (RUN && p.bn > 0) enAdd(SHT.soulPerChain);
     p.hit.add(m); const n = p.chain > 0 ? nearest(m.x, m.y - 4, SHT.chainR, p.hit) : null;
     if (!n) { p.back = 1; break; }
     const a = Math.atan2(n.y - 5 - (m.y - 5), n.x - m.x), sp = Math.hypot(p.vx, p.vy); p.x = m.x; p.y = m.y - 5; p.vx = Math.cos(a) * sp; p.vy = Math.sin(a) * sp; p.chain--; p.bn++; p.life = W.thLife; fx({ t: 'bounce', x: m.x, y: m.y - 5 }); break;
@@ -1043,7 +1044,7 @@ function stepMeteors(dt) { // 陨石落地：圈内一次命中，击退 + 眩�
       const big = m.boss || m.elite; m.stunT = Math.max(m.stunT || 0, MT.stun * (big ? MT.stunBossMul : 1));
       if (!m.boss) { const dx = m.x - M.x, dy = m.y - M.y, l = Math.hypot(dx, dy) || 1; m.kx += dx / l * kb; m.ky += dy / l * kb; }
     }
-    if (RUN && kills >= MT.refundKills && M.ground) player.soul = Math.min(STATS.soulMax, player.soul + MT.soulRefund); // 一下杀 ≥3 只返还灯火
+    if (RUN && kills >= MT.refundKills && M.ground) enAdd(MT.soulRefund); // 一下杀 ≥3 只返还能量
     if (M.ground) pushGround({ W: M.W, x: M.x, y: M.y, r: M.r, t: M.ground.dur * (STATS.durMul || 1), tickT: M.ground.tick, tick: M.ground.tick, mul: M.mul * M.ground.pct, el: M.W.el, fire: M.W.el === 'exp' ? 1 : 0, gk: M.W.el === 'exp' ? 'fire' : 'g' + M.W.el }); // 火地：每 tick = 这次命中的 pct
   }
   meteors = meteors.filter(M => M.t > 0);

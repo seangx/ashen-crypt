@@ -81,9 +81,10 @@ function computeStats(eq = S.equip) {
   if (eng) for (const { fx } of activeRunes(eng, P)) dashMax += fx.dashMax || 0;
   P.dashMax = Math.max(1, dashMax + (TM.dashMax || 0));
   // 魂火
-  P.soulMax = (SOUL.base + P.energy * SOUL.perEnergy + (A.lampMax || 0) + (TA.lampMax || 0)) * (FL.burnSoul ? 0.7 : 1); // tree-v3 燃魂：灯火上限 −30%
+  P.soulMax = (SOUL.base + (A.lampMax || 0) + (TA.lampMax || 0)) * (FL.burnSoul ? 0.7 : 1); /* 11-14：灯火只是倒计时，魂力不再加灯火上限（改加能量） */
+  P.enMax = EN.base + P.energy * EN.perEnergy; P.enGainMul = 1 + ((A.soulRegen || 0) + (TA.soulRegen || 0)) / 100; P.enRegen = (EN.regen + P.energy * EN.regenPerEnergy) * P.enGainMul; /* 能量：上限、每秒回复；“能量回复提高%”也乘命中回能 */ // tree-v3 燃魂：灯火上限 −30%
   P.soulRegen = (SOUL.regen + P.energy * SOUL.regenPerEnergy) * (1 + ((A.soulRegen || 0) + (TA.soulRegen || 0)) / 100);
-  P.soulGainMul = 1 + ((A.soulRegen || 0) + (TA.soulRegen || 0) + (A.soulKillInc || 0) + (TA.soulKillInc || 0)) / 100; // 推关里提高击杀回的灯火（魂火回复 + 击杀回灯火）
+  P.soulGainMul = 1 + ((A.soulKillInc || 0) + (TA.soulKillInc || 0)) / 100; // 推关里提高击杀回的灯火（魂火回复 + 击杀回灯火）
   P.burnMul = (1 - Math.min(GEAR.burnLessCap, (A.burnLess || 0) + (TA.burnLess || 0)) / 100) * (1 + (FL.burnMore || 0) / 100); // 灯火燃烧降低；誓约“灯火燃烧 +%”
   P.delayAdd = (A.delayAdd || 0) + (TA.delayAdd || 0); P.spawnAdd = (A.spawnAdd || 0) + (TA.spawnAdd || 0); P.frozenTaken = ((A.frozenTaken || 0) + (TA.frozenTaken || 0)) / 100; P.freezeMul = 1 + (TA.freezeDur || 0) / 100; // 新流派用（第 4 步）
   P.soulLess = Math.min(SOUL.costCap, (A.soulLess || 0) + (TA.soulLess || 0)) / 100;
@@ -309,7 +310,7 @@ function refreshStats() {
   const prev = typeof STATS !== 'undefined' ? STATS : null;
   STATS = computeStats();
   if (prev && prev.dps != null && G.ui && G.ui.statDelta && !(typeof RUN !== 'undefined' && RUN && !RUN.prep)) G.ui.statDelta(prev, STATS); // 手感：换装后浮出秒伤 / 坚韧的变化（战斗中不弹）
-  if (typeof RUN !== 'undefined' && RUN) { player.life = Math.min(player.life, STATS.life); player.shield = Math.min(player.shield, STATS.shield); player.dash = Math.min(player.dash, STATS.dashMax); player.soul = Math.min(player.soul, STATS.soulMax); }
+  if (typeof RUN !== 'undefined' && RUN) { player.life = Math.min(player.life, STATS.life); player.shield = Math.min(player.shield, STATS.shield); player.dash = Math.min(player.dash, STATS.dashMax); player.soul = Math.min(player.soul, STATS.soulMax); player.en = Math.min(player.en, STATS.enMax); }
 }
 // 换装比较用：秒伤 + 有效生命的粗略估值
 function itemValue(it) {

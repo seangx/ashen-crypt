@@ -1,5 +1,5 @@
 {
- "_说明": "魂龛（design/system-v2 §4–5、spec-trigger-slots、lamp-v2 §5、uniques-audit §8）。conds：kind cast=【出手】/ resp=【响应】；mode charge 充能 / each 每次 / timer 时间 / state 状态 / always 常驻。cap 充能容量；per 每次事件加分；gap 每次型最短间隔；N 时间型间隔（按阶 T1–T5）；every 状态型间隔；thr 低血阈值；r 遇精英半径。skill：技能石 → proc 触发系数（每命中一个敌人）、cost [1 级, 满级] 每次灯火消耗（常驻是每秒）。supCost：辅助石消耗倍率（缺省 defCost）。affs：魂龛词条 [T1, T5]。",
+ "_说明": "魂龛（design/system-v2 §4–5、spec-trigger-slots、lamp-v2 §5、uniques-audit §8）。conds：kind cast=【出手】/ resp=【响应】；mode charge 充能 / each 每次 / timer 时间 / state 状态 / always 常驻。cap 充能容量；per 每次事件加分；gap 每次型最短间隔；N 时间型间隔（按阶 T1–T5）；every 状态型间隔；thr 低血阈值；r 遇精英半径。skill：技能石 → proc 触发系数（每命中一个敌人）、cost [1 级, 满级] 每次能量消耗（常驻是每秒）。supCost：辅助石消耗倍率（缺省 defCost）。affs：魂龛词条 [T1, T5]。",
  "conds": {
   "cast": {
    "n": "出手时",
@@ -396,7 +396,7 @@
    ]
   },
   "lampOn": {
-   "n": "触发回灯火 +{v}",
+   "n": "触发回能量 +{v}",
    "r": [
     0.2,
     1
@@ -426,7 +426,7 @@
    "rare": 1
   },
   "burnLamp": {
-   "n": "燃灯：每次多耗 {v} 灯火，伤害 +{w}%",
+   "n": "燃灯：每次多耗 {v} 能量，伤害 +{w}%",
    "r": [
     1,
     3
@@ -490,7 +490,7 @@
     "lifeCost": 0.05,
     "dmg": 80
    },
-   "d": "阈值 50%；不耗灯火，改耗 5% 当前生命；技能伤害 +80%"
+   "d": "阈值 50%；不耗能量，改耗 5% 当前生命；技能伤害 +80%"
   },
   {
    "k": "thunder",

@@ -279,7 +279,7 @@
   "engine": 0.1
  },
  "whirl": {
-  "_说明": "旋风斩第三版（经典旋风斩，规格 design/spec-whirlwind-v3.md）。旋身符文：回旋骨刃连续命中时每秒 +gainPerSec 层“旋势”，最多 maxStacks 层，decay 秒没命中清零；每层伤害总增按符文等级（runes.json Whirl 的 spinMore，没写时用 morePer），判定半径 +rngPer%（再乘 1 + 范围提高%）。有层数时角色在转：移速 ×spinMoveMul，每秒消耗 soulPerSec 灯火（×(1-魂火消耗降低)），每次挥砍每砍中一个敌人回 soulPerHit，一次最多按 soulHitCap 个算；小旋风打中不回。减伤：每层 drPerStack%，最多 drCap%。旋风之心（大型天赋，【近战·范围】，对同时有 Melee 和 AoE 标签的武器生效）：伤害 ×heartMore；转的时候每 devilEvery 秒甩出一个小旋风（满层时间隔 ×devilFullMul），朝随机方向跑，速度 devilSpeed 像素/秒，每秒最多偏转 devilTurn 弧度，飘 devilLife 秒，半径 devilR，每 devilTick 秒伤害碰到的敌人（旋风单次伤害 × devilMul，含当前层数倍率），小旋风算投射物：每次甩出 1 + 投射物数量 个，同时最多 devilMax × (1 + 投射物数量) 个，速度吃投射物速度，存在时间吃持续时间提高，不吃投射物伤害的总增 / 总降；代价：非近战武器伤害 ×offhandMul，冲刺距离 ×dashMul。风暴之眼（独特头冠，【范围】，数值在 rules.json areaEye）：范围提高，范围伤害把普通怪往命中点拉，转旋风时持续卷向自己。craftPref / runeOrder 是 tools/sim.js --build whirl 的做装词条族优先级和插符文顺序；treeKey 是旋风之心所在的小团。affixes 是本流派加的词条族（格式同 astro.json 的 affixes，外加 text、stat、tag）。",
+  "_说明": "旋风斩第三版（经典旋风斩，规格 design/spec-whirlwind-v3.md）。旋身符文：回旋骨刃连续命中时每秒 +gainPerSec 层“旋势”，最多 maxStacks 层，decay 秒没命中清零；每层伤害总增按符文等级（runes.json Whirl 的 spinMore，没写时用 morePer），判定半径 +rngPer%（再乘 1 + 范围提高%）。有层数时角色在转：移速 ×spinMoveMul，每秒消耗 soulPerSec 能量（×(1-能量消耗降低)），每次挥砍每砍中一个敌人回 soulPerHit，一次最多按 soulHitCap 个算；小旋风打中不回。减伤：每层 drPerStack%，最多 drCap%。旋风之心（大型天赋，【近战·范围】，对同时有 Melee 和 AoE 标签的武器生效）：伤害 ×heartMore；转的时候每 devilEvery 秒甩出一个小旋风（满层时间隔 ×devilFullMul），朝随机方向跑，速度 devilSpeed 像素/秒，每秒最多偏转 devilTurn 弧度，飘 devilLife 秒，半径 devilR，每 devilTick 秒伤害碰到的敌人（旋风单次伤害 × devilMul，含当前层数倍率），小旋风算投射物：每次甩出 1 + 投射物数量 个，同时最多 devilMax × (1 + 投射物数量) 个，速度吃投射物速度，存在时间吃持续时间提高，不吃投射物伤害的总增 / 总降；代价：非近战武器伤害 ×offhandMul，冲刺距离 ×dashMul。风暴之眼（独特头冠，【范围】，数值在 rules.json areaEye）：范围提高，范围伤害把普通怪往命中点拉，转旋风时持续卷向自己。craftPref / runeOrder 是 tools/sim.js --build whirl 的做装词条族优先级和插符文顺序；treeKey 是旋风之心所在的小团。affixes 是本流派加的词条族（格式同 astro.json 的 affixes，外加 text、stat、tag）。",
   "gainPerSec": 1,
   "maxStacks": 10,
   "decay": 2,
@@ -461,7 +461,7 @@
   "drCap": 40
  },
  "shield": {
-  "_说明": "圣盾掷（飞盾圣骑）流派（spec-bd-gear §4.2）。圣徽盾插圣盾掷符文后变成一把虚拟武器（STATS.shieldW，form shieldThrow，el pla，标签 Shield / Projectile / ProjectileCanChain / ProjectileCanPierce / Attack / Hit）：每 1/aps 秒（aps 1.2，吃攻速）朝最近的敌人扔一次，盾在飞时不再扔。单次伤害 = 盾的护甲（底子护甲 × (1 + 护甲提高%)）× 符文 throwK，再吃盾牌伤害% 和圣光伤害%（同一个提高池）。速度 speed × 投射物速度倍数；寿命 life × 投射物寿命倍数（同游雷）。无限穿透，同一敌人每 rehit 秒最多打一次；弹射 = 碰屏幕边反弹（符文 chain + 通用弹射），每弹一次之后的命中 +chainStepInc%（符文，和通用 chainStep 相加）。弹射用完再碰屏幕边或寿命到了就以 returnSpeed 飞回手上，回程不造成伤害。盾在手上时格挡（block）生效，飞出去时不算格挡（盾的护甲照常算）。每次命中回护盾上限的 shieldOnHit%。每次投掷消耗 soulPerThrow 灯火（不够就不扔），反弹过之后的每次命中返还 soulPerChain。回响圣盾（大天赋 echoShield，守备区，替换骨刺甲）：每次盾命中在命中点炸半径 echoR 像素的圣光爆（×echoMul，算范围）；有 Shield 标签的伤害 ×heartMore，其他武器 ×offhandMul，生命上限 −10%（天赋 more life 0.9）。estHits 只给秒伤估算用。",
+  "_说明": "圣盾掷（飞盾圣骑）流派（spec-bd-gear §4.2）。圣徽盾插圣盾掷符文后变成一把虚拟武器（STATS.shieldW，form shieldThrow，el pla，标签 Shield / Projectile / ProjectileCanChain / ProjectileCanPierce / Attack / Hit）：每 1/aps 秒（aps 1.2，吃攻速）朝最近的敌人扔一次，盾在飞时不再扔。单次伤害 = 盾的护甲（底子护甲 × (1 + 护甲提高%)）× 符文 throwK，再吃盾牌伤害% 和圣光伤害%（同一个提高池）。速度 speed × 投射物速度倍数；寿命 life × 投射物寿命倍数（同游雷）。无限穿透，同一敌人每 rehit 秒最多打一次；弹射 = 碰屏幕边反弹（符文 chain + 通用弹射），每弹一次之后的命中 +chainStepInc%（符文，和通用 chainStep 相加）。弹射用完再碰屏幕边或寿命到了就以 returnSpeed 飞回手上，回程不造成伤害。盾在手上时格挡（block）生效，飞出去时不算格挡（盾的护甲照常算）。每次命中回护盾上限的 shieldOnHit%。每次投掷消耗 soulPerThrow 能量（不够就不扔），反弹过之后的每次命中返还 soulPerChain。回响圣盾（大天赋 echoShield，守备区，替换骨刺甲）：每次盾命中在命中点炸半径 echoR 像素的圣光爆（×echoMul，算范围）；有 Shield 标签的伤害 ×heartMore，其他武器 ×offhandMul，生命上限 −10%（天赋 more life 0.9）。estHits 只给秒伤估算用。",
   "aps": 1.2,
   "crit": 6,
   "range": 800,
@@ -577,7 +577,7 @@
   "base": "FrostOrb"
  },
  "meteor": {
-  "_说明": "陨火（陨石术）流派（spec-bd-gear §4.1）。坠星杖（form meteor）每次出手：选射程内敌人最多的点（aoe 半径内计数），按那群怪的平均速度 × 延迟预判，画红橙色预警圈（边缘随倒计时收缩），delay 秒后圈内一次命中，击退 knockPx 像素、眩晕 stun 秒（精英 / Boss ×stunBossMul）。插陨火符文：伤害 ×meteorMul，落地留火地（符文 ground），火地里的敌人伤害总降 groundWeaken。每次施放消耗 soulPerCast 灯火（不够时放不带符文的陨石），一次命中击杀 ≥refundKills 只返还 soulRefund。星坠雨（大天赋 starfall，范围区内左，替换光环）：每次落 sfN 颗，散布半径 = aoe × sfSpread，每颗 ×sfMul、范围 ×sfAoe、延迟 ×sfDelay；有 Delayed 标签的武器 ×heartMore，其他武器 ×offhandMul，移速 −10%（天赋 more）。estGround 只给秒伤估算（火地的额外倍数）。craftPref / runeOrder / treeKey / base 是 tools/sim.js、bis.js --build meteor 用的。",
+  "_说明": "陨火（陨石术）流派（spec-bd-gear §4.1）。坠星杖（form meteor）每次出手：选射程内敌人最多的点（aoe 半径内计数），按那群怪的平均速度 × 延迟预判，画红橙色预警圈（边缘随倒计时收缩），delay 秒后圈内一次命中，击退 knockPx 像素、眩晕 stun 秒（精英 / Boss ×stunBossMul）。插陨火符文：伤害 ×meteorMul，落地留火地（符文 ground），火地里的敌人伤害总降 groundWeaken。每次施放消耗 soulPerCast 能量（不够时放不带符文的陨石），一次命中击杀 ≥refundKills 只返还 soulRefund。星坠雨（大天赋 starfall，范围区内左，替换光环）：每次落 sfN 颗，散布半径 = aoe × sfSpread，每颗 ×sfMul、范围 ×sfAoe、延迟 ×sfDelay；有 Delayed 标签的武器 ×heartMore，其他武器 ×offhandMul，移速 −10%（天赋 more）。estGround 只给秒伤估算（火地的额外倍数）。craftPref / runeOrder / treeKey / base 是 tools/sim.js、bis.js --build meteor 用的。",
   "delay": 1.0,
   "knockPx": 20,
   "stun": 0.5,
@@ -634,7 +634,7 @@
   "base": "StarfallRod"
  },
  "nova": {
-  "_说明": "霜环（冰霜新星）流派（spec-bd-gear §4.4）。霜环符文插在霜钟 / 圣钟（form nova）上：新星伤害 ×novaMul，每次命中叠 chillStacks 层冰缓，击退 knockPx 像素；插在圣钟上时元素改成寒霜。每次新星消耗 soulPerCast 灯火（不够时放普通的新星），每冻结一只返还 refund，每次最多 refundCap。碎冰（大天赋 shatter，范围区外右）：杀死冻结的敌人时尸体向四周放 shardN 片冰片（+ 派生 +N），每片 = 新星武器单次伤害 ×shardMul，速度 shardSpeed、寿命 shardLife 秒、不穿透，算派生和投射物；冰片本身不触发碎冰，但冰片打死的冻结敌人照样碎；同屏最多 maxShards 片。有 Nova 标签（或插了霜环符文）的武器 ×heartMore，其他武器 ×offhandMul，非寒霜伤害总降 20%（天赋的 more）。estShatter 只给秒伤估算用（碎冰的额外倍数）。craftPref / runeOrder / treeKey / base 是 tools/sim.js、bis.js --build nova 用的。",
+  "_说明": "霜环（冰霜新星）流派（spec-bd-gear §4.4）。霜环符文插在霜钟 / 圣钟（form nova）上：新星伤害 ×novaMul，每次命中叠 chillStacks 层冰缓，击退 knockPx 像素；插在圣钟上时元素改成寒霜。每次新星消耗 soulPerCast 能量（不够时放普通的新星），每冻结一只返还 refund，每次最多 refundCap。碎冰（大天赋 shatter，范围区外右）：杀死冻结的敌人时尸体向四周放 shardN 片冰片（+ 派生 +N），每片 = 新星武器单次伤害 ×shardMul，速度 shardSpeed、寿命 shardLife 秒、不穿透，算派生和投射物；冰片本身不触发碎冰，但冰片打死的冻结敌人照样碎；同屏最多 maxShards 片。有 Nova 标签（或插了霜环符文）的武器 ×heartMore，其他武器 ×offhandMul，非寒霜伤害总降 20%（天赋的 more）。estShatter 只给秒伤估算用（碎冰的额外倍数）。craftPref / runeOrder / treeKey / base 是 tools/sim.js、bis.js --build nova 用的。",
   "soulPerCast": 0.3,
   "refund": 0.15,
   "refundCap": 0.9,
@@ -688,7 +688,7 @@
   "base": "FrostOrb"
  },
  "spark": {
-  "_说明": "游雷（电球）流派（规格 design/spec-spark.md、design/spec-pierce-chain.md；2026-10-24 用户定稿：寿命按本地方案，穿透保持无限穿透，弹射是指弹屏幕边缘；11-11 用户改定：照流放之路，“弹射”只指在敌人之间跳，投射物打中后按 分裂 → 穿透 → 弹射 一次只触发一种，穿透有次数；碰屏幕边折返不再是属性，是游雷、寒魄球自己的飞行方式，一直到寿命结束）。游雷符文：插在雷灵（form proj + wander）上，每次出手朝目标扇形放出一串游雷，数量 = 符文的 sparkN + 投射物数量（相加，照流放之路；投射物 +N 来自词条、天赋、百骨冠）；每颗伤害 = 武器单发 × 符文的 sparkMul。轨迹是固定的正弦波：沿出手方向直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，不追踪、不随机。速度 = 武器弹速 × speedMul；寿命 life 秒 × (1 + 持续时间提高% + 投射物持续时间提高%) × 缓流等符文总增，寿命到了就消失（反弹不补寿命），弹速决定这段时间飞多远；同屏最多 maxAlive 颗，超出时最老的消失。弹射 = 中心线碰到当前屏幕边（视野去掉顶部状态栏，左右各留 10 像素）镜面反射的次数，每反弹一次耗 1 次弹射、之后的伤害 ×chainMul，反弹后继续走波形；弹射用完再碰到屏幕边就飞出去消失。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、织雷之心、雷冠）。穿透是布尔的：有任何穿透来源（basePierce、穿刺符文、穿透词条）就无限穿透，同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）；没有穿透时打中一个敌人就消失。每次出手消耗 soulPerCast 灯火。织雷之心（大型天赋）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每反弹一次之后的命中伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，数值在 rules.json chainCrown）：反弹过的游雷打中的敌人感电；第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉的不再分叉、不弹射）。estLeg / estLegHit / estRehit 只给秒伤估算用：一趟屏幕约 estLeg 像素，每多一趟按 estLegHit 估多打的命中，穿透时飞在屏幕里每多 1 秒按 estRehit 估重复命中。chainR / chainLife 已不用（投射物不再在敌人之间转向）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
+  "_说明": "游雷（电球）流派（规格 design/spec-spark.md、design/spec-pierce-chain.md；2026-10-24 用户定稿：寿命按本地方案，穿透保持无限穿透，弹射是指弹屏幕边缘；11-11 用户改定：照流放之路，“弹射”只指在敌人之间跳，投射物打中后按 分裂 → 穿透 → 弹射 一次只触发一种，穿透有次数；碰屏幕边折返不再是属性，是游雷、寒魄球自己的飞行方式，一直到寿命结束）。游雷符文：插在雷灵（form proj + wander）上，每次出手朝目标扇形放出一串游雷，数量 = 符文的 sparkN + 投射物数量（相加，照流放之路；投射物 +N 来自词条、天赋、百骨冠）；每颗伤害 = 武器单发 × 符文的 sparkMul。轨迹是固定的正弦波：沿出手方向直线前进，横向偏移 = waveA × sin(2π × 走过的距离 / waveL + 相位)，不追踪、不随机。速度 = 武器弹速 × speedMul；寿命 life 秒 × (1 + 持续时间提高% + 投射物持续时间提高%) × 缓流等符文总增，寿命到了就消失（反弹不补寿命），弹速决定这段时间飞多远；同屏最多 maxAlive 颗，超出时最老的消失。弹射 = 中心线碰到当前屏幕边（视野去掉顶部状态栏，左右各留 10 像素）镜面反射的次数，每反弹一次耗 1 次弹射、之后的伤害 ×chainMul，反弹后继续走波形；弹射用完再碰到屏幕边就飞出去消失。弹射次数 = 通用的弹射 W.chain（游雷符文的 chain、连锁符文、“弹射 +#”词条、织雷之心、雷冠）。穿透是布尔的：有任何穿透来源（basePierce、穿刺符文、穿透词条）就无限穿透，同一串对同一个敌人每 rehit 秒最多打一次（原作 0.66 秒）；没有穿透时打中一个敌人就消失。每次出手消耗 soulPerCast 能量。织雷之心（大型天赋）：有 ProjectileCanChain 标签的武器伤害 ×heartMore，每反弹一次之后的命中伤害 +chainStepInc%，游雷命中叠 shockGain 层感电，弹射 +1；代价：其他武器伤害 ×offhandMul，非元素伤害总降。雷冠（独特头冠，数值在 rules.json chainCrown）：反弹过的游雷打中的敌人感电；第一次打中感电的敌人时分叉成 forkN 颗（×forkMul，分叉的不再分叉、不弹射）。estLeg / estLegHit / estRehit 只给秒伤估算用：一趟屏幕约 estLeg 像素，每多一趟按 estLegHit 估多打的命中，穿透时飞在屏幕里每多 1 秒按 estRehit 估重复命中。chainR / chainLife 已不用（投射物不再在敌人之间转向）。craftPref / runeOrder / treeKey / uniqueId 是 tools/sim.js、bis.js --build spark 用的。",
   "life": 3.5,
   "rehit": 0.66,
   "speedMul": 1.1,
@@ -819,6 +819,15 @@
   "estRehit": 0.25
  },
  "apsCurve": { "_说明": "武器基础攻速压缩：攻速高于 knee 的部分只保留 keep 倍（4/秒 → 1.45，6/秒 → 1.75，8/秒 → 2.05），每击伤害按 原攻速 ÷ 新攻速 放大，基础秒伤不变；攻速词条和辅助宝石因此更显眼", "knee": 1.0, "keep": 0.15 },
+ "energy": {
+  "_说明": "能量（11-14 从灯火里拆出来）：放技能的资源。上限 = base + 魂力 × perEnergy；每秒回复 = (regen + 魂力 × regenPerEnergy) × (1 + 能量回复提高%)。技能石 / 魂龛每次施放消耗能量（triggers.json 的 cost，能量消耗降低最多 soul.costCap%），不够就不放，这次出手退回底技能；常驻魂龛每秒消耗，耗尽后停下，回到上限的 restart 才重新启动。底技能（和出手时魂龛替它放的那一下）命中回 soul.hitLamp 算出来的量 × hitMul；装备的命中 / 暴击 / 受击回能、魂龛“触发回能”、技能自带的返还都回能量。灯火（soul）只剩倒计时：按层数燃烧、击杀回，不再被技能消耗。",
+  "base": 100,
+  "perEnergy": 2,
+  "regen": 2,
+  "regenPerEnergy": 0.03,
+  "restart": 0.1,
+  "hitMul": 6
+ },
  "soul": {
   "_说明": "魂火：所有流派共用的资源条（护甲条下面那条细条）。上限 = base + 魂力 × perEnergy；每秒回复 = (regen + 魂力 × regenPerEnergy) × (1 + 魂火回复提高%)；魂火消耗降低最多 costCap%。各流派怎么花魂火写在各自的段里（目前只有 whirl）。affixes 格式同 whirl.affixes。 灯火（推关）：推关一趟从当前层出发一层接一层往下打，进入时灯火 = 魂火上限。每秒燃烧 burn + 层数 × burnPerFloor，推关中没有自然回复（regen 只在天梯里用）；击杀回 onKill（普通 / 精英 / Boss），“魂火回复提高%”提高击杀回复。灯火归 0：平安返回，拾取的全部带走。阵亡：这一趟拾取的装备、符文、碎片每件有 deathKeep% 几率保留。nextFloorDelay：打掉守关 Boss 后几秒进入下一层（期间自动拾取地上的东西）。lowWarn：灯火低于这个比例时灯火条闪烁。 startBack：推关（没锁层时）从 max(1, 最深层 − startBack) 出发，越走越难，最深层是一趟的高潮；锁层时就从锁定的层出发。超过出发前的最深层才算推层成功。 重温：比出发时的最深层浅的层，燃烧 ×revisitBurnMul、击杀回复 ×revisitKillMul，热身的几层花得少，灯火留给最深层。 returnHp：推关里某一层的最低血量（护甲比例）低于 returnHp% 时，打掉这层的守关 Boss 后自动撤回（和灯灭一样平安带走全部东西），免得挂机时在最深层反复阵亡。 撤回只看最深层附近的层（层数 ≥ 出发前最深层 − 1），热身层血量再低也不撤。returnHpMelee：近战流派（AI 在近战模式）用的撤回阈值，null 时沿用 returnHp。 returnHpNow：最深层附近（层数 ≥ 出发前最深层 − 1）护甲比例一旦低于 returnHpNow%，立刻紧急撤回（不等打完 Boss），同样平安带走全部东西，推层不算失败。",
   "base": 100,
@@ -828,7 +837,7 @@
   "costCap": 50,
   "affixes": {
    "SoulRegen": {
-    "text": "魂火回复提高 #%",
+    "text": "能量回复提高 #%",
     "stat": "soulRegen",
     "type": "S",
     "on": [
@@ -878,7 +887,7 @@
     ]
    },
    "SoulLess": {
-    "text": "魂火消耗降低 #%",
+    "text": "能量消耗降低 #%",
     "stat": "soulLess",
     "type": "S",
     "on": [

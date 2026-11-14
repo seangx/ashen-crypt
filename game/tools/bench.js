@@ -23,7 +23,7 @@ for (let i = 0; i < argv.length; i++) { const a = argv[i].replace(/^--/, ''); o[
       const r = { id: G.id, n: G.n, form: G.form, w, eff: G.base.eff, kills: 0, pack: 0, single: 0 };
       const run = async (mode) => {
         P.setup({ gems: [G.id], weapon: w, depth: +o.depth, level: 50, ilvl: +o.depth }); for (const k of ['mobs', 'projs', 'meteors', 'zones']) if (A[k]) A[k].length = 0; await P.start(); const L0 = A.STATS.life; let one = null; // 上一轮的木桩、弹道先清掉
-        P.step(sec, () => { A.player.life = L0; A.player.soul = A.STATS.soulMax;
+        P.step(sec, () => { A.player.life = L0; A.player.soul = A.STATS.soulMax; A.player.en = A.STATS.enMax;
           if (mode === 'pack') { P.tank(); const live = A.mobs.filter(m => !m.dead); if (live.length > PACK) { A.mobs.length = 0; A.mobs.push(...live.slice(0, PACK)); } }
           if (mode === 'single') { if (!one) { one = A.mobs.find(m => !m.dead && !m.boss && m.rise <= 0.2); if (one) { one.x = A.player.x + 70; one.y = A.player.y; one.spd = 0; } } if (one) { P.tank(); one.spd = 0; one.kx = one.ky = 0; A.mobs.length = 0; A.mobs.push(one); } } }); // 单体：训练木桩，不动，放在角色前方 70 像素
         const v = mode === 'kills' ? A.RUN.kills : own() / sec; P.stop(); return v;
